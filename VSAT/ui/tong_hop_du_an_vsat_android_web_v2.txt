@@ -1,0 +1,905 @@
+TỔNG HỢP ĐẦY ĐỦ DỰ ÁN NỀN TẢNG ÔN THI V-SAT ĐA NỀN TẢNG ANDROID + WEB
+
+1. BỐI CẢNH VÀ HƯỚNG ĐI BAN ĐẦU CỦA DỰ ÁN
+
+Dự án được định hướng là một nền tảng hỗ trợ ôn thi V-SAT, triển khai đồng thời trên Android app và web dành cho PC. Mục tiêu không phải chỉ làm một ứng dụng luyện đề đơn giản, mà là xây dựng một hệ thống có thể mô phỏng trải nghiệm thi thử, hỗ trợ luyện tập, theo dõi tiến độ, quản trị nội dung, quản lý ngân hàng câu hỏi, tạo đề, duyệt nội dung, phân quyền người dùng, hỗ trợ cộng tác viên, và từng bước có thể phát triển thành một sản phẩm có khả năng vận hành thực tế.
+
+Trong quá trình trao đổi, dự án đã được thu hẹp và chốt lại theo hướng bắt đầu với kỳ thi V-SAT trước, thay vì ôm toàn bộ các kỳ thi như THPT Quốc gia, HSA, V-ACT, V-SAT ngay từ đầu. Lý do là V-SAT phù hợp hơn để xây một hệ thống thi thử trên máy tính lẫn mobile, có mô hình rõ ràng, có tính khả thi về mặt sản phẩm, và phù hợp cho một đồ án có chiều sâu nghiệp vụ.
+
+2. NHỮNG GÌ ĐÃ ĐƯỢC CHỐT VỀ BÀI TOÁN SẢN PHẨM
+
+2.1. Dự án không phải chỉ là “app luyện đề”
+
+Dự án được xác định là một nền tảng mô phỏng thi và hỗ trợ ôn tập V-SAT đa nền tảng, bao gồm các lớp giá trị sau:
+- Thi thử mô phỏng trải nghiệm nghiêm túc
+- Luyện tập theo chủ đề
+- Theo dõi kết quả và lịch sử thi
+- Phân tích lỗi sai và chủ đề yếu
+- Hệ thống quản trị nội dung ngân hàng câu hỏi và đề thi
+- Cơ chế phân quyền cho admin, cộng tác viên và các vai trò nội bộ
+- Có hướng phát triển thành mô hình thương mại thông qua lượt thi, gói đề, hoặc các hình thức mở khóa nội dung sau này
+
+2.2. Mobile app không chỉ để luyện nhanh
+
+Ban đầu có suy luận rằng web nên là nền tảng chính để thi thử còn mobile chỉ nên tập trung vào luyện tập. Tuy nhiên sau khi đối chiếu với định hướng của người dùng và tham chiếu từ website thitrenmaytinh.edu.vn, quan điểm đã được điều chỉnh.
+
+Đã chốt rằng Android app cũng phải có giao diện thi nghiêm túc và đầy đủ, tương đồng với bản web ở mental model. Điều này có nghĩa là mobile không phải bản rút gọn của hệ thống thi, mà là một kênh thi thật sự, có đầy đủ:
+- Màn hình làm bài
+- Điều hướng giữa các câu
+- Đồng hồ đếm giờ
+- Chọn đáp án
+- Đánh dấu câu xem lại
+- Nộp bài
+- Xem kết quả
+
+Tức là cả web và mobile đều phục vụ thi thử thật, chỉ khác về tối ưu hiển thị và bố cục theo kích thước màn hình.
+
+2.3. Web và mobile phải nhất quán về mô hình trải nghiệm
+
+Đã chốt rằng ứng dụng Android và web không nên bị tách thành hai tư duy sản phẩm khác nhau. Cả hai phải dùng chung logic nghiệp vụ, chung mental model, chung tài khoản, chung hệ thống câu hỏi, chung đề thi, và chung backend.
+
+Điều này dẫn tới yêu cầu:
+- Thi trên web và mobile đều sử dụng cùng exam engine
+- Người dùng có thể hiểu giao diện và hành vi nhất quán giữa hai nền tảng
+- Khi mở rộng sau này, web PC có thể mang bố cục rộng hơn nhưng vẫn giữ bản sắc sản phẩm và luồng thao tác tương đồng với mobile
+
+2.4. Không clone website tham chiếu nhưng được phép học từ tính khả thi của nó
+
+Website thitrenmaytinh.edu.vn được dùng như một tài liệu tham khảo thực tế để chứng minh rằng mô hình:
+- Thi thử trên giao diện đơn giản
+- Mua lẻ lượt thi
+- Quản lý lịch sử làm bài
+- Có tài khoản người dùng
+- Có báo cáo và mô phỏng thi trên nền tảng số
+
+là hoàn toàn khả thi.
+
+Tuy nhiên đã chốt rằng dự án không nên clone giao diện hay cấu trúc của website đó. Hướng đúng là:
+- Học các điểm họ đã chứng minh là hiệu quả
+- Giữ tinh thần đơn giản, rõ ràng, tập trung vào trải nghiệm thi
+- Nhưng xây dựng bản sắc và design system riêng
+- Tạo ra một hệ thống mang tính sản phẩm độc lập, có thể mở rộng tốt hơn
+
+3. NHỮNG GÌ ĐÃ CHỐT VỀ MÔ HÌNH SẢN PHẨM
+
+3.1. Tên và bản chất của sản phẩm
+
+Một cách gọi phù hợp cho dự án là:
+Nền tảng mô phỏng thi và hỗ trợ ôn tập V-SAT đa nền tảng Android – Web với phân tích kết quả và gợi ý lộ trình học cá nhân hóa.
+
+Tên gọi này thể hiện rõ:
+- Có mô phỏng thi
+- Có ôn tập
+- Có đa nền tảng
+- Có phân tích kết quả
+- Có yếu tố cá nhân hóa
+
+3.2. Môn học và phạm vi giai đoạn đầu
+
+Không nên làm toàn bộ 8 môn ngay từ đầu. Đã chốt phạm vi MVP là bắt đầu với 2 môn trước, hợp lý nhất là:
+- Toán
+- Tiếng Anh
+
+Lý do:
+- Đây là hai môn phổ biến, dễ demo
+- Có sự khác nhau về đặc trưng câu hỏi nên có thể chứng minh được độ linh hoạt của hệ thống
+- Giảm tải phần xây dựng ngân hàng câu hỏi ban đầu
+- Sau khi hoàn thiện được luồng thi, quản trị, import, tạo đề, báo cáo thì mới mở rộng dần sang các môn khác
+
+3.3. Mô hình doanh thu đã được cân nhắc
+
+Ý tưởng ban đầu là kiếm tiền theo mỗi lượt thi. Sau khi phân tích, đã chốt rằng mô hình này có thể dùng nhưng không nên là giá trị duy nhất của sản phẩm.
+
+Những gì đã xác định:
+- Thu tiền theo lượt thi là khả thi
+- Nhưng nếu chỉ thu tiền mỗi lượt thi thì sản phẩm dễ bị so sánh với các hệ thống miễn phí hoặc thi thử có sẵn
+- Giá trị thật sự nên nằm ở chất lượng mô phỏng, báo cáo, phân tích, quản trị nội dung, độ tiện dụng, và năng lực mở rộng sản phẩm
+
+Ở giai đoạn đầu, để phù hợp với đồ án, có thể ghi nhận mô hình thương mại dưới dạng:
+- Đề miễn phí
+- Đề trả phí theo lượt
+- Gói môn
+- Gói combo
+- Hệ thống ví, credit hoặc lịch sử giao dịch ở mức quản trị
+
+4. KIẾN TRÚC HỆ THỐNG ĐÃ ĐƯỢC CHỐT
+
+4.1. Nền tảng triển khai
+
+Đã chốt rằng dự án sẽ có hai đầu giao diện:
+- Android app
+- Web cho PC
+
+4.2. Công nghệ định hướng
+
+Ở phía Android:
+- Java
+- XML
+- Hướng phát triển native Android
+
+Ở phía web:
+- Có thể dùng React hoặc công nghệ frontend web hiện đại tương tự
+- Bản chất là giao diện thi và quản trị cho PC, nhưng trong giai đoạn hiện tại trọng tâm ưu tiên vẫn là Android app
+
+Ở backend:
+- Đã chốt theo hướng một backend chung cho cả Android và web
+- Phù hợp nhất là Spring Boot vì đồng bộ với hệ sinh thái Java
+- Backend chịu trách nhiệm xử lý đăng nhập, phân quyền, câu hỏi, đề thi, kết quả, ticket lỗi, dashboard và import dữ liệu
+
+Ở database:
+- Định hướng dùng PostgreSQL hoặc hệ quản trị tương đương
+- Có thể bổ sung Redis hoặc cache nếu muốn nâng cấp sau này, nhưng không phải bắt buộc ở bản đồ án đầu tiên
+
+4.3. Mô hình kiến trúc logic
+
+Một backend chung sẽ phục vụ:
+- Người dùng học viên
+- Cộng tác viên
+- Admin nội dung
+- Super Admin
+- Android app
+- Web PC
+
+Các phân hệ chính gồm:
+- Authentication và phân quyền
+- Question bank management
+- Exam management
+- Exam session / exam engine
+- Result and analytics
+- Review and moderation
+- Ticket / issue report
+- User and role management
+- Import batch từ Excel
+- Audit log
+- Commerce / package / pricing nếu cần mở rộng
+
+5. NHỮNG GÌ ĐÃ ĐƯỢC CHỐT VỀ THIẾT KẾ TRẢI NGHIỆM HỌC VIÊN
+
+5.1. Các phân hệ học viên cốt lõi
+
+Những chức năng học viên đã được xác định rõ:
+- Đăng ký / đăng nhập
+- Trang chủ
+- Kho đề
+- Chi tiết đề
+- Màn thi thử
+- Điều hướng câu hỏi
+- Xác nhận nộp bài
+- Kết quả bài thi
+- Luyện theo chủ đề yếu
+- Lịch sử thi
+- Tài khoản cá nhân
+
+5.2. Giao diện thi là màn quan trọng nhất
+
+Màn thi thử trên mobile và web đã được xác định là trung tâm của sản phẩm. Những thành phần bắt buộc gồm:
+- Tên môn thi
+- Đồng hồ đếm ngược
+- Số câu hiện tại trên tổng số câu
+- Khu vực nội dung câu hỏi
+- Khu vực đáp án A/B/C/D
+- Nút điều hướng câu trước / câu sau
+- Đánh dấu câu cần xem lại
+- Nút mở bảng điều hướng câu hỏi
+- Nút nộp bài
+- Trạng thái tự lưu nếu có
+
+5.3. Giao diện mobile cũng phải thi thật, không chỉ luyện tập
+
+Điểm này đã được chốt rất mạnh. Android app không được coi là một phiên bản phụ. Mobile vẫn phải có đầy đủ trải nghiệm thi như web, chỉ tối ưu lại bố cục và vùng thao tác cho màn hình nhỏ.
+
+5.4. Những gì đã được thiết kế thành công
+
+Theo phần đánh giá bộ giao diện đã sinh bằng Stitch, phần học viên đã có khá ổn các màn:
+- Kho đề
+- Màn thi
+- Danh sách câu hỏi
+- Xác nhận nộp bài
+- Kết quả thi
+- Luyện tập theo chủ đề yếu
+
+Những phần này được đánh giá là đã đủ để làm một MVP nghiêm túc.
+
+6. NHỮNG GÌ ĐÃ ĐƯỢC CHỐT VỀ HỆ THỐNG QUẢN TRỊ
+
+6.1. Không làm app quản trị riêng ở giai đoạn đầu
+
+Đã chốt rằng ở quy mô nhỏ, không cần một app quản trị tách biệt. Quản trị sẽ nằm chung trong cùng Android app.
+
+Khi người dùng đăng nhập bằng tài khoản đã được cấp quyền trước, ứng dụng sẽ nhận diện vai trò và cho phép chuyển sang chế độ quản trị ngay trong app.
+
+Điểm quan trọng:
+- Một app duy nhất
+- Nhiều mode sử dụng
+- Dựa trên role để hiện / ẩn tính năng
+- Backend kiểm tra quyền thật sự
+
+6.2. Cơ chế chuyển mode
+
+Đã chốt rằng nếu tài khoản có quyền quản trị thì trong màn hình tài khoản hoặc profile sẽ có nút:
+- Chế độ quản trị
+- Hoặc chuyển mode giữa học viên và quản trị
+
+Điều này giúp:
+- Giữ app gọn
+- Tránh phải làm app admin riêng ngay từ đầu
+- Phù hợp với quy mô nhóm nhỏ
+- Dễ mở rộng sau này khi sản phẩm lớn lên thành web admin hoặc app admin riêng
+
+6.3. Vai trò người dùng đã được chốt
+
+Có 4 vai trò chính:
+- Học viên
+- Cộng tác viên
+- Admin nội dung
+- Super Admin
+
+6.4. Quyền của từng vai trò
+
+Học viên:
+- Không có UI quản trị
+- Chỉ dùng các chức năng học tập, thi thử, mua đề, báo lỗi
+
+Cộng tác viên:
+- Tạo câu hỏi mới
+- Chỉnh sửa câu hỏi của mình
+- Thêm lời giải
+- Thêm nội dung vào bản nháp
+- Gửi duyệt
+- Xem phản hồi từ admin
+- Quản lý batch import của mình nếu được cấp quyền
+
+Admin nội dung:
+- Duyệt câu hỏi
+- Trả sửa
+- Từ chối nội dung
+- Tạo đề thi
+- Chọn câu hỏi vào đề
+- Xuất bản hoặc ẩn đề
+- Quản lý chủ đề
+- Xử lý báo lỗi từ học viên
+- Xem thống kê nội dung
+- Quản lý ticket ở mức vận hành nội dung
+
+Super Admin:
+- Có toàn quyền hệ thống
+- Quản lý role người dùng
+- Cấp / thu hồi quyền admin
+- Khóa / mở khóa tài khoản
+- Quản lý pricing, package nếu có
+- Xem audit log và các cấu hình hệ thống
+
+6.5. IA của admin mode đã được định hướng
+
+Một Information Architecture hợp lý cho admin mode đã được đề xuất như sau:
+- Tổng quan
+- Nội dung
+- Đề thi
+- Vận hành
+- Hệ thống
+
+Trong đó:
+Nội dung bao gồm:
+- Ngân hàng câu hỏi
+- Duyệt nội dung
+- Không gian cộng tác viên
+- Version history nếu cần
+
+Đề thi bao gồm:
+- Danh sách đề
+- Tạo đề
+- Builder đề
+- Preview đề
+- Xuất bản / ẩn đề
+
+Vận hành bao gồm:
+- Ticket lỗi
+- Gói lượt thi / doanh thu nếu có
+- Thông báo hoặc các chức năng quản lý hàng ngày
+
+Hệ thống bao gồm:
+- Người dùng
+- Phân quyền
+- Audit log
+- Cài đặt
+
+7. NHỮNG PHÂN HỆ QUẢN TRỊ ĐÃ ĐƯỢC CHỐT PHẢI CÓ
+
+7.1. Dashboard quản trị
+
+Dashboard quản trị là màn đầu tiên trong admin mode. Những gì cần có:
+- Số câu hỏi chờ duyệt
+- Số đề đang nháp
+- Ticket lỗi mới
+- Lượt thi hôm nay
+- Doanh thu nếu áp dụng thương mại
+- Top môn được làm nhiều
+- Quick actions
+
+Đây là màn tổng quan để người quản trị nhìn nhanh tình hình hệ thống.
+
+7.2. Ngân hàng câu hỏi
+
+Đây là phân hệ lõi. Mỗi câu hỏi cần có các trường dữ liệu:
+- Mã câu hỏi
+- Môn học
+- Chủ đề
+- Chủ đề con
+- Độ khó
+- Loại câu hỏi
+- Nội dung câu hỏi
+- Đáp án A/B/C/D
+- Đáp án đúng
+- Lời giải
+- Nguồn
+- Tag
+- Trạng thái
+- Người tạo
+- Người duyệt
+- Version
+- Thời gian tạo / cập nhật
+
+Danh sách câu hỏi cần có:
+- Tìm kiếm
+- Lọc theo môn
+- Lọc theo chủ đề
+- Lọc theo độ khó
+- Lọc theo trạng thái
+- Lọc theo người tạo
+- Thông tin nhanh trên card/list item
+- Truy cập nhanh vào chi tiết câu hỏi
+
+7.3. Các trạng thái câu hỏi đã được chốt
+
+- Bản nháp
+- Chờ duyệt
+- Cần sửa
+- Đã duyệt
+- Đã xuất bản
+- Tạm ẩn
+- Lưu trữ
+
+7.4. Biên soạn câu hỏi
+
+Đã xác định rằng màn biên soạn câu hỏi trong thiết kế hiện tại vẫn chưa đủ sâu, và đây là một trong hai workflow cần làm mạnh hơn.
+
+Flow biên soạn cần hỗ trợ:
+- Tạo câu hỏi mới
+- Chỉnh sửa câu hỏi
+- Tạo nhóm câu hỏi / passage
+- Xem trước như học viên
+- Lưu nháp
+- Gửi duyệt
+- Cập nhật
+- Nhân bản câu hỏi
+
+Đặc biệt với passage hoặc nhóm câu hỏi dùng chung ngữ liệu, hệ thống phải hỗ trợ tạo group question.
+
+7.5. Duyệt nội dung
+
+Đây là workflow rất quan trọng của admin mode. Những màn đã được xác định cần có:
+- Hàng chờ duyệt
+- Chi tiết duyệt câu hỏi
+- Trả sửa
+- Từ chối
+- Duyệt thành công
+- Lịch sử phiên bản
+- Bình luận nội bộ giữa admin và cộng tác viên
+
+Đây là một trong những điểm mạnh được đánh giá khá cao ở thiết kế hiện tại.
+
+7.6. Quản lý đề thi
+
+Đây là workflow quan trọng thứ hai và cũng là phần được đánh giá là cần làm sâu thêm.
+
+Mỗi đề thi cần có:
+- Mã đề
+- Tên đề
+- Môn
+- Mô tả
+- Số câu
+- Thời lượng
+- Mức độ
+- Miễn phí / trả phí
+- Giá lượt thi
+- Trạng thái
+- Ngày phát hành
+- Tag
+
+Các trạng thái đề đã được xác định:
+- Bản nháp
+- Đang biên soạn
+- Chờ duyệt
+- Đã xuất bản
+- Tạm ẩn
+- Đã khóa
+- Lưu trữ
+
+Flow quản lý đề cần có:
+- Danh sách đề
+- Tạo đề mới
+- Chỉnh sửa đề
+- Chọn câu hỏi từ ngân hàng
+- Bộ lọc nâng cao câu hỏi
+- Sắp xếp thứ tự câu
+- Preview đề
+- Cấu hình miễn phí / trả phí / giá
+- Xuất bản hoặc tạm ẩn đề
+
+7.7. Không gian cộng tác viên
+
+Đây là một phân hệ tách biệt khỏi admin full, dành cho các tài khoản chỉ có quyền đóng góp nội dung. Cần có:
+- Dashboard cộng tác viên
+- Câu hỏi của tôi
+- Bản nháp của tôi
+- Nội dung chờ duyệt
+- Nội dung bị trả sửa
+- Phản hồi mới từ admin
+- Chủ đề được phân công
+- Thống kê đóng góp cá nhân
+
+7.8. Người dùng và phân quyền
+
+Hệ thống cần có:
+- Danh sách user
+- Chi tiết user
+- Gán role
+- Lock / unlock account
+- Tóm tắt quyền hạn theo vai trò
+
+7.9. Ticket lỗi / issue report
+
+Ticket là một phân hệ độc lập. Học viên có thể báo lỗi cho câu hỏi hoặc đề thi. Những loại lỗi đã được xác định:
+- Sai đáp án
+- Sai lời giải
+- Lỗi chính tả
+- Lỗi hiển thị
+- Nội dung không rõ
+- Nghi ngờ trùng lặp
+
+Các trạng thái ticket đã được xác định:
+- Mới
+- Đang xử lý
+- Chờ xác minh
+- Đã sửa
+- Đã đóng
+
+Flow quản trị ticket cần có:
+- Danh sách ticket
+- Chi tiết ticket
+- Liên kết tới câu hỏi hoặc đề liên quan
+- Cập nhật trạng thái ticket
+
+7.10. Audit log
+
+Audit log đã được xác định là nên có ngay từ đầu dù dự án còn nhỏ. Mục đích:
+- Biết ai sửa câu hỏi nào
+- Ai duyệt câu nào
+- Ai đổi role của ai
+- Ai ẩn đề hoặc xuất bản đề
+- Theo dõi các hành động quản trị quan trọng
+
+8. NHỮNG GÌ ĐÃ CÓ TRONG PHẦN THIẾT KẾ GIAO DIỆN HIỆN TẠI
+
+Sau khi người dùng sinh giao diện bằng Google Stitch và gửi file zip để đánh giá, đã có các nhận định sau:
+
+8.1. Tổng quan chung
+
+Bộ thiết kế hiện tại đã đi đúng hướng lớn và không còn ở mức vài màn hình rời rạc. Nó đã thể hiện được:
+- Hệ thống học viên
+- Hệ thống quản trị trong cùng app
+- Cơ chế chuyển mode
+- Các màn quản trị có chiều sâu tương đối
+
+8.2. Điểm mạnh của bản thiết kế hiện tại
+
+- Có tư duy 1 app 2 mode
+- Có màn tài khoản admin, bật chế độ quản trị, popup chuyển mode, xem như học viên
+- Có dashboard quản trị
+- Có ngân hàng câu hỏi
+- Có duyệt nội dung
+- Có tạo đề, chi tiết đề, các màn quản lý đề
+- Có ticket lỗi
+- Có màn người dùng và quyền
+- Có màn cộng tác viên
+- Có màn bình luận nội bộ và lịch sử phiên bản
+- Có đủ phần học viên: kho đề, thi, điều hướng câu, kết quả, luyện chủ đề yếu
+
+8.3. Những điểm chưa ổn của thiết kế hiện tại
+
+- Giao diện đang hơi iOS-like hơn là Android-native
+- Student mode và admin mode chưa thật sự cùng một brand identity mạnh
+- Một số màn quản trị mới dừng ở mức “có màn” chứ chưa đủ dữ liệu để code nghiệp vụ thật
+- Màn biên soạn câu hỏi còn thiếu chiều sâu
+- Màn tạo đề hiện tại giống form khai báo hơn là exam builder thực sự
+- Một số list/card còn thiếu metadata để người quản trị ra quyết định nhanh
+- Navigation của admin mode cần chặt hơn
+- Có sự lẫn ngôn ngữ Anh / Việt ở các label
+
+8.4. Những gì đã được chốt phải tiếp tục sửa trong thiết kế
+
+- Android hóa toàn bộ UI
+- Thống nhất brand giữa học viên và admin
+- Làm sâu 2 workflow quan trọng nhất: biên soạn câu hỏi và tạo đề thi
+- Khóa lại IA của admin mode
+- Việt hóa gần như toàn bộ label
+- Bổ sung loading, empty, error, offline, permission-denied states
+- Làm rõ role-based visibility trong admin mode
+
+9. NHỮNG PROMPT ĐÃ ĐƯỢC XÂY DỰNG ĐỂ TIẾP TỤC DÙNG VỚI GOOGLE STITCH
+
+9.1. Prompt để Android hóa toàn bộ giao diện
+
+Đã xây dựng prompt chuyên để refine toàn bộ ứng dụng theo hướng Android-native hơn, giữ module và cấu trúc nhưng thay thế các dấu hiệu iOS-like bằng Material 3, top app bars, bottom sheets, chips, dialog, spacing và điều hướng phù hợp hơn với Android.
+
+9.2. Prompt để thống nhất student mode và admin mode
+
+Đã xây dựng prompt nhằm kéo học viên và admin vào cùng một design system:
+- cùng primary brand color
+- cùng typography
+- cùng ngôn ngữ thiết kế
+- vẫn cho phép admin đậm tính vận hành hơn
+
+9.3. Prompt riêng cho question authoring flow
+
+Đã xây dựng prompt riêng để Stitch làm sâu:
+- danh sách biên soạn câu hỏi
+- tạo mới câu hỏi
+- sửa câu hỏi
+- thêm question group / passage
+- preview câu hỏi như học viên
+- submit for review
+
+9.4. Prompt riêng cho exam builder flow
+
+Đã xây dựng prompt để làm sâu:
+- danh sách đề
+- tạo đề
+- chỉnh sửa đề
+- chọn câu từ question bank
+- lọc câu nâng cao
+- sắp xếp thứ tự câu
+- preview đề
+- cấu hình miễn phí / trả phí / giá lượt thi
+- publish / unpublish
+
+9.5. Prompt cải thiện question bank list
+
+Đã xây dựng prompt để tăng độ hữu ích của list item bằng cách bổ sung metadata như:
+- ngày cập nhật
+- version
+- số comment review
+- có đang nằm trong đề nào không
+- có ticket lỗi liên quan hay không
+
+9.6. Prompt làm mạnh workflow duyệt nội dung
+
+Đã xây dựng prompt riêng cho:
+- hàng chờ duyệt
+- chi tiết duyệt
+- trả sửa
+- từ chối
+- duyệt
+- lịch sử phiên bản
+- comment nội bộ
+
+9.7. Prompt làm rõ collaborator workspace
+
+Đã xây dựng prompt để biến không gian cộng tác viên thành một workspace thực sự với:
+- câu hỏi của tôi
+- bản nháp của tôi
+- nội dung chờ duyệt
+- nội dung bị trả sửa
+- phản hồi mới
+- chủ đề được phân công
+- thống kê đóng góp
+
+9.8. Prompt gom lại IA của admin mode
+
+Đã xây dựng prompt để tổ chức lại admin thành 5 section chính:
+- Tổng quan
+- Nội dung
+- Đề thi
+- Vận hành
+- Hệ thống
+
+9.9. Prompt Việt hóa giao diện
+
+Đã xây dựng prompt để loại bỏ tình trạng lẫn Anh – Việt trong label.
+
+9.10. Prompt tạo missing UI states
+
+Đã xây dựng prompt để bổ sung:
+- loading
+- empty
+- no result
+- error
+- offline
+- permission denied
+- locked content
+- confirmation states
+- success feedback
+
+9.11. Prompt làm rõ role-based permissions
+
+Đã xây dựng prompt để biểu diễn rõ sự khác nhau giữa:
+- Học viên
+- Cộng tác viên
+- Admin nội dung
+- Super Admin
+
+9.12. Prompt tạo DESIGN.md
+
+Đã xây dựng prompt để sinh một DESIGN.md cho toàn bộ project, làm source of truth cho:
+- brand personality
+- semantic colors
+- typography
+- spacing
+- corner radius
+- elevation
+- card patterns
+- button variants
+- badge styles
+- navigation patterns
+- exam screen rules
+- admin workflow rules
+- consistency rules về tiếng Việt
+
+10. NHỮNG GÌ ĐÃ ĐƯỢC CHỐT VỀ NHẬP CÂU HỎI BẰNG EXCEL
+
+10.1. Đã chốt rằng nhập câu hỏi bằng file Excel là rất khả dụng
+
+Ý tưởng thêm câu hỏi hàng loạt bằng Excel đã được đánh giá là hoàn toàn khả dụng, thậm chí nên có trong hệ thống nếu muốn vận hành ngân hàng câu hỏi hiệu quả.
+
+Excel không thay thế hoàn toàn editor trong app, nhưng là một kênh nhập liệu số lượng lớn rất phù hợp.
+
+10.2. Đã chốt vai trò của Excel trong hệ thống
+
+Excel chỉ nên là:
+- Kênh nhập liệu hàng loạt
+- Công cụ import nhanh
+- Công cụ trao đổi dữ liệu giữa giáo viên, cộng tác viên và hệ thống
+
+Excel không nên là công cụ biên soạn cuối cùng cho mọi loại nội dung phức tạp.
+
+10.3. Những gì nên import bằng Excel
+
+- Mã câu hỏi
+- Môn học
+- Chủ đề
+- Chủ đề con
+- Độ khó
+- Loại câu hỏi
+- Nội dung câu hỏi trắc nghiệm chuẩn
+- Đáp án A/B/C/D
+- Đáp án đúng
+- Lời giải ngắn
+- Nguồn
+- Tag
+- Trạng thái nhập ban đầu
+- Ghi chú nội bộ
+
+10.4. Những gì không nên phụ thuộc hoàn toàn vào Excel
+
+- Ảnh minh họa phức tạp
+- Công thức toán được trình bày đẹp
+- Bảng biểu phức tạp
+- Audio
+- Passage dài nếu template chưa đủ tốt
+- Nội dung cần format phong phú
+
+10.5. Workflow import Excel đã được chốt
+
+Flow nhập Excel đúng phải là:
+- Tải file mẫu
+- Điền dữ liệu
+- Upload file
+- Parse file
+- Validate dữ liệu
+- Hiển thị lỗi theo dòng và theo cột
+- Preview kết quả import
+- Đưa dữ liệu vào staging batch
+- Admin review batch
+- Xác nhận nhập chính thức vào question bank
+- Các câu vẫn chỉ ở trạng thái Bản nháp hoặc Chờ duyệt, không publish thẳng
+
+10.6. Đã chốt rằng không được import thẳng vào bảng questions chính
+
+Phải có 2 tầng dữ liệu:
+
+Tầng 1: import staging
+- import_batches
+- import_rows
+- lưu dữ liệu gốc, trạng thái parse, lỗi validate, lịch sử import
+
+Tầng 2: question bank chính thức
+- questions
+- question_options
+- question_groups
+- dữ liệu chính thức đã được duyệt hoặc chờ duyệt
+
+10.7. Các rule validate đã được chốt
+
+Khi import phải kiểm tra:
+- môn có hợp lệ không
+- chủ đề có tồn tại không
+- độ khó có hợp lệ không
+- loại câu hỏi có đúng không
+- đáp án đúng có thuộc A/B/C/D không
+- câu hỏi có bị rỗng không
+- các đáp án có thiếu không
+- mã câu có bị trùng không
+- group_code có hợp lệ không
+- cột bắt buộc có thiếu không
+- có lỗi encoding không
+
+Mức lỗi nên chia thành:
+- Error
+- Warning
+- Info
+
+10.8. Các cấp độ phát triển import Excel đã được xác định
+
+Cấp 1 – MVP:
+- hỗ trợ file .xlsx
+- 1 dòng = 1 câu hỏi
+- câu trắc nghiệm 4 đáp án
+- chưa hỗ trợ ảnh
+- chưa hỗ trợ passage phức tạp
+
+Cấp 2:
+- hỗ trợ group_code
+- hỗ trợ passage
+- hỗ trợ image_name
+
+Cấp 3:
+- hỗ trợ latex hoặc html nhẹ
+- hỗ trợ file zip tài nguyên
+- template đa loại câu hỏi
+
+10.9. Template Excel gợi ý đã được chốt
+
+Các cột mẫu gồm:
+- question_code
+- subject_code
+- topic_code
+- subtopic_code
+- difficulty
+- question_type
+- group_code
+- question_text
+- option_a
+- option_b
+- option_c
+- option_d
+- correct_answer
+- explanation
+- source
+- tags
+- status
+- note
+- image_name
+- latex_content
+
+10.10. Phân quyền liên quan đến import Excel đã được chốt
+
+Cộng tác viên:
+- được upload file
+- được xem lỗi
+- được tạo batch nháp
+- được gửi duyệt batch
+
+Admin:
+- được duyệt batch
+- được nhập chính thức
+- được sửa mapping hoặc xử lý lỗi nhập
+- được rollback batch nếu cần
+
+Super Admin:
+- được cấu hình template
+- được xem log import toàn hệ thống
+- được quản lý các thiết lập nâng cao liên quan đến import
+
+11. NHỮNG VIỆC CẦN LÀM TIẾP THEO ĐÃ ĐƯỢC XÁC ĐỊNH
+
+11.1. Về thiết kế UI/UX
+
+- Chạy các prompt refine đã chuẩn bị trên Google Stitch
+- Android hóa giao diện
+- Thống nhất student mode và admin mode vào cùng một design system
+- Làm sâu question authoring flow
+- Làm sâu exam builder flow
+- Làm rõ IA của admin mode
+- Việt hóa toàn bộ label
+- Bổ sung loading / empty / error / offline / permission states
+- Làm rõ role-based visibility
+- Sinh DESIGN.md làm tài liệu chuẩn hóa giao diện
+
+11.2. Về đặc tả nghiệp vụ
+
+- Khóa lại các trường dữ liệu của question, exam, user, ticket, package, import batch
+- Khóa lại ma trận quyền của 4 vai trò
+- Chốt flow review nội dung
+- Chốt flow exam builder
+- Chốt flow issue reporting
+- Chốt flow import Excel
+- Chốt flow chuyển mode học viên / quản trị
+
+11.3. Về kỹ thuật backend
+
+- Thiết kế schema database
+- Tách bảng phục vụ user, roles, subjects, topics, questions, options, exams, sessions, results, tickets, import batches, audit log
+- Thiết kế API cho Android app và web
+- Tạo hệ thống authentication và authorization
+- Tạo cơ chế role-based access control
+- Tạo import pipeline từ Excel vào staging
+- Tạo exam engine cho lưu đáp án, điều hướng, nộp bài, chấm điểm
+- Tạo dashboard query và thống kê cần thiết
+
+11.4. Về Android app
+
+- Chốt danh sách màn hình cuối cùng
+- Chốt component system theo DESIGN.md
+- Thiết kế điều hướng giữa học viên và admin mode
+- Lập danh sách RecyclerView, Fragment/Activity, Dialog, BottomSheet cần có
+- Quy hoạch state management, API service, model, mapper
+
+11.5. Về web
+
+- Giữ định hướng web dùng chung backend
+- Có thể triển khai sau Android hoặc song song ở mức tối thiểu
+- Web giai đoạn đầu tập trung vào thi trên màn hình lớn và đồng bộ trải nghiệm với mobile
+
+11.6. Về dữ liệu nội dung
+
+- Tự biên soạn ngân hàng câu hỏi ban đầu cho 2 môn đầu tiên
+- Chuẩn bị file mẫu Excel
+- Kiểm tra quy tắc mã môn, mã chủ đề, độ khó, question_type
+- Chuẩn bị dữ liệu demo đủ để trình bày MVP
+
+12. NHỮNG GÌ ĐÃ ĐƯỢC CHỐT RÕ RÀNG NHẤT TÍNH ĐẾN HIỆN TẠI
+
+- Dự án sẽ đi theo hướng V-SAT trước
+- Dự án có 2 nền tảng chính: Android app và web PC
+- Android app vẫn có full giao diện thi nghiêm túc, không chỉ là nơi luyện nhanh
+- Hệ thống không làm app admin riêng ở giai đoạn đầu
+- Quản trị nằm chung trong app, dựa trên role để mở admin mode
+- Có 4 vai trò: học viên, cộng tác viên, admin nội dung, super admin
+- Hai workflow quản trị quan trọng nhất cần làm sâu là biên soạn câu hỏi và tạo đề thi
+- Hệ thống phải có question bank, exam management, review workflow, ticket, user/role management, audit log
+- Thiết kế hiện tại đã đủ tốt để đi tiếp, nhưng cần refine để Android-native hơn và implementation-ready hơn
+- Cần dùng Stitch thêm nhiều prompt refine theo từng module thay vì một prompt khổng lồ
+- Import câu hỏi bằng Excel là khả thi và nên có
+- Import Excel phải đi qua staging, validate, preview, approval, không được đi thẳng vào dữ liệu chính thức
+- Bản chất của sản phẩm là một nền tảng mô phỏng thi và vận hành nội dung, không chỉ là app luyện đề đơn giản
+
+13. TRẠNG THÁI HIỆN TẠI CỦA DỰ ÁN
+
+Tại thời điểm tổng hợp này, dự án đang ở giai đoạn:
+- Đã có định hướng sản phẩm khá rõ
+- Đã chốt mô hình nghiệp vụ chính
+- Đã chốt vai trò và admin mode trong cùng app
+- Đã có bộ thiết kế giao diện cơ bản tạo từ Google Stitch
+- Đã được đánh giá và xác định các điểm cần refine
+- Đã có danh sách prompt cụ thể để tiếp tục hoàn thiện thiết kế
+- Đã chốt được rằng tính năng import Excel nên có trong hệ thống
+- Chưa bước sang giai đoạn code chi tiết, nhưng đã đủ điều kiện để bắt đầu chuyển sang đặc tả kỹ thuật và triển khai
+
+14. KẾT LUẬN LÀM VIỆC
+
+Dự án hiện nay không còn là một ý tưởng sơ bộ. Nó đã hình thành thành một hệ thống tương đối hoàn chỉnh với:
+- Mục tiêu rõ ràng
+- Phạm vi giai đoạn đầu rõ ràng
+- Kiến trúc nền tảng rõ ràng
+- Các nhóm người dùng rõ ràng
+- Các phân hệ học viên và quản trị rõ ràng
+- Các workflow nội dung quan trọng đã được xác định
+- Hướng nâng cấp giao diện và chuẩn hóa thiết kế đã có
+- Hướng nhập dữ liệu số lượng lớn bằng Excel đã được xác nhận là khả thi
+
+Từ điểm này trở đi, công việc hợp lý nhất là chuyển sang:
+- Chuẩn hóa thiết kế cuối cùng
+- Khóa đặc tả dữ liệu và API
+- Lập danh sách màn hình để code
+- Triển khai backend và Android app theo các phần đã chốt
+

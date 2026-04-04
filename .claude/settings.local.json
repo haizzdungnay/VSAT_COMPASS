@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(unzip -l vsat-compass-api.zip)",
+      "Bash(unzip -p vsat-compass-api.zip vsat-compass-api/.env.example)",
+      "Bash(unzip -p vsat-compass-api.zip vsat-compass-api/src/main/resources/application.yml)",
+      "Read(//d/lap trinh kiem com/Java/**)",
+      "Bash(unzip -o \"VSAT_COMPASS/VSAT/ui/sample/vsat-compass-api.zip\" -d .)",
+      "Bash(gradle --version)",
+      "Bash(java --version)",
+      "Bash(where java:*)",
+      "Bash(java -version)",
+      "Bash(mkdir -p \"D:/lap trinh kiem com/Java/vsat-compass-api/gradle/wrapper\")",
+      "Bash(cp \"D:/lap trinh kiem com/Java/VSAT_COMPASS/gradle/wrapper/gradle-wrapper.jar\" \"D:/lap trinh kiem com/Java/vsat-compass-api/gradle/wrapper/\")",
+      "Bash(cp \"D:/lap trinh kiem com/Java/VSAT_COMPASS/gradlew\" \"D:/lap trinh kiem com/Java/vsat-compass-api/\")",
+      "Bash(cp \"D:/lap trinh kiem com/Java/VSAT_COMPASS/gradlew.bat\" \"D:/lap trinh kiem com/Java/vsat-compass-api/\")"
+    ]
+  }
+}

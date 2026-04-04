@@ -1,0 +1,679 @@
+================================================================================
+V-SAT COMPASS — BÁO CÁO TIẾN ĐỘ VÀ HƯỚNG DẪN KHỞI ĐỘNG DỰ ÁN
+Ngày: 2026-04-02
+================================================================================
+
+MỤC LỤC
+  I.   Tổng quan dự án
+  II.  Những gì đã hoàn thành
+  III. Danh sách file deliverables
+  IV.  Cấu trúc project Spring Boot
+  V.   Hướng dẫn khởi động dự án trên Android Studio
+  VI.  Giải thích từng file trong project
+  VII. Các API Auth đã implement
+  VIII.Các module cần code tiếp theo (thứ tự ưu tiên)
+  IX.  Prompt gợi ý cho Claude Code
+  X.   Lưu ý kỹ thuật quan trọng
+
+================================================================================
+I. TỔNG QUAN DỰ ÁN
+================================================================================
+
+Tên dự án: V-SAT Compass
+Mô tả: Nền tảng mô phỏng thi và hỗ trợ ôn tập V-SAT đa nền tảng (Android + Web)
+        với phân tích kết quả và gợi ý lộ trình học cá nhân hóa.
+
+Kiến trúc:
+  - Backend: Spring Boot 3.2.5 (Java 17) — một backend chung cho cả Android và Web
+  - Database: PostgreSQL (Neon Serverless) — 27 bảng, 20 ENUM types
+  - Android: Java + XML (Native Android)
+  - Web: React hoặc tương đương (triển khai sau Android)
+  - Build tool: Gradle
+  - Auth: JWT (access token 15 phút + refresh token 30 ngày)
+
+4 vai trò người dùng:
+  1. STUDENT (Học viên) — thi thử, luyện tập, xem kết quả, báo lỗi
+  2. COLLABORATOR (Cộng tác viên) — tạo câu hỏi, gửi duyệt, import Excel
+  3. CONTENT_ADMIN (Admin nội dung) — duyệt câu hỏi, tạo đề, quản lý ticket
+  4. SUPER_ADMIN — toàn quyền hệ thống, quản lý user & role, audit log
+
+MVP bắt đầu với 2 môn: Toán và Tiếng Anh.
+Một app Android duy nhất, 2 mode: Student mode + Admin mode (chuyển đổi theo role).
+
+================================================================================
+II. NHỮNG GÌ ĐÃ HOÀN THÀNH
+================================================================================
+
+A. PHÂN TÍCH & THIẾT KẾ (đã hoàn thành trước đó)
+  ✅ Tài liệu tổng hợp dự án (tong_hop_du_an_vsat_android_web_v2.txt)
+  ✅ Database schema 27 bảng (vsat_database_schema.sql)
+  ✅ Tài liệu giải thích schema (vsat_schema_documentation.txt)
+  ✅ Bộ thiết kế giao diện từ Google Stitch (các file zip screen)
+
+B. ĐẶC TẢ KỸ THUẬT (hoàn thành trong phiên làm việc này)
+  ✅ Danh sách 67 màn hình — đánh mã, phân nhóm theo mode, ghi loại UI
+     (42 MVP, 16 Phase 2, 3 Defer, 6 UI States)
+  ✅ Ma trận quyền — 65+ hành động × 4 vai trò
+  ✅ API Spec — 79 endpoints chi tiết (52 MVP, 21 Phase 2, 6 Defer)
+     Bao gồm: method, URL, request/response body, role tối thiểu, liên kết màn hình
+  ✅ Quy ước Response Format — chuẩn hóa success/error, pagination, filter, JWT flow
+
+C. TRIỂN KHAI CODE (hoàn thành trong phiên làm việc này)
+  ✅ Project Spring Boot hoàn chỉnh — 29 files, 25 Java classes
+  ✅ Package structure chuẩn theo layer architecture
+  ✅ Security configuration — JWT filter, role-based access control, CORS
+  ✅ Auth module đầy đủ — 7 endpoints, full business logic
+  ✅ Base infrastructure — ApiResponse wrapper, AppException, GlobalExceptionHandler
+  ✅ Swagger/OpenAPI config — tự động generate API docs
+  ✅ Gradle build file — tất cả dependencies đã khai báo
+  ✅ application.yml — dev/prod profiles, Neon PostgreSQL config
+  ✅ README.md — hướng dẫn cho developer
+
+================================================================================
+III. DANH SÁCH FILE DELIVERABLES
+================================================================================
+
+Anh đã nhận được các file sau (tải từ Claude):
+
+1. vsat_compass_man_hinh_va_phan_quyen.xlsx
+   → Sheet 1: Danh sách 67 màn hình (mã, tên, mode, nhóm, loại UI, ưu tiên)
+   → Sheet 2: Ma trận quyền 65+ hành động × 4 role
+   → Sheet 3: Thống kê tổng hợp
+
+2. vsat_compass_api_spec.xlsx
+   → Sheet 1: 79 API endpoints chi tiết
+   → Sheet 2: Phân nhóm theo module + gợi ý tên Spring Controller
+   → Sheet 3: Quy ước Response Format, Pagination, JWT flow
+
+3. vsat-compass-api.zip
+   → Project Spring Boot hoàn chỉnh, giải nén ra dùng được ngay
+
+Các file đã có từ trước (trong project knowledge):
+4. tong_hop_du_an_vsat_android_web_v2.txt — tài liệu tổng hợp nghiệp vụ
+5. vsat_database_schema.sql — SQL tạo toàn bộ 27 bảng + 20 ENUM
+6. vsat_schema_documentation.txt — giải thích từng bảng, từng cột
+7. Các file screen_*.png — mockup giao diện từ Stitch
+
+================================================================================
+IV. CẤU TRÚC PROJECT SPRING BOOT
+================================================================================
+
+vsat-compass-api/
+├── build.gradle                          # Dependencies & build config
+├── settings.gradle                       # Project name
+├── gradle.properties                     # JVM args
+├── .gitignore
+├── .env.example                          # Template biến môi trường
+├── README.md                             # Hướng dẫn developer
+└── src/main/
+    ├── resources/
+    │   └── application.yml               # Config: DB, JWT, CORS, profiles
+    └── java/com/vsatcompass/api/
+        ├── VsatCompassApiApplication.java  # Main class
+        │
+        ├── config/
+        │   ├── SecurityConfig.java         # Spring Security + JWT filter chain
+        │   ├── OpenApiConfig.java          # Swagger UI config
+        │   └── JpaConfig.java              # JPA Auditing
+        │
+        ├── security/
+        │   ├── jwt/
+        │   │   └── JwtUtils.java           # Tạo/validate JWT token
+        │   ├── filter/
+        │   │   └── JwtAuthenticationFilter.java  # Filter đọc JWT từ header
+        │   └── service/
+        │       ├── CustomUserDetails.java        # Adapter User → UserDetails
+        │       └── CustomUserDetailsService.java # Load user từ DB
+        │
+        ├── entity/
+        │   ├── User.java                   # Entity bảng users
+        │   ├── RefreshToken.java           # Entity bảng refresh_tokens
+        │   └── enums/
+        │       ├── UserRole.java           # STUDENT, COLLABORATOR, CONTENT_ADMIN, SUPER_ADMIN
+        │       ├── UserStatus.java         # ACTIVE, LOCKED, SUSPENDED, DEACTIVATED
+        │       └── GenderType.java         # MALE, FEMALE, OTHER
+        │
+        ├── repository/
+        │   ├── UserRepository.java         # JPA repo + custom query filter
+        │   └── RefreshTokenRepository.java # Token lookup & revoke
+        │
+        ├── dto/
+        │   ├── common/
+        │   │   └── ApiResponse.java        # Wrapper: { data, message, error }
+        │   ├── request/
+        │   │   └── AuthRequest.java        # Register, Login, RefreshToken, ChangePassword...
+        │   └── response/
+        │       └── AuthResponse.java       # TokenPair, UserInfo
+        │
+        ├── service/
+        │   ├── AuthService.java            # Interface
+        │   └── impl/
+        │       └── AuthServiceImpl.java    # Full implementation
+        │
+        ├── controller/
+        │   ├── auth/
+        │   │   └── AuthController.java     # 7 endpoints auth
+        │   ├── admin/                      # (thư mục trống, code sau)
+        │   ├── student/                    # (thư mục trống, code sau)
+        │   └── collaborator/              # (thư mục trống, code sau)
+        │
+        ├── mapper/
+        │   └── UserMapper.java             # User entity → UserInfo DTO
+        │
+        ├── exception/
+        │   ├── AppException.java           # Custom exception + factory methods
+        │   └── GlobalExceptionHandler.java # Bắt tất cả exception trả JSON chuẩn
+        │
+        └── util/
+            └── SecurityUtils.java          # Helper: getCurrentUserId, isAdmin, etc.
+
+================================================================================
+V. HƯỚNG DẪN KHỞI ĐỘNG DỰ ÁN TRÊN ANDROID STUDIO
+================================================================================
+
+LƯU Ý QUAN TRỌNG: Android Studio chủ yếu dùng cho Android app. Tuy nhiên vì
+Android Studio dựa trên IntelliJ IDEA nên vẫn mở được project Spring Boot (Gradle).
+Nếu gặp vấn đề, anh có thể dùng IntelliJ IDEA Community Edition (miễn phí) cho
+phần backend.
+
+─────────────────────────────────────────────────────────────────────────────────
+BƯỚC 1: CÀI ĐẶT PREREQUISITES
+─────────────────────────────────────────────────────────────────────────────────
+
+1.1. Java 17 (JDK)
+  - Tải: https://adoptium.net/temurin/releases/?version=17
+  - Hoặc dùng SDKMAN: sdk install java 17.0.11-tem
+  - Verify: java -version → phải hiện "17.x.x"
+
+1.2. PostgreSQL
+  CÁCH 1 — Dùng Neon (cloud, khuyến khích):
+    - Đăng ký: https://neon.tech (miễn phí)
+    - Tạo project mới, chọn region "Asia Southeast 1" (Singapore)
+    - Copy connection string
+
+  CÁCH 2 — Cài local:
+    - Tải PostgreSQL: https://www.postgresql.org/download/
+    - Tạo database: CREATE DATABASE vsat_compass;
+
+1.3. Android Studio (đã có)
+  - Đảm bảo đã cài plugin "Spring Boot" nếu muốn chạy backend từ đây
+  - Hoặc dùng IntelliJ IDEA Community cho backend
+
+─────────────────────────────────────────────────────────────────────────────────
+BƯỚC 2: SETUP DATABASE
+─────────────────────────────────────────────────────────────────────────────────
+
+2.1. Nếu dùng Neon:
+  - Vào Neon Dashboard → SQL Editor
+  - Copy toàn bộ nội dung file "vsat_database_schema.sql"
+  - Paste và chạy → sẽ tạo 20 ENUM types + 27 bảng + indexes + triggers
+
+2.2. Nếu dùng local PostgreSQL:
+  Mở terminal/cmd:
+    psql -U postgres -d vsat_compass -f vsat_database_schema.sql
+
+2.3. Verify:
+  Chạy: SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public';
+  Kết quả phải là 27 (hoặc hơn nếu tính sequence tables).
+
+─────────────────────────────────────────────────────────────────────────────────
+BƯỚC 3: SETUP PROJECT SPRING BOOT
+─────────────────────────────────────────────────────────────────────────────────
+
+3.1. Giải nén file "vsat-compass-api.zip" vào thư mục làm việc
+     Ví dụ: D:\Projects\vsat-compass-api\
+
+3.2. Tạo file .env (hoặc set biến môi trường):
+  Copy .env.example thành .env rồi sửa:
+
+    DATABASE_URL=jdbc:postgresql://ep-xxx.ap-southeast-1.aws.neon.tech/vsat_compass?sslmode=require
+    DATABASE_USERNAME=your_username
+    DATABASE_PASSWORD=your_password
+    JWT_SECRET=<generate bằng lệnh bên dưới>
+
+  Generate JWT Secret (chạy trong terminal):
+    - Linux/Mac: openssl rand -base64 64
+    - Windows (PowerShell):
+      [Convert]::ToBase64String((1..64 | ForEach-Object { Get-Random -Maximum 256 }) -as [byte[]])
+    - Hoặc dùng online: https://generate.plus/en/base64
+
+3.3. Mở project bằng Android Studio / IntelliJ:
+  - File → Open → chọn thư mục vsat-compass-api
+  - Đợi Gradle sync xong (lần đầu sẽ tải dependencies, mất 2-5 phút)
+
+3.4. Cấu hình environment variables trong IDE:
+  CÁCH 1 — Trong Run Configuration:
+    - Run → Edit Configurations → VsatCompassApiApplication
+    - Tab "Environment variables"
+    - Thêm: DATABASE_URL=...; DATABASE_USERNAME=...; DATABASE_PASSWORD=...; JWT_SECRET=...
+
+  CÁCH 2 — Dùng plugin EnvFile:
+    - Cài plugin "EnvFile" trong IDE
+    - Trong Run Configuration, tick "Enable EnvFile"
+    - Chọn file .env
+
+  CÁCH 3 — Sửa trực tiếp application.yml (KHÔNG KHUYẾN KHÍCH cho production):
+    - Thay ${DATABASE_URL:...} bằng giá trị thật
+    - Nhớ KHÔNG commit file này lên git
+
+─────────────────────────────────────────────────────────────────────────────────
+BƯỚC 4: CHẠY PROJECT
+─────────────────────────────────────────────────────────────────────────────────
+
+4.1. Từ IDE:
+  - Mở VsatCompassApiApplication.java
+  - Nhấn nút Run (▶) bên cạnh hàm main()
+  - Đợi thấy dòng: "Started VsatCompassApiApplication in X seconds"
+
+4.2. Từ terminal:
+  cd D:\Projects\vsat-compass-api
+  
+  Windows:   gradlew.bat bootRun
+  Linux/Mac: ./gradlew bootRun
+
+  (Lần đầu chạy sẽ tự tải Gradle wrapper, mất thêm 1-2 phút)
+
+4.3. Verify server chạy thành công:
+  - Mở browser: http://localhost:8080/api/v1/swagger-ui.html
+  - Phải thấy giao diện Swagger UI với nhóm "Authentication"
+
+─────────────────────────────────────────────────────────────────────────────────
+BƯỚC 5: TEST API
+─────────────────────────────────────────────────────────────────────────────────
+
+5.1. Test bằng Swagger UI (dễ nhất):
+  - Mở: http://localhost:8080/api/v1/swagger-ui.html
+  - Mở endpoint POST /auth/register
+  - Nhấn "Try it out"
+  - Nhập body:
+    {
+      "email": "test@example.com",
+      "password": "123456",
+      "fullName": "Nguyen Van Test"
+    }
+  - Nhấn "Execute"
+  - Phải trả về 201 với access_token và refresh_token
+
+5.2. Test đăng nhập:
+  - POST /auth/login
+    {
+      "email": "test@example.com",
+      "password": "123456",
+      "deviceInfo": "Web/Chrome"
+    }
+
+5.3. Test API cần auth:
+  - Copy access_token từ response đăng nhập
+  - Nhấn nút "Authorize" (🔒) trên Swagger
+  - Paste token vào (KHÔNG cần prefix "Bearer")
+  - Giờ gọi GET /auth/me sẽ trả về thông tin user
+
+5.4. Test bằng cURL (nếu thích terminal):
+  # Register
+  curl -X POST http://localhost:8080/api/v1/auth/register \
+    -H "Content-Type: application/json" \
+    -d '{"email":"test@example.com","password":"123456","fullName":"Test User"}'
+
+  # Login
+  curl -X POST http://localhost:8080/api/v1/auth/login \
+    -H "Content-Type: application/json" \
+    -d '{"email":"test@example.com","password":"123456"}'
+
+  # Get me (thay TOKEN bằng access_token thật)
+  curl http://localhost:8080/api/v1/auth/me \
+    -H "Authorization: Bearer TOKEN"
+
+5.5. Test bằng Postman:
+  - Import từ Swagger: http://localhost:8080/api/v1/api-docs
+  - Hoặc tạo collection thủ công
+
+─────────────────────────────────────────────────────────────────────────────────
+BƯỚC 6: CÀI GRADLE WRAPPER (NẾU CHƯA CÓ)
+─────────────────────────────────────────────────────────────────────────────────
+
+Project hiện chưa có Gradle wrapper. Anh cần generate nó:
+
+  CÁCH 1 — Nếu máy đã cài Gradle:
+    cd vsat-compass-api
+    gradle wrapper --gradle-version 8.7
+
+  CÁCH 2 — Dùng Android Studio:
+    - Android Studio sẽ tự detect và hỏi tạo wrapper khi mở project
+    - Nhấn OK để tự generate
+
+  Sau khi có wrapper, thư mục sẽ thêm:
+    gradle/wrapper/gradle-wrapper.jar
+    gradle/wrapper/gradle-wrapper.properties
+    gradlew        (Linux/Mac)
+    gradlew.bat    (Windows)
+
+================================================================================
+VI. GIẢI THÍCH TỪNG FILE TRONG PROJECT
+================================================================================
+
+--- CONFIG ---
+
+SecurityConfig.java
+  Cấu hình Spring Security. Định nghĩa:
+  - Endpoint nào public (auth/**, swagger, GET subjects, GET exams)
+  - Endpoint nào cần role gì (/admin/users/** → SUPER_ADMIN, /admin/** → CONTENT_ADMIN+)
+  - JWT filter chain, CORS, session stateless, password encoder (BCrypt)
+
+OpenApiConfig.java
+  Cấu hình Swagger UI: tiêu đề, mô tả API, nút Authorize cho JWT.
+
+JpaConfig.java
+  Bật @EnableJpaAuditing để tự động fill createdAt/updatedAt.
+
+--- SECURITY ---
+
+JwtUtils.java
+  Utility tạo access token (15 phút) và refresh token (30 ngày).
+  Parse token lấy userId, role. Validate token signature + expiration.
+
+JwtAuthenticationFilter.java
+  Filter chạy trước mọi request. Đọc header "Authorization: Bearer <token>",
+  validate, rồi set Authentication vào SecurityContext.
+
+CustomUserDetails.java
+  Adapter giữa entity User và interface UserDetails của Spring Security.
+  Map role thành GrantedAuthority: "ROLE_STUDENT", "ROLE_CONTENT_ADMIN", etc.
+
+CustomUserDetailsService.java
+  Load user từ DB theo email hoặc id, trả về CustomUserDetails.
+
+--- ENTITY ---
+
+User.java
+  Map với bảng "users". Dùng @Enumerated(EnumType.STRING) cho role, status, gender.
+  Tự set default: role=STUDENT, status=ACTIVE, emailVerified=false.
+
+RefreshToken.java
+  Map với bảng "refresh_tokens". Mỗi token liên kết 1 user (ManyToOne).
+
+--- REPOSITORY ---
+
+UserRepository.java
+  findByEmail, existsByEmail, findByFilters (lọc theo role, status, keyword với paging).
+
+RefreshTokenRepository.java
+  findByTokenAndRevokedFalse, revokeAllByUserId, revokeByToken.
+
+--- DTO ---
+
+ApiResponse.java
+  Wrapper chuẩn hóa response:
+  - Thành công: { data: {...}, message: "Success" }
+  - Lỗi: { error: { code: "...", message: "...", details: {...} } }
+
+AuthRequest.java
+  6 inner classes: Register, Login, RefreshToken, ForgotPassword, ResetPassword,
+  ChangePassword, UpdateProfile. Có validation annotations (@NotBlank, @Email, @Size).
+
+AuthResponse.java
+  TokenPair (accessToken + refreshToken + user info).
+  UserInfo (id, email, fullName, role, status, ...).
+
+--- SERVICE ---
+
+AuthService.java (interface)
+  7 methods: register, login, refreshToken, logout, getMe, updateProfile, changePassword.
+
+AuthServiceImpl.java (implementation)
+  Business logic đầy đủ:
+  - Register: check email trùng, hash password, tạo user, generate token pair
+  - Login: verify email+password, check status (locked/deactivated), update lastLoginAt
+  - RefreshToken: validate trong DB, check expiration, revoke cũ, tạo mới
+  - Logout: revoke refresh token
+  - ChangePassword: verify mật khẩu cũ, hash mới, revoke tất cả token (force re-login)
+  - UpdateProfile: parse gender enum, parse date, update fields
+
+--- CONTROLLER ---
+
+AuthController.java
+  7 REST endpoints, map với API spec:
+  POST /auth/register      → AU-01
+  POST /auth/login         → AU-02
+  POST /auth/refresh       → AU-03
+  POST /auth/logout        → AU-04
+  GET  /auth/me            → AU-07
+  PUT  /auth/me            → AU-08
+  PUT  /auth/me/password   → AU-09
+
+--- EXCEPTION ---
+
+AppException.java
+  Custom exception với HttpStatus + error code.
+  Factory methods: badRequest(), unauthorized(), forbidden(), notFound(), conflict().
+
+GlobalExceptionHandler.java
+  @RestControllerAdvice bắt tất cả exception:
+  - AppException → trả đúng status + error JSON
+  - MethodArgumentNotValidException → trả 400 + chi tiết field nào lỗi
+  - BadCredentialsException → trả 401
+  - AccessDeniedException → trả 403
+  - Exception → trả 500
+
+--- UTIL ---
+
+SecurityUtils.java
+  Helper methods để dùng trong service/controller:
+  getCurrentUserId(), getCurrentUserRole(), isAdmin(), isSuperAdmin().
+
+--- MAPPER ---
+
+UserMapper.java
+  Chuyển User entity → AuthResponse.UserInfo DTO.
+
+================================================================================
+VII. CÁC API AUTH ĐÃ IMPLEMENT
+================================================================================
+
+Mã    Method  URL                    Mô tả                     Status
+───── ─────── ────────────────────── ────────────────────────── ────────
+AU-01 POST    /auth/register         Đăng ký tài khoản         ✅ Done
+AU-02 POST    /auth/login            Đăng nhập                 ✅ Done
+AU-03 POST    /auth/refresh          Làm mới access token      ✅ Done
+AU-04 POST    /auth/logout           Đăng xuất                 ✅ Done
+AU-05 POST    /auth/forgot-password  Gửi email reset MK        🔲 Chưa (cần email service)
+AU-06 POST    /auth/reset-password   Đặt lại MK bằng token     🔲 Chưa (cần email service)
+AU-07 GET     /auth/me               Lấy thông tin user        ✅ Done
+AU-08 PUT     /auth/me               Cập nhật hồ sơ            ✅ Done
+AU-09 PUT     /auth/me/password      Đổi mật khẩu              ✅ Done
+
+Tổng: 7/9 endpoints đã implement. 2 endpoints còn lại cần tích hợp email service
+(có thể defer, dùng reset manual qua DB trong giai đoạn dev).
+
+================================================================================
+VIII. CÁC MODULE CẦN CODE TIẾP THEO (THỨ TỰ ƯU TIÊN)
+================================================================================
+
+Dưới đây là thứ tự nên code tiếp, sắp theo dependency và độ quan trọng:
+
+──── MVP PRIORITY 1 — NỀN TẢNG (nên làm ngay) ────
+
+MODULE 1: Subject & Topic (7 API — SB-01 đến SB-07)
+  Lý do: Đơn giản nhất, là dữ liệu nền cho Question và Exam.
+  Entity: Subject, Topic, Subtopic
+  Controller: SubjectController
+  Thời gian ước lượng: 2-3 giờ
+
+MODULE 2: Question Bank (5 API MVP — QS-01 đến QS-05)
+  Lý do: Là dữ liệu lõi, cần có trước khi tạo đề.
+  Entity: Question, QuestionOption, QuestionVersion, QuestionGroup
+  Controller: QuestionController
+  Lưu ý: CTV chỉ xem/sửa câu của mình, Admin xem/sửa tất cả
+  Thời gian ước lượng: 5-7 giờ
+
+MODULE 3: Review Workflow (5 API — RV-01 đến RV-05)
+  Lý do: Liên kết chặt với Question Bank.
+  Entity: QuestionReview, QuestionComment
+  Controller: ReviewController
+  Thời gian ước lượng: 3-4 giờ
+
+──── MVP PRIORITY 2 — EXAM ENGINE (trái tim sản phẩm) ────
+
+MODULE 4: Exam Management (9 API — EX-01 đến EX-09)
+  Lý do: Cần có đề trước khi thi.
+  Entity: Exam, ExamQuestion
+  Controller: ExamController (student), AdminExamController (admin)
+  Thời gian ước lượng: 5-6 giờ
+
+MODULE 5: Exam Session Engine (7 API — ES-01 đến ES-07)
+  Lý do: Đây là TRÁI TIM — cho phép học viên thi thử end-to-end.
+  Entity: ExamSession, SessionAnswer
+  Controller: ExamSessionController
+  Logic: start session → save answers → submit → grade → return result
+  Thời gian ước lượng: 7-10 giờ (phức tạp nhất)
+
+──── MVP PRIORITY 3 — BỔ TRỢ ────
+
+MODULE 6: History & Analytics (4 API — HI-01 đến HI-04)
+  Entity: UserTopicStats (cache bảng thống kê)
+  Controller: StudentStatsController
+  Thời gian ước lượng: 3-4 giờ
+
+MODULE 7: Ticket (7 API — TK-01 đến TK-07)
+  Entity: Ticket, TicketComment
+  Controller: TicketController, AdminTicketController
+  Thời gian ước lượng: 3-4 giờ
+
+MODULE 8: Dashboard (2 API — DA-01, DA-02)
+  Không cần entity mới, chỉ aggregate query.
+  Controller: DashboardController
+  Thời gian ước lượng: 2-3 giờ
+
+MODULE 9: User Management (4 API — UM-01 đến UM-04)
+  Dùng lại UserRepository, thêm admin-specific logic.
+  Controller: AdminUserController
+  Thời gian ước lượng: 2-3 giờ
+
+MODULE 10: Collaborator Workspace (1 API MVP — CL-01)
+  Dùng lại QuestionRepository với filter created_by.
+  Controller: CollaboratorController
+  Thời gian ước lượng: 1-2 giờ
+
+──── PHASE 2 (sau khi MVP xong) ────
+
+MODULE 11: Import Excel (8 API)
+MODULE 12: Notification (3 API)
+MODULE 13: Audit Log & System Config (3 API)
+MODULE 14: Collaborator Assignment (3 API)
+MODULE 15: Question Group / Passage (3 API)
+
+──── DEFER (không cần ở đồ án) ────
+
+MODULE 16: Commerce — Wallet, Package, Transaction (6 API)
+
+================================================================================
+IX. PROMPT GỢI Ý CHO CLAUDE CODE
+================================================================================
+
+Khi anh mở Claude Code để tiếp tục code, có thể dùng các prompt sau:
+
+─── Để Claude Code hiểu context dự án ───
+
+"Tôi đang làm dự án V-SAT Compass — nền tảng ôn thi V-SAT. Backend dùng
+Spring Boot 3.2.5, Java 17, Gradle, PostgreSQL. Project đã có Auth module
+hoàn chỉnh (register, login, JWT, refresh token). Cấu trúc package:
+com.vsatcompass.api với các layer: controller, service, repository, entity,
+dto, exception, security, mapper, util.
+
+Các quy ước đã chốt:
+- Response wrapper: ApiResponse<T> với { data, message, error }
+- Exception: dùng AppException.badRequest/notFound/forbidden/conflict
+- Pagination: Spring Data Page<T>, query params: page, size, sort
+- Enum dùng @Enumerated(EnumType.STRING)
+- Role check: @PreAuthorize hoặc SecurityUtils.getCurrentUserId()
+- Controller đặt trong sub-package: auth/, admin/, student/, collaborator/
+- DTO đặt trong dto/request/ và dto/response/
+
+Hãy giúp tôi code module [TÊN MODULE] với các API: [LIỆT KÊ]"
+
+─── Prompt code từng module cụ thể ───
+
+PROMPT MODULE 1 — Subject & Topic:
+"Tạo entity Subject, Topic, Subtopic map với bảng subjects, topics, subtopics
+trong PostgreSQL. Tạo SubjectRepository, TopicRepository. Tạo SubjectService
+và SubjectController với các API:
+  GET /subjects — lấy danh sách môn
+  GET /subjects/{id}/topics — lấy chủ đề theo môn (kèm subtopics)
+  POST /subjects — tạo môn mới (CONTENT_ADMIN+)
+  POST /subjects/{id}/topics — tạo chủ đề (CONTENT_ADMIN+)
+  POST /topics/{id}/subtopics — tạo chủ đề con (CONTENT_ADMIN+)
+  PUT /subjects/{id} — cập nhật môn (CONTENT_ADMIN+)
+  PUT /topics/{id} — cập nhật chủ đề (CONTENT_ADMIN+)
+Dùng đúng quy ước ApiResponse, AppException đã có trong project."
+
+PROMPT MODULE 5 — Exam Session (quan trọng nhất):
+"Tạo entity ExamSession, SessionAnswer map với bảng exam_sessions,
+session_answers. Tạo ExamSessionService và ExamSessionController với các API:
+  POST /sessions/start — bắt đầu phiên thi (tạo session, load câu hỏi từ đề)
+  GET /sessions/{id} — resume phiên đang làm
+  PUT /sessions/{id}/answers/{questionId} — lưu đáp án 1 câu
+  POST /sessions/{id}/answers/batch — lưu đáp án nhiều câu
+  POST /sessions/{id}/submit — nộp bài (chấm điểm, tính score)
+  GET /sessions/{id}/result — xem kết quả
+  GET /sessions/{id}/review — xem lại bài làm (kèm đáp án đúng + lời giải)
+
+Logic chấm điểm khi submit:
+  - Đếm đúng/sai/bỏ qua
+  - Tính score = (correct / total) * 10
+  - Tính score_percentage
+  - Cập nhật answered_count, correct_count, wrong_count, skipped_count
+  - Tính time_spent_seconds
+  - Set status = SUBMITTED
+  - Cập nhật user_topic_stats (cache thống kê chủ đề)"
+
+================================================================================
+X. LƯU Ý KỸ THUẬT QUAN TRỌNG
+================================================================================
+
+1. ENUM MAPPING VỚI POSTGRESQL
+   PostgreSQL dùng custom ENUM type (CREATE TYPE user_role AS ENUM ...).
+   Trong entity, dùng:
+     @Enumerated(EnumType.STRING)
+     @Column(columnDefinition = "user_role")
+     private UserRole role;
+   Nếu gặp lỗi type mismatch, thêm vào application.yml:
+     spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: true
+
+2. NEON POSTGRESQL — SSL
+   Connection string Neon phải có ?sslmode=require
+   Ví dụ: jdbc:postgresql://ep-xxx.aws.neon.tech/vsat_compass?sslmode=require
+
+3. HIBERNATE ddl-auto = validate
+   Đã set "validate" chứ KHÔNG phải "update" hay "create".
+   Schema do file SQL tạo, Hibernate chỉ validate mapping.
+   Nếu entity không khớp schema sẽ báo lỗi ngay khi start — đây là ý đồ để
+   phát hiện sai sót sớm.
+
+4. JWT SECRET PHẢI ĐỦ DÀI
+   jjwt 0.12.x yêu cầu key ít nhất 256-bit cho HMAC-SHA.
+   Nếu secret quá ngắn sẽ báo lỗi WeakKeyException.
+   Dùng: openssl rand -base64 64 để generate.
+
+5. CONTEXT PATH
+   Server chạy tại: http://localhost:8080/api/v1/
+   Tất cả URL trong controller là relative: /auth/register → full: /api/v1/auth/register
+
+6. CTV (COLLABORATOR) CHỈ XEM DỮ LIỆU CỦA MÌNH
+   Khi code Question/Review module, nhớ check:
+   - Nếu role = COLLABORATOR → filter theo created_by = currentUserId
+   - Nếu role = CONTENT_ADMIN hoặc SUPER_ADMIN → xem tất cả
+
+7. SOFT DELETE
+   KHÔNG dùng cờ deleted. Dùng status = ARCHIVED hoặc HIDDEN.
+   Giữ dữ liệu để audit trail.
+
+8. GIT WORKFLOW GỢI Ý
+   - main: code ổn định
+   - develop: code đang phát triển
+   - feature/auth: module auth (đã xong)
+   - feature/subjects: module subject & topic
+   - feature/questions: module question bank
+   - feature/exam-engine: module thi thử
+
+================================================================================
+HẾT BÁO CÁO
+================================================================================

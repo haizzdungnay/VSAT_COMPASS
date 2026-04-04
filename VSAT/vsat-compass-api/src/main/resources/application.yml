@@ -1,0 +1,97 @@
+spring:
+  application:
+    name: vsat-compass-api
+  profiles:
+    active: dev
+
+  # JPA / Hibernate
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+
+  # Jackson
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+# Server
+server:
+  port: 8080
+  servlet:
+    context-path: /api/v1
+
+# JWT Configuration
+app:
+  jwt:
+    secret: ${JWT_SECRET:your-256-bit-secret-key-change-in-production-please-make-it-long-enough}
+    access-token-expiration-ms: 900000       # 15 minutes
+    refresh-token-expiration-ms: 2592000000  # 30 days
+  cors:
+    allowed-origins: http://localhost:3000,http://localhost:5173
+
+# Swagger
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.vsatcompass.api: DEBUG
+    org.springframework.security: INFO
+
+---
+# ==================== DEV PROFILE ====================
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/vsat_compass}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+
+  jpa:
+    show-sql: true
+
+logging:
+  level:
+    com.vsatcompass.api: DEBUG
+
+---
+# ==================== PROD PROFILE ====================
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+
+  jpa:
+    show-sql: false
+
+logging:
+  level:
+    com.vsatcompass.api: INFO

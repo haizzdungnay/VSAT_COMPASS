@@ -1,0 +1,33 @@
+# Build artifacts
+build/
+dist/
+target/
+.gradle/
+*.jar
+*.war
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.iml
+
+# Dependencies
+node_modules/
+.npm
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Android
+*.apk
+*.aab
+.android/
+
+# Node
+npm-debug.log

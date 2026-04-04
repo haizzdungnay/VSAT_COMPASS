@@ -1,0 +1,344 @@
+================================================================================
+V-SAT COMPASS — TÀI LIỆU GIẢI THÍCH DATABASE SCHEMA
+Version: 1.0.0 | Ngày: 2026-03-30
+================================================================================
+
+I. TỔNG QUAN
+================================================================================
+
+Tổng số bảng: 27
+Database engine: PostgreSQL (Neon Serverless)
+Tổng số ENUM types: 20
+
+Danh sách 27 bảng theo nhóm:
+
+  [Users & Auth]         users, refresh_tokens
+  [Subject Hierarchy]    subjects, topics, subtopics
+  [Question Bank]        question_groups, questions, question_options, question_versions
+  [Review Workflow]      question_reviews, question_comments
+  [Exam Management]      exams, exam_questions
+  [Exam Session]         exam_sessions, session_answers
+  [Practice Analytics]   user_topic_stats
+  [Tickets]              tickets, ticket_comments
+  [Excel Import]         import_batches, import_rows
+  [Commerce]             wallets, packages, package_exams, transactions, user_exam_access
+  [Collaborator]         collaborator_assignments
+  [Notifications]        notifications
+  [Audit & System]       audit_logs, system_configs
+
+
+II. BẢNG NÀO LẤY TỪ TÀI LIỆU, BẢNG NÀO EM THÊM
+================================================================================
+
+TỪ TÀI LIỆU (yêu cầu trực tiếp):
+- users                  → Mục 4.3, 6.3, 7.8
+- subjects               → Mục 3.2
+- topics, subtopics      → Mục 7.2 (trường dữ liệu câu hỏi có chủ đề, chủ đề con)
+- question_groups        → Mục 7.4 (passage / nhóm câu hỏi dùng chung ngữ liệu)
+- questions              → Mục 7.2 (liệt kê đầy đủ các trường)
+- question_options       → Mục 7.2 (đáp án A/B/C/D)
+- question_versions      → Mục 7.5 (lịch sử phiên bản)
+- question_reviews       → Mục 7.5 (duyệt nội dung)
+- question_comments      → Mục 7.5 (bình luận nội bộ giữa admin và CTV)
+- exams                  → Mục 7.6 (các trường dữ liệu đề thi)
+- exam_questions         → Mục 7.6 (chọn câu hỏi từ ngân hàng vào đề)
+- exam_sessions          → Mục 4.3 (exam engine)
+- session_answers        → Mục 5.2 (chọn đáp án, đánh dấu xem lại)
+- tickets                → Mục 7.9 (ticket lỗi)
+- import_batches         → Mục 10.6 (tầng 1 import staging)
+- import_rows            → Mục 10.6 (tầng 1 import staging)
+- audit_logs             → Mục 7.10
+
+EM THÊM (không có trong tài liệu, nhưng cần thiết):
+- refresh_tokens         → Quản lý JWT refresh token cho đăng nhập đa thiết bị
+- ticket_comments        → Lịch sử xử lý ticket (tài liệu chỉ nói "cập nhật trạng thái")
+- user_topic_stats       → Bảng thống kê chủ đề yếu phục vụ "luyện tập theo chủ đề yếu"
+- wallets                → Tài liệu nói "ví, credit" nhưng chưa có cấu trúc cụ thể
+- packages               → Tài liệu nói "gói đề, gói combo" nhưng chưa có bảng
+- package_exams          → Mapping đề nào thuộc gói nào
+- transactions           → Lịch sử giao dịch, tài liệu nói "lịch sử giao dịch ở mức quản trị"
+- user_exam_access       → Quản lý quyền truy cập đề trả phí sau khi mua
+- collaborator_assignments → Tài liệu nói "chủ đề được phân công" nhưng chưa có bảng
+- notifications          → Tài liệu nói "phản hồi mới từ admin", "thông báo" nhưng chưa cụ thể
+- system_configs         → Cấu hình hệ thống linh hoạt, tránh hardcode
+
+
+III. GIẢI THÍCH TỪNG BẢNG
+================================================================================
+
+1. users
+   - Lưu tất cả người dùng, role phân biệt bằng ENUM (STUDENT, COLLABORATOR, CONTENT_ADMIN, SUPER_ADMIN)
+   - 1 user = 1 role tại mỗi thời điểm, đúng theo tài liệu mục 6.3
+   - password_hash: lưu hash, không lưu plaintext
+   - email_verified: phục vụ flow xác thực email
+
+2. refresh_tokens [EM THÊM]
+   - Phục vụ JWT authentication cho cả Android và Web
+   - device_info: biết token thuộc thiết bị nào, hỗ trợ đăng xuất từng device
+   - revoked: cho phép thu hồi token mà không cần xóa
+
+3. subjects
+   - MVP chỉ có 2 môn: MATH, ENG
+   - code dùng cho API và import Excel (subject_code)
+   - display_order: sắp xếp hiển thị trên UI
+
+4. topics
+   - Chủ đề thuộc 1 môn (subject_id FK)
+   - code dùng cho import Excel (topic_code)
+
+5. subtopics
+   - Chủ đề con thuộc 1 topic (topic_id FK)
+   - code dùng cho import Excel (subtopic_code)
+
+6. question_groups
+   - Nhóm câu hỏi dùng chung đoạn văn / ngữ liệu (passage)
+   - passage_text: nội dung plaintext
+   - passage_html: phiên bản có format
+   - Được liên kết từ questions qua question_group_id
+   - code: tương ứng group_code trong template Excel
+
+7. questions
+   - Bảng lõi, chứa toàn bộ trường theo mục 7.2 của tài liệu
+   - question_code: mã câu duy nhất, map với question_code trong Excel
+   - question_text: nội dung plaintext
+   - question_html: phiên bản HTML/LaTeX đã render (cho công thức Toán)
+   - explanation / explanation_html: lời giải 2 format
+   - tags: lưu comma-separated, đủ cho MVP; có thể tách bảng riêng sau
+   - version: tăng mỗi khi chỉnh sửa
+   - order_in_group: thứ tự câu trong nhóm passage
+
+8. question_options
+   - Tách đáp án ra bảng riêng thay vì 4 cột option_a/b/c/d
+   - Lý do: linh hoạt khi mở rộng sang 5+ đáp án hoặc câu nhiều đáp án đúng
+   - is_correct: đánh dấu đáp án đúng
+   - option_label: 'A', 'B', 'C', 'D'
+
+9. question_versions
+   - Snapshot câu hỏi tại mỗi version
+   - options_snapshot: JSONB lưu toàn bộ đáp án tại thời điểm đó
+   - change_summary: mô tả thay đổi ("Sửa lỗi chính tả đáp án C")
+
+10. question_reviews
+    - Mỗi lần admin duyệt/trả sửa/từ chối = 1 record
+    - version_reviewed: biết review trên version nào
+    - comment: lý do cụ thể
+
+11. question_comments
+    - Bình luận nội bộ trên câu hỏi (trao đổi admin ↔ CTV)
+    - parent_comment_id: hỗ trợ reply thread
+
+12. exams
+    - Đầy đủ trường theo mục 7.6 tài liệu
+    - pricing_type + price: phân biệt đề miễn phí / trả phí
+    - total_attempts, avg_score: cached counters để hiển thị nhanh trên UI
+    - version: theo dõi phiên bản đề
+
+13. exam_questions
+    - Mapping N-N giữa exams và questions
+    - question_order: thứ tự câu trong đề
+    - UNIQUE(exam_id, question_order): đảm bảo không trùng thứ tự
+
+14. exam_sessions
+    - Mỗi lần học viên bắt đầu làm bài = 1 session
+    - mode: phân biệt thi thử vs luyện tập
+    - Các counter (answered_count, correct_count...) cập nhật khi nộp bài
+    - device_type: biết thi trên Android hay Web
+    - time_spent_seconds: thời gian thực tế (có thể < duration nếu nộp sớm)
+
+15. session_answers
+    - Chi tiết đáp án từng câu trong 1 phiên thi
+    - is_bookmarked: tính năng "đánh dấu câu xem lại" từ mục 5.2
+    - time_spent_seconds: thời gian cho từng câu (phục vụ phân tích)
+    - selected_option_id: NULL = chưa chọn (skipped)
+
+16. user_topic_stats [EM THÊM]
+    - Phục vụ tính năng "luyện tập theo chủ đề yếu" (mục 5.1)
+    - Tính toán từ session_answers, cache lại để query nhanh
+    - is_weak_topic: đánh dấu chủ đề cần ôn thêm (accuracy_rate < ngưỡng)
+
+17. tickets
+    - 6 loại lỗi đúng theo mục 7.9
+    - 5 trạng thái đúng theo mục 7.9
+    - Liên kết được cả câu hỏi (question_id) và đề thi (exam_id)
+    - assigned_to: admin được phân công xử lý
+
+18. ticket_comments [EM THÊM]
+    - Lịch sử trao đổi và cập nhật trạng thái trên ticket
+    - old_status / new_status: ghi lại mỗi lần chuyển trạng thái
+
+19. import_batches
+    - Tầng 1 staging theo mục 10.6
+    - 12 trạng thái chi tiết theo đúng flow: upload → parse → validate → preview → approval → import
+    - error_summary: JSONB tóm tắt lỗi tổng ("5 lỗi môn không hợp lệ, 3 cảnh báo...")
+
+20. import_rows
+    - Từng dòng trong batch Excel
+    - raw_data: JSONB lưu dữ liệu gốc từ Excel (giữ nguyên để audit)
+    - errors: JSONB mảng lỗi theo format [{field, message, level}]
+    - question_id: liên kết sau khi import thành công vào question bank
+
+21. wallets [EM THÊM]
+    - Ví tiền của user, phục vụ mô hình thương mại mục 3.3
+    - balance: số dư hiện tại
+    - total_deposited / total_spent: thống kê nhanh
+
+22. packages [EM THÊM]
+    - Gói đề thi (gói lẻ, gói môn, gói combo) theo mục 3.3
+    - duration_days: thời hạn sử dụng, NULL = vĩnh viễn
+    - original_price: giá gốc để hiện khuyến mãi trên UI
+
+23. package_exams [EM THÊM]
+    - Mapping N-N giữa packages và exams
+
+24. transactions [EM THÊM]
+    - Lịch sử mọi giao dịch tài chính
+    - balance_before / balance_after: snapshot số dư tại thời điểm giao dịch
+    - external_ref: mã giao dịch từ cổng thanh toán bên ngoài
+
+25. user_exam_access [EM THÊM]
+    - Quản lý quyền truy cập đề trả phí
+    - max_attempts / used_attempts: giới hạn số lần thi
+    - expires_at: hết hạn quyền truy cập
+
+26. collaborator_assignments [EM THÊM]
+    - Tài liệu mục 7.7 nói "chủ đề được phân công" nhưng chưa có bảng
+    - target_count: mục tiêu số câu cần viết
+    - completed_count: đã hoàn thành bao nhiêu
+    - deadline: hạn chót
+
+27. notifications [EM THÊM]
+    - Phục vụ "phản hồi mới từ admin" (mục 7.7) và thông báo chung
+    - reference_type + reference_id: liên kết polymorphic tới entity liên quan
+    - is_read / read_at: đánh dấu đã đọc
+
+28. audit_logs
+    - Đúng theo mục 7.10 tài liệu
+    - 15 loại action bao phủ toàn bộ hành động quản trị
+    - old_value / new_value: JSONB cho phép diff chi tiết
+    - ip_address, user_agent: truy vết nguồn gốc
+
+29. system_configs [EM THÊM]
+    - Key-value store cho cấu hình hệ thống
+    - Tránh hardcode các tham số có thể thay đổi
+    - Seed 6 config mặc định ban đầu
+
+
+IV. DANH SÁCH ENUM VÀ GIÁ TRỊ
+================================================================================
+
+1.  user_role:           STUDENT, COLLABORATOR, CONTENT_ADMIN, SUPER_ADMIN
+2.  user_status:         ACTIVE, LOCKED, SUSPENDED, DEACTIVATED
+3.  gender_type:         MALE, FEMALE, OTHER
+4.  difficulty_level:    EASY, MEDIUM, HARD, VERY_HARD
+5.  question_type:       SINGLE_CHOICE, MULTIPLE_CHOICE, TRUE_FALSE, FILL_IN_BLANK
+6.  question_status:     DRAFT, PENDING_REVIEW, NEEDS_REVISION, APPROVED, PUBLISHED, HIDDEN, ARCHIVED
+7.  exam_status:         DRAFT, COMPOSING, PENDING_REVIEW, PUBLISHED, HIDDEN, LOCKED, ARCHIVED
+8.  exam_pricing_type:   FREE, PAID, PACKAGE
+9.  session_status:      IN_PROGRESS, SUBMITTED, TIMED_OUT, ABANDONED
+10. session_mode:        MOCK_EXAM, PRACTICE
+11. ticket_type:         WRONG_ANSWER, WRONG_EXPLANATION, TYPO, DISPLAY_ERROR, UNCLEAR_CONTENT, SUSPECTED_DUPLICATE
+12. ticket_status:       NEW, IN_PROGRESS, AWAITING_VERIFY, FIXED, CLOSED
+13. review_action:       APPROVE, REQUEST_REVISION, REJECT
+14. import_batch_status: UPLOADED, PARSING, PARSED, VALIDATING, VALIDATED, PREVIEWING, PENDING_APPROVAL, APPROVED, IMPORTING, COMPLETED, FAILED, ROLLED_BACK
+15. import_row_status:   VALID, WARNING, ERROR
+16. import_error_level:  ERROR, WARNING, INFO
+17. transaction_type:    DEPOSIT, PURCHASE, REFUND, BONUS
+18. transaction_status:  PENDING, COMPLETED, FAILED, REFUNDED
+19. package_type:        SINGLE_EXAM, SUBJECT_PACK, COMBO_PACK, SUBSCRIPTION
+20. notification_type:   REVIEW_RESULT, TICKET_UPDATE, SYSTEM, EXAM_PUBLISHED, ASSIGNMENT
+21. audit_action:        CREATE, UPDATE, DELETE, PUBLISH, UNPUBLISH, APPROVE, REJECT, LOCK, UNLOCK, ASSIGN_ROLE, REVOKE_ROLE, IMPORT, ROLLBACK, LOGIN, LOGOUT
+
+
+V. QUY ƯỚC ĐẶT TÊN
+================================================================================
+
+- Tên bảng: snake_case, số nhiều (users, questions, exams...)
+- Tên cột: snake_case
+- Primary key: id (BIGSERIAL)
+- Foreign key: [entity]_id (user_id, question_id...)
+- Timestamp: _at suffix (created_at, updated_at, submitted_at...)
+- Boolean: is_ prefix hoặc ngữ cảnh rõ ràng (is_correct, is_active, revoked)
+- ENUM type: snake_case singular (user_role, ticket_status...)
+- Index: idx_[table]_[column] (idx_questions_subject, idx_users_email...)
+- Trigger: trg_[table]_updated_at
+- Unique constraint: UNIQUE trực tiếp trên cột hoặc tổ hợp
+
+
+VI. MỘT SỐ LƯU Ý KỸ THUẬT
+================================================================================
+
+1. TIMESTAMPTZ: Toàn bộ timestamp dùng WITH TIME ZONE để tránh lỗi múi giờ
+
+2. JSONB: Dùng cho dữ liệu linh hoạt (options_snapshot, raw_data, errors, error_summary, old_value, new_value) — query được, index được
+
+3. DECIMAL(12,2) cho tiền: Đủ cho VND (max 999,999,999,999.99)
+
+4. Tags lưu comma-separated: Đủ cho MVP. Nếu cần filter phức tạp theo tag, tách bảng question_tags sau
+
+5. Auto-update trigger: Tất cả bảng có updated_at đều có trigger tự cập nhật
+
+6. Cascade delete: Áp dụng hợp lý (xóa user → xóa refresh_tokens, xóa exam → xóa exam_questions, xóa question → xóa options...)
+
+7. Soft delete: Không dùng cờ deleted. Thay vào đó dùng status (ARCHIVED, DEACTIVATED) để giữ dữ liệu và audit trail
+
+8. Neon connection pooling: Spring Boot nên dùng HikariCP kết nối qua connection pooler endpoint của Neon (port 5432 pooler) thay vì direct connection
+
+
+VII. MAPPING VỚI TEMPLATE EXCEL IMPORT (Mục 10.9 tài liệu)
+================================================================================
+
+Cột Excel              →  Bảng.Cột
+─────────────────────────────────────────────────────
+question_code           →  questions.question_code
+subject_code            →  subjects.code (lookup)
+topic_code              →  topics.code (lookup)
+subtopic_code           →  subtopics.code (lookup)
+difficulty              →  questions.difficulty
+question_type           →  questions.question_type
+group_code              →  question_groups.code (lookup/create)
+question_text           →  questions.question_text
+option_a                →  question_options (label='A')
+option_b                →  question_options (label='B')
+option_c                →  question_options (label='C')
+option_d                →  question_options (label='D')
+correct_answer          →  question_options.is_correct (match label)
+explanation             →  questions.explanation
+source                  →  questions.source
+tags                    →  questions.tags
+status                  →  questions.status (mặc định DRAFT)
+note                    →  import_rows.raw_data (lưu trong JSON gốc)
+image_name              →  questions.image_url (sau khi upload)
+latex_content           →  questions.question_html (sau khi render)
+
+
+VIII. MA TRẬN QUYỀN (tham khảo, implement trong Spring Boot)
+================================================================================
+
+Hành động                    STUDENT  COLLABORATOR  CONTENT_ADMIN  SUPER_ADMIN
+─────────────────────────────────────────────────────────────────────────────────
+Thi thử / Luyện tập           ✓          ✓              ✓             ✓
+Xem kho đề                    ✓          ✓              ✓             ✓
+Mua đề / nạp ví               ✓          ✓              ✓             ✓
+Báo lỗi (tạo ticket)          ✓          ✓              ✓             ✓
+Tạo câu hỏi                   ✗          ✓              ✓             ✓
+Sửa câu hỏi của mình          ✗          ✓              ✓             ✓
+Sửa câu hỏi bất kỳ            ✗          ✗              ✓             ✓
+Gửi duyệt câu hỏi             ✗          ✓              ✓             ✓
+Duyệt / trả sửa / từ chối    ✗          ✗              ✓             ✓
+Tạo đề thi                    ✗          ✗              ✓             ✓
+Xuất bản / ẩn đề               ✗          ✗              ✓             ✓
+Xử lý ticket                  ✗          ✗              ✓             ✓
+Upload Excel import            ✗          ✓              ✓             ✓
+Duyệt batch import             ✗          ✗              ✓             ✓
+Rollback batch                 ✗          ✗              ✗             ✓
+Quản lý user & role            ✗          ✗              ✗             ✓
+Lock / Unlock tài khoản        ✗          ✗              ✗             ✓
+Xem audit log                  ✗          ✗              ✗             ✓
+Quản lý packages & pricing     ✗          ✗              ✗             ✓
+Cấu hình hệ thống             ✗          ✗              ✗             ✓
+Cấu hình template import       ✗          ✗              ✗             ✓
+
+
+================================================================================
+HẾT TÀI LIỆU
+================================================================================
