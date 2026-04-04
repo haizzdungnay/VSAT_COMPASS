@@ -30,7 +30,7 @@ server:
 # JWT Configuration
 app:
   jwt:
-    secret: ${JWT_SECRET:your-256-bit-secret-key-change-in-production-please-make-it-long-enough}
+    secret: ${JWT_SECRET:dnNhdGNvbXBhc3Mtc3VwZXItc2VjcmV0LWp3dC1rZXktMjU2Yml0LXByb2R1Y3Rpb24tMjAyNC12c2F0}
     access-token-expiration-ms: 900000       # 15 minutes
     refresh-token-expiration-ms: 2592000000  # 30 days
   cors:
