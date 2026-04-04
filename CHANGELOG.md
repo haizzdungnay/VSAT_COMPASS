@@ -1,5 +1,152 @@
 # V-SAT COMPASS — CHANGELOG
 
+## [0.3.0] - 2026-04-04 — Kết nối Neon DB + Fix Auth + GitHub
+
+### Đã hoàn thành
+- [x] Kết nối Neon Serverless PostgreSQL (ap-southeast-1)
+- [x] Chạy `vsat_database_schema.sql` trên Neon → 27 bảng + 20 ENUM types
+- [x] Tạo file `.env` với credentials thực tế
+- [x] **DataInitializer**: tự tạo 4 tài khoản test khi backend khởi động
+  - `student@vsat.com` / `Student@123` (STUDENT)
+  - `collab@vsat.com` / `Admin@123` (COLLABORATOR)
+  - `content@vsat.com` / `Admin@123` (CONTENT_ADMIN)
+  - `admin@vsat.com` / `Admin@123` (SUPER_ADMIN)
+
+### Fix lỗi Android ↔ Backend JSON mismatch
+- [x] **RegisterRequest**: bỏ `@SerializedName("full_name")` → gửi đúng `fullName`
+- [x] **AuthResponse**: bỏ `@SerializedName("access_token/refresh_token")` → parse đúng `accessToken`/`refreshToken`
+- [x] **UserProfile**: bỏ `@SerializedName("full_name"/"avatar_url")` → parse đúng camelCase từ backend
+- [x] **AuthApi logout**: thêm body `{refreshToken: "..."}` theo đúng spec backend
+- [x] **ApiClient**: thêm `getRefreshToken()` public method
+
+### GitHub
+- [x] Init git repository, push lên `https://github.com/haizzdungnay/VSAT_COMPASS`
+- [x] Tạo `README.md` + cập nhật `CHANGELOG.md`
+
+---
+
+## [0.2.0] - 2026-04-03 — Android App MVP
+
+### Android (25 Java files, 22 XML resources)
+
+#### Architecture
+- MVVM: ViewModel + LiveData + Repository pattern
+- Retrofit 2 + OkHttp3 (JWT interceptor tự động gắn Bearer token)
+- Jetpack Navigation Component + BottomNavigationView
+- ViewBinding toàn bộ
+
+#### Data Layer
+- `ApiClient.java` — Retrofit singleton, JWT interceptor, SharedPreferences token storage
+- `AuthApi.java` — Retrofit interface: login, register, refresh, logout, getMe
+- `ExamApi.java` — Retrofit interface: danh sách đề, chi tiết, start/submit session, submit answer
+- Models: `ApiResponse<T>`, `AuthResponse`, `LoginRequest`, `RegisterRequest`,
+  `UserProfile`, `Exam`, `Question`, `ExamSession`
+- `AuthRepository.java` — LiveData-based auth operations
+- `Resource<T>` — LOADING/SUCCESS/ERROR wrapper
+
+#### UI Layer
+- `SplashActivity` — tự redirect dựa trên access token
+- `LoginActivity` + `RegisterActivity` — auth screens với validation
+- `MainActivity` — BottomNav (3 tabs: Trang chủ, Đề thi, Cá nhân)
+- `HomeFragment` — chào mừng + thống kê học viên
+- `ExamFragment` — danh sách đề thi (RecyclerView + SwipeRefresh)
+- `ExamAdapter` — item card: tiêu đề, số câu, thời gian, nút "Làm bài"
+- `ExamSessionActivity` — làm bài thi: timer đếm ngược, điều hướng câu hỏi, lưu đáp án
+- `ExamResultActivity` — xem điểm, số câu đúng, thời gian làm bài
+- `ProfileFragment` — thông tin cá nhân + đăng xuất
+
+#### Resources
+- Layouts: `activity_splash`, `activity_login`, `activity_register`, `activity_main`,
+  `activity_exam_session`, `activity_exam_result`, `fragment_home`, `fragment_exam`,
+  `fragment_profile`, `item_exam`
+- Navigation graph: `mobile_navigation.xml` (3 fragments)
+- Bottom nav menu: `bottom_nav_menu.xml`
+- Colors: primary blue theme + text/error/success colors
+
+#### Cấu hình
+- `AndroidManifest.xml`: INTERNET permission, `usesCleartextTraffic=true`, 6 activities khai báo
+- `libs.versions.toml`: toàn bộ dependencies khai báo type-safe
+- `app/build.gradle.kts`: viewBinding enabled, Java 11, minSdk 28, targetSdk 36
+
+---
+
+## [0.1.0] - 2026-04-02 — Backend MVP (9 Modules hoàn thành)
+
+### Infrastructure (Module 0)
+- [x] VsatCompassApiApplication, SecurityConfig, JpaConfig, OpenApiConfig
+- [x] JwtAuthenticationFilter, JwtUtils, CustomUserDetails, CustomUserDetailsService
+- [x] AppException (factory methods: badRequest, notFound, forbidden, conflict, unauthorized)
+- [x] GlobalExceptionHandler (xử lý tập trung toàn bộ exception)
+- [x] SecurityUtils, UserMapper
+- [x] AuthController, AuthService, AuthServiceImpl (7 endpoints)
+- [x] User, RefreshToken entities + repositories
+- [x] 3 Auth enums: UserRole, UserStatus, GenderType
+- [x] spring-dotenv: load `.env` tự động
+
+### Module 1 — Subject & Topic
+- [x] 3 Entities: Subject, Topic, Subtopic
+- [x] SubjectService + SubjectServiceImpl
+- [x] SubjectController: 7 endpoints (CRUD subject/topic/subtopic)
+
+### Module 2 — Question Bank
+- [x] 4 Entities: Question, QuestionOption, QuestionGroup, QuestionVersion
+- [x] 4 Enums: DifficultyLevel, QuestionType, QuestionStatus, ReviewAction
+- [x] QuestionService + QuestionServiceImpl (CRUD, filter, options, version++)
+- [x] QuestionController (collaborator): 5 endpoints
+- [x] QuestionAdminController: 4 endpoints
+
+### Module 3 — Review Workflow
+- [x] 2 Entities: QuestionReview, QuestionComment
+- [x] ReviewService + ReviewServiceImpl (status transitions: APPROVE/REJECT/REQUEST_REVISION)
+- [x] ReviewController: 4 endpoints (create review, list, add/list comments)
+
+### Module 4 — Exam Management
+- [x] 2 Entities: Exam, ExamQuestion
+- [x] 3 Enums: ExamStatus, ExamPricingType, DifficultyLevel
+- [x] ExamService + ExamServiceImpl
+- [x] ExamAdminController: 7 endpoints (CRUD + questions + status)
+- [x] ExamPublicController: 2 public GET endpoints
+
+### Module 5 — Session Engine
+- [x] 2 Entities: ExamSession, SessionAnswer
+- [x] 2 Enums: SessionMode, SessionStatus
+- [x] SessionService + SessionServiceImpl (start, submit, scoring)
+- [x] SessionController: 6 endpoints
+
+### Module 6 — Student Stats
+- [x] 1 Entity: UserTopicStats
+- [x] StudentStatsService + StudentStatsServiceImpl
+- [x] StudentStatsController: 3 endpoints (topic stats, weak topics, exam history)
+
+### Module 7 — Ticket System
+- [x] 2 Entities: Ticket, TicketComment
+- [x] 2 Enums: TicketType, TicketStatus
+- [x] TicketService + TicketServiceImpl (UUID ticketCode, lifecycle, comments)
+- [x] TicketController (student): 4 endpoints
+- [x] TicketAdminController: 6 endpoints
+
+### Module 8 — Dashboard
+- [x] DashboardService + DashboardServiceImpl (aggregate counts)
+- [x] DashboardController: 1 endpoint (admin overview)
+
+### Module 9 — User Management
+- [x] UserManagementService + UserManagementServiceImpl
+- [x] UserManagementController: 4 endpoints (list filter, detail, role, status) — SUPER_ADMIN only
+
+---
+
+## Thống kê tổng
+
+| Hạng mục | Số lượng |
+|----------|----------|
+| Bảng database | 27 |
+| ENUM types PostgreSQL | 20 |
+| API endpoints MVP | ~52 |
+| Backend Java files | 126+ |
+| Android Java files | 25 |
+| Android XML resources | 22 |
+
+
 ## [0.1.0] - 2026-04-02 — Khởi tạo dự án & Auth Module
 
 ### Đã hoàn thành trước phiên làm việc này
