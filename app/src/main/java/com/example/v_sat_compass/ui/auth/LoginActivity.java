@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -26,17 +27,30 @@ public class LoginActivity extends AppCompatActivity {
         viewModel = new ViewModelProvider(this).get(AuthViewModel.class);
 
         binding.btnLogin.setOnClickListener(v -> doLogin());
-        binding.tvGoToRegister.setOnClickListener(v -> {
-            startActivity(new Intent(this, RegisterActivity.class));
-        });
+
+        binding.tvGoToRegister.setOnClickListener(v ->
+                startActivity(new Intent(this, RegisterActivity.class)));
+
+        binding.tvForgotPassword.setOnClickListener(v -> showForgotPasswordDialog());
+
+        binding.btnGoogleLogin.setOnClickListener(v ->
+                Toast.makeText(this, "Tính năng đăng nhập Google sẽ sớm ra mắt!", Toast.LENGTH_SHORT).show());
+
+        if (binding.btnBack != null) {
+            binding.btnBack.setOnClickListener(v -> finish());
+        }
     }
 
     private void doLogin() {
         String email = binding.etEmail.getText().toString().trim();
         String password = binding.etPassword.getText().toString().trim();
 
-        if (email.isEmpty() || password.isEmpty()) {
-            Toast.makeText(this, "Vui long dien day du thong tin", Toast.LENGTH_SHORT).show();
+        if (email.isEmpty()) {
+            Toast.makeText(this, "Vui lòng nhập email hoặc số điện thoại", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (password.isEmpty()) {
+            Toast.makeText(this, "Vui lòng nhập mật khẩu", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -48,16 +62,26 @@ public class LoginActivity extends AppCompatActivity {
                     break;
                 case SUCCESS:
                     binding.progressBar.setVisibility(View.GONE);
-                    Toast.makeText(this, "Dang nhap thanh cong!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show();
                     startActivity(new Intent(this, MainActivity.class));
                     finishAffinity();
                     break;
                 case ERROR:
                     binding.progressBar.setVisibility(View.GONE);
                     binding.btnLogin.setEnabled(true);
-                    Toast.makeText(this, resource.getMessage(), Toast.LENGTH_SHORT).show();
+                    String msg = resource.getMessage();
+                    if (msg == null || msg.isEmpty()) msg = "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.";
+                    Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
                     break;
             }
         });
+    }
+
+    private void showForgotPasswordDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Quên mật khẩu")
+                .setMessage("Tính năng đặt lại mật khẩu sẽ gửi link xác nhận đến email của bạn.\n\nVui lòng liên hệ hỗ trợ tại: support@vsat-compass.vn")
+                .setPositiveButton("Đã hiểu", null)
+                .show();
     }
 }

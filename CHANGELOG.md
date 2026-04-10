@@ -1,5 +1,188 @@
 # V-SAT COMPASS — CHANGELOG
 
+## [0.5.0] - 2026-04-10 — Kiến trúc Hybrid: Xử lý cục bộ + Đồng bộ kết quả
+
+### Tổng quan thay đổi kiến trúc
+
+Chuyển từ hai cực "full server" và "full offline" sang kiến trúc **hybrid** hợp lý hơn:
+
+| Bước | Xử lý | Ghi chú |
+|------|--------|---------|
+| Đăng nhập / xác thực | **Server** | Kiểm tra tài khoản, quyền mua đề |
+| Lấy danh sách đề thi | **Server** | `GET /exams` |
+| Bắt đầu phiên thi | **Server** | `POST /sessions/start` — kiểm tra quyền truy cập |
+| Tải câu hỏi | **Server** (cache RAM) | Mỗi câu chỉ gọi API 1 lần, sau đó đọc từ `questionCache` |
+| Đếm thời gian | **Thiết bị** | `CountDownTimer` |
+| Lưu đáp án đã chọn | **Thiết bị** | `selectedAnswers` Map — không gọi API theo từng câu |
+| Chấm điểm | **Thiết bị** | So sánh với `option.isCorrect()` từ `questionCache` |
+| Nộp kết quả | **Server** (fire-and-forget) | Chỉ POST `{score, correct, total, timeSpent}` |
+
+**Lợi ích:** Giảm API calls từ `1 + N + N + 1` xuống `1 + N(cached) + 1`. Không cần server xử lý scoring. Kết quả được lưu vào DB mà không cần logic phức tạp phía server.
+
+---
+
+### ✨ Android — Thay đổi
+
+#### `ExamApi.java`
+- [x] Thêm endpoint `POST /sessions/{sessionId}/client-submit` — nhận kết quả đã tính sẵn từ client
+
+#### `ApiClient.java`
+- [x] Cập nhật comment giải thích `CLIENT_SIDE_EXAM_PROCESSING=true` (timer + chấm điểm cục bộ; vẫn cần mạng để auth, fetch đề, ghi kết quả)
+
+#### `AuthRepository.java`
+- [x] Xóa early-return offline bypass trong `login()`, `register()`, `getMe()` → tất cả gọi API thực tế
+- [x] Giữ `createOfflineAuth()` chỉ làm fallback khi mất mạng
+
+#### `HomeFragment.java`
+- [x] Xóa offline shortcut trong `loadUserProfile()` và `loadExams()` → luôn gọi API trước, fallback cục bộ khi lỗi
+
+#### `ExamFragment.java`
+- [x] Xóa offline shortcut trong `loadExams()` → gọi `GET /exams`, fallback về `LocalExamDataSource` khi lỗi
+
+#### `ExamSessionActivity.java`
+- [x] Thêm `Map<Long, Question> questionCache` — lưu câu hỏi đã fetch để tránh gọi lại + dùng để chấm điểm
+- [x] `startSession()`: bỏ offline early-return, luôn gọi `POST /sessions/start`; `sessionStartMillis` set ngay khi bắt đầu
+- [x] `loadQuestion()`: phục vụ từ `questionCache` nếu đã có, ngược lại gọi API rồi lưu vào cache
+- [x] `submitAnswer()`: vẫn no-op (không gửi từng đáp án lên server) — chỉ lưu vào `selectedAnswers` Map
+- [x] `submitExamLocally()`: chấm điểm từ `questionCache` (dùng `option.isCorrect()`), fallback về `LocalExamDataSource` nếu câu chưa cache; sau khi tính xong gọi `submitClientResult()` fire-and-forget để ghi kết quả vào DB
+
+---
+
+### 🚀 Backend — Cloud Deploy Setup (từ phiên trước)
+
+#### `Dockerfile` *(mới)*
+- [x] Multi-stage build: `gradle:8.7-jdk17` để build → `eclipse-temurin:17-jre-alpine` để run
+- [x] Expose port 8080, `ENTRYPOINT` chạy fat JAR
+
+#### `render.yaml` *(mới)*
+- [x] Cấu hình deploy lên Render.com free tier
+- [x] Health check path `/api/v1/actuator/health`
+- [x] Env vars: `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `JWT_SECRET`, `SPRING_PROFILES_ACTIVE=prod`
+
+#### `application.yml`
+- [x] Profile `prod`: HikariCP pool tối ưu cho Neon free tier (`maximumPoolSize=5`, `minimumIdle=1`, `connectionTimeout=20000`)
+
+---
+
+### ⚠️ Lưu ý triển khai
+
+- Backend chưa implement module **Exam/Session/Question** (chỉ có Auth module). App tự động fallback về `LocalExamDataSource` (`sample_math_exam.json`) khi API chưa có.
+- Khi backend đủ module, tắt fallback bằng cách không dùng `LocalExamDataSource` trong các `onFailure`.
+- Endpoint `POST /sessions/{id}/client-submit` cần được thêm vào `SessionController` trên backend.
+
+---
+
+## [0.4.0] - 2026-04-08 — Triển khai toàn bộ UI Mockup + Enhanced Screens
+
+### ✨ Tính năng mới — Android UI Implementation
+
+#### Màn hình mới
+- [x] **ExamDetailActivity** — Chi tiết đề thi: gradient header, info cards (thời gian, số câu, độ khó), mô tả, nút "Bắt đầu thi ngay"
+- [x] **PracticeFragment** — Lộ trình cải thiện: 
+  - 2 chủ đề cần cải thiện (Hình học không gian 45%, Logarit & Hàm số mũ 60%) với nút "Luyện tập ngay"
+  - 4 chủ đề theo tiến độ (Số học & Đại số 80%, Giải tích 50%, Xác suất & Thống kê 30%, Vật lí hạt nhân 70%) với nút "Tiếp tục"
+- [x] **Fragment_practice.xml** — ScrollView + MaterialCardView + custom progress bars
+
+#### Cải thiện HomeFragment
+- [x] Gradient header với chào buổi (Morning/Afternoon/Evening)
+- [x] Circular score gauge display
+- [x] 3 stat cards: Đề làm, Câu đúng, Tỷ lệ thành công
+- [x] "Tiếp tục luyện tập" section
+- [x] RecyclerView gợi ý ngang (SuggestionAdapter)
+- [x] RecyclerView đề gần đây
+
+#### Cải thiện ExamSessionActivity  
+- [x] Toolbar: nút back, title, bookmark icon, grid icon
+- [x] Progress bar thể hiện tiến độ làm bài
+- [x] Timer hiển thị bên cạnh số câu (`45:50` | `Câu 1/50`)
+- [x] **Question Grid Dialog**: 7-column grid, màu sắc phân biệt (answered=green, unanswered=gray, current=blue border, bookmarked=orange flag)
+- [x] **Bookmark toggle**: lưu câu hỏi yêu thích, icon màu thay đổi theo trạng thái
+- [x] Nút "Nộp bài" từ grid dialog
+
+#### Cải thiện ExamResultActivity
+- [x] Top bar: nút back, tiêu đề, chỉn chu
+- [x] **Circular score chart** (ring progress): 820/1200 điểm V-SAT
+- [x] **Thống kê bên phải**: thời gian làm bài, số câu đúng
+- [x] **"Kết quả theo môn"** section với progress bars: Toán 90%, Lí 70%
+- [x] **"Chủ đề cần cải thiện"** section: Hình học không gian 55%, Dao động cơ 60%, Số phức 65%
+- [x] 2 nút hành động: "Xem lời giải chi tiết" (purple), "Luyện tập thêm" (outline)
+
+#### Cải thiện ExamAdapter + item_exam.xml
+- [x] Redesign item card: bold title, icon + question count, icon + duration, "Đề miễn phí"/"30.000đ" badge, "Làm bài" button
+- [x] Vietnamese text with diacritics: "câu", "phút"
+- [x] Better spacing + Material Design 3 styling
+
+#### Cải thiện ExamFragment
+- [x] "Kho đề thi" header
+- [x] Search bar (MaterialCardView + EditText)
+- [x] Horizontal filter chips: Tất cả, Toán, Tiếng Anh, Vật lí, Hóa học
+- [x] RecyclerView danh sách đề
+
+#### Bảng điều hướng
+- [x] 4 tabs: Trang chủ, Kho đề, Luyện tập, Tài khoản
+- [x] Custom vector icons cho mỗi tab
+- [x] Primary color gradient
+
+#### Cập nhật ProfileFragment
+- [x] Vietnamese diacritics throughout ("Thông tin cá nhân", "Số điện thoại", "Chưa cập nhật", "Đăng xuất")
+
+### 🎨 Design & Colors
+- [x] **Primary**: Purple/Indigo theme (#4A3ABA)
+- [x] **Secondary**: Accent colors (#FF6C5CE7)
+- [x] **Success**: Green (#4CAF50)
+- [x] **Warning**: Orange (#FF9800)
+- [x] **Error**: Red
+- [x] **Drawables created** (20+ files):
+  - ic_home, ic_exam, ic_practice, ic_profile (nav icons)
+  - ic_back, ic_grid, ic_bookmark, ic_timer, ic_check_circle (feature icons)
+  - bg_gradient_header, bg_gradient_card, bg_chip_selected/unselected (backgrounds)
+  - bg_button_primary, bg_button_outline (button styles)
+  - bg_question_answered, bg_question_unanswered, bg_question_current (question states)
+  - circular_progress.xml (ring-shaped score gauge)
+  - progress_green.xml, progress_orange.xml, progress_purple.xml (progress bars)
+
+### Mã nguồn — File thay đổi
+
+**Java (6 files)**
+- ExamSessionActivity.java: bookmark toggle, grid dialog, Vietnamese text
+- ExamResultActivity.java: circular score, V-SAT 1200-point scale
+- HomeFragment.java: greeting logic, adapters setup
+- ProfileFragment.java: Vietnamese diacritics
+- QuestionGridAdapter.java: NEW — 7-column grid, state colors
+- SuggestionAdapter.java: NEW (created in 0.3.0, improved)
+
+**Layouts (9 files)**
+- activity_exam_detail.xml: gradient header + info cards + button
+- activity_exam_session.xml: toolbar with icons, timer, progress
+- activity_exam_result.xml: circular score + stats + breakdowns
+- fragment_practice.xml: NEW — scrollable topic cards + progress lists
+- dialog_question_grid.xml: NEW — grid + stats + submit button
+- item_question_grid.xml: NEW — numbered cells with state colors
+- item_exam.xml: redesigned card layout
+- fragment_exam.xml: search + filter chips
+- fragment_profile.xml: Vietnamese labels
+
+**Drawables (20+ files)**
+- 10 vector icons for tabs/features
+- 10 background drawables for buttons/states
+- 3 custom progress bar drawables
+- 1 circular progress ring
+
+**Manifest & Config**
+- AndroidManifest.xml: + ExamDetailActivity registration
+- mobile_navigation.xml: + nav_practice fragment
+- bottom_nav_menu.xml: 4 items with icons
+- colors.xml: expanded color palette
+
+### Bản dựng
+- **API Call**: ExamFragment → ExamDetailActivity → ExamSessionActivity → ExamResultActivity
+- **Navigation**: BottomNav 4 tabs + intent-based activities
+- **Data Flow**: Retrofit API → RecyclerViews → Activities
+- **State Management**: BookmarkedQuestions Set, SelectedAnswers Map persisted during session
+- **Build Status**: ✅ BUILD SUCCESSFUL (all tasks up-to-date)
+
+---
+
 ## [0.3.0] - 2026-04-04 — Kết nối Neon DB + Fix Auth + GitHub
 
 ### Đã hoàn thành

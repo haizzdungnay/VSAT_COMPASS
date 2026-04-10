@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Toolbar định dạng -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:background="@color/surface"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="8dp"
+            android:layout_marginBottom="8dp">
+
+            <TextView android:layout_width="32dp" android:layout_height="32dp" android:gravity="center" android:text="B" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" android:layout_marginEnd="4dp" />
+            <TextView android:layout_width="32dp" android:layout_height="32dp" android:gravity="center" android:text="I" android:textStyle="italic" android:textSize="16sp" android:textColor="@color/text_primary" android:layout_marginEnd="4dp" />
+            <TextView android:layout_width="32dp" android:layout_height="32dp" android:gravity="center" android:text="U" android:textSize="16sp" android:textColor="@color/text_primary" android:layout_marginEnd="4dp" />
+            <View android:layout_width="1dp" android:layout_height="24dp" android:background="@color/background" android:layout_marginHorizontal="4dp" />
+            <TextView android:layout_width="32dp" android:layout_height="32dp" android:gravity="center" android:text="≡" android:textSize="16sp" android:textColor="@color/text_primary" android:layout_marginEnd="4dp" />
+            <TextView android:layout_width="32dp" android:layout_height="32dp" android:gravity="center" android:text="•" android:textSize="18sp" android:textColor="@color/text_primary" android:layout_marginEnd="4dp" />
+            <ImageView android:layout_width="28dp" android:layout_height="28dp" android:src="@android:drawable/ic_menu_gallery" android:tint="@color/text_primary" android:layout_marginEnd="4dp" />
+            <ImageView android:layout_width="28dp" android:layout_height="28dp" android:src="@android:drawable/ic_menu_share" android:tint="@color/text_primary" />
+        </LinearLayout>
+
+        <!-- Nội dung câu hỏi -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:hint="Nhập nội dung câu hỏi tại đây..."
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etContent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textMultiLine"
+                android:minLines="5"
+                android:gravity="top" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- 4 đáp án -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Đáp án (A, B, C, D)" android:textColor="@color/text_primary" android:textSize="14sp" android:textStyle="bold" android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" android:hint="A." style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense">
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etOptA" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" android:hint="B." style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense">
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etOptB" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" android:hint="C." style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense">
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etOptC" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp" android:hint="D." style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense">
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etOptD" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Đáp án đúng -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Đáp án đúng" android:textColor="@color/text_primary" android:textSize="14sp" android:textStyle="bold" android:layout_marginBottom="8dp" />
+
+        <RadioGroup android:id="@+id/rgCorrectAnswer" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="16dp">
+            <RadioButton android:id="@+id/rbA" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="A" android:buttonTint="@color/success" />
+            <RadioButton android:id="@+id/rbB" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="B" android:buttonTint="@color/success" />
+            <RadioButton android:id="@+id/rbC" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="C" android:buttonTint="@color/success" />
+            <RadioButton android:id="@+id/rbD" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="D" android:buttonTint="@color/success" />
+        </RadioGroup>
+
+        <!-- Lời giải -->
+        <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" android:hint="Lời giải chi tiết (tùy chọn)..." style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etExplanation" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textMultiLine" android:minLines="3" android:gravity="top" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+    </LinearLayout>
+</ScrollView>

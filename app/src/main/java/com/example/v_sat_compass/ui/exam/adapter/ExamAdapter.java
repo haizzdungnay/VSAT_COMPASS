@@ -4,8 +4,10 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.v_sat_compass.R;
 import com.example.v_sat_compass.data.model.Exam;
 import com.example.v_sat_compass.databinding.ItemExamBinding;
 
@@ -19,6 +21,14 @@ public class ExamAdapter extends RecyclerView.Adapter<ExamAdapter.ExamViewHolder
 
     public interface OnExamClickListener {
         void onStartExam(Exam exam);
+    }
+
+    public ExamAdapter() {
+    }
+
+    public ExamAdapter(List<Exam> initialExams, OnExamClickListener listener) {
+        this.exams.addAll(initialExams);
+        this.listener = listener;
     }
 
     public void setOnExamClickListener(OnExamClickListener listener) {
@@ -59,11 +69,33 @@ public class ExamAdapter extends RecyclerView.Adapter<ExamAdapter.ExamViewHolder
 
         void bind(Exam exam) {
             binding.tvExamTitle.setText(exam.getTitle());
-            binding.tvSubjectName.setText(exam.getSubjectName() != null ? exam.getSubjectName() : "");
-            binding.tvQuestionCount.setText(exam.getTotalQuestions() + " cau");
-            binding.tvDuration.setText(exam.getDurationMinutes() + " phut");
+            binding.tvQuestionCount.setText(exam.getTotalQuestions() + " câu");
+            binding.tvDuration.setText(exam.getDurationMinutes() + " phút");
+
+            // Price display: passingScore == 0 means free
+            double passingScore = exam.getPassingScore();
+            if (passingScore <= 0) {
+                binding.tvSubjectName.setText("Đề miễn phí");
+                binding.tvSubjectName.setTextColor(
+                        ContextCompat.getColor(binding.getRoot().getContext(), R.color.success));
+                binding.ivPriceIcon.setImageResource(R.drawable.ic_check_circle);
+                binding.ivPriceIcon.setColorFilter(
+                        ContextCompat.getColor(binding.getRoot().getContext(), R.color.success));
+            } else {
+                String subjectName = exam.getSubjectName() != null ? exam.getSubjectName() : "";
+                binding.tvSubjectName.setText(subjectName.isEmpty() ? "30.000đ" : subjectName);
+                binding.tvSubjectName.setTextColor(
+                        ContextCompat.getColor(binding.getRoot().getContext(), R.color.text_secondary));
+                binding.ivPriceIcon.setImageResource(R.drawable.ic_bookmark);
+                binding.ivPriceIcon.setColorFilter(
+                        ContextCompat.getColor(binding.getRoot().getContext(), R.color.text_secondary));
+            }
 
             binding.btnStartExam.setOnClickListener(v -> {
+                if (listener != null) listener.onStartExam(exam);
+            });
+
+            binding.getRoot().setOnClickListener(v -> {
                 if (listener != null) listener.onStartExam(exam);
             });
         }

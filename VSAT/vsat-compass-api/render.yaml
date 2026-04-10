@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: vsat-compass-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    region: singapore
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        value: jdbc:postgresql://ep-proud-band-a14sdzmb.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+      - key: DATABASE_USERNAME
+        value: neondb_owner
+      - key: DATABASE_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        value: dnNhdGNvbXBhc3Mtc3VwZXItc2VjcmV0LWp3dC1rZXktMjU2Yml0LXByb2R1Y3Rpb24tMjAyNC12c2F0
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod

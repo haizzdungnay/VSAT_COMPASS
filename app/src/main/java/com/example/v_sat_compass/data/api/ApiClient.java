@@ -15,7 +15,24 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ApiClient {
 
-    private static final String BASE_URL = "http://10.0.2.2:8080/api/v1/";
+    // ===== CẤU HÌNH URL BACKEND =====
+    // Sau khi deploy lên Render, thay URL bên dưới bằng URL Render của bạn
+    // Ví dụ: "https://vsat-compass-api.onrender.com/api/v1/"
+    // Render free tier sẽ sleep sau 15 phút không dùng, request đầu tiên mất ~30-60s
+    private static final String BASE_URL_CLOUD = "https://vsat-compass-api.onrender.com/api/v1/";
+    // Dùng IP LAN khi chạy backend local (chỉ dùng khi dev)
+    private static final String BASE_URL_LOCAL = "http://192.168.100.8:8080/api/v1/";
+
+    // >>> CHUYỂN GIỮA CLOUD VÀ LOCAL TẠI ĐÂY <<<
+    private static final String BASE_URL = BASE_URL_CLOUD;
+
+    // === CHẾ ĐỘ XỬ LÝ ĐỀ THI ===
+    // true  → Timer + chấm điểm chạy trực tiếp trên thiết bị (KHÔNG gửi từng đáp án lên server).
+    //         App vẫn cần mạng để đăng nhập, kiểm tra quyền mua đề, và lấy dữ liệu đề thi.
+    //         Chỉ POST kết quả cuối cùng {score, correct, total, timeSpent} lên DB.
+    // false → Server xử lý toàn bộ (nhận từng đáp án, tự chấm điểm).
+    private static final boolean CLIENT_SIDE_EXAM_PROCESSING = true;
+
     private static Retrofit retrofit;
 
     public static Retrofit getClient() {
@@ -79,5 +96,9 @@ public class ApiClient {
 
     public static boolean isLoggedIn() {
         return getAccessToken() != null;
+    }
+
+    public static boolean isClientSideExamProcessingEnabled() {
+        return CLIENT_SIDE_EXAM_PROCESSING;
     }
 }

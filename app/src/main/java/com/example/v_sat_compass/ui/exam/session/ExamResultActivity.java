@@ -23,15 +23,24 @@ public class ExamResultActivity extends AppCompatActivity {
         int total = getIntent().getIntExtra("total", 0);
         int timeSpent = getIntent().getIntExtra("time_spent", 0);
 
-        binding.tvScore.setText(String.format(Locale.getDefault(), "%.0f%%", score));
+        // Calculate display score (V-SAT scale: 1200)
+        int displayScore = (int) (score * 12);
+        binding.tvScore.setText(String.valueOf(displayScore));
+        binding.tvScoreMax.setText("/1200");
         binding.tvCorrectCount.setText(correct + "/" + total);
+
+        // Progress ring
+        binding.progressScore.setProgress((int) score);
 
         int minutes = timeSpent / 60;
         int seconds = timeSpent % 60;
         binding.tvTimeSpent.setText(String.format(Locale.getDefault(), "%d:%02d", minutes, seconds));
 
-        binding.tvPassStatus.setText(score >= 50 ? "DAT" : "CHUA DAT");
-
+        binding.btnBack.setOnClickListener(v -> finish());
         binding.btnBackToList.setOnClickListener(v -> finish());
+        binding.btnViewDetail.setOnClickListener(v -> {
+            // TODO: Navigate to detailed solution review
+            finish();
+        });
     }
 }

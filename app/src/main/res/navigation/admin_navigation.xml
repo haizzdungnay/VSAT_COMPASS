@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/admin_navigation"
+    app:startDestination="@id/nav_admin_dashboard">
+
+    <fragment
+        android:id="@+id/nav_admin_dashboard"
+        android:name="com.example.v_sat_compass.ui.admin.dashboard.AdminDashboardFragment"
+        android:label="Tổng quan"
+        tools:layout="@layout/fragment_admin_dashboard" />
+
+    <fragment
+        android:id="@+id/nav_admin_questions"
+        android:name="com.example.v_sat_compass.ui.admin.questions.AdminQuestionBankFragment"
+        android:label="Ngân hàng"
+        tools:layout="@layout/fragment_admin_question_bank" />
+
+    <fragment
+        android:id="@+id/nav_admin_exams"
+        android:name="com.example.v_sat_compass.ui.admin.exam.AdminExamListFragment"
+        android:label="Đề thi"
+        tools:layout="@layout/fragment_admin_exam_list" />
+
+    <fragment
+        android:id="@+id/nav_admin_users"
+        android:name="com.example.v_sat_compass.ui.admin.users.AdminUserManagementFragment"
+        android:label="Người dùng"
+        tools:layout="@layout/fragment_admin_user_management" />
+
+</navigation>

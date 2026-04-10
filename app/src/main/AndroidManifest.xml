@@ -16,6 +16,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.VSAT_COMPASS">
+
+        <!-- ── Core ── -->
         <activity
             android:name=".ui.SplashActivity"
             android:exported="true"
@@ -25,11 +27,31 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.auth.LoginActivity" android:exported="false" />
+        <activity android:name=".ui.auth.LoginActivity"    android:exported="false" />
         <activity android:name=".ui.auth.RegisterActivity" android:exported="false" />
-        <activity android:name=".MainActivity" android:exported="false" />
-        <activity android:name=".ui.exam.session.ExamSessionActivity" android:exported="false" />
-        <activity android:name=".ui.exam.session.ExamResultActivity" android:exported="false" />
+        <activity android:name=".MainActivity"             android:exported="false" />
+
+        <!-- ── Exam (Student) ── -->
+        <activity android:name=".ui.exam.ExamDetailActivity"           android:exported="false" />
+        <activity android:name=".ui.exam.session.ExamSessionActivity"  android:exported="false" />
+        <activity android:name=".ui.exam.session.ExamResultActivity"   android:exported="false" />
+
+        <!-- ── Admin Mode ── -->
+        <activity
+            android:name=".ui.admin.AdminActivity"
+            android:exported="false"
+            android:label="Quản trị V-SAT" />
+
+        <!-- Admin: Question management -->
+        <activity android:name=".ui.admin.questions.AdminReviewQuestionActivity" android:exported="false" />
+
+        <!-- Admin: Exam management -->
+        <activity android:name=".ui.admin.exam.AdminCreateExamActivity" android:exported="false" />
+
+        <!-- ── Collaborator ── -->
+        <activity android:name=".ui.collaborator.CollaboratorWorkspaceActivity" android:exported="false" />
+        <activity android:name=".ui.collaborator.QuestionEditorActivity"        android:exported="false" />
+
     </application>
 
 </manifest>

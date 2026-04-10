@@ -1,0 +1,624 @@
+{
+  "exam": {
+    "id": 1,
+    "exam_code": "VSAT-MATH-2024-001",
+    "title": "Đề thi thử V-SAT Toán — Đề số 1",
+    "subject_name": "Toán học",
+    "description": "Đề thi mô phỏng kỳ thi V-SAT môn Toán. Cấu trúc 50 câu trắc nghiệm, thời gian 90 phút, tổng 150 điểm (mỗi câu 3 điểm, không trừ điểm sai).",
+    "duration_minutes": 90,
+    "total_questions": 50,
+    "max_score": 150,
+    "points_per_question": 3,
+    "difficulty": "MEDIUM",
+    "status": "PUBLISHED",
+    "is_paid": false,
+    "structure": {
+      "dai_so_ham_so": { "name": "Đại số & Hàm số", "from": 1, "to": 18, "count": 18 },
+      "giai_tich": { "name": "Giải tích (Đạo hàm & Tích phân)", "from": 19, "to": 33, "count": 15 },
+      "hinh_hoc": { "name": "Hình học & Tọa độ", "from": 34, "to": 45, "count": 12 },
+      "to_hop_xac_suat": { "name": "Tổ hợp & Xác suất", "from": 46, "to": 50, "count": 5 }
+    }
+  },
+  "questions": [
+    {
+      "order": 1, "code": "MATH-001", "topic": "Đại số",
+      "content": "Phương trình 2x² - 5x + 3 = 0 có hai nghiệm x₁, x₂. Giá trị của x₁ + x₂ bằng:",
+      "options": [
+        {"label": "A", "content": "5/2"},
+        {"label": "B", "content": "3/2"},
+        {"label": "C", "content": "-5/2"},
+        {"label": "D", "content": "-3/2"}
+      ],
+      "correct": "A",
+      "explanation": "Theo định lý Vi-et: x₁ + x₂ = -b/a = -(-5)/2 = 5/2."
+    },
+    {
+      "order": 2, "code": "MATH-002", "topic": "Đại số",
+      "content": "Tập nghiệm của bất phương trình x² - 3x + 2 ≤ 0 là:",
+      "options": [
+        {"label": "A", "content": "(-∞; 1]"},
+        {"label": "B", "content": "[1; 2]"},
+        {"label": "C", "content": "[2; +∞)"},
+        {"label": "D", "content": "(-∞; 1] ∪ [2; +∞)"}
+      ],
+      "correct": "B",
+      "explanation": "x² - 3x + 2 = (x-1)(x-2) ≤ 0 khi 1 ≤ x ≤ 2. Tập nghiệm: [1; 2]."
+    },
+    {
+      "order": 3, "code": "MATH-003", "topic": "Hàm số bậc hai",
+      "content": "Parabol y = x² - 4x + 3 có đỉnh tại điểm:",
+      "options": [
+        {"label": "A", "content": "(2; -1)"},
+        {"label": "B", "content": "(-2; -1)"},
+        {"label": "C", "content": "(2; 1)"},
+        {"label": "D", "content": "(-2; 1)"}
+      ],
+      "correct": "A",
+      "explanation": "Đỉnh parabol y = ax² + bx + c tại x = -b/(2a) = 4/2 = 2. y(2) = 4 - 8 + 3 = -1. Đỉnh (2; -1)."
+    },
+    {
+      "order": 4, "code": "MATH-004", "topic": "Hệ phương trình",
+      "content": "Hệ phương trình {x + y = 5; 2x - y = 4} có nghiệm (x; y) là:",
+      "options": [
+        {"label": "A", "content": "(3; 2)"},
+        {"label": "B", "content": "(2; 3)"},
+        {"label": "C", "content": "(4; 1)"},
+        {"label": "D", "content": "(1; 4)"}
+      ],
+      "correct": "A",
+      "explanation": "Cộng hai phương trình: 3x = 9 → x = 3. Thay vào: y = 5 - 3 = 2. Nghiệm (3; 2)."
+    },
+    {
+      "order": 5, "code": "MATH-005", "topic": "Lũy thừa",
+      "content": "Giá trị của 4^(3/2) bằng:",
+      "options": [
+        {"label": "A", "content": "6"},
+        {"label": "B", "content": "8"},
+        {"label": "C", "content": "12"},
+        {"label": "D", "content": "16"}
+      ],
+      "correct": "B",
+      "explanation": "4^(3/2) = (4^(1/2))³ = 2³ = 8."
+    },
+    {
+      "order": 6, "code": "MATH-006", "topic": "Logarithm",
+      "content": "log₂(32) bằng:",
+      "options": [
+        {"label": "A", "content": "3"},
+        {"label": "B", "content": "4"},
+        {"label": "C", "content": "5"},
+        {"label": "D", "content": "6"}
+      ],
+      "correct": "C",
+      "explanation": "log₂(32) = log₂(2⁵) = 5."
+    },
+    {
+      "order": 7, "code": "MATH-007", "topic": "Hàm số mũ",
+      "content": "Phương trình 2^(2x-1) = 8 có nghiệm x bằng:",
+      "options": [
+        {"label": "A", "content": "1"},
+        {"label": "B", "content": "2"},
+        {"label": "C", "content": "3/2"},
+        {"label": "D", "content": "5/2"}
+      ],
+      "correct": "B",
+      "explanation": "2^(2x-1) = 2³ → 2x - 1 = 3 → x = 2."
+    },
+    {
+      "order": 8, "code": "MATH-008", "topic": "Hàm số logarithm",
+      "content": "Phương trình log₃(x + 1) = 2 có nghiệm x bằng:",
+      "options": [
+        {"label": "A", "content": "6"},
+        {"label": "B", "content": "7"},
+        {"label": "C", "content": "8"},
+        {"label": "D", "content": "9"}
+      ],
+      "correct": "C",
+      "explanation": "log₃(x + 1) = 2 → x + 1 = 3² = 9 → x = 8."
+    },
+    {
+      "order": 9, "code": "MATH-009", "topic": "Dãy số",
+      "content": "Dãy cấp số cộng có số hạng đầu u₁ = 3 và công sai d = 4. Số hạng u₅ bằng:",
+      "options": [
+        {"label": "A", "content": "15"},
+        {"label": "B", "content": "17"},
+        {"label": "C", "content": "19"},
+        {"label": "D", "content": "23"}
+      ],
+      "correct": "C",
+      "explanation": "u₅ = u₁ + (5-1)d = 3 + 4×4 = 3 + 16 = 19."
+    },
+    {
+      "order": 10, "code": "MATH-010", "topic": "Cấp số nhân",
+      "content": "Cấp số nhân có u₁ = 2, q = 3. Tổng 4 số hạng đầu S₄ bằng:",
+      "options": [
+        {"label": "A", "content": "78"},
+        {"label": "B", "content": "80"},
+        {"label": "C", "content": "82"},
+        {"label": "D", "content": "84"}
+      ],
+      "correct": "B",
+      "explanation": "S₄ = u₁(q⁴-1)/(q-1) = 2(81-1)/2 = 80."
+    },
+    {
+      "order": 11, "code": "MATH-011", "topic": "Đa thức",
+      "content": "Đa thức P(x) = x³ - 6x² + 11x - 6 có nghiệm x = 1 là nghiệm bội mấy?",
+      "options": [
+        {"label": "A", "content": "Bội 1"},
+        {"label": "B", "content": "Bội 2"},
+        {"label": "C", "content": "Bội 3"},
+        {"label": "D", "content": "Không phải nghiệm"}
+      ],
+      "correct": "A",
+      "explanation": "P(1) = 1 - 6 + 11 - 6 = 0. P'(x) = 3x²-12x+11, P'(1) = 3-12+11 = 2 ≠ 0. Vậy x=1 là nghiệm bội 1."
+    },
+    {
+      "order": 12, "code": "MATH-012", "topic": "Phân thức đại số",
+      "content": "Rút gọn phân thức (x²-4)/(x-2) (với x ≠ 2) ta được:",
+      "options": [
+        {"label": "A", "content": "x - 2"},
+        {"label": "B", "content": "x + 2"},
+        {"label": "C", "content": "x² + 2"},
+        {"label": "D", "content": "2 - x"}
+      ],
+      "correct": "B",
+      "explanation": "(x²-4)/(x-2) = (x+2)(x-2)/(x-2) = x + 2."
+    },
+    {
+      "order": 13, "code": "MATH-013", "topic": "Bất phương trình bậc hai",
+      "content": "Bất phương trình x² - 5x + 6 > 0 có tập nghiệm là:",
+      "options": [
+        {"label": "A", "content": "(2; 3)"},
+        {"label": "B", "content": "(-∞; 2) ∪ (3; +∞)"},
+        {"label": "C", "content": "[2; 3]"},
+        {"label": "D", "content": "(-∞; 2] ∪ [3; +∞)"}
+      ],
+      "correct": "B",
+      "explanation": "x²-5x+6 = (x-2)(x-3) > 0 khi x < 2 hoặc x > 3. Tập nghiệm: (-∞;2) ∪ (3;+∞)."
+    },
+    {
+      "order": 14, "code": "MATH-014", "topic": "Hàm số bậc nhất",
+      "content": "Đường thẳng y = 2x - 3 đi qua điểm nào trong các điểm sau?",
+      "options": [
+        {"label": "A", "content": "(1; -1)"},
+        {"label": "B", "content": "(2; 1)"},
+        {"label": "C", "content": "(0; 3)"},
+        {"label": "D", "content": "(-1; -5)"}
+      ],
+      "correct": "B",
+      "explanation": "y(2) = 2×2 - 3 = 1. Điểm (2; 1) thuộc đường thẳng."
+    },
+    {
+      "order": 15, "code": "MATH-015", "topic": "Hàm số",
+      "content": "Hàm số f(x) = x² - 2x + 1 đồng biến trên khoảng:",
+      "options": [
+        {"label": "A", "content": "(-∞; 0)"},
+        {"label": "B", "content": "(0; 1)"},
+        {"label": "C", "content": "(1; +∞)"},
+        {"label": "D", "content": "(-∞; 1)"}
+      ],
+      "correct": "C",
+      "explanation": "f'(x) = 2x - 2 > 0 khi x > 1. Hàm đồng biến trên (1; +∞)."
+    },
+    {
+      "order": 16, "code": "MATH-016", "topic": "Phương trình bậc ba",
+      "content": "Phương trình x³ - 3x² + 3x - 1 = 0 có bao nhiêu nghiệm thực?",
+      "options": [
+        {"label": "A", "content": "0"},
+        {"label": "B", "content": "1"},
+        {"label": "C", "content": "2"},
+        {"label": "D", "content": "3"}
+      ],
+      "correct": "B",
+      "explanation": "x³ - 3x² + 3x - 1 = (x-1)³ = 0 → x = 1 (nghiệm bội 3 = 1 nghiệm thực)."
+    },
+    {
+      "order": 17, "code": "MATH-017", "topic": "Logarithm",
+      "content": "Bất phương trình log₁/₂(x - 1) > -2 có tập nghiệm là:",
+      "options": [
+        {"label": "A", "content": "(1; 5)"},
+        {"label": "B", "content": "(1; 4)"},
+        {"label": "C", "content": "(1; 3)"},
+        {"label": "D", "content": "(1; +∞)"}
+      ],
+      "correct": "A",
+      "explanation": "log₁/₂(x-1) > -2 ⟺ x-1 < (1/2)^(-2) = 4 ⟺ x < 5. Kết hợp x - 1 > 0 → x > 1. Tập nghiệm: (1; 5)."
+    },
+    {
+      "order": 18, "code": "MATH-018", "topic": "Hàm số mũ",
+      "content": "Giá trị lớn nhất của hàm số y = -e^x + 2 trên đoạn [-1; 1] là:",
+      "options": [
+        {"label": "A", "content": "2 - e"},
+        {"label": "B", "content": "2 - 1/e"},
+        {"label": "C", "content": "2 + e"},
+        {"label": "D", "content": "2 + 1/e"}
+      ],
+      "correct": "B",
+      "explanation": "Hàm -e^x nghịch biến, đạt max khi x nhỏ nhất = -1. y(-1) = -e^(-1) + 2 = 2 - 1/e."
+    },
+    {
+      "order": 19, "code": "MATH-019", "topic": "Đạo hàm",
+      "content": "Đạo hàm của hàm số f(x) = x³ - 3x² + 2 là:",
+      "options": [
+        {"label": "A", "content": "3x² - 6x"},
+        {"label": "B", "content": "3x² + 6x"},
+        {"label": "C", "content": "x³ - 6x"},
+        {"label": "D", "content": "3x - 6"}
+      ],
+      "correct": "A",
+      "explanation": "f'(x) = 3x² - 6x."
+    },
+    {
+      "order": 20, "code": "MATH-020", "topic": "Cực trị",
+      "content": "Hàm số y = x³ - 3x có bao nhiêu cực trị?",
+      "options": [
+        {"label": "A", "content": "0"},
+        {"label": "B", "content": "1"},
+        {"label": "C", "content": "2"},
+        {"label": "D", "content": "3"}
+      ],
+      "correct": "C",
+      "explanation": "y' = 3x² - 3 = 0 → x = ±1. y'' = 6x: y''(1)=6>0 (cực tiểu), y''(-1)=-6<0 (cực đại). Có 2 cực trị."
+    },
+    {
+      "order": 21, "code": "MATH-021", "topic": "Giới hạn",
+      "content": "Giới hạn lim(x→2) (x²-4)/(x-2) bằng:",
+      "options": [
+        {"label": "A", "content": "0"},
+        {"label": "B", "content": "2"},
+        {"label": "C", "content": "4"},
+        {"label": "D", "content": "Không tồn tại"}
+      ],
+      "correct": "C",
+      "explanation": "lim(x→2) (x²-4)/(x-2) = lim(x→2) (x+2) = 4."
+    },
+    {
+      "order": 22, "code": "MATH-022", "topic": "Đạo hàm hàm hợp",
+      "content": "Đạo hàm của y = sin(2x) là:",
+      "options": [
+        {"label": "A", "content": "cos(2x)"},
+        {"label": "B", "content": "2cos(2x)"},
+        {"label": "C", "content": "-2cos(2x)"},
+        {"label": "D", "content": "-cos(2x)"}
+      ],
+      "correct": "B",
+      "explanation": "y' = cos(2x) × (2x)' = 2cos(2x)."
+    },
+    {
+      "order": 23, "code": "MATH-023", "topic": "Đạo hàm",
+      "content": "Đạo hàm của y = ln(x² + 1) là:",
+      "options": [
+        {"label": "A", "content": "1/(x²+1)"},
+        {"label": "B", "content": "2x/(x²+1)"},
+        {"label": "C", "content": "x/(x²+1)"},
+        {"label": "D", "content": "2/(x²+1)"}
+      ],
+      "correct": "B",
+      "explanation": "y' = (x²+1)'/(x²+1) = 2x/(x²+1)."
+    },
+    {
+      "order": 24, "code": "MATH-024", "topic": "Giá trị lớn nhất nhỏ nhất",
+      "content": "Giá trị nhỏ nhất của hàm số f(x) = x² - 4x + 5 trên đoạn [0; 4] là:",
+      "options": [
+        {"label": "A", "content": "0"},
+        {"label": "B", "content": "1"},
+        {"label": "C", "content": "2"},
+        {"label": "D", "content": "5"}
+      ],
+      "correct": "B",
+      "explanation": "f'(x) = 2x - 4 = 0 → x = 2 ∈ [0; 4]. f(2) = 4 - 8 + 5 = 1. f(0) = 5, f(4) = 5. Min = 1."
+    },
+    {
+      "order": 25, "code": "MATH-025", "topic": "Tích phân",
+      "content": "∫(x² + 1)dx bằng:",
+      "options": [
+        {"label": "A", "content": "x³/3 + x + C"},
+        {"label": "B", "content": "x³ + x + C"},
+        {"label": "C", "content": "2x + C"},
+        {"label": "D", "content": "x³/3 + C"}
+      ],
+      "correct": "A",
+      "explanation": "∫(x²+1)dx = x³/3 + x + C."
+    },
+    {
+      "order": 26, "code": "MATH-026", "topic": "Tích phân xác định",
+      "content": "∫₀¹ (2x + 1) dx bằng:",
+      "options": [
+        {"label": "A", "content": "1"},
+        {"label": "B", "content": "2"},
+        {"label": "C", "content": "3"},
+        {"label": "D", "content": "4"}
+      ],
+      "correct": "B",
+      "explanation": "∫₀¹(2x+1)dx = [x²+x]₀¹ = (1+1) - 0 = 2."
+    },
+    {
+      "order": 27, "code": "MATH-027", "topic": "Tích phân",
+      "content": "∫ eˣ dx bằng:",
+      "options": [
+        {"label": "A", "content": "eˣ + C"},
+        {"label": "B", "content": "xeˣ + C"},
+        {"label": "C", "content": "eˣ/x + C"},
+        {"label": "D", "content": "e^(x+1) + C"}
+      ],
+      "correct": "A",
+      "explanation": "∫eˣdx = eˣ + C (nguyên hàm của eˣ chính là eˣ)."
+    },
+    {
+      "order": 28, "code": "MATH-028", "topic": "Diện tích",
+      "content": "Diện tích hình phẳng giới hạn bởi y = x², trục Ox, x = 0 và x = 2 là:",
+      "options": [
+        {"label": "A", "content": "4/3"},
+        {"label": "B", "content": "8/3"},
+        {"label": "C", "content": "4"},
+        {"label": "D", "content": "8"}
+      ],
+      "correct": "B",
+      "explanation": "S = ∫₀² x²dx = [x³/3]₀² = 8/3."
+    },
+    {
+      "order": 29, "code": "MATH-029", "topic": "Tích phân",
+      "content": "∫ (1/x) dx (x > 0) bằng:",
+      "options": [
+        {"label": "A", "content": "-1/x² + C"},
+        {"label": "B", "content": "ln(x) + C"},
+        {"label": "C", "content": "1/(2x²) + C"},
+        {"label": "D", "content": "x·ln(x) + C"}
+      ],
+      "correct": "B",
+      "explanation": "∫(1/x)dx = ln|x| + C = ln(x) + C với x > 0."
+    },
+    {
+      "order": 30, "code": "MATH-030", "topic": "Đạo hàm ứng dụng",
+      "content": "Một vật chuyển động theo phương trình s = t³ - 3t² + 2t (m, s). Vận tốc của vật tại t = 2 (giây) là:",
+      "options": [
+        {"label": "A", "content": "0 m/s"},
+        {"label": "B", "content": "1 m/s"},
+        {"label": "C", "content": "2 m/s"},
+        {"label": "D", "content": "3 m/s"}
+      ],
+      "correct": "C",
+      "explanation": "v(t) = s'(t) = 3t² - 6t + 2. v(2) = 12 - 12 + 2 = 2 m/s."
+    },
+    {
+      "order": 31, "code": "MATH-031", "topic": "Tích phân",
+      "content": "∫₁ᵉ (1/x) dx bằng:",
+      "options": [
+        {"label": "A", "content": "0"},
+        {"label": "B", "content": "1"},
+        {"label": "C", "content": "e"},
+        {"label": "D", "content": "e - 1"}
+      ],
+      "correct": "B",
+      "explanation": "∫₁ᵉ(1/x)dx = [ln(x)]₁ᵉ = ln(e) - ln(1) = 1 - 0 = 1."
+    },
+    {
+      "order": 32, "code": "MATH-032", "topic": "Tiệm cận",
+      "content": "Hàm số y = (2x+1)/(x-1) có tiệm cận ngang là:",
+      "options": [
+        {"label": "A", "content": "y = 0"},
+        {"label": "B", "content": "y = 1"},
+        {"label": "C", "content": "y = 2"},
+        {"label": "D", "content": "y = -1"}
+      ],
+      "correct": "C",
+      "explanation": "lim(x→±∞) (2x+1)/(x-1) = lim 2x/x = 2. Tiệm cận ngang: y = 2."
+    },
+    {
+      "order": 33, "code": "MATH-033", "topic": "Tích phân",
+      "content": "Thể tích khối tròn xoay tạo bởi hình phẳng giới hạn bởi y = √x, x = 0, x = 4, trục Ox (quay quanh Ox) là:",
+      "options": [
+        {"label": "A", "content": "4π"},
+        {"label": "B", "content": "6π"},
+        {"label": "C", "content": "8π"},
+        {"label": "D", "content": "16π"}
+      ],
+      "correct": "C",
+      "explanation": "V = π∫₀⁴ (√x)² dx = π∫₀⁴ x dx = π[x²/2]₀⁴ = π×8 = 8π."
+    },
+    {
+      "order": 34, "code": "MATH-034", "topic": "Vectơ",
+      "content": "Cho vectơ a = (3; 4). Độ dài |a| bằng:",
+      "options": [
+        {"label": "A", "content": "3"},
+        {"label": "B", "content": "4"},
+        {"label": "C", "content": "5"},
+        {"label": "D", "content": "7"}
+      ],
+      "correct": "C",
+      "explanation": "|a| = √(3²+4²) = √(9+16) = √25 = 5."
+    },
+    {
+      "order": 35, "code": "MATH-035", "topic": "Tọa độ",
+      "content": "Khoảng cách từ điểm M(3; -4) đến gốc tọa độ O là:",
+      "options": [
+        {"label": "A", "content": "1"},
+        {"label": "B", "content": "5"},
+        {"label": "C", "content": "7"},
+        {"label": "D", "content": "25"}
+      ],
+      "correct": "B",
+      "explanation": "OM = √(3²+(-4)²) = √(9+16) = 5."
+    },
+    {
+      "order": 36, "code": "MATH-036", "topic": "Đường thẳng",
+      "content": "Đường thẳng đi qua A(1; 2) và B(3; 6) có phương trình là:",
+      "options": [
+        {"label": "A", "content": "y = 2x"},
+        {"label": "B", "content": "y = 2x + 1"},
+        {"label": "C", "content": "y = x + 1"},
+        {"label": "D", "content": "y = 3x - 1"}
+      ],
+      "correct": "A",
+      "explanation": "Hệ số góc k = (6-2)/(3-1) = 2. Phương trình: y - 2 = 2(x - 1) → y = 2x."
+    },
+    {
+      "order": 37, "code": "MATH-037", "topic": "Đường tròn",
+      "content": "Đường tròn (x-2)² + (y+1)² = 9 có tâm và bán kính là:",
+      "options": [
+        {"label": "A", "content": "I(2; -1), R = 3"},
+        {"label": "B", "content": "I(-2; 1), R = 3"},
+        {"label": "C", "content": "I(2; -1), R = 9"},
+        {"label": "D", "content": "I(-2; 1), R = 9"}
+      ],
+      "correct": "A",
+      "explanation": "So sánh (x-a)²+(y-b)²=R²: a=2, b=-1, R=√9=3. Tâm I(2;-1), R=3."
+    },
+    {
+      "order": 38, "code": "MATH-038", "topic": "Khoảng cách",
+      "content": "Khoảng cách từ điểm M(1; 2) đến đường thẳng 3x + 4y - 5 = 0 là:",
+      "options": [
+        {"label": "A", "content": "5/6"},
+        {"label": "B", "content": "6/5"},
+        {"label": "C", "content": "1"},
+        {"label": "D", "content": "2"}
+      ],
+      "correct": "B",
+      "explanation": "d = |3×1 + 4×2 - 5|/√(9+16) = |3+8-5|/5 = 6/5."
+    },
+    {
+      "order": 39, "code": "MATH-039", "topic": "Hình học không gian",
+      "content": "Thể tích hình hộp chữ nhật có 3 kích thước 3cm, 4cm, 5cm là:",
+      "options": [
+        {"label": "A", "content": "47 cm³"},
+        {"label": "B", "content": "60 cm³"},
+        {"label": "C", "content": "94 cm³"},
+        {"label": "D", "content": "120 cm³"}
+      ],
+      "correct": "B",
+      "explanation": "V = 3 × 4 × 5 = 60 cm³."
+    },
+    {
+      "order": 40, "code": "MATH-040", "topic": "Hình cầu",
+      "content": "Mặt cầu có bán kính R = 3. Thể tích mặt cầu là:",
+      "options": [
+        {"label": "A", "content": "12π"},
+        {"label": "B", "content": "36π"},
+        {"label": "C", "content": "108π"},
+        {"label": "D", "content": "144π"}
+      ],
+      "correct": "B",
+      "explanation": "V = (4/3)πR³ = (4/3)π×27 = 36π."
+    },
+    {
+      "order": 41, "code": "MATH-041", "topic": "Vectơ tích vô hướng",
+      "content": "Cho a = (1; 2) và b = (3; -1). Tích vô hướng a·b bằng:",
+      "options": [
+        {"label": "A", "content": "-1"},
+        {"label": "B", "content": "1"},
+        {"label": "C", "content": "5"},
+        {"label": "D", "content": "7"}
+      ],
+      "correct": "B",
+      "explanation": "a·b = 1×3 + 2×(-1) = 3 - 2 = 1."
+    },
+    {
+      "order": 42, "code": "MATH-042", "topic": "Hình chóp",
+      "content": "Hình chóp tam giác đều có cạnh đáy a = 4 và chiều cao h = 6. Thể tích bằng:",
+      "options": [
+        {"label": "A", "content": "8√3"},
+        {"label": "B", "content": "16√3"},
+        {"label": "C", "content": "24"},
+        {"label": "D", "content": "32"}
+      ],
+      "correct": "A",
+      "explanation": "S_đáy = (a²√3)/4 = (16√3)/4 = 4√3. V = (1/3)×S×h = (1/3)×4√3×6 = 8√3."
+    },
+    {
+      "order": 43, "code": "MATH-043", "topic": "Elip",
+      "content": "Elip x²/16 + y²/9 = 1 có bán trục lớn a và bán trục nhỏ b là:",
+      "options": [
+        {"label": "A", "content": "a = 4, b = 3"},
+        {"label": "B", "content": "a = 16, b = 9"},
+        {"label": "C", "content": "a = 3, b = 4"},
+        {"label": "D", "content": "a = 9, b = 16"}
+      ],
+      "correct": "A",
+      "explanation": "Phương trình chuẩn x²/a²+y²/b²=1. a²=16→a=4, b²=9→b=3."
+    },
+    {
+      "order": 44, "code": "MATH-044", "topic": "Góc giữa hai đường thẳng",
+      "content": "Góc giữa hai đường thẳng y = x + 1 và y = -x + 2 là:",
+      "options": [
+        {"label": "A", "content": "30°"},
+        {"label": "B", "content": "45°"},
+        {"label": "C", "content": "60°"},
+        {"label": "D", "content": "90°"}
+      ],
+      "correct": "D",
+      "explanation": "k₁ = 1, k₂ = -1. k₁×k₂ = -1 → hai đường vuông góc. Góc = 90°."
+    },
+    {
+      "order": 45, "code": "MATH-045", "topic": "Hình trụ",
+      "content": "Hình trụ có bán kính R = 2 và chiều cao h = 5. Thể tích bằng:",
+      "options": [
+        {"label": "A", "content": "10π"},
+        {"label": "B", "content": "20π"},
+        {"label": "C", "content": "40π"},
+        {"label": "D", "content": "80π"}
+      ],
+      "correct": "B",
+      "explanation": "V = πR²h = π×4×5 = 20π."
+    },
+    {
+      "order": 46, "code": "MATH-046", "topic": "Hoán vị",
+      "content": "Số hoán vị của 5 phần tử là:",
+      "options": [
+        {"label": "A", "content": "20"},
+        {"label": "B", "content": "60"},
+        {"label": "C", "content": "120"},
+        {"label": "D", "content": "240"}
+      ],
+      "correct": "C",
+      "explanation": "P₅ = 5! = 5×4×3×2×1 = 120."
+    },
+    {
+      "order": 47, "code": "MATH-047", "topic": "Tổ hợp",
+      "content": "Giá trị của C(6,2) bằng:",
+      "options": [
+        {"label": "A", "content": "12"},
+        {"label": "B", "content": "15"},
+        {"label": "C", "content": "30"},
+        {"label": "D", "content": "36"}
+      ],
+      "correct": "B",
+      "explanation": "C(6,2) = 6!/(2!×4!) = (6×5)/(2×1) = 15."
+    },
+    {
+      "order": 48, "code": "MATH-048", "topic": "Xác suất",
+      "content": "Gieo một xúc xắc cân đối. Xác suất để xuất hiện mặt có số chấm lẻ là:",
+      "options": [
+        {"label": "A", "content": "1/6"},
+        {"label": "B", "content": "1/3"},
+        {"label": "C", "content": "1/2"},
+        {"label": "D", "content": "2/3"}
+      ],
+      "correct": "C",
+      "explanation": "Mặt lẻ: {1, 3, 5} = 3 mặt. P = 3/6 = 1/2."
+    },
+    {
+      "order": 49, "code": "MATH-049", "topic": "Xác suất có điều kiện",
+      "content": "Một túi có 3 bi đỏ và 2 bi xanh. Lấy ngẫu nhiên 2 bi. Xác suất lấy được 2 bi đỏ là:",
+      "options": [
+        {"label": "A", "content": "3/10"},
+        {"label": "B", "content": "1/2"},
+        {"label": "C", "content": "3/5"},
+        {"label": "D", "content": "9/25"}
+      ],
+      "correct": "A",
+      "explanation": "P = C(3,2)/C(5,2) = 3/10."
+    },
+    {
+      "order": 50, "code": "MATH-050", "topic": "Chỉnh hợp",
+      "content": "Từ 5 chữ số {1,2,3,4,5}, có bao nhiêu số tự nhiên có 3 chữ số khác nhau được lập thành?",
+      "options": [
+        {"label": "A", "content": "10"},
+        {"label": "B", "content": "30"},
+        {"label": "C", "content": "60"},
+        {"label": "D", "content": "120"}
+      ],
+      "correct": "C",
+      "explanation": "Số chỉnh hợp A(5,3) = 5×4×3 = 60."
+    }
+  ]
+}

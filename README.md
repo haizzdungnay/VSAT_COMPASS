@@ -58,9 +58,11 @@ VSAT_COMPASS/                          ← Repository root
 │       ├── MainActivity.java          ← Bottom nav + Navigation
 │       ├── data/
 │       │   ├── api/
-│       │   │   ├── ApiClient.java     ← Retrofit singleton + JWT interceptor
+│       │   │   ├── ApiClient.java     ← Retrofit singleton + JWT interceptor + feature flag
 │       │   │   ├── AuthApi.java       ← Auth endpoints
-│       │   │   └── ExamApi.java       ← Exam + Session endpoints
+│       │   │   └── ExamApi.java       ← Exam + Session endpoints (incl. client-submit)
+│       │   ├── local/
+│       │   │   └── LocalExamDataSource.java  ← Đọc sample_math_exam.json (fallback offline)
 │       │   ├── model/                 ← Gson models (ApiResponse, Exam, Question…)
 │       │   └── repository/            ← AuthRepository, Resource<T>
 │       └── ui/
@@ -73,16 +75,17 @@ VSAT_COMPASS/                          ← Repository root
 │
 ├── VSAT/
 │   ├── vsat-compass-api/              ← Backend Spring Boot (thư mục gốc)
+│   │   ├── Dockerfile                 ← Multi-stage build (deploy Render.com)
+│   │   ├── render.yaml                ← Render.com deploy config
 │   │   └── src/main/java/com/vsatcompass/api/
 │   │       ├── config/               ← Security, JPA, OpenAPI, DataInitializer
-│   │       ├── controller/           ← auth/, admin/, collaborator/, student/
+│   │       ├── controller/           ← auth/ (các module khác đang phát triển)
 │   │       ├── dto/                  ← request/, response/, common/
-│   │       ├── entity/               ← 16 entities + 13 enums
-│   │       ├── repository/           ← 16 Spring Data JPA repos
-│   │       ├── service/              ← 9 interfaces + 9 implementations
+│   │       ├── entity/               ← User, RefreshToken + enums
+│   │       ├── repository/           ← Spring Data JPA repos
+│   │       ├── service/              ← AuthService + impl
 │   │       ├── security/             ← JWT utils, filter, UserDetails
 │   │       ├── exception/            ← AppException, GlobalExceptionHandler
-│   │       ├── mapper/               ← UserMapper
 │   │       └── util/                 ← SecurityUtils
 │   ├── vsat_database_schema.sql      ← 27 bảng + 20 ENUM types
 │   └── ui/                           ← Tài liệu thiết kế
@@ -160,20 +163,22 @@ http://localhost:8080/api/v1/swagger-ui.html
 
 ## API Modules
 
+> **Trạng thái backend hiện tại:** Đang triển khai dần. Module Auth hoàn chỉnh; các module Exam/Session/Question chưa có — Android app tự fallback về dữ liệu cục bộ (`sample_math_exam.json`).
+
 | Module | Base Path | Endpoints | Trạng thái |
 |--------|-----------|-----------|------------|
 | Auth | `/auth` | register, login, refresh, logout, getMe, updateProfile, changePassword | ✅ Done |
-| Questions (Collaborator) | `/collaborator/questions` | CRUD + filter + options | ✅ Done |
-| Questions (Admin) | `/admin/questions` | status, version | ✅ Done |
-| Review Workflow | `/collaborator/questions/{id}/reviews` | create, list, comment | ✅ Done |
-| Exams (Admin) | `/admin/exams` | CRUD + questions + status | ✅ Done |
-| Exams (Public) | `/exams` | list published, detail | ✅ Done |
-| Session Engine | `/sessions` | start, submit, answer | ✅ Done |
-| Student Stats | `/my-stats` | topic stats, weak topics, history | ✅ Done |
-| Tickets (Student) | `/tickets` | create, list, detail, comment | ✅ Done |
-| Tickets (Admin) | `/admin/tickets` | list, assign, resolve, status | ✅ Done |
-| Dashboard | `/admin/dashboard` | overview counts | ✅ Done |
-| User Management | `/admin/users` | list, detail, role, status | ✅ Done |
+| Questions (Collaborator) | `/collaborator/questions` | CRUD + filter + options | 📋 Thiết kế xong |
+| Questions (Admin) | `/admin/questions` | status, version | 📋 Thiết kế xong |
+| Review Workflow | `/collaborator/questions/{id}/reviews` | create, list, comment | 📋 Thiết kế xong |
+| Exams (Admin) | `/admin/exams` | CRUD + questions + status | 📋 Thiết kế xong |
+| Exams (Public) | `/exams` | list published, detail | 📋 Thiết kế xong |
+| Session Engine | `/sessions` | start, **client-submit**, answer | 📋 Thiết kế xong |
+| Student Stats | `/my-stats` | topic stats, weak topics, history | 📋 Thiết kế xong |
+| Tickets (Student) | `/tickets` | create, list, detail, comment | 📋 Thiết kế xong |
+| Tickets (Admin) | `/admin/tickets` | list, assign, resolve, status | 📋 Thiết kế xong |
+| Dashboard | `/admin/dashboard` | overview counts | 📋 Thiết kế xong |
+| User Management | `/admin/users` | list, detail, role, status | 📋 Thiết kế xong |
 
 ---
 
@@ -188,10 +193,14 @@ http://localhost:8080/api/v1/swagger-ui.html
 
 1. Mở thư mục `VSAT_COMPASS/` bằng Android Studio
 2. Sync Gradle
-3. Đảm bảo backend đang chạy ở `localhost:8080`
-4. Run app trên emulator (kết nối qua `10.0.2.2:8080`)
+3. Run app — **không cần backend đang chạy**
 
-> **Lưu ý:** Nếu test trên thiết bị thật, đổi `BASE_URL` trong `ApiClient.java` thành IP máy tính trong mạng LAN.
+> **Chế độ mặc định (`CLIENT_SIDE_EXAM_PROCESSING = true` trong `ApiClient.java`):**
+> - Đăng nhập / danh sách đề gọi API thực. Nếu backend chưa có hoặc mất mạng → dùng `sample_math_exam.json`
+> - Timer + chấm điểm chạy hoàn toàn trên thiết bị
+> - Chỉ POST kết quả cuối `{score, correct, total, timeSpent}` lên server
+
+> **Khi chạy với backend local:** đổi `BASE_URL` trong `ApiClient.java` sang `BASE_URL_LOCAL` và sửa IP thành IP máy tính trong LAN.
 
 ### Màn hình đã có
 
@@ -201,9 +210,11 @@ http://localhost:8080/api/v1/swagger-ui.html
 | Login | Đăng nhập bằng email/password |
 | Register | Tạo tài khoản mới |
 | Home | Dashboard: thống kê cá nhân |
-| Exam List | Danh sách đề thi + filter |
-| Exam Session | Làm bài thi với timer đếm ngược |
-| Exam Result | Xem điểm và kết quả |
+| Exam List | Danh sách đề thi, tìm kiếm & lọc theo môn |
+| Exam Detail | Chi tiết đề thi + thông tin cơ bản |
+| Exam Session | Làm bài thi: timer, bookmark, grid câu hỏi |
+| Exam Result | Circular score, thống kê theo môn, chủ đề cần cải thiện |
+| Practice (Topics) | Lộ trình cải thiện theo chủ đề với tiến độ |
 | Profile | Thông tin cá nhân + đăng xuất |
 
 ---
@@ -219,16 +230,41 @@ http://localhost:8080/api/v1/swagger-ui.html
 
 ---
 
+## Kiến trúc xử lý đề thi (Hybrid)
+
+```
+[Android App]                         [Backend / Neon DB]
+     │
+     ├─ Login / Register         →    Auth API (JWT)
+     ├─ GET /exams                →    Danh sách đề (quyền truy cập)
+     ├─ POST /sessions/start      →    Tạo session, kiểm tra mua đề
+     ├─ GET /sessions/{id}/questions/{qId}  →  Câu hỏi (cache vào RAM)
+     │
+     │  [Trên thiết bị]
+     ├─ CountDownTimer            ←    Không cần server
+     ├─ selectedAnswers Map       ←    Đáp án lưu RAM
+     ├─ Chấm điểm (isCorrect)     ←    Dùng questionCache
+     │
+     └─ POST /sessions/{id}/client-submit  →  Ghi kết quả {score, correct, total, time}
+```
+
+**Fallback offline:** Nếu bất kỳ bước nào thất bại → `LocalExamDataSource` đọc `sample_math_exam.json` trong assets.
+
+---
+
 ## Thống kê dự án
 
 | Hạng mục | Số lượng |
 |----------|----------|
 | Bảng database | 27 |
 | ENUM types PostgreSQL | 20 |
-| API endpoints | ~52 MVP |
-| Backend Java files | 126+ |
-| Android Java files | 25 |
-| Android XML layouts | 12 |
+| API endpoints (thiết kế) | ~52 MVP |
+| Backend Java files (hiện tại) | ~25 (Auth module) |
+| Android Java files | 30+ |
+| Android XML layouts | 18+ |
+| Android Drawable resources | 20+ |
+| Local exam data (JSON assets) | 1 (sample_math_exam.json) |
+| Features live | Login, Register, Exam list, Exam session, Timer, Scoring, Result |
 
 ---
 
