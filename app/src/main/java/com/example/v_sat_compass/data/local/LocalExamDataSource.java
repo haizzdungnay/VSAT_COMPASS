@@ -15,12 +15,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class LocalExamDataSource {
 
+    private static final String SAMPLE_ASSET_PREFIX = "sample_";
+    private static final String SAMPLE_ASSET_SUFFIX = ".json";
     private static final String SAMPLE_ASSET_FILE = "sample_math_exam.json";
     private static final LocalExamDataSource INSTANCE = new LocalExamDataSource();
 
@@ -68,8 +71,15 @@ public class LocalExamDataSource {
         }
 
         try {
-            String json = readAssetAsString(context, SAMPLE_ASSET_FILE);
-            parseSampleExamJson(json);
+            exams.clear();
+            questionsById.clear();
+            correctOptionByQuestionId.clear();
+
+            List<String> examAssets = getExamAssetFiles(context);
+            for (String assetFile : examAssets) {
+                String json = readAssetAsString(context, assetFile);
+                parseSampleExamJson(json, assetFile);
+            }
             loaded = true;
         } catch (Exception ex) {
             exams.clear();
@@ -79,7 +89,28 @@ public class LocalExamDataSource {
         }
     }
 
-    private void parseSampleExamJson(String json) {
+    private List<String> getExamAssetFiles(Context context) {
+        List<String> files = new ArrayList<>();
+        try {
+            String[] assets = context.getAssets().list("");
+            if (assets != null) {
+                for (String assetName : assets) {
+                    if (assetName.startsWith(SAMPLE_ASSET_PREFIX) && assetName.endsWith(SAMPLE_ASSET_SUFFIX)) {
+                        files.add(assetName);
+                    }
+                }
+            }
+        } catch (IOException ignored) {
+        }
+
+        if (files.isEmpty()) {
+            files.add(SAMPLE_ASSET_FILE);
+        }
+        Collections.sort(files);
+        return files;
+    }
+
+    private void parseSampleExamJson(String json, String sourceFileName) {
         JsonObject root = JsonParser.parseString(json).getAsJsonObject();
         JsonObject sourceExam = root.getAsJsonObject("exam");
         JsonArray sourceQuestions = root.getAsJsonArray("questions");
@@ -88,7 +119,7 @@ public class LocalExamDataSource {
             return;
         }
 
-        long examId = sourceExam.has("id") ? sourceExam.get("id").getAsLong() : 1L;
+        long examId = sourceExam.has("id") ? sourceExam.get("id").getAsLong() : Math.abs(sourceFileName.hashCode());
 
         JsonObject examObj = new JsonObject();
         examObj.addProperty("id", examId);
@@ -106,7 +137,7 @@ public class LocalExamDataSource {
         for (JsonElement element : sourceQuestions) {
             JsonObject sourceQuestion = element.getAsJsonObject();
             int order = getInt(sourceQuestion, "order", fallbackOrder++);
-            long questionId = order;
+            long questionId = (examId * 100000L) + order;
 
             JsonObject examQuestionObj = new JsonObject();
             examQuestionObj.addProperty("question_id", questionId);
@@ -156,7 +187,6 @@ public class LocalExamDataSource {
         examObj.add("questions", examQuestions);
         Exam convertedExam = gson.fromJson(examObj, Exam.class);
 
-        exams.clear();
         exams.add(convertedExam);
     }
 

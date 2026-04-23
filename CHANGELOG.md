@@ -1,5 +1,391 @@
 # V-SAT COMPASS — CHANGELOG
 
+## [0.8.0] - 2026-04-23 — Phase B: Backend Production-Ready
+
+### Mục tiêu
+Stabilize public backend, lock in minimum required APIs (Auth + Session sync), harden security — nền tảng cho Phase C (admin content management).
+
+---
+
+### 🏗️ Phase 1 — Public Backend Stability
+
+#### Actuator & Monitoring
+- [x] Thêm `spring-boot-starter-actuator` — expose chỉ `/actuator/health` (no details)
+- [x] Thêm `bucket4j-core` dependency (chuẩn bị cho Phase 3 rate limiting)
+
+#### Config Hardening (`application.yml`)
+- [x] **Remove JWT_SECRET fallback** — app fail-fast nếu env var chưa set
+- [x] CORS driven by `CORS_ALLOWED_ORIGINS` env var (default: localhost dev)
+- [x] Logging levels tối ưu: prod `WARN` cho Hibernate SQL + Spring Security
+- [x] Dev profile: `HIBERNATE_SQL_LOG` env var toggle
+
+#### Security (`SecurityConfig.java`)
+- [x] HSTS header enabled (max-age 1 year, includeSubDomains)
+- [x] Actuator health endpoint added to public permits
+- [x] Rate limit filter registered before JWT filter
+
+#### Secret Management
+- [x] **`render.yaml`**: Remove tất cả hardcoded secrets (JWT_SECRET, DATABASE_URL, DATABASE_USERNAME)
+- [x] Chuyển sang Render Dashboard env var management
+- [x] Health check path configured: `/api/v1/actuator/health`
+- [x] `.env.example` cập nhật: CORS_ALLOWED_ORIGINS, stronger warnings
+
+#### Response Envelope
+- [x] Thêm `timestamp` field (ISO-8601 OffsetDateTime) vào `ApiResponse`
+
+#### Documentation
+- [x] **`docs/DEPLOY_RUNBOOK.md`** — 7 sections: prerequisites, first-time deploy, routine deploy, rollback, secret rotation, incident triage, cost watch
+
+---
+
+### 🔌 Phase 2 — Minimum Required APIs
+
+#### Session Module (NEW — 8 files)
+- [x] `ExamSession` entity mapped to frozen `exam_sessions` table schema
+- [x] `SessionMode` enum: `MOCK_EXAM`, `PRACTICE`
+- [x] `SessionStatus` enum: `IN_PROGRESS`, `SUBMITTED`, `TIMED_OUT`, `ABANDONED`
+- [x] `ExamSessionRepository`: `findById`, `findByIdAndUserId`
+- [x] `SessionRequest` DTO: `StartSession`, `ClientSubmit` (với validation)
+- [x] `SessionResponse` DTO: `SessionInfo`
+- [x] `SessionService` + `SessionServiceImpl`:
+  - `startSession()` — tạo phiên thi mới
+  - `clientSubmit()` — nộp kết quả client-side scoring
+  - Anti-replay: 409 `SESSION_ALREADY_SUBMITTED` nếu đã nộp
+  - Owner check: 403 `SESSION_FORBIDDEN` nếu không phải chủ phiên
+  - Validation: `correctCount ≤ totalQuestions`, `score 0-100`, `timeSpent 0-86400`
+- [x] `SessionController`: `POST /sessions/start` (201), `POST /sessions/{id}/client-submit` (200)
+
+#### Error Code Standardization
+- [x] `AppException` — 10 specific factory methods:
+  - Auth: `authEmailTaken()`, `authInvalidCredentials()`, `authUnauthorized()`, `authRefreshInvalid()`, `authForbidden()`
+  - Session: `sessionAlreadySubmitted()`, `sessionForbidden()`
+  - Generic: `validationFailed()`, `rateLimitExceeded()`, `badRequest()`
+- [x] `AuthServiceImpl` — thay generic errors bằng specific error codes
+
+#### Smoke Test Scripts
+- [x] `docs/scripts/smoke_auth.sh` — 9 test cases (bash 3.2 compatible)
+- [x] `docs/scripts/smoke_sessions.sh` — 5 test cases (bash 3.2 compatible)
+
+---
+
+### 🔒 Phase 3 — Security & Stability Hardening
+
+#### Validation Hardening (`AuthRequest.java`)
+- [x] Password: `@Size(min=6)` → `@Size(min=8, max=100)` + `@Pattern(letter+digit)`
+- [x] Email: thêm `@Size(max=255)`
+- [x] FullName: `@Size(min=2, max=100)`
+- [x] Áp dụng cho Register, ChangePassword, ResetPassword
+
+#### Exception Handler (`GlobalExceptionHandler.java`)
+- [x] `VALIDATION_ERROR` → `VALIDATION_FAILED`
+- [x] Validation errors trả `fieldErrors` map trong `data` field
+- [x] Thêm handlers: `BadCredentialsException`, `AccessDeniedException`, `AuthenticationException`
+
+#### Rate Limiting (`RateLimitFilter.java`)
+- [x] In-memory Bucket4j rate limiting:
+  - `/auth/login`: 10 req/phút/IP
+  - `/auth/register`: 5 req/giờ/IP
+  - `/auth/refresh`: 30 req/phút/IP
+- [x] Client IP resolution: `X-Forwarded-For` first IP (Render proxy)
+- [x] Returns 429 `RATE_LIMIT_EXCEEDED` with standard ApiResponse
+
+#### JWT Cleanup Job
+- [x] `@EnableScheduling` trên `VsatCompassApiApplication`
+- [x] `RefreshTokenCleanupService`: chạy 03:00 AM daily
+- [x] Xóa expired tokens + revoked tokens cũ hơn 7 ngày
+
+#### Documentation
+- [x] **`docs/API_ERROR_CODES.md`** — Error catalog + response envelope + rate limits + Android handling guide
+- [x] **`docs/SMOKE_CHECKLIST.md`** — 10 backend TCs mới (TC-016 → TC-025), tổng 25 TCs
+- [x] Android direct-DB audit: **CLEAN** (không có PostgreSQL/JDBC/Neon references)
+
+---
+
+### 📊 Build Results
+
+| Module | Command | Result |
+|--------|---------|--------|
+| Backend | `./gradlew build -x test` | ✅ BUILD SUCCESSFUL (no warnings) |
+
+### 📁 Files Changed
+
+| Category | Count | Chi tiết |
+|----------|-------|----------|
+| New files | 15 | 8 Session module + 2 smoke scripts + RateLimitFilter + CleanupService + 3 docs |
+| Modified files | 12 | build.gradle, application.yml, SecurityConfig, render.yaml, .env.example, ApiResponse, AppException, AuthServiceImpl, AuthRequest, GlobalExceptionHandler, VsatCompassApiApplication, RefreshTokenRepository |
+
+---
+
+## [0.7.1] - 2026-04-23 — Phase A Polish & Hardening
+
+### Mục tiêu
+Polish toàn diện Phase A (Local Pack + Exam Review + History) trước khi bước sang Giai đoạn B. Build pass + 6 unit tests pass.
+
+---
+
+### 🔍 Phase 1 — Code Quality Audit & Fix
+
+**Lint baseline:** 54 errors / 537 warnings (pre-existing). Phase A chỉ thêm 1 error (`MissingSuperCall`) đã được fix.
+
+#### strings.xml
+- [x] Extract toàn bộ chuỗi tiếng Việt hardcoded trong Phase A sang `res/values/strings.xml`
+- [x] Thêm 30+ string keys: `review_*`, `history_*`, `home_greeting_*`, `home_stats_*`, `time_*`, `empty_state_*`, `cd_*` (accessibility)
+
+#### ScoreConstants.java *(mới)*
+- [x] `VSAT_MAX_SCORE = 1200`, `PERCENT_TO_VSAT = 12`, `WEAK_TOPIC_THRESHOLD_PERCENT = 60`
+- [x] `ExamResultActivity` và `ExamHistoryEntry` dùng `ScoreConstants` thay vì magic number 12
+
+#### TAG constants
+- [x] Thêm `private static final String TAG = "ClassName"` vào: `ExamReviewActivity`, `ExamHistoryActivity`, `ExamHistoryRepository`, `HomeFragment`
+
+#### Exception handling cleanup
+- [x] `ExamReviewActivity`: `catch (Exception ignored)` → `catch (JsonSyntaxException e)` + `Log.w(TAG, ...)`
+- [x] `ExamHistoryRepository.saveSync()`: `catch (IOException ignored)` → `Log.e(TAG, ..., e)` với context
+- [x] `ExamHistoryRepository.loadSync()`: silent swallow → log warning + corrupt file recovery
+
+#### MissingSuperCall
+- [x] `ExamSessionActivity.onBackPressed()`: thêm `@SuppressWarnings("MissingSuperCall")` với comment giải thích
+
+#### Schema migration-friendly
+- [x] `ExamHistoryEntry`: thêm `@SerializedName` cho mọi field — JSON cũ parse OK khi thêm field mới
+
+#### ExamHistoryAdapter
+- [x] `SimpleDateFormat` dùng `Locale.forLanguageTag("vi-VN")` thay vì deprecated constructor
+
+---
+
+### 🛡️ Phase 2 — Robustness & Edge Cases
+
+#### ExamHistoryRepository
+- [x] **Atomic write**: ghi vào `.tmp` → `fos.getFD().sync()` → `renameTo()` target — bảo vệ khỏi half-written nếu app bị kill
+- [x] **Corrupt file recovery**: `JsonSyntaxException` → rename sang `exam_history.json.corrupt.<timestamp>`, log warning, trả về empty list
+- [x] **Concurrent access**: tất cả I/O đi qua `synchronized (fileLock)` + single-thread executor
+- [x] **`saveEntry` overload** nhận `Runnable onSaveFailed` → callback khi save thất bại (storage đầy...)
+- [x] **`injectMockEntries(count, onDone)`**: debug-only API inject N entries giả để test stress/scroll
+- [x] **`clearAll(onDone)`**: debug-only API xóa toàn bộ history
+- [x] `Context appCtx = context.getApplicationContext()` tránh Activity context leak trong executor
+
+#### ExamReviewActivity
+- [x] Guard `examId == 0` → `finish()` + Toast trước khi inflate
+- [x] Guard `questionIds.isEmpty()` sau load → `finish()` + Toast
+- [x] `optionExistsInQuestion()`: kiểm tra `selectedOptionId` còn hợp lệ trong pack hiện tại — nếu pack đề đã thay đổi sau khi lưu, treat như câu chưa làm + log warning
+- [x] Clamp `currentIndex` khi restore từ `savedInstanceState`
+
+#### ExamHistoryActivity
+- [x] `onSaveInstanceState` / restore `currentSubjectFilter` sau rotate
+- [x] `syncChipUi()` tách rời khỏi `selectChip()` để restore không trigger reload thừa
+- [x] `showLoadingState(true/false)` toggle `ProgressBar` + `RecyclerView`
+- [x] `loadHistory()` phân biệt 2 empty state: "chưa có bài nào" vs "filter ra 0 kết quả"
+- [x] `openReview()` bọc trong try-catch, log warning nếu `examId` không tìm thấy
+
+#### ExamResultActivity
+- [x] Nhận extra `history_save_failed` từ `ExamSessionActivity`
+- [x] Hiển thị `Snackbar` cảnh báo khi lưu lịch sử thất bại
+
+#### Debug Dev Menu (ProfileFragment — DEBUG build only)
+- [x] Long-press tên hiển thị trong ProfileFragment → dialog dev tools
+- [x] "Inject 50 lịch sử mock" → gọi `injectMockEntries(50)`
+- [x] "Xóa toàn bộ lịch sử" → gọi `clearAll()`
+- [x] Toàn bộ code trong `if (!BuildConfig.DEBUG) return;` — release build không có
+
+---
+
+### ✨ Phase 3 — UX Polish & Verification
+
+#### RelativeTimeHelper.java *(mới)*
+- [x] `format(context, timestampMillis)`: < 1ph → "vừa xong"; < 1h → "X phút trước"; < 24h → "X giờ trước"; < 7 ngày → "X ngày trước"; còn lại → "dd/MM/yyyy HH:mm" locale vi-VN
+- [x] `ExamHistoryAdapter` dùng `RelativeTimeHelper.format()` thay vì `SimpleDateFormat` tĩnh
+
+#### Loading & Empty states
+- [x] `ExamHistoryActivity`: `ProgressBar` (id `progressLoading`) hiện khi đang fetch, ẩn khi xong
+- [x] Empty state text khác nhau: "Chưa có bài thi nào" vs "Không có bài thi nào ở môn này"
+- [x] `HomeFragment`: stat cards hiện "--" / "0ph" thay vì "0" khi chưa có lịch sử
+
+#### Accessibility
+- [x] `activity_exam_review.xml` nút back: `contentDescription="@string/cd_back"` + `minWidth/Height="48dp"`
+- [x] `activity_exam_history.xml` nút back: `contentDescription="@string/cd_back"` + `minWidth/Height="48dp"`
+
+#### StrictMode (debug build)
+- [x] `VsatApp.enableStrictMode()`: `detectDiskReads + detectDiskWrites + detectNetwork + penaltyLog`
+- [x] Chỉ bật khi `BuildConfig.DEBUG` — release build không bị ảnh hưởng
+
+#### Unit Tests
+- [x] `ExamHistoryRepositoryTest.java` — 6 test cases (5 yêu cầu + 1 bonus):
+  - `saveEntry_thenGetAll_returnsNewestFirst`
+  - `saveEntry_exceedsMax_capsAt200`
+  - `getByExamId_returnsOnlyMatchingSubject` (filter contains)
+  - `getStats_calculatesAverageCorrectly` (avgScore = 900 khi 2 bài 600+1200)
+  - `getAll_corruptFile_returnsEmptyAndCreatesCorruptBackup`
+  - (TC6: khởi tạo fresh repo mỗi test qua reflection)
+- [x] `build.gradle.kts`: `testOptions { unitTests { isReturnDefaultValues = true } }` để Android stubs không throw
+
+#### Smoke Checklist
+- [x] `docs/SMOKE_CHECKLIST.md` — 15 test cases bao phủ: login, 5 đề, filter, làm bài, review, history, persist, rotate, empty state, dev menu, sync status, thoát giữa chừng
+
+### Giả định kỹ thuật đã chọn
+- **`returnDefaultValues = true`**: Android stubs trong JVM unit test trả về default thay vì throw — đủ để test file I/O logic không cần Robolectric.
+- **FakeContext extends ContextWrapper**: không cần Mockito, chỉ override `getFilesDir()`.
+- **Không thêm dependency mới**: tất cả fix dùng JUnit4 + standard Java — thoả ràng buộc.
+
+### Kết quả đo lường
+| Metric | v0.7.0 | v0.7.1 |
+|--------|--------|--------|
+| Unit tests pass | 1/1 (ExampleTest) | 6/6 |
+| Lint Phase A errors | 1 (MissingSuperCall) | 0 |
+| Strings hardcoded (Phase A Java) | ~18 | 0 |
+| Exception swallow (silent) | 3 | 0 |
+
+---
+
+## [0.7.0] - 2026-04-23 — Student MVP hoàn chỉnh: Review chi tiết + Lịch sử bài làm
+
+### Tổng quan
+
+Hoàn tất 3 task P0 cuối cùng của Giai đoạn A:
+
+- **A2** — 5 pack đề local với metadata chuẩn hóa, filter chip hoạt động đúng
+- **A4** — Màn xem lời giải chi tiết từng câu sau bài thi
+- **A5** — Lịch sử bài làm persist local + dashboard student hiển thị dữ liệu thật
+
+Học viên có thể: đăng nhập → làm bài → xem kết quả → xem lời giải → xem lịch sử → tất cả chạy offline.
+
+---
+
+### 📦 Phase 1 — Bổ sung pack đề + chuẩn hóa metadata (A2)
+
+#### Assets mới / cập nhật
+- [x] **`sample_math_exam_2.json`** — Đề Toán nâng cao (id=4), 30 câu, 60 phút, MATH_002; topics: số phức, logarithm, hàm số, đạo hàm, tích phân, hình học, xác suất
+- [x] **`sample_english_exam_2.json`** — Đề Tiếng Anh nâng cao (id=5), 30 câu, 45 phút, ENG_002; topics: ngữ pháp, từ vựng, đọc hiểu, nhận biết lỗi
+- [x] **`sample_english_exam.json`** — Sửa `subject_name: "Tieng Anh"` → `"Tiếng Anh"`, cập nhật nội dung và explanation tiếng Việt
+- [x] **`sample_physics_exam.json`** — Sửa `subject_name: "Vat ly"` → `"Vật lí"`, cập nhật nội dung tiếng Việt
+
+Kết quả: filter chip "Toán" → 2 đề, "Tiếng Anh" → 2 đề, "Vật lí" → 1 đề. Tổng 5 pack.
+
+---
+
+### 🔍 Phase 2 — Xem lời giải chi tiết (A4)
+
+#### File mới
+- [x] **`ui/exam/session/ExamReviewActivity.java`** — Màn review từng câu: option đúng tô xanh, option sai tô đỏ, explanation đầy đủ, điều hướng ← / →, grid tổng quan
+- [x] **`ui/exam/session/ReviewGridAdapter.java`** — Grid adapter cho review: đúng=xanh lá, sai=đỏ nhạt, chưa làm=xám
+- [x] **`res/layout/activity_exam_review.xml`** — Layout màn review với ScrollView, option cards, explanation card, bottom nav bar
+- [x] **`res/drawable/bg_badge_warning.xml`** — Badge cam cho câu "chưa trả lời"
+
+#### File sửa
+- [x] **`ExamSessionActivity.java`** — Thêm serialize `selectedAnswers` → JSON, truyền `examId`/`examTitle`/`examSubject`/`selectedAnswersJson` sang ExamResultActivity; import Gson
+- [x] **`ExamResultActivity.java`** — Nhận extras từ Session, nối nút "Xem lời giải chi tiết" → mở ExamReviewActivity với đúng extras
+- [x] **`AndroidManifest.xml`** — Đăng ký ExamReviewActivity
+
+**Luồng dữ liệu:** ExamSessionActivity → (intent extras) → ExamResultActivity → ExamReviewActivity. ExamReviewActivity tự load câu hỏi từ LocalExamDataSource theo `examId`, không cần snapshot câu hỏi.
+
+**Tính năng:**
+- Option đúng + user chọn đúng → xanh #E8F5E9, icon ✓
+- Option đúng + user không chọn → xanh nhạt + label "Đáp án đúng"
+- Option sai + user đã chọn → đỏ nhạt + icon ✗ + label "Của bạn"
+- Câu chưa làm → badge cam "Bạn chưa trả lời câu này"
+- Rotate device → giữ nguyên câu đang xem (onSaveInstanceState)
+
+---
+
+### 📊 Phase 3 — Lịch sử bài làm + Dashboard student (A5)
+
+#### File mới
+- [x] **`data/model/ExamHistoryEntry.java`** — POJO: id, examId, examTitle, subject, totalQuestions, correctCount, score (1200), timeSpentSeconds, submittedAtMillis, selectedAnswersJson
+- [x] **`data/repository/ExamHistoryRepository.java`** — Lưu JSON vào `filesDir/exam_history.json`; cap 200 entries; methods async (ExecutorService + Handler): saveEntry, getAll, getRecent, getBySubject, getStats, getBestScoreForExam
+- [x] **`ui/history/ExamHistoryActivity.java`** — Màn lịch sử: filter chips theo môn, stats row (bài đã làm / điểm TB / tỷ lệ đúng), empty state thân thiện, nút "Xem lại" → ExamReviewActivity
+- [x] **`ui/history/ExamHistoryAdapter.java`** — RecyclerView adapter cho list lịch sử
+- [x] **`res/layout/activity_exam_history.xml`** — Layout màn lịch sử
+- [x] **`res/layout/item_exam_history.xml`** — Card item: tên đề, môn badge, điểm lớn, ngày/giờ, câu đúng, thời gian, nút "Xem lại"
+
+#### File sửa
+- [x] **`ExamSessionActivity.java`** — Sau khi chấm điểm, tạo ExamHistoryEntry và gọi `ExamHistoryRepository.saveEntry()` async
+- [x] **`HomeFragment.java`** — `loadHistoryStats()` lấy stats thật từ repo: tvTotalExams = số bài đã làm, tvAvgScore = điểm TB V-SAT, tvTotalTime = tổng thời gian; `loadRecentForContinue()` cập nhật section "Tiếp tục luyện tập" theo đề gần nhất; nút "Xem tất cả" → ExamHistoryActivity; `onResume()` reload stats
+- [x] **`fragment_home.xml`** — Thêm id `tvViewAllHistory` cho nút "Xem tất cả"
+- [x] **`AndroidManifest.xml`** — Đăng ký ExamHistoryActivity
+
+### Giả định kỹ thuật đã chọn
+- **Không dùng Room** — dữ liệu lịch sử lưu dạng JSON file trong `filesDir`. Lý do: tránh thêm dependency nặng; với cap 200 entries (~200KB), file I/O là đủ nhanh.
+- **Snapshot câu hỏi không cần lưu** — ExamReviewActivity reload từ LocalExamDataSource theo `examId`. Giả định: pack đề local không bị xóa giữa các lần xem lại.
+- **selectedAnswersJson trong history** — lưu để "Xem lại" bài cũ load đúng đáp án đã chọn.
+
+---
+
+## [0.6.0] - 2026-04-23 — Client-First ổn định đa thiết bị + Backend tối thiểu
+
+### Tổng quan
+
+Phiên bản này tập trung tối ưu vận hành chi phí thấp:
+
+- Luồng làm bài chuyển sang **local-first thực sự** (thiết bị là trung tâm)
+- Backend chỉ giữ vai trò tối thiểu cho **Auth** và **đồng bộ kết quả cuối**
+- App chạy ổn trên nhiều thiết bị Android mà không phụ thuộc IP LAN thay đổi
+
+---
+
+### ✨ Android — Thay đổi chính
+
+#### `app/build.gradle.kts`
+- [x] Cấu hình mặc định dùng `BASE_URL_CLOUD` cho cả debug/release
+- [x] Giữ `LOCAL_LAN_HOST` làm tùy chọn dev nội bộ
+- [x] Tắt `USE_LOCAL_BACKEND` mặc định để tránh phụ thuộc IP LAN khi chạy đa thiết bị
+
+#### `ApiClient.java`
+- [x] Chuẩn hóa resolve base URL theo BuildConfig
+- [x] Thêm log runtime backend URL để debug nhanh trên Logcat
+- [x] Thêm hàm `getCurrentBaseUrl()` phục vụ hiển thị runtime status
+
+#### `LoginActivity.java`
+- [x] Hiển thị backend URL trong debug build để xác định endpoint thực tế app đang gọi
+
+#### `HomeFragment.java` + `ExamFragment.java`
+- [x] Trong chế độ `CLIENT_SIDE_EXAM_PROCESSING=true`, ưu tiên nạp đề từ local datasource
+- [x] Giảm phụ thuộc vào backend exam list khi user chỉ cần làm bài trên thiết bị
+
+#### `ExamSessionActivity.java`
+- [x] Chạy phiên thi local ngay lập tức (không chặn bởi `sessions/start`)
+- [x] Bootstrap session online chạy nền (non-blocking) để đồng bộ kết quả cuối nếu backend sẵn sàng
+- [x] Chỉ gửi `client-submit` khi có remote session hợp lệ
+- [x] Bổ sung trạng thái sync trực quan trên màn hình thi:
+  - `Sync: local-only`
+  - `Sync: online enabled`
+
+#### `activity_exam_session.xml`
+- [x] Thêm `tvSyncStatus` ngay dưới top bar để thể hiện trạng thái local/online sync realtime
+
+---
+
+### 📚 Local Exam Packs
+
+#### `LocalExamDataSource.java`
+- [x] Nâng cấp từ single-file sang multi-pack scan `sample_*.json`
+- [x] Tự động nạp toàn bộ đề local trong `assets/`
+- [x] Chống trùng ID câu hỏi giữa nhiều đề bằng namespace theo examId
+- [x] Fallback an toàn về `sample_math_exam.json` nếu không có file theo pattern
+
+#### Assets mới
+- [x] `app/src/main/assets/sample_english_exam.json`
+- [x] `app/src/main/assets/sample_physics_exam.json`
+- [x] Giữ `sample_math_exam.json` làm bộ đề mẫu nền tảng
+
+---
+
+### 🧭 Tài liệu
+
+#### `README.md`
+- [x] Cập nhật kiến trúc client-first theo backend tối thiểu
+- [x] Bổ sung API dependency map: endpoint bắt buộc vs tùy chọn vs không bắt buộc
+- [x] Bổ sung quy ước mở rộng đề local `sample_*.json`
+- [x] Bổ sung mô tả trạng thái sync trong màn hình thi
+
+---
+
+### ✅ Kết quả đạt được
+
+- App có thể vận hành làm bài ổn định theo mô hình local-first
+- Giảm rủi ro downtime backend ảnh hưởng trực tiếp trải nghiệm thi
+- Dễ mở rộng ngân hàng đề local mà không phải sửa code luồng chính
+- Phù hợp chiến lược giảm chi phí server (backend mỏng, chỉ giữ phần cần bảo mật và đồng bộ)
+
 ## [0.5.0] - 2026-04-10 — Kiến trúc Hybrid: Xử lý cục bộ + Đồng bộ kết quả
 
 ### Tổng quan thay đổi kiến trúc

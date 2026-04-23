@@ -2,7 +2,10 @@ package com.example.v_sat_compass.data.api;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
+import android.util.Log;
 
+import com.example.v_sat_compass.BuildConfig;
 import com.example.v_sat_compass.VsatApp;
 
 import java.util.concurrent.TimeUnit;
@@ -14,17 +17,13 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ApiClient {
+    private static final String TAG = "ApiClient";
 
-    // ===== CẤU HÌNH URL BACKEND =====
-    // Sau khi deploy lên Render, thay URL bên dưới bằng URL Render của bạn
-    // Ví dụ: "https://vsat-compass-api.onrender.com/api/v1/"
-    // Render free tier sẽ sleep sau 15 phút không dùng, request đầu tiên mất ~30-60s
-    private static final String BASE_URL_CLOUD = "https://vsat-compass-api.onrender.com/api/v1/";
-    // Dùng IP LAN khi chạy backend local (chỉ dùng khi dev)
-    private static final String BASE_URL_LOCAL = "http://192.168.100.8:8080/api/v1/";
-
-    // >>> CHUYỂN GIỮA CLOUD VÀ LOCAL TẠI ĐÂY <<<
-    private static final String BASE_URL = BASE_URL_CLOUD;
+    // Debug -> local backend, Release -> cloud backend.
+    // Local host is chosen at runtime:
+    // - Emulator: 10.0.2.2
+    // - Physical device: LOCAL_LAN_HOST from BuildConfig
+    private static final String EMULATOR_LOCAL_HOST = "10.0.2.2";
 
     // === CHẾ ĐỘ XỬ LÝ ĐỀ THI ===
     // true  → Timer + chấm điểm chạy trực tiếp trên thiết bị (KHÔNG gửi từng đáp án lên server).
@@ -37,6 +36,9 @@ public class ApiClient {
 
     public static Retrofit getClient() {
         if (retrofit == null) {
+            String baseUrl = resolveBaseUrl();
+            Log.i(TAG, "Using backend URL: " + baseUrl);
+
             HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
             logging.setLevel(HttpLoggingInterceptor.Level.BODY);
 
@@ -58,12 +60,37 @@ public class ApiClient {
                     .build();
 
             retrofit = new Retrofit.Builder()
-                    .baseUrl(BASE_URL)
+                    .baseUrl(baseUrl)
                     .client(client)
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
         }
         return retrofit;
+    }
+
+    public static String getCurrentBaseUrl() {
+        return resolveBaseUrl();
+    }
+
+    private static String resolveBaseUrl() {
+        if (!BuildConfig.USE_LOCAL_BACKEND) {
+            return BuildConfig.BASE_URL_CLOUD;
+        }
+
+        String host = isProbablyRunningOnEmulator() ? EMULATOR_LOCAL_HOST : BuildConfig.LOCAL_LAN_HOST;
+        return "http://" + host + ":8080/api/v1/";
+    }
+
+    private static boolean isProbablyRunningOnEmulator() {
+        return Build.FINGERPRINT.startsWith("generic")
+                || Build.FINGERPRINT.startsWith("unknown")
+                || Build.MODEL.contains("google_sdk")
+                || Build.MODEL.contains("Emulator")
+                || Build.MODEL.contains("Android SDK built for x86")
+                || Build.MANUFACTURER.contains("Genymotion")
+                || Build.BRAND.startsWith("generic")
+                || Build.DEVICE.startsWith("generic")
+                || "google_sdk".equals(Build.PRODUCT);
     }
 
     private static String getAccessToken() {

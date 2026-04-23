@@ -35,6 +35,8 @@
         <activity android:name=".ui.exam.ExamDetailActivity"           android:exported="false" />
         <activity android:name=".ui.exam.session.ExamSessionActivity"  android:exported="false" />
         <activity android:name=".ui.exam.session.ExamResultActivity"   android:exported="false" />
+        <activity android:name=".ui.exam.session.ExamReviewActivity"   android:exported="false" />
+        <activity android:name=".ui.history.ExamHistoryActivity"       android:exported="false" />
 
         <!-- ── Admin Mode ── -->
         <activity

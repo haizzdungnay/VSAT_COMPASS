@@ -27,19 +27,19 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Void>> handleValidationException(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
+    public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationException(MethodArgumentNotValidException ex) {
+        Map<String, String> fieldErrors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach(error -> {
             String fieldName = ((FieldError) error).getField();
             String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
+            fieldErrors.put(fieldName, errorMessage);
         });
 
-        ApiResponse<Void> response = ApiResponse.<Void>builder()
+        ApiResponse<Map<String, String>> response = ApiResponse.<Map<String, String>>builder()
+                .data(fieldErrors)
                 .error(ApiResponse.ErrorInfo.builder()
-                        .code("VALIDATION_ERROR")
+                        .code("VALIDATION_FAILED")
                         .message("Dữ liệu không hợp lệ")
-                        .details(errors)
                         .build())
                 .build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
@@ -48,19 +48,19 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponse<Void>> handleBadCredentials(BadCredentialsException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponse.error("INVALID_CREDENTIALS", "Email hoặc mật khẩu không đúng"));
+                .body(ApiResponse.error("AUTH_INVALID_CREDENTIALS", "Email hoặc mật khẩu không đúng"));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ApiResponse.error("FORBIDDEN", "Bạn không có quyền thực hiện hành động này"));
+                .body(ApiResponse.error("AUTH_FORBIDDEN", "Bạn không có quyền thực hiện hành động này"));
     }
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ApiResponse<Void>> handleAuthentication(AuthenticationException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponse.error("UNAUTHORIZED", "Vui lòng đăng nhập"));
+                .body(ApiResponse.error("AUTH_UNAUTHORIZED", "Vui lòng đăng nhập"));
     }
 
     @ExceptionHandler(Exception.class)

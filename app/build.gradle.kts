@@ -21,12 +21,26 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "BASE_URL_CLOUD", "\"https://vsat-compass-api.onrender.com/api/v1/\"")
+            buildConfigField("String", "LOCAL_LAN_HOST", "\"192.168.1.240\"")
+            buildConfigField("boolean", "USE_LOCAL_BACKEND", "false")
+        }
         release {
             isMinifyEnabled = false
+            buildConfigField("String", "BASE_URL_CLOUD", "\"https://vsat-compass-api.onrender.com/api/v1/\"")
+            buildConfigField("String", "LOCAL_LAN_HOST", "\"192.168.1.240\"")
+            buildConfigField("boolean", "USE_LOCAL_BACKEND", "false")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+    }
+    testOptions {
+        unitTests {
+            // Android stubs return default values instead of throwing in JVM unit tests
+            isReturnDefaultValues = true
         }
     }
     compileOptions {
@@ -35,6 +49,7 @@ android {
     }
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 

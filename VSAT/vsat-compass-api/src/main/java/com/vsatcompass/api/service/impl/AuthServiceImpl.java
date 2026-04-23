@@ -38,7 +38,7 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse.TokenPair register(AuthRequest.Register request) {
         // Check email exists
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw AppException.conflict("Email đã được sử dụng");
+            throw AppException.authEmailTaken();
         }
 
         // Create user
@@ -63,7 +63,7 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse.TokenPair login(AuthRequest.Login request) {
         // Find user
         User user = userRepository.findByEmail(request.getEmail().toLowerCase().trim())
-                .orElseThrow(() -> AppException.unauthorized("Email hoặc mật khẩu không đúng"));
+                .orElseThrow(() -> AppException.authInvalidCredentials());
 
         // Check status
         if (user.getStatus() == UserStatus.LOCKED) {
@@ -75,7 +75,7 @@ public class AuthServiceImpl implements AuthService {
 
         // Verify password
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            throw AppException.unauthorized("Email hoặc mật khẩu không đúng");
+            throw AppException.authInvalidCredentials();
         }
 
         // Update last login
@@ -92,12 +92,12 @@ public class AuthServiceImpl implements AuthService {
         // Validate refresh token in DB
         RefreshToken storedToken = refreshTokenRepository
                 .findByTokenAndRevokedFalse(request.getRefreshToken())
-                .orElseThrow(() -> AppException.unauthorized("Refresh token không hợp lệ hoặc đã hết hạn"));
+                .orElseThrow(() -> AppException.authRefreshInvalid());
 
         // Check expiration
         if (storedToken.getExpiresAt().isBefore(OffsetDateTime.now())) {
             refreshTokenRepository.revokeByToken(request.getRefreshToken());
-            throw AppException.unauthorized("Refresh token đã hết hạn, vui lòng đăng nhập lại");
+            throw AppException.authRefreshInvalid();
         }
 
         // Revoke old token

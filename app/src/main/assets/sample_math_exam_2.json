@@ -1,0 +1,378 @@
+{
+  "exam": {
+    "id": 4,
+    "exam_code": "VSAT-MATH-2024-002",
+    "title": "Đề thi thử V-SAT Toán — Đề nâng cao số 2",
+    "subject_name": "Toán học",
+    "description": "Đề thi nâng cao môn Toán V-SAT. Cấu trúc 30 câu trắc nghiệm, thời gian 60 phút. Bao gồm số phức, logarithm, hàm số, đạo hàm, tích phân, hình học và xác suất.",
+    "duration_minutes": 60,
+    "total_questions": 30,
+    "max_score": 90,
+    "points_per_question": 3,
+    "difficulty": "HARD",
+    "status": "PUBLISHED",
+    "is_paid": false
+  },
+  "questions": [
+    {
+      "order": 1, "code": "MATH2-001", "topic": "Số phức", "subtopic": "Mô đun số phức", "difficulty": "MEDIUM",
+      "content": "Mô đun của số phức z = 3 + 4i bằng:",
+      "options": [
+        {"label": "A", "content": "5"},
+        {"label": "B", "content": "7"},
+        {"label": "C", "content": "√7"},
+        {"label": "D", "content": "1"}
+      ],
+      "correct": "A",
+      "explanation": "|z| = √(a² + b²) = √(3² + 4²) = √(9 + 16) = √25 = 5. Đây là bộ ba Pythagoras 3-4-5 cổ điển."
+    },
+    {
+      "order": 2, "code": "MATH2-002", "topic": "Số phức", "subtopic": "Phép nhân số phức", "difficulty": "MEDIUM",
+      "content": "Phần thực của số phức z = (1 + 2i)(3 - i) là:",
+      "options": [
+        {"label": "A", "content": "3"},
+        {"label": "B", "content": "5"},
+        {"label": "C", "content": "7"},
+        {"label": "D", "content": "-5"}
+      ],
+      "correct": "B",
+      "explanation": "(1+2i)(3-i) = 3 - i + 6i - 2i² = 3 + 5i - 2(-1) = 3 + 5i + 2 = 5 + 5i. Phần thực là 5."
+    },
+    {
+      "order": 3, "code": "MATH2-003", "topic": "Số phức", "subtopic": "Số phức liên hợp", "difficulty": "EASY",
+      "content": "Số phức liên hợp của z = 2 - 3i là:",
+      "options": [
+        {"label": "A", "content": "2 + 3i"},
+        {"label": "B", "content": "-2 + 3i"},
+        {"label": "C", "content": "-2 - 3i"},
+        {"label": "D", "content": "3 - 2i"}
+      ],
+      "correct": "A",
+      "explanation": "Số phức liên hợp của z = a + bi là z̄ = a - bi (đổi dấu phần ảo). Vậy liên hợp của 2 - 3i là 2 + 3i. Tích z.z̄ = |z|² = 4 + 9 = 13."
+    },
+    {
+      "order": 4, "code": "MATH2-004", "topic": "Logarithm", "subtopic": "Tính logarithm", "difficulty": "EASY",
+      "content": "Giá trị của log₂(32) bằng:",
+      "options": [
+        {"label": "A", "content": "5"},
+        {"label": "B", "content": "4"},
+        {"label": "C", "content": "6"},
+        {"label": "D", "content": "16"}
+      ],
+      "correct": "A",
+      "explanation": "log₂(32) = log₂(2⁵) = 5. Vì 2⁵ = 32. Kiểm tra: 2¹=2, 2²=4, 2³=8, 2⁴=16, 2⁵=32 ✓"
+    },
+    {
+      "order": 5, "code": "MATH2-005", "topic": "Logarithm", "subtopic": "Logarithm thập phân", "difficulty": "EASY",
+      "content": "Giá trị của lg(1 000 000) bằng:",
+      "options": [
+        {"label": "A", "content": "5"},
+        {"label": "B", "content": "6"},
+        {"label": "C", "content": "7"},
+        {"label": "D", "content": "8"}
+      ],
+      "correct": "B",
+      "explanation": "lg(1 000 000) = lg(10⁶) = 6. Vì 10⁶ = 1 000 000. Logarithm cơ số 10: lg(10ⁿ) = n."
+    },
+    {
+      "order": 6, "code": "MATH2-006", "topic": "Logarithm", "subtopic": "Tập xác định hàm logarithm", "difficulty": "MEDIUM",
+      "content": "Tập xác định của hàm số y = log₂(x - 3) là:",
+      "options": [
+        {"label": "A", "content": "(-∞; 3)"},
+        {"label": "B", "content": "[3; +∞)"},
+        {"label": "C", "content": "(3; +∞)"},
+        {"label": "D", "content": "(-∞; -3)"}
+      ],
+      "correct": "C",
+      "explanation": "Hàm logarithm xác định khi biểu thức trong log > 0: x - 3 > 0 → x > 3. Tập xác định: (3; +∞). Lưu ý x = 3 không thuộc tập xác định vì log(0) không xác định."
+    },
+    {
+      "order": 7, "code": "MATH2-007", "topic": "Hàm mũ", "subtopic": "Hàm mũ cơ số 2", "difficulty": "MEDIUM",
+      "content": "Giá trị của 2^(log₂ 5) bằng:",
+      "options": [
+        {"label": "A", "content": "2"},
+        {"label": "B", "content": "10"},
+        {"label": "C", "content": "log₂ 5"},
+        {"label": "D", "content": "5"}
+      ],
+      "correct": "D",
+      "explanation": "Tính chất: a^(log_a x) = x với mọi a > 0, a ≠ 1, x > 0. Vậy 2^(log₂ 5) = 5. Đây là tính chất cơ bản hàm mũ và logarithm nghịch nhau."
+    },
+    {
+      "order": 8, "code": "MATH2-008", "topic": "Hàm số", "subtopic": "Cực trị hàm số", "difficulty": "HARD",
+      "content": "Hàm số y = x³ - 3x có bao nhiêu điểm cực trị?",
+      "options": [
+        {"label": "A", "content": "0"},
+        {"label": "B", "content": "1"},
+        {"label": "C", "content": "3"},
+        {"label": "D", "content": "2"}
+      ],
+      "correct": "D",
+      "explanation": "y' = 3x² - 3 = 3(x²-1) = 3(x-1)(x+1). y' = 0 khi x = ±1. Bảng biến thiên: y'>0 trên (-∞;-1) và (1;+∞); y'<0 trên (-1;1). Vậy x=-1 là cực đại, x=1 là cực tiểu → 2 điểm cực trị."
+    },
+    {
+      "order": 9, "code": "MATH2-009", "topic": "Đạo hàm", "subtopic": "Đạo hàm hàm đa thức", "difficulty": "EASY",
+      "content": "Đạo hàm của hàm số y = x³ + 2x² - 5x + 1 là:",
+      "options": [
+        {"label": "A", "content": "3x² + 4x - 5"},
+        {"label": "B", "content": "3x² + 2x - 5"},
+        {"label": "C", "content": "x² + 4x - 5"},
+        {"label": "D", "content": "3x³ + 4x - 5"}
+      ],
+      "correct": "A",
+      "explanation": "Quy tắc đạo hàm: (xⁿ)' = n·xⁿ⁻¹. Vậy: (x³)' = 3x², (2x²)' = 4x, (-5x)' = -5, (1)' = 0. Kết quả: y' = 3x² + 4x - 5."
+    },
+    {
+      "order": 10, "code": "MATH2-010", "topic": "Đạo hàm", "subtopic": "Đạo hàm hàm hợp", "difficulty": "MEDIUM",
+      "content": "Đạo hàm của hàm số y = sin(2x + 1) là:",
+      "options": [
+        {"label": "A", "content": "cos(2x + 1)"},
+        {"label": "B", "content": "-cos(2x + 1)"},
+        {"label": "C", "content": "2cos(2x + 1)"},
+        {"label": "D", "content": "-2cos(2x + 1)"}
+      ],
+      "correct": "C",
+      "explanation": "Quy tắc đạo hàm hàm hợp: [sin(u)]' = u'·cos(u). Với u = 2x+1 thì u' = 2. Vậy y' = 2·cos(2x+1)."
+    },
+    {
+      "order": 11, "code": "MATH2-011", "topic": "Hàm số", "subtopic": "Tăng giảm hàm số", "difficulty": "MEDIUM",
+      "content": "Hàm số y = -x³ + 3x đồng biến trên khoảng nào?",
+      "options": [
+        {"label": "A", "content": "(-∞; -1) và (1; +∞)"},
+        {"label": "B", "content": "(-1; 1)"},
+        {"label": "C", "content": "(0; +∞)"},
+        {"label": "D", "content": "(-∞; 0)"}
+      ],
+      "correct": "B",
+      "explanation": "y' = -3x² + 3 = -3(x²-1) = -3(x-1)(x+1). y' > 0 khi (x-1)(x+1) < 0 ↔ -1 < x < 1. Hàm đồng biến trên (-1; 1)."
+    },
+    {
+      "order": 12, "code": "MATH2-012", "topic": "Đạo hàm", "subtopic": "Ứng dụng đạo hàm", "difficulty": "HARD",
+      "content": "Tiếp tuyến với đồ thị y = x² + x tại điểm có hoành độ x = 1 có hệ số góc là:",
+      "options": [
+        {"label": "A", "content": "1"},
+        {"label": "B", "content": "2"},
+        {"label": "C", "content": "3"},
+        {"label": "D", "content": "4"}
+      ],
+      "correct": "C",
+      "explanation": "Hệ số góc tiếp tuyến = y'(x₀). y' = 2x + 1. Tại x = 1: y'(1) = 2·1 + 1 = 3. Vậy hệ số góc tiếp tuyến là 3."
+    },
+    {
+      "order": 13, "code": "MATH2-013", "topic": "Tích phân", "subtopic": "Tích phân cơ bản", "difficulty": "MEDIUM",
+      "content": "∫(0→1) x² dx bằng:",
+      "options": [
+        {"label": "A", "content": "1"},
+        {"label": "B", "content": "1/2"},
+        {"label": "C", "content": "2"},
+        {"label": "D", "content": "1/3"}
+      ],
+      "correct": "D",
+      "explanation": "∫x² dx = x³/3 + C. Vậy ∫(0→1) x² dx = [x³/3]₀¹ = 1/3 - 0 = 1/3."
+    },
+    {
+      "order": 14, "code": "MATH2-014", "topic": "Tích phân", "subtopic": "Nguyên hàm lượng giác", "difficulty": "MEDIUM",
+      "content": "∫cos(x) dx bằng:",
+      "options": [
+        {"label": "A", "content": "sin(x) + C"},
+        {"label": "B", "content": "-sin(x) + C"},
+        {"label": "C", "content": "tan(x) + C"},
+        {"label": "D", "content": "-cos(x) + C"}
+      ],
+      "correct": "A",
+      "explanation": "Nguyên hàm của cos(x) là sin(x) + C vì (sin(x))' = cos(x). Đây là một trong các nguyên hàm cơ bản cần nhớ thuộc."
+    },
+    {
+      "order": 15, "code": "MATH2-015", "topic": "Tích phân", "subtopic": "Diện tích hình phẳng", "difficulty": "HARD",
+      "content": "Diện tích hình phẳng giới hạn bởi y = x², y = 0, x = 0, x = 2 là:",
+      "options": [
+        {"label": "A", "content": "4/3"},
+        {"label": "B", "content": "2"},
+        {"label": "C", "content": "8/3"},
+        {"label": "D", "content": "4"}
+      ],
+      "correct": "C",
+      "explanation": "S = ∫(0→2) x² dx = [x³/3]₀² = 8/3 - 0 = 8/3. Vì y = x² ≥ 0 trên [0;2], diện tích đúng bằng giá trị tích phân."
+    },
+    {
+      "order": 16, "code": "MATH2-016", "topic": "Tích phân", "subtopic": "Tích phân hàm mũ", "difficulty": "MEDIUM",
+      "content": "∫eˣ dx bằng:",
+      "options": [
+        {"label": "A", "content": "eˣ/x + C"},
+        {"label": "B", "content": "xeˣ + C"},
+        {"label": "C", "content": "eˣ + C"},
+        {"label": "D", "content": "e⁻ˣ + C"}
+      ],
+      "correct": "C",
+      "explanation": "Hàm eˣ có đạo hàm chính là bản thân nó: (eˣ)' = eˣ. Vì vậy nguyên hàm của eˣ cũng là eˣ + C."
+    },
+    {
+      "order": 17, "code": "MATH2-017", "topic": "Hình học giải tích", "subtopic": "Phương trình đường thẳng", "difficulty": "MEDIUM",
+      "content": "Đường thẳng đi qua A(1; 2) và B(3; 6) có phương trình:",
+      "options": [
+        {"label": "A", "content": "y = 2x"},
+        {"label": "B", "content": "y = 2x + 1"},
+        {"label": "C", "content": "y = x + 1"},
+        {"label": "D", "content": "y = 3x - 1"}
+      ],
+      "correct": "A",
+      "explanation": "Hệ số góc: k = (y₂-y₁)/(x₂-x₁) = (6-2)/(3-1) = 4/2 = 2. Phương trình: y - 2 = 2(x - 1) → y = 2x - 2 + 2 = 2x. Kiểm tra: A(1;2): 2=2·1 ✓; B(3;6): 6=2·3 ✓"
+    },
+    {
+      "order": 18, "code": "MATH2-018", "topic": "Hình học giải tích", "subtopic": "Khoảng cách điểm-đường", "difficulty": "MEDIUM",
+      "content": "Khoảng cách từ điểm M(1; 1) đến đường thẳng 3x + 4y - 5 = 0 là:",
+      "options": [
+        {"label": "A", "content": "2/5"},
+        {"label": "B", "content": "3/5"},
+        {"label": "C", "content": "4/5"},
+        {"label": "D", "content": "1"}
+      ],
+      "correct": "A",
+      "explanation": "d(M, d) = |ax₀+by₀+c| / √(a²+b²) = |3·1+4·1-5| / √(9+16) = |3+4-5| / 5 = |2| / 5 = 2/5."
+    },
+    {
+      "order": 19, "code": "MATH2-019", "topic": "Hình học giải tích", "subtopic": "Phương trình đường tròn", "difficulty": "MEDIUM",
+      "content": "Đường tròn (C): x² + y² - 4x + 2y - 4 = 0 có bán kính bằng:",
+      "options": [
+        {"label": "A", "content": "2"},
+        {"label": "B", "content": "3"},
+        {"label": "C", "content": "4"},
+        {"label": "D", "content": "√4"}
+      ],
+      "correct": "B",
+      "explanation": "Viết lại: (x-2)² + (y+1)² = 4+1+4 = 9. Bán kính R = √9 = 3. Tâm I(2; -1). Phương pháp: hoàn chỉnh bình phương rồi đọc R = √(2+b²/4-c) theo dạng tổng quát."
+    },
+    {
+      "order": 20, "code": "MATH2-020", "topic": "Hình học giải tích", "subtopic": "Vectơ", "difficulty": "EASY",
+      "content": "Tích vô hướng của hai vectơ a⃗(1;2) và b⃗(3;-1) bằng:",
+      "options": [
+        {"label": "A", "content": "5"},
+        {"label": "B", "content": "3"},
+        {"label": "C", "content": "1"},
+        {"label": "D", "content": "-1"}
+      ],
+      "correct": "C",
+      "explanation": "a⃗·b⃗ = x₁·x₂ + y₁·y₂ = 1·3 + 2·(-1) = 3 - 2 = 1. Tích vô hướng = 0 khi hai vectơ vuông góc."
+    },
+    {
+      "order": 21, "code": "MATH2-021", "topic": "Hình học không gian", "subtopic": "Thể tích hình chóp", "difficulty": "MEDIUM",
+      "content": "Hình chóp tứ giác đều có cạnh đáy a = 6 và chiều cao h = 4. Thể tích hình chóp bằng:",
+      "options": [
+        {"label": "A", "content": "24"},
+        {"label": "B", "content": "48"},
+        {"label": "C", "content": "72"},
+        {"label": "D", "content": "48"}
+      ],
+      "correct": "B",
+      "explanation": "V = (1/3)·S_đáy·h = (1/3)·(6²)·4 = (1/3)·36·4 = 48. Công thức thể tích hình chóp: V = S·h/3."
+    },
+    {
+      "order": 22, "code": "MATH2-022", "topic": "Hình học không gian", "subtopic": "Diện tích mặt cầu", "difficulty": "MEDIUM",
+      "content": "Mặt cầu bán kính R = 3 có diện tích bằng:",
+      "options": [
+        {"label": "A", "content": "36π"},
+        {"label": "B", "content": "9π"},
+        {"label": "C", "content": "12π"},
+        {"label": "D", "content": "27π"}
+      ],
+      "correct": "A",
+      "explanation": "Diện tích mặt cầu: S = 4πR² = 4·π·3² = 4·π·9 = 36π. Thể tích hình cầu là V = (4/3)πR³ = 36π (trùng hợp do R=3)."
+    },
+    {
+      "order": 23, "code": "MATH2-023", "topic": "Hình học không gian", "subtopic": "Thể tích hình trụ", "difficulty": "EASY",
+      "content": "Hình trụ có bán kính đáy r = 2 và chiều cao h = 5. Thể tích hình trụ bằng:",
+      "options": [
+        {"label": "A", "content": "10π"},
+        {"label": "B", "content": "20π"},
+        {"label": "C", "content": "40π"},
+        {"label": "D", "content": "4π"}
+      ],
+      "correct": "B",
+      "explanation": "V = π·r²·h = π·4·5 = 20π. Diện tích xung quanh hình trụ: S_xq = 2πrh = 20π (trùng hợp). Diện tích toàn phần: S = 2πr(r+h) = 2π·2·7 = 28π."
+    },
+    {
+      "order": 24, "code": "MATH2-024", "topic": "Hình học không gian", "subtopic": "Góc giữa đường và mặt phẳng", "difficulty": "HARD",
+      "content": "Hình lập phương ABCD.A'B'C'D' cạnh a. Góc giữa đường chéo AC' và mặt phẳng (ABCD) bằng:",
+      "options": [
+        {"label": "A", "content": "30°"},
+        {"label": "B", "content": "45°"},
+        {"label": "C", "content": "arctan(1/√2)"},
+        {"label": "D", "content": "arctan(√2)"}
+      ],
+      "correct": "C",
+      "explanation": "Hình chiếu AC' lên (ABCD) là đường chéo AC (dài a√2). Chiều cao CC' = a. tan(α) = CC'/AC = a/(a√2) = 1/√2. Góc α = arctan(1/√2) ≈ 35°16'."
+    },
+    {
+      "order": 25, "code": "MATH2-025", "topic": "Tổ hợp", "subtopic": "Chỉnh hợp", "difficulty": "MEDIUM",
+      "content": "Có bao nhiêu cách xếp 3 học sinh vào 5 ghế (mỗi ghế 1 người)?",
+      "options": [
+        {"label": "A", "content": "10"},
+        {"label": "B", "content": "15"},
+        {"label": "C", "content": "30"},
+        {"label": "D", "content": "60"}
+      ],
+      "correct": "D",
+      "explanation": "Số chỉnh hợp chập 3 của 5: A₅³ = 5!/(5-3)! = 5·4·3 = 60. Đây là bài toán xếp có thứ tự (ghế phân biệt, người phân biệt)."
+    },
+    {
+      "order": 26, "code": "MATH2-026", "topic": "Tổ hợp", "subtopic": "Tổ hợp chọn", "difficulty": "EASY",
+      "content": "Từ nhóm 6 người, chọn ra 2 người. Có bao nhiêu cách chọn?",
+      "options": [
+        {"label": "A", "content": "15"},
+        {"label": "B", "content": "12"},
+        {"label": "C", "content": "30"},
+        {"label": "D", "content": "6"}
+      ],
+      "correct": "A",
+      "explanation": "Số tổ hợp chập 2 của 6: C₆² = 6!/(2!·4!) = (6·5)/(2·1) = 15. Không quan tâm thứ tự nên dùng tổ hợp (không dùng chỉnh hợp)."
+    },
+    {
+      "order": 27, "code": "MATH2-027", "topic": "Xác suất", "subtopic": "Xác suất cổ điển", "difficulty": "MEDIUM",
+      "content": "Gieo một con xúc xắc cân đối. Xác suất để xuất hiện mặt có số chẵn là:",
+      "options": [
+        {"label": "A", "content": "1/6"},
+        {"label": "B", "content": "1/3"},
+        {"label": "C", "content": "2/3"},
+        {"label": "D", "content": "1/2"}
+      ],
+      "correct": "D",
+      "explanation": "Không gian mẫu: {1, 2, 3, 4, 5, 6}, n(Ω) = 6. Sự kiện mặt chẵn: {2, 4, 6}, n(A) = 3. P(A) = 3/6 = 1/2."
+    },
+    {
+      "order": 28, "code": "MATH2-028", "topic": "Xác suất", "subtopic": "Xác suất có điều kiện", "difficulty": "HARD",
+      "content": "Túi có 3 bi đỏ và 2 bi xanh. Lấy ngẫu nhiên 2 bi. Xác suất để cả 2 đều đỏ là:",
+      "options": [
+        {"label": "A", "content": "3/10"},
+        {"label": "B", "content": "1/2"},
+        {"label": "C", "content": "9/25"},
+        {"label": "D", "content": "2/5"}
+      ],
+      "correct": "A",
+      "explanation": "Tổng số cách chọn 2 bi từ 5: C₅² = 10. Cách chọn 2 bi đỏ từ 3 đỏ: C₃² = 3. P = 3/10."
+    },
+    {
+      "order": 29, "code": "MATH2-029", "topic": "Dãy số", "subtopic": "Cấp số cộng", "difficulty": "MEDIUM",
+      "content": "Dãy số 2, 5, 8, 11, ... là cấp số cộng với công sai d bằng:",
+      "options": [
+        {"label": "A", "content": "2"},
+        {"label": "B", "content": "2.5"},
+        {"label": "C", "content": "4"},
+        {"label": "D", "content": "3"}
+      ],
+      "correct": "D",
+      "explanation": "Công sai d = u₂ - u₁ = 5 - 2 = 3. Kiểm tra: u₃ - u₂ = 8 - 5 = 3 ✓; u₄ - u₃ = 11 - 8 = 3 ✓. Số hạng tổng quát: uₙ = 2 + (n-1)·3 = 3n - 1."
+    },
+    {
+      "order": 30, "code": "MATH2-030", "topic": "Đại số", "subtopic": "Giải phương trình bậc 2", "difficulty": "EASY",
+      "content": "Phương trình x² - 5x + 6 = 0 có hai nghiệm x₁, x₂. Tích x₁·x₂ bằng:",
+      "options": [
+        {"label": "A", "content": "5"},
+        {"label": "B", "content": "-6"},
+        {"label": "C", "content": "6"},
+        {"label": "D", "content": "-5"}
+      ],
+      "correct": "C",
+      "explanation": "Theo định lý Vi-et: x₁·x₂ = c/a = 6/1 = 6. Và x₁+x₂ = -b/a = 5. Kiểm tra: nghiệm x=2 và x=3 → 2·3=6 ✓, 2+3=5 ✓."
+    }
+  ]
+}

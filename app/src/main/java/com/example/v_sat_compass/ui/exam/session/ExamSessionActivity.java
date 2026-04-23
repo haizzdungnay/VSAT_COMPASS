@@ -22,10 +22,13 @@ import com.example.v_sat_compass.data.api.ExamApi;
 import com.example.v_sat_compass.data.local.LocalExamDataSource;
 import com.example.v_sat_compass.data.model.ApiResponse;
 import com.example.v_sat_compass.data.model.Exam;
+import com.example.v_sat_compass.data.model.ExamHistoryEntry;
 import com.example.v_sat_compass.data.model.ExamSession;
 import com.example.v_sat_compass.data.model.Question;
+import com.example.v_sat_compass.data.repository.ExamHistoryRepository;
 import com.example.v_sat_compass.databinding.ActivityExamSessionBinding;
 import com.google.android.material.card.MaterialCardView;
+import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,6 +49,8 @@ public class ExamSessionActivity extends AppCompatActivity {
 
     private Long sessionId;
     private long examId;
+    private String examTitle;
+    private String examSubject;
     private int durationMinutes;
     private int totalQuestions;
 
@@ -66,6 +71,7 @@ public class ExamSessionActivity extends AppCompatActivity {
     private int strokeDefault;
     private int strokeSelected;
     private final boolean clientSideProcessing = ApiClient.isClientSideExamProcessingEnabled();
+    private boolean hasRemoteSession;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,13 +87,14 @@ public class ExamSessionActivity extends AppCompatActivity {
         strokeSelected = ContextCompat.getColor(this, R.color.primary);
 
         examId = getIntent().getLongExtra("exam_id", 0);
-        String title = getIntent().getStringExtra("exam_title");
+        examTitle = getIntent().getStringExtra("exam_title");
+        examSubject = getIntent().getStringExtra("exam_subject");
         durationMinutes = getIntent().getIntExtra("duration_minutes", 60);
         totalQuestions = getIntent().getIntExtra("total_questions", 0);
 
-        // Show subject name in top bar (use title as subject prefix)
-        String displayTitle = title != null ? title : "Đề thi";
+        String displayTitle = examTitle != null ? examTitle : "Đề thi";
         binding.tvExamTitle.setText(displayTitle);
+        updateSyncStatus(false);
 
         binding.btnBack.setOnClickListener(v -> confirmExit());
         binding.btnPrevious.setOnClickListener(v -> navigateQuestion(-1));
@@ -101,6 +108,12 @@ public class ExamSessionActivity extends AppCompatActivity {
     private void startSession() {
         sessionStartMillis = System.currentTimeMillis();
 
+        if (clientSideProcessing) {
+            startLocalSession();
+            tryBootstrapRemoteSession();
+            return;
+        }
+
         Map<String, Long> body = new HashMap<>();
         body.put("examId", examId);
 
@@ -110,6 +123,7 @@ public class ExamSessionActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                     ExamSession session = response.body().getData();
                     sessionId = session.getId();
+                    hasRemoteSession = true;
                     loadExamDetail();
                     startTimer();
                 } else {
@@ -120,12 +134,52 @@ public class ExamSessionActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<ApiResponse<ExamSession>> call, Throwable t) {
-                sessionId = System.currentTimeMillis();
-                sessionStartMillis = System.currentTimeMillis();
-                loadExamDetailFromLocal();
-                startTimer();
+                startLocalSession();
             }
         });
+    }
+
+    private void startLocalSession() {
+        hasRemoteSession = false;
+        sessionId = System.currentTimeMillis();
+        updateSyncStatus(false);
+        loadExamDetailFromLocal();
+        startTimer();
+    }
+
+    private void tryBootstrapRemoteSession() {
+        Map<String, Long> body = new HashMap<>();
+        body.put("examId", examId);
+
+        examApi.startSession(body).enqueue(new Callback<ApiResponse<ExamSession>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<ExamSession>> call, Response<ApiResponse<ExamSession>> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    ExamSession remoteSession = response.body().getData();
+                    if (remoteSession != null && remoteSession.getId() != null) {
+                        sessionId = remoteSession.getId();
+                        hasRemoteSession = true;
+                        updateSyncStatus(true);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<ExamSession>> call, Throwable t) {
+                // Keep local-only exam flow when backend is unavailable.
+                updateSyncStatus(false);
+            }
+        });
+    }
+
+    private void updateSyncStatus(boolean onlineSyncEnabled) {
+        if (onlineSyncEnabled) {
+            binding.tvSyncStatus.setText("Sync: online enabled");
+            binding.tvSyncStatus.setTextColor(ContextCompat.getColor(this, R.color.primary));
+        } else {
+            binding.tvSyncStatus.setText("Sync: local-only");
+            binding.tvSyncStatus.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
+        }
     }
 
     private void loadExamDetail() {
@@ -185,6 +239,19 @@ public class ExamSessionActivity extends AppCompatActivity {
             currentQuestion = questionCache.get(questionId);
             displayQuestion(currentQuestion);
             updateBookmarkIcon();
+            return;
+        }
+
+        if (clientSideProcessing || !hasRemoteSession) {
+            Question localQuestion = LocalExamDataSource.getInstance().getQuestion(this, questionId);
+            if (localQuestion != null) {
+                currentQuestion = localQuestion;
+                questionCache.put(questionId, localQuestion);
+                displayQuestion(currentQuestion);
+                updateBookmarkIcon();
+            } else {
+                Toast.makeText(this, "Không tìm thấy câu hỏi cục bộ", Toast.LENGTH_SHORT).show();
+            }
             return;
         }
 
@@ -443,7 +510,7 @@ public class ExamSessionActivity extends AppCompatActivity {
         }
 
         // POST final result to backend (fire-and-forget; result is already shown to user)
-        if (sessionId != null) {
+        if (hasRemoteSession && sessionId != null) {
             Map<String, Object> resultBody = new HashMap<>();
             resultBody.put("correctAnswers", correct);
             resultBody.put("totalQuestions", total);
@@ -455,12 +522,28 @@ public class ExamSessionActivity extends AppCompatActivity {
             });
         }
 
+        // Serialize selectedAnswers để truyền sang ExamResultActivity → ExamReviewActivity
+        String answersJson = new Gson().toJson(selectedAnswers);
+
+        // Lưu lịch sử bài làm vào local storage (async, callback nếu lỗi lưu)
+        ExamHistoryEntry historyEntry = new ExamHistoryEntry(
+                examId, examTitle, examSubject,
+                total, correct, score, timeSpentSeconds, answersJson);
+        final boolean[] historySaveFailed = {false};
+        ExamHistoryRepository.getInstance().saveEntry(this, historyEntry,
+                () -> historySaveFailed[0] = true);
+
         Intent intent = new Intent(ExamSessionActivity.this, ExamResultActivity.class);
         intent.putExtra("session_id", sessionId != null ? sessionId : System.currentTimeMillis());
         intent.putExtra("score", score);
         intent.putExtra("correct", correct);
         intent.putExtra("total", total);
         intent.putExtra("time_spent", timeSpentSeconds);
+        intent.putExtra("exam_id", examId);
+        intent.putExtra("exam_title", examTitle);
+        intent.putExtra("exam_subject", examSubject != null ? examSubject : "");
+        intent.putExtra("selected_answers_json", answersJson);
+        intent.putExtra("history_save_failed", historySaveFailed[0]);
         startActivity(intent);
         finish();
     }
@@ -561,6 +644,8 @@ public class ExamSessionActivity extends AppCompatActivity {
     }
 
     @Override
+    @SuppressWarnings("MissingSuperCall")
+    // super.onBackPressed() intentionally not called — back press shows exam exit dialog
     public void onBackPressed() {
         confirmExit();
     }

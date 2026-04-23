@@ -1,3 +1,62 @@
 <resources>
     <string name="app_name">V-SAT_COMPASS</string>
+
+    <!-- ── Accessibility content descriptions ── -->
+    <string name="cd_back">Quay lại</string>
+    <string name="cd_bookmark">Đánh dấu câu hỏi</string>
+    <string name="cd_grid_menu">Bảng câu hỏi</string>
+
+    <!-- ── Exam Review (ExamReviewActivity) ── -->
+    <string name="review_title">Xem lời giải chi tiết</string>
+    <string name="review_question_label">Câu %1$d</string>
+    <string name="review_counter_format">%1$d/%2$d</string>
+    <string name="review_question_load_error">Không thể tải câu hỏi này.</string>
+    <string name="review_explanation_placeholder">Lời giải đang được cập nhật.</string>
+    <string name="review_option_correct_label">Đáp án đúng</string>
+    <string name="review_option_yours_label">Của bạn</string>
+    <string name="review_grid_answered">Đã làm: %1$d/%2$d</string>
+    <string name="review_grid_skipped">Bỏ qua: %1$d</string>
+    <string name="review_unanswered_badge">Bạn chưa trả lời câu này</string>
+    <string name="review_question_unavailable">Câu hỏi này đã được cập nhật, không xem chi tiết được.</string>
+    <string name="review_option_unavailable">Đáp án bạn chọn không còn tồn tại trong phiên bản đề hiện tại.</string>
+
+    <!-- ── Exam History (ExamHistoryActivity) ── -->
+    <string name="history_title">Lịch sử bài làm</string>
+    <string name="history_stat_empty">--</string>
+    <string name="history_filter_math">Toán</string>
+    <string name="history_filter_english">Tiếng Anh</string>
+    <string name="history_filter_physics">Vật lí</string>
+    <string name="history_empty_no_exams">Chưa có bài thi nào.\nHãy thử đề đầu tiên nhé!</string>
+    <string name="history_empty_no_filter_results">Không có bài thi nào ở môn này.</string>
+    <string name="history_review_btn">Xem lại</string>
+    <string name="history_save_error">Không lưu được lịch sử bài làm. Vui lòng kiểm tra dung lượng thiết bị.</string>
+    <string name="history_correct_count">%1$d/%2$d câu đúng</string>
+    <string name="history_time_format">%1$d:%2$02d</string>
+
+    <!-- ── Home screen (HomeFragment) ── -->
+    <string name="home_greeting_morning">Chào buổi sáng</string>
+    <string name="home_greeting_afternoon">Chào buổi chiều</string>
+    <string name="home_greeting_evening">Chào buổi tối</string>
+    <string name="home_greeting_default_name">bạn</string>
+    <string name="home_greeting_format">%1$s, %2$s!</string>
+    <string name="home_greeting_default_morning">Chào buổi sáng, bạn!</string>
+    <string name="home_greeting_default_afternoon">Chào buổi chiều, bạn!</string>
+    <string name="home_greeting_default_evening">Chào buổi tối, bạn!</string>
+    <string name="home_stats_time_minutes">%1$dph</string>
+    <string name="home_stats_time_hours">%1$dh%2$dm</string>
+    <string name="home_stats_time_zero">0ph</string>
+    <string name="home_stats_score_empty">--</string>
+
+    <!-- ── Relative time labels ── -->
+    <string name="time_just_now">vừa xong</string>
+    <string name="time_minutes_ago">%1$d phút trước</string>
+    <string name="time_hours_ago">%1$d giờ trước</string>
+    <string name="time_days_ago">%1$d ngày trước</string>
+
+    <!-- ── Empty state shared ── -->
+    <string name="empty_state_history_title">Chưa có bài thi nào</string>
+    <string name="empty_state_history_subtitle">Hãy thử đề đầu tiên nhé!</string>
+    <string name="empty_state_filter_title">Không tìm thấy kết quả</string>
+    <string name="empty_state_filter_subtitle">Không có bài thi nào ở môn này.</string>
+    <string name="empty_state_btn_go_exams">Vào kho đề</string>
 </resources>

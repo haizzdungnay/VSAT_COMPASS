@@ -27,14 +27,15 @@ server:
   servlet:
     context-path: /api/v1
 
-# JWT Configuration
+# JWT Configuration — JWT_SECRET MUST be set via environment variable.
+# If not set, application will fail to start (no fallback).
 app:
   jwt:
-    secret: ${JWT_SECRET:dnNhdGNvbXBhc3Mtc3VwZXItc2VjcmV0LWp3dC1rZXktMjU2Yml0LXByb2R1Y3Rpb24tMjAyNC12c2F0}
+    secret: ${JWT_SECRET}
     access-token-expiration-ms: 900000       # 15 minutes
     refresh-token-expiration-ms: 2592000000  # 30 days
   cors:
-    allowed-origins: http://localhost:3000,http://localhost:5173
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
 
 # Swagger
 springdoc:
@@ -45,11 +46,21 @@ springdoc:
     tags-sorter: alpha
     operations-sorter: alpha
 
-# Logging
+# Actuator — expose ONLY health endpoint, no details
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+# Logging (default)
 logging:
   level:
     root: INFO
-    com.vsatcompass.api: DEBUG
+    com.vsatcompass.api: INFO
     org.springframework.security: INFO
 
 ---
@@ -73,6 +84,7 @@ spring:
 logging:
   level:
     com.vsatcompass.api: DEBUG
+    org.hibernate.SQL: ${HIBERNATE_SQL_LOG:WARN}
 
 ---
 # ==================== PROD PROFILE ====================
@@ -99,3 +111,5 @@ spring:
 logging:
   level:
     com.vsatcompass.api: INFO
+    org.hibernate.SQL: WARN
+    org.springframework.security: WARN

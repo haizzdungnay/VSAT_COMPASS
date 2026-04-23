@@ -1,0 +1,376 @@
+{
+  "exam": {
+    "id": 5,
+    "exam_code": "VSAT-ENG-2024-002",
+    "title": "Đề thi thử V-SAT Tiếng Anh — Đề nâng cao số 2",
+    "subject_name": "Tiếng Anh",
+    "description": "Đề thi nâng cao môn Tiếng Anh V-SAT. 30 câu trắc nghiệm, 45 phút. Gồm ngữ pháp, từ vựng, đọc hiểu và nhận biết lỗi sai.",
+    "duration_minutes": 45,
+    "total_questions": 30,
+    "difficulty": "MEDIUM",
+    "status": "PUBLISHED",
+    "is_paid": false
+  },
+  "questions": [
+    {
+      "order": 1, "code": "ENG2-001", "topic": "Ngữ pháp", "subtopic": "Thì hiện tại hoàn thành",
+      "content": "She ____ in Hanoi for five years.",
+      "options": [
+        {"label": "A", "content": "lives"},
+        {"label": "B", "content": "lived"},
+        {"label": "C", "content": "has lived"},
+        {"label": "D", "content": "is living"}
+      ],
+      "correct": "C",
+      "explanation": "Thì hiện tại hoàn thành (have/has + V3) dùng khi hành động bắt đầu trong quá khứ và còn tiếp tục đến hiện tại. 'For five years' là dấu hiệu nhận biết. 'Lived' (quá khứ đơn) dùng khi hành động đã kết thúc hoàn toàn."
+    },
+    {
+      "order": 2, "code": "ENG2-002", "topic": "Ngữ pháp", "subtopic": "Câu bị động",
+      "content": "The letter ____ by Tom yesterday.",
+      "options": [
+        {"label": "A", "content": "writes"},
+        {"label": "B", "content": "is written"},
+        {"label": "C", "content": "was written"},
+        {"label": "D", "content": "wrote"}
+      ],
+      "correct": "C",
+      "explanation": "Câu bị động thì quá khứ đơn: was/were + V3. 'Yesterday' → quá khứ đơn. Cấu trúc: S + was/were + V3 + by + O. 'Is written' là hiện tại bị động, không phù hợp với 'yesterday'."
+    },
+    {
+      "order": 3, "code": "ENG2-003", "topic": "Ngữ pháp", "subtopic": "Mệnh đề quan hệ",
+      "content": "The book ____ I borrowed from the library was very interesting.",
+      "options": [
+        {"label": "A", "content": "who"},
+        {"label": "B", "content": "which"},
+        {"label": "C", "content": "whom"},
+        {"label": "D", "content": "whose"}
+      ],
+      "correct": "B",
+      "explanation": "'Which' là đại từ quan hệ thay thế cho danh từ chỉ vật (the book). 'Who/Whom' chỉ dùng cho người. 'Whose' dùng để chỉ sở hữu. Mệnh đề quan hệ rút gọn: 'The book (which I borrowed) was...' → 'which' làm tân ngữ nên có thể lược bỏ."
+    },
+    {
+      "order": 4, "code": "ENG2-004", "topic": "Ngữ pháp", "subtopic": "Câu giả định",
+      "content": "If he ____ harder, he would pass the exam.",
+      "options": [
+        {"label": "A", "content": "studies"},
+        {"label": "B", "content": "study"},
+        {"label": "C", "content": "studied"},
+        {"label": "D", "content": "had studied"}
+      ],
+      "correct": "C",
+      "explanation": "Câu điều kiện loại 2 (giả định không có thật ở hiện tại): If + S + V-ed/V2, S + would + V. 'Had studied' dùng cho điều kiện loại 3 (giả định trong quá khứ). Chủ ngữ 'he' → 'studied' (không thêm '-s')."
+    },
+    {
+      "order": 5, "code": "ENG2-005", "topic": "Ngữ pháp", "subtopic": "Động từ khiếm khuyết",
+      "content": "You ____ smoke here. It's forbidden.",
+      "options": [
+        {"label": "A", "content": "must"},
+        {"label": "B", "content": "should"},
+        {"label": "C", "content": "mustn't"},
+        {"label": "D", "content": "needn't"}
+      ],
+      "correct": "C",
+      "explanation": "'Mustn't' diễn tả sự cấm đoán (không được phép). 'Must' diễn tả bắt buộc. 'Should' là lời khuyên nhẹ. 'Needn't' = không cần thiết nhưng không bị cấm. 'It's forbidden' (bị cấm) → dùng 'mustn't'."
+    },
+    {
+      "order": 6, "code": "ENG2-006", "topic": "Ngữ pháp", "subtopic": "Giới từ thời gian",
+      "content": "He was born ____ 1998.",
+      "options": [
+        {"label": "A", "content": "at"},
+        {"label": "B", "content": "on"},
+        {"label": "C", "content": "in"},
+        {"label": "D", "content": "by"}
+      ],
+      "correct": "C",
+      "explanation": "Giới từ chỉ thời gian: 'in' + năm/tháng/mùa; 'on' + ngày/thứ; 'at' + giờ/thời điểm cụ thể. '1998' là năm → dùng 'in'. Ví dụ: in January (tháng 1), on Monday (thứ Hai), at 8 o'clock (8 giờ)."
+    },
+    {
+      "order": 7, "code": "ENG2-007", "topic": "Ngữ pháp", "subtopic": "So sánh hơn",
+      "content": "This film is ____ than the one we saw last week.",
+      "options": [
+        {"label": "A", "content": "more interesting"},
+        {"label": "B", "content": "most interesting"},
+        {"label": "C", "content": "interestinger"},
+        {"label": "D", "content": "more interest"}
+      ],
+      "correct": "A",
+      "explanation": "So sánh hơn với tính từ dài (≥ 3 âm tiết): more + adj + than. 'Interesting' (3 âm tiết) → 'more interesting than'. 'Most interesting' là so sánh nhất. 'Interestinger' sai cấu trúc."
+    },
+    {
+      "order": 8, "code": "ENG2-008", "topic": "Ngữ pháp", "subtopic": "Gerund và Infinitive",
+      "content": "I enjoy ____ football with my friends.",
+      "options": [
+        {"label": "A", "content": "to play"},
+        {"label": "B", "content": "play"},
+        {"label": "C", "content": "playing"},
+        {"label": "D", "content": "played"}
+      ],
+      "correct": "C",
+      "explanation": "Một số động từ theo sau là V-ing (gerund): enjoy, finish, mind, avoid, suggest, keep, practice. 'Enjoy + V-ing'. 'To play' (infinitive) không dùng sau 'enjoy'."
+    },
+    {
+      "order": 9, "code": "ENG2-009", "topic": "Ngữ pháp", "subtopic": "Câu hỏi đuôi",
+      "content": "She doesn't like coffee, ____?",
+      "options": [
+        {"label": "A", "content": "does she"},
+        {"label": "B", "content": "doesn't she"},
+        {"label": "C", "content": "is she"},
+        {"label": "D", "content": "isn't she"}
+      ],
+      "correct": "A",
+      "explanation": "Câu hỏi đuôi: nếu mệnh đề chính phủ định → phần đuôi khẳng định, dùng trợ động từ phù hợp. 'Doesn't' → trợ động từ đảo là 'does', chủ ngữ 'she'. → 'does she?'"
+    },
+    {
+      "order": 10, "code": "ENG2-010", "topic": "Ngữ pháp", "subtopic": "Reported Speech",
+      "content": "He said: 'I am tired.' → He said that he ____ tired.",
+      "options": [
+        {"label": "A", "content": "is"},
+        {"label": "B", "content": "was"},
+        {"label": "C", "content": "were"},
+        {"label": "D", "content": "has been"}
+      ],
+      "correct": "B",
+      "explanation": "Câu gián tiếp (reported speech): thì hiện tại đơn → quá khứ đơn. 'Am' → 'was'. Quy tắc lùi thì: is/am → was, are → were, will → would, can → could, have/has → had."
+    },
+    {
+      "order": 11, "code": "ENG2-011", "topic": "Từ vựng", "subtopic": "Từ đồng nghĩa",
+      "content": "Choose the word closest in meaning to 'enormous'.",
+      "options": [
+        {"label": "A", "content": "tiny"},
+        {"label": "B", "content": "huge"},
+        {"label": "C", "content": "narrow"},
+        {"label": "D", "content": "light"}
+      ],
+      "correct": "B",
+      "explanation": "'Enormous' nghĩa là cực kỳ lớn. Từ đồng nghĩa: huge (to lớn), gigantic, massive, immense. Trái nghĩa: tiny (nhỏ xíu), miniature. 'Narrow' (hẹp), 'light' (nhẹ/sáng) không liên quan."
+    },
+    {
+      "order": 12, "code": "ENG2-012", "topic": "Từ vựng", "subtopic": "Phân biệt từ dễ nhầm",
+      "content": "The scientist made an important ____ last year.",
+      "options": [
+        {"label": "A", "content": "discover"},
+        {"label": "B", "content": "discovery"},
+        {"label": "C", "content": "discovered"},
+        {"label": "D", "content": "discovering"}
+      ],
+      "correct": "B",
+      "explanation": "Sau 'an important' cần danh từ. 'Discovery' là danh từ (sự khám phá). 'Discover' là động từ. 'Made a discovery' = khám phá ra điều gì đó. Tương tự: invention (phát minh), improvement (cải tiến)."
+    },
+    {
+      "order": 13, "code": "ENG2-013", "topic": "Từ vựng", "subtopic": "Collocation",
+      "content": "She ____ a decision to study abroad.",
+      "options": [
+        {"label": "A", "content": "did"},
+        {"label": "B", "content": "made"},
+        {"label": "C", "content": "took"},
+        {"label": "D", "content": "had"}
+      ],
+      "correct": "B",
+      "explanation": "Collocation cố định: 'make a decision' (đưa ra quyết định). Các collocation với 'make': make an effort, make a mistake, make progress, make a suggestion. 'Take a decision' (British English) cũng chấp nhận nhưng 'make' phổ biến hơn."
+    },
+    {
+      "order": 14, "code": "ENG2-014", "topic": "Từ vựng", "subtopic": "Từ trái nghĩa",
+      "content": "The opposite of 'optimistic' is ____.",
+      "options": [
+        {"label": "A", "content": "cheerful"},
+        {"label": "B", "content": "hopeful"},
+        {"label": "C", "content": "pessimistic"},
+        {"label": "D", "content": "realistic"}
+      ],
+      "correct": "C",
+      "explanation": "'Optimistic' (lạc quan) ↔ 'pessimistic' (bi quan). 'Cheerful' (vui vẻ) và 'hopeful' (hy vọng) là từ cùng nghĩa hoặc gần nghĩa. 'Realistic' (thực tế) không phải trái nghĩa trực tiếp."
+    },
+    {
+      "order": 15, "code": "ENG2-015", "topic": "Từ vựng", "subtopic": "Phrasal verbs",
+      "content": "Please ____ the form carefully before submitting it.",
+      "options": [
+        {"label": "A", "content": "fill in"},
+        {"label": "B", "content": "fill up"},
+        {"label": "C", "content": "fill out"},
+        {"label": "D", "content": "Both A and C"}
+      ],
+      "correct": "D",
+      "explanation": "'Fill in' và 'fill out' đều có nghĩa là điền vào (form/questionnaire). Cả hai đều đúng trong ngữ cảnh này. 'Fill up' nghĩa là đổ đầy (fill up the tank = đổ đầy bình). 'Fill in' phổ biến hơn ở British English."
+    },
+    {
+      "order": 16, "code": "ENG2-016", "topic": "Từ vựng", "subtopic": "Word formation",
+      "content": "His ____ in the competition surprised everyone.",
+      "options": [
+        {"label": "A", "content": "perform"},
+        {"label": "B", "content": "performer"},
+        {"label": "C", "content": "performance"},
+        {"label": "D", "content": "performing"}
+      ],
+      "correct": "C",
+      "explanation": "Sau tính từ sở hữu 'his' và trước giới từ 'in', ta cần danh từ. 'Performance' (màn trình diễn, thành tích) là danh từ. Quy tắc: perform (động từ) → performance (danh từ) → performer (người thực hiện)."
+    },
+    {
+      "order": 17, "code": "ENG2-017", "topic": "Từ vựng", "subtopic": "Idioms",
+      "content": "It's raining cats and dogs. What does this idiom mean?",
+      "options": [
+        {"label": "A", "content": "Animals are falling from the sky"},
+        {"label": "B", "content": "It is raining very heavily"},
+        {"label": "C", "content": "The weather is unpredictable"},
+        {"label": "D", "content": "It will rain soon"}
+      ],
+      "correct": "B",
+      "explanation": "'It's raining cats and dogs' là thành ngữ nghĩa là trời mưa rất to (mưa như trút nước). Các idiom về thời tiết khác: 'under the weather' (không khỏe), 'every cloud has a silver lining' (trong cái rủi có cái may)."
+    },
+    {
+      "order": 18, "code": "ENG2-018", "topic": "Từ vựng", "subtopic": "Từ ghép",
+      "content": "A person who saves people from drowning is called a ____.",
+      "options": [
+        {"label": "A", "content": "firewoman"},
+        {"label": "B", "content": "lifeguard"},
+        {"label": "C", "content": "bodyguard"},
+        {"label": "D", "content": "goalkeeper"}
+      ],
+      "correct": "B",
+      "explanation": "'Lifeguard' là nhân viên cứu hộ tại bãi biển/hồ bơi, chuyên cứu người đuối nước. 'Firefighter/Fireman' cứu hỏa. 'Bodyguard' là vệ sĩ bảo vệ cá nhân. 'Goalkeeper' là thủ môn bóng đá."
+    },
+    {
+      "order": 19, "code": "ENG2-019", "topic": "Đọc hiểu", "subtopic": "Tìm thông tin chính",
+      "content": "Read: 'Solar energy is clean and renewable. Unlike fossil fuels, it doesn't produce harmful gases. However, solar panels are expensive to install.' — What is the main advantage of solar energy mentioned?",
+      "options": [
+        {"label": "A", "content": "It is very cheap to use"},
+        {"label": "B", "content": "It produces no harmful gases"},
+        {"label": "C", "content": "Solar panels are easy to install"},
+        {"label": "D", "content": "It is stored underground"}
+      ],
+      "correct": "B",
+      "explanation": "Đoạn văn nêu hai ưu điểm: sạch và tái tạo được, không tạo ra khí độc hại. Đáp án B phản ánh đúng lợi ích chính. A sai (đắt để lắp đặt). C sai (đắt, không dễ). D không được đề cập."
+    },
+    {
+      "order": 20, "code": "ENG2-020", "topic": "Đọc hiểu", "subtopic": "Từ vựng trong ngữ cảnh",
+      "content": "In the sentence 'The company's revenue has soared this year', the word 'soared' means:",
+      "options": [
+        {"label": "A", "content": "decreased sharply"},
+        {"label": "B", "content": "remained stable"},
+        {"label": "C", "content": "increased dramatically"},
+        {"label": "D", "content": "fluctuated frequently"}
+      ],
+      "correct": "C",
+      "explanation": "'Soar' nghĩa là tăng vọt, bay cao. 'Revenue has soared' = doanh thu tăng mạnh. Các từ tương tự: skyrocket, surge, rocket up. Trái nghĩa: plummet, plunge (giảm mạnh), decline (giảm dần)."
+    },
+    {
+      "order": 21, "code": "ENG2-021", "topic": "Đọc hiểu", "subtopic": "Suy luận",
+      "content": "Read: 'Despite studying for 3 hours, Tom failed the test.' What can we infer about Tom?",
+      "options": [
+        {"label": "A", "content": "Tom studied effectively"},
+        {"label": "B", "content": "Tom didn't study at all"},
+        {"label": "C", "content": "Tom studied but the result was disappointing"},
+        {"label": "D", "content": "Tom passed the test easily"}
+      ],
+      "correct": "C",
+      "explanation": "'Despite studying for 3 hours' cho biết Tom đã cố gắng học, nhưng 'failed' cho thấy kết quả không như mong đợi. Từ 'despite' (mặc dù) diễn tả sự tương phản giữa nỗ lực và kết quả."
+    },
+    {
+      "order": 22, "code": "ENG2-022", "topic": "Đọc hiểu", "subtopic": "Ý chính đoạn văn",
+      "content": "Read: 'Regular exercise has numerous benefits. It strengthens muscles, improves cardiovascular health, and boosts mental well-being. Even 30 minutes a day can make a significant difference.' — What is the best title?",
+      "options": [
+        {"label": "A", "content": "How to Lose Weight Fast"},
+        {"label": "B", "content": "The Benefits of Regular Exercise"},
+        {"label": "C", "content": "Muscle Building Techniques"},
+        {"label": "D", "content": "Why People Hate Exercising"}
+      ],
+      "correct": "B",
+      "explanation": "Đoạn văn liệt kê nhiều lợi ích của việc tập thể dục đều đặn (cơ bắp, tim mạch, tâm lý). Tiêu đề B bao quát toàn bộ nội dung. A (giảm cân) chỉ là một ích lợi nhỏ không được đề cập. C chỉ nói về một khía cạnh."
+    },
+    {
+      "order": 23, "code": "ENG2-023", "topic": "Đọc hiểu", "subtopic": "Thái độ tác giả",
+      "content": "Read: 'Social media addiction is destroying real human connection. Young people spend more time staring at screens than talking to family.' — The author's attitude is:",
+      "options": [
+        {"label": "A", "content": "Positive about social media"},
+        {"label": "B", "content": "Critical of social media overuse"},
+        {"label": "C", "content": "Neutral and objective"},
+        {"label": "D", "content": "Encouraging more screen time"}
+      ],
+      "correct": "B",
+      "explanation": "Từ 'destroying' (phá hủy) và 'staring at screens' (nhìn chằm chằm vào màn hình) cho thấy tác giả có thái độ tiêu cực, phê phán việc lạm dụng mạng xã hội. Không có từ ngữ trung lập hay tích cực nào."
+    },
+    {
+      "order": 24, "code": "ENG2-024", "topic": "Đọc hiểu", "subtopic": "Chi tiết cụ thể",
+      "content": "Read: 'The Amazon rainforest covers about 5.5 million km² and is home to 10% of all species on Earth.' — How much area does the Amazon cover?",
+      "options": [
+        {"label": "A", "content": "55 million km²"},
+        {"label": "B", "content": "5.5 thousand km²"},
+        {"label": "C", "content": "5.5 million km²"},
+        {"label": "D", "content": "0.55 million km²"}
+      ],
+      "correct": "C",
+      "explanation": "Đoạn văn nêu rõ: 'covers about 5.5 million km²'. Đây là câu hỏi tìm chi tiết cụ thể (scanning). Kỹ năng: đọc lướt để tìm số liệu, không cần đọc toàn bộ đoạn văn."
+    },
+    {
+      "order": 25, "code": "ENG2-025", "topic": "Đọc hiểu", "subtopic": "Từ thay thế",
+      "content": "Read: 'Many students struggle with time management. They often leave assignments to the last minute.' — What does 'they' refer to?",
+      "options": [
+        {"label": "A", "content": "Assignments"},
+        {"label": "B", "content": "Many students"},
+        {"label": "C", "content": "Time management skills"},
+        {"label": "D", "content": "Teachers"}
+      ],
+      "correct": "B",
+      "explanation": "'They' là đại từ nhân xưng ngôi thứ 3 số nhiều, thay thế cho danh từ đứng trước trong câu trước. Danh từ phù hợp là 'many students' (số nhiều, chỉ người). 'Assignments' là vật, không dùng 'they leave' theo nghĩa này."
+    },
+    {
+      "order": 26, "code": "ENG2-026", "topic": "Đọc hiểu", "subtopic": "Hàm ý",
+      "content": "Read: 'The restaurant was so crowded that we had to wait an hour for a table.' — What can we conclude?",
+      "options": [
+        {"label": "A", "content": "The restaurant was not popular"},
+        {"label": "B", "content": "The restaurant was very popular"},
+        {"label": "C", "content": "The food was bad"},
+        {"label": "D", "content": "They didn't get a table"}
+      ],
+      "correct": "B",
+      "explanation": "Việc nhà hàng 'so crowded' (đông nghịt) đến mức phải chờ 1 tiếng ngụ ý nhà hàng rất nổi tiếng và được nhiều người yêu thích. Đây là suy luận hàm ý — không được nói trực tiếp nhưng có thể suy ra."
+    },
+    {
+      "order": 27, "code": "ENG2-027", "topic": "Nhận biết lỗi", "subtopic": "Error identification",
+      "content": "Find the error: 'He (A) has been (B) working here (C) since (D) three years.'",
+      "options": [
+        {"label": "A", "content": "He"},
+        {"label": "B", "content": "has been"},
+        {"label": "C", "content": "working here"},
+        {"label": "D", "content": "since"}
+      ],
+      "correct": "D",
+      "explanation": "'Since' dùng với mốc thời gian cụ thể (since 2020, since Monday). 'Three years' là khoảng thời gian nên phải dùng 'for'. Sửa: 'for three years'. Quy tắc: since + điểm thời gian; for + khoảng thời gian."
+    },
+    {
+      "order": 28, "code": "ENG2-028", "topic": "Nhận biết lỗi", "subtopic": "Error identification",
+      "content": "Find the error: 'Neither the students (A) nor the teacher (B) were (C) present (D) at the meeting.'",
+      "options": [
+        {"label": "A", "content": "the students"},
+        {"label": "B", "content": "the teacher"},
+        {"label": "C", "content": "were"},
+        {"label": "D", "content": "at the meeting"}
+      ],
+      "correct": "C",
+      "explanation": "Quy tắc 'neither...nor': động từ chia theo chủ ngữ gần nhất. Chủ ngữ gần nhất là 'the teacher' (số ít) → phải dùng 'was' (số ít), không phải 'were'. Sửa: 'was'. Tương tự: 'either...or' cũng theo quy tắc này."
+    },
+    {
+      "order": 29, "code": "ENG2-029", "topic": "Nhận biết lỗi", "subtopic": "Error identification",
+      "content": "Find the error: 'I suggest (A) that he goes (B) to the doctor (C) immediately (D).'",
+      "options": [
+        {"label": "A", "content": "suggest"},
+        {"label": "B", "content": "goes"},
+        {"label": "C", "content": "to the doctor"},
+        {"label": "D", "content": "immediately"}
+      ],
+      "correct": "B",
+      "explanation": "Sau 'suggest that + S', động từ dùng dạng nguyên mẫu không 'to' (subjunctive mood): suggest that he GO (không chia). Tương tự: recommend, insist, demand, propose + that + S + V (nguyên mẫu). Sửa: 'go'."
+    },
+    {
+      "order": 30, "code": "ENG2-030", "topic": "Nhận biết lỗi", "subtopic": "Error identification",
+      "content": "Find the error: 'We are used to (A) eat (B) early in (C) the morning (D).'",
+      "options": [
+        {"label": "A", "content": "are used to"},
+        {"label": "B", "content": "eat"},
+        {"label": "C", "content": "in"},
+        {"label": "D", "content": "the morning"}
+      ],
+      "correct": "B",
+      "explanation": "'Be used to + V-ing' nghĩa là quen làm gì. 'Eat' phải là 'eating'. Phân biệt: 'be used to + V-ing' (quen làm) vs 'used to + V' (đã từng làm trong quá khứ). Sửa: 'eating'."
+    }
+  ]
+}

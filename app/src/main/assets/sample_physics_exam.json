@@ -1,0 +1,112 @@
+{
+  "exam": {
+    "id": 3,
+    "exam_code": "VSAT-PHY-2024-001",
+    "title": "Đề thi thử V-SAT Vật lí — Đề số 1",
+    "subject_name": "Vật lí",
+    "description": "Đề thi mẫu Vật lí gồm 8 câu trắc nghiệm cơ bản: cơ học, điện học, quang học, nhiệt học.",
+    "duration_minutes": 20,
+    "total_questions": 8,
+    "difficulty": "EASY",
+    "status": "PUBLISHED",
+    "is_paid": false
+  },
+  "questions": [
+    {
+      "order": 1, "code": "PHY-001", "topic": "Cơ học", "subtopic": "Đơn vị SI",
+      "content": "Đơn vị SI của vận tốc là:",
+      "options": [
+        {"label": "A", "content": "m/s"},
+        {"label": "B", "content": "N"},
+        {"label": "C", "content": "J"},
+        {"label": "D", "content": "W"}
+      ],
+      "correct": "A",
+      "explanation": "Vận tốc = quãng đường / thời gian. Đơn vị SI là m (mét) / s (giây) = m/s. N (Newton) là đơn vị lực, J (Joule) là đơn vị năng lượng, W (Watt) là đơn vị công suất."
+    },
+    {
+      "order": 2, "code": "PHY-002", "topic": "Động lực học", "subtopic": "Định luật Newton",
+      "content": "Định luật II Newton có dạng:",
+      "options": [
+        {"label": "A", "content": "F = ma"},
+        {"label": "B", "content": "pV = nRT"},
+        {"label": "C", "content": "A = UIt"},
+        {"label": "D", "content": "Q = mcΔt"}
+      ],
+      "correct": "A",
+      "explanation": "Định luật II Newton: hợp lực tác dụng lên vật bằng tích khối lượng và gia tốc: F = ma. pV = nRT là phương trình khí lý tưởng, A = UIt là công của dòng điện, Q = mcΔt là nhiệt lượng."
+    },
+    {
+      "order": 3, "code": "PHY-003", "topic": "Điện học", "subtopic": "Cường độ dòng điện",
+      "content": "Đơn vị của cường độ dòng điện là:",
+      "options": [
+        {"label": "A", "content": "Volt (V)"},
+        {"label": "B", "content": "Ampere (A)"},
+        {"label": "C", "content": "Ohm (Ω)"},
+        {"label": "D", "content": "Tesla (T)"}
+      ],
+      "correct": "B",
+      "explanation": "Cường độ dòng điện đo bằng Ampere (A). Volt là đơn vị hiệu điện thế, Ohm là đơn vị điện trở, Tesla là đơn vị cảm ứng từ."
+    },
+    {
+      "order": 4, "code": "PHY-004", "topic": "Quang học", "subtopic": "Thấu kính hội tụ",
+      "content": "Ảnh thật qua thấu kính hội tụ có tính chất:",
+      "options": [
+        {"label": "A", "content": "Cùng chiều, nhỏ hơn vật"},
+        {"label": "B", "content": "Ngược chiều, không hứng được trên màn"},
+        {"label": "C", "content": "Ngược chiều, hứng được trên màn"},
+        {"label": "D", "content": "Cùng chiều, không có độ phóng đại"}
+      ],
+      "correct": "C",
+      "explanation": "Ảnh thật là ảnh hứng được trên màn, được tạo ra khi vật ở ngoài tiêu điểm. Ảnh thật qua thấu kính hội tụ luôn ngược chiều với vật và hứng được trên màn. Ảnh cùng chiều qua thấu kính hội tụ là ảnh ảo (vật trong tiêu điểm)."
+    },
+    {
+      "order": 5, "code": "PHY-005", "topic": "Nhiệt học", "subtopic": "Nhiệt lượng",
+      "content": "Nhiệt lượng cần để tăng nhiệt độ vật được tính bởi công thức:",
+      "options": [
+        {"label": "A", "content": "Q = mcΔt"},
+        {"label": "B", "content": "Q = I²Rt"},
+        {"label": "C", "content": "Q = Pt"},
+        {"label": "D", "content": "Q = mgh"}
+      ],
+      "correct": "A",
+      "explanation": "Công thức nhiệt lượng: Q = mcΔt, trong đó m là khối lượng (kg), c là nhiệt dung riêng (J/kg.K), Δt là độ tăng nhiệt độ. Q = I²Rt là nhiệt tỏa ra trên điện trở, Q = Pt là nhiệt lượng theo công suất, mgh là thế năng trọng trường."
+    },
+    {
+      "order": 6, "code": "PHY-006", "topic": "Dao động", "subtopic": "Tần số",
+      "content": "Đại lượng nào cho biết số dao động trong 1 giây?",
+      "options": [
+        {"label": "A", "content": "Chu kỳ T"},
+        {"label": "B", "content": "Tần số f"},
+        {"label": "C", "content": "Biên độ A"},
+        {"label": "D", "content": "Pha ban đầu φ"}
+      ],
+      "correct": "B",
+      "explanation": "Tần số f (Hz) là số dao động toàn phần thực hiện trong 1 giây. Chu kỳ T là thời gian thực hiện 1 dao động toàn phần (T = 1/f). Biên độ là giá trị cực đại của li độ. Pha ban đầu xác định trạng thái dao động lúc t = 0."
+    },
+    {
+      "order": 7, "code": "PHY-007", "topic": "Điện học", "subtopic": "Mạch nối tiếp",
+      "content": "Trong mạch nối tiếp, cường độ dòng điện:",
+      "options": [
+        {"label": "A", "content": "Khác nhau trên mỗi đoạn"},
+        {"label": "B", "content": "Bằng nhau tại mọi điểm"},
+        {"label": "C", "content": "Tăng dần theo điện trở"},
+        {"label": "D", "content": "Giảm dần theo điện trở"}
+      ],
+      "correct": "B",
+      "explanation": "Đặc trưng của mạch nối tiếp: cường độ dòng điện như nhau qua mọi điện trở (I = I₁ = I₂ = ... = Iₙ). Hiệu điện thế mới phân chia tỉ lệ với điện trở. Trong mạch song song thì ngược lại — hiệu điện thế bằng nhau."
+    },
+    {
+      "order": 8, "code": "PHY-008", "topic": "Cơ học", "subtopic": "Công cơ học",
+      "content": "Công cơ học được tính bởi:",
+      "options": [
+        {"label": "A", "content": "A = F.s.cos(α)"},
+        {"label": "B", "content": "A = F/s"},
+        {"label": "C", "content": "A = m/v"},
+        {"label": "D", "content": "A = p/t"}
+      ],
+      "correct": "A",
+      "explanation": "Công cơ học: A = F.s.cos(α), trong đó F là lực, s là quãng đường, α là góc giữa lực và hướng chuyển động. Khi F cùng hướng chuyển động (α = 0): A = F.s. A = F/s không có ý nghĩa vật lý. p/t là công suất."
+    }
+  ]
+}

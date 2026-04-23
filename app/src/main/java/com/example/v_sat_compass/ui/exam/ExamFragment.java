@@ -39,6 +39,7 @@ public class ExamFragment extends Fragment {
     private List<Exam> allExams = new ArrayList<>();
     private String selectedSubject = null; // null = all
     private String searchQuery = "";
+    private final boolean clientSideProcessing = ApiClient.isClientSideExamProcessingEnabled();
 
     @Nullable
     @Override
@@ -142,6 +143,14 @@ public class ExamFragment extends Fragment {
     private void loadExams() {
         binding.progressBar.setVisibility(View.VISIBLE);
         binding.tvEmpty.setVisibility(View.GONE);
+
+        if (clientSideProcessing) {
+            binding.progressBar.setVisibility(View.GONE);
+            binding.swipeRefresh.setRefreshing(false);
+            allExams = LocalExamDataSource.getInstance().getPublishedExams(requireContext());
+            applyFilters();
+            return;
+        }
 
         ExamApi api = ApiClient.getClient().create(ExamApi.class);
         api.getPublishedExams(null).enqueue(new Callback<ApiResponse<List<Exam>>>() {

@@ -93,6 +93,18 @@
             </LinearLayout>
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/tvSyncStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="12dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:text="Sync: local-only"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp"
+            android:background="#F7F8FB" />
+
         <!-- Progress bar -->
         <ProgressBar
             android:id="@+id/progressQuestion"

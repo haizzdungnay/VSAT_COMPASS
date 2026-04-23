@@ -9,7 +9,9 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.v_sat_compass.BuildConfig;
 import com.example.v_sat_compass.MainActivity;
+import com.example.v_sat_compass.data.api.ApiClient;
 import com.example.v_sat_compass.data.repository.Resource;
 import com.example.v_sat_compass.databinding.ActivityLoginBinding;
 
@@ -23,6 +25,10 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityLoginBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        if (BuildConfig.DEBUG) {
+            Toast.makeText(this, "Backend: " + ApiClient.getCurrentBaseUrl(), Toast.LENGTH_LONG).show();
+        }
 
         viewModel = new ViewModelProvider(this).get(AuthViewModel.class);
 

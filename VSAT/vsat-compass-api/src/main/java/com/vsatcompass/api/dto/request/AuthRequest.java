@@ -2,6 +2,7 @@ package com.vsatcompass.api.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -11,14 +12,19 @@ public class AuthRequest {
     public static class Register {
         @NotBlank(message = "Email không được để trống")
         @Email(message = "Email không hợp lệ")
+        @Size(max = 255, message = "Email tối đa 255 ký tự")
         private String email;
 
         @NotBlank(message = "Mật khẩu không được để trống")
-        @Size(min = 6, max = 100, message = "Mật khẩu phải từ 6-100 ký tự")
+        @Size(min = 8, max = 100, message = "Mật khẩu phải từ 8-100 ký tự")
+        @Pattern(
+                regexp = "^(?=.*[a-zA-Z])(?=.*[0-9]).+$",
+                message = "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ và số"
+        )
         private String password;
 
         @NotBlank(message = "Họ tên không được để trống")
-        @Size(max = 150, message = "Họ tên tối đa 150 ký tự")
+        @Size(min = 2, max = 100, message = "Họ tên phải từ 2-100 ký tự")
         private String fullName;
 
         private String phone;
@@ -28,6 +34,7 @@ public class AuthRequest {
     public static class Login {
         @NotBlank(message = "Email không được để trống")
         @Email(message = "Email không hợp lệ")
+        @Size(max = 255, message = "Email tối đa 255 ký tự")
         private String email;
 
         @NotBlank(message = "Mật khẩu không được để trống")
@@ -55,7 +62,11 @@ public class AuthRequest {
         private String token;
 
         @NotBlank
-        @Size(min = 6, max = 100)
+        @Size(min = 8, max = 100)
+        @Pattern(
+                regexp = "^(?=.*[a-zA-Z])(?=.*[0-9]).+$",
+                message = "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ và số"
+        )
         private String newPassword;
     }
 
@@ -65,13 +76,17 @@ public class AuthRequest {
         private String oldPassword;
 
         @NotBlank(message = "Mật khẩu mới không được để trống")
-        @Size(min = 6, max = 100, message = "Mật khẩu mới phải từ 6-100 ký tự")
+        @Size(min = 8, max = 100, message = "Mật khẩu mới phải từ 8-100 ký tự")
+        @Pattern(
+                regexp = "^(?=.*[a-zA-Z])(?=.*[0-9]).+$",
+                message = "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ và số"
+        )
         private String newPassword;
     }
 
     @Data
     public static class UpdateProfile {
-        @Size(max = 150)
+        @Size(min = 2, max = 100, message = "Họ tên phải từ 2-100 ký tự")
         private String fullName;
 
         private String phone;

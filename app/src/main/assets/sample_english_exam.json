@@ -1,0 +1,112 @@
+{
+  "exam": {
+    "id": 2,
+    "exam_code": "VSAT-ENG-2024-001",
+    "title": "Đề thi thử V-SAT Tiếng Anh — Đề số 1",
+    "subject_name": "Tiếng Anh",
+    "description": "Đề thi mẫu Tiếng Anh gồm 8 câu trắc nghiệm cơ bản để luyện tập ngữ pháp và từ vựng.",
+    "duration_minutes": 20,
+    "total_questions": 8,
+    "difficulty": "EASY",
+    "status": "PUBLISHED",
+    "is_paid": false
+  },
+  "questions": [
+    {
+      "order": 1, "code": "ENG-001", "topic": "Từ vựng", "subtopic": "Đồng nghĩa",
+      "content": "Choose the word closest in meaning to 'rapid'.",
+      "options": [
+        {"label": "A", "content": "slow"},
+        {"label": "B", "content": "quick"},
+        {"label": "C", "content": "late"},
+        {"label": "D", "content": "weak"}
+      ],
+      "correct": "B",
+      "explanation": "'Rapid' có nghĩa là nhanh chóng. 'Quick' là từ đồng nghĩa gần nhất. 'Slow' là trái nghĩa. 'Late' nghĩa là muộn, 'weak' nghĩa là yếu đuối — đều không liên quan."
+    },
+    {
+      "order": 2, "code": "ENG-002", "topic": "Ngữ pháp", "subtopic": "Thì hiện tại đơn",
+      "content": "She ____ to school every day.",
+      "options": [
+        {"label": "A", "content": "go"},
+        {"label": "B", "content": "goes"},
+        {"label": "C", "content": "going"},
+        {"label": "D", "content": "gone"}
+      ],
+      "correct": "B",
+      "explanation": "Thì hiện tại đơn với chủ ngữ ngôi thứ 3 số ít (she/he/it) phải thêm '-s' hoặc '-es' vào động từ. 'go' → 'goes'. 'going' là dạng hiện tại phân từ, 'gone' là quá khứ phân từ."
+    },
+    {
+      "order": 3, "code": "ENG-003", "topic": "Từ vựng", "subtopic": "Trái nghĩa",
+      "content": "The opposite of 'cheap' is ____.",
+      "options": [
+        {"label": "A", "content": "expensive"},
+        {"label": "B", "content": "small"},
+        {"label": "C", "content": "near"},
+        {"label": "D", "content": "clear"}
+      ],
+      "correct": "A",
+      "explanation": "'Cheap' nghĩa là rẻ. Từ trái nghĩa là 'expensive' (đắt). 'Small' (nhỏ), 'near' (gần), 'clear' (rõ ràng) đều không phải trái nghĩa của 'cheap'."
+    },
+    {
+      "order": 4, "code": "ENG-004", "topic": "Ngữ pháp", "subtopic": "Câu điều kiện",
+      "content": "If it ____ tomorrow, we will stay home.",
+      "options": [
+        {"label": "A", "content": "rain"},
+        {"label": "B", "content": "rains"},
+        {"label": "C", "content": "rained"},
+        {"label": "D", "content": "raining"}
+      ],
+      "correct": "B",
+      "explanation": "Câu điều kiện loại 1 (điều kiện có thể xảy ra): mệnh đề if dùng thì hiện tại đơn, mệnh đề chính dùng 'will + V'. She → 'rains'. 'Rained' là quá khứ đơn, dùng cho điều kiện loại 2."
+    },
+    {
+      "order": 5, "code": "ENG-005", "topic": "Phát âm", "subtopic": "Trọng âm",
+      "content": "Choose the word with a different stress pattern from the others.",
+      "options": [
+        {"label": "A", "content": "teacher"},
+        {"label": "B", "content": "student"},
+        {"label": "C", "content": "between"},
+        {"label": "D", "content": "window"}
+      ],
+      "correct": "C",
+      "explanation": "'Teacher' (TEAch-er), 'student' (STU-dent), 'window' (WIN-dow) đều có trọng âm ở âm tiết đầu. Riêng 'between' (be-TWEEN) có trọng âm ở âm tiết thứ hai — khác nhóm."
+    },
+    {
+      "order": 6, "code": "ENG-006", "topic": "Từ vựng", "subtopic": "Giới từ kết hợp",
+      "content": "He is interested ____ science.",
+      "options": [
+        {"label": "A", "content": "on"},
+        {"label": "B", "content": "in"},
+        {"label": "C", "content": "at"},
+        {"label": "D", "content": "for"}
+      ],
+      "correct": "B",
+      "explanation": "Cụm từ cố định: 'interested in' (quan tâm đến). Không dùng 'on', 'at' hay 'for' với 'interested'. Ví dụ: She is interested in music / He is interested in learning."
+    },
+    {
+      "order": 7, "code": "ENG-007", "topic": "Ngữ pháp", "subtopic": "Thì quá khứ tiếp diễn",
+      "content": "They ____ dinner when I arrived.",
+      "options": [
+        {"label": "A", "content": "have"},
+        {"label": "B", "content": "had"},
+        {"label": "C", "content": "were having"},
+        {"label": "D", "content": "are having"}
+      ],
+      "correct": "C",
+      "explanation": "Thì quá khứ tiếp diễn (was/were + V-ing) diễn tả hành động đang xảy ra thì bị ngắt bởi một hành động khác trong quá khứ. 'I arrived' là hành động xảy ra sau, 'they were having dinner' là hành động đang diễn ra trước đó."
+    },
+    {
+      "order": 8, "code": "ENG-008", "topic": "Đọc hiểu", "subtopic": "Xác định chủ đề",
+      "content": "Choose the best title for a passage about protecting forests.",
+      "options": [
+        {"label": "A", "content": "How to cook quickly"},
+        {"label": "B", "content": "Saving our forests"},
+        {"label": "C", "content": "Buying a new phone"},
+        {"label": "D", "content": "Learning piano"}
+      ],
+      "correct": "B",
+      "explanation": "Tiêu đề phải phản ánh nội dung chính của đoạn văn — bảo vệ rừng. 'Saving our forests' (Cứu lấy những cánh rừng) là tiêu đề phù hợp nhất. Các đáp án A, C, D đều không liên quan đến chủ đề rừng."
+    }
+  ]
+}

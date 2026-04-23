@@ -11,14 +11,18 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
+import com.example.v_sat_compass.BuildConfig;
 import com.example.v_sat_compass.data.api.ApiClient;
 import com.example.v_sat_compass.data.api.AuthApi;
 import com.example.v_sat_compass.data.model.ApiResponse;
 import com.example.v_sat_compass.data.model.UserProfile;
+import com.example.v_sat_compass.data.repository.ExamHistoryRepository;
 import com.example.v_sat_compass.databinding.FragmentProfileBinding;
 import com.example.v_sat_compass.ui.admin.AdminActivity;
 import com.example.v_sat_compass.ui.auth.LoginActivity;
 import com.example.v_sat_compass.util.UserRoleHelper;
+
+import com.google.android.material.snackbar.Snackbar;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -42,6 +46,7 @@ public class ProfileFragment extends Fragment {
 
         loadProfile();
         setupAdminAccess();
+        setupDevMenu();
 
         binding.btnLogout.setOnClickListener(v -> {
             ApiClient.clearTokens();
@@ -140,6 +145,54 @@ public class ProfileFragment extends Fragment {
         Intent intent = new Intent(requireContext(), AdminActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
+    }
+
+    // ─── Dev menu (DEBUG build only) ─────────────────────────────────────────
+
+    private void setupDevMenu() {
+        if (!BuildConfig.DEBUG) return;
+        // Long-press vào tvFullName mở dev dialog inject mock data
+        binding.tvFullName.setOnLongClickListener(v -> {
+            showDevMenu();
+            return true;
+        });
+    }
+
+    private void showDevMenu() {
+        if (getContext() == null) return;
+        new AlertDialog.Builder(requireContext())
+                .setTitle("[DEV] Dev Tools")
+                .setItems(new String[]{
+                        "Inject 50 lịch sử mock",
+                        "Xóa toàn bộ lịch sử"
+                }, (dialog, which) -> {
+                    if (which == 0) {
+                        injectMockHistory();
+                    } else {
+                        clearAllHistory();
+                    }
+                })
+                .setNegativeButton("Huỷ", null)
+                .show();
+    }
+
+    private void injectMockHistory() {
+        ExamHistoryRepository.getInstance().injectMockEntries(requireContext(), 50, () -> {
+            if (binding == null) return;
+            Snackbar.make(binding.getRoot(),
+                    "[DEV] Đã inject 50 entries mock vào lịch sử",
+                    Snackbar.LENGTH_SHORT).show();
+        });
+    }
+
+    private void clearAllHistory() {
+        // Xóa bằng cách ghi file rỗng
+        ExamHistoryRepository.getInstance().clearAll(requireContext(), () -> {
+            if (binding == null) return;
+            Snackbar.make(binding.getRoot(),
+                    "[DEV] Đã xóa toàn bộ lịch sử",
+                    Snackbar.LENGTH_SHORT).show();
+        });
     }
 
     @Override

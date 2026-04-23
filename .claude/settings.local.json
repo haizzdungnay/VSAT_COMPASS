@@ -14,7 +14,10 @@
       "Bash(cp \"D:/lap trinh kiem com/Java/VSAT_COMPASS/gradle/wrapper/gradle-wrapper.jar\" \"D:/lap trinh kiem com/Java/vsat-compass-api/gradle/wrapper/\")",
       "Bash(cp \"D:/lap trinh kiem com/Java/VSAT_COMPASS/gradlew\" \"D:/lap trinh kiem com/Java/vsat-compass-api/\")",
       "Bash(cp \"D:/lap trinh kiem com/Java/VSAT_COMPASS/gradlew.bat\" \"D:/lap trinh kiem com/Java/vsat-compass-api/\")",
-      "Bash(cmd /c \"tasklist | findstr java\")"
+      "Bash(cmd /c \"tasklist | findstr java\")",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio/jbr\" ./gradlew assembleDebug)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio/jbr\" ./gradlew lintDebug)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio/jbr\" ./gradlew assembleDebug testDebugUnitTest)"
     ]
   }
 }
