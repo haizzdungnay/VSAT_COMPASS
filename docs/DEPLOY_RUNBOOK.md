@@ -18,10 +18,17 @@
 ### Tạo JWT Secret
 
 ```bash
-# Tạo JWT secret mới (base64, 512-bit)
+# Tạo JWT secret mới (base64, 512-bit) — Linux / macOS / Git Bash
 openssl rand -base64 64
 
 # Lưu output — KHÔNG commit vào git, chỉ paste vào Render Dashboard
+```
+
+Nếu không có `openssl` trên Windows, dùng PowerShell:
+```powershell
+$bytes = New-Object byte[] 64
+[System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
+[Convert]::ToBase64String($bytes)
 ```
 
 ### Environment Variables cần thiết
@@ -204,6 +211,17 @@ git push --force origin main
 □ User status có phải ACTIVE không? (LOCKED / DEACTIVATED sẽ bị reject)
 ```
 
+### Deploy fails: `SQLState: 28P01 password authentication failed for user 'neondb_owner'`
+
+```
+□ Nguyên nhân: DATABASE_PASSWORD env var không khớp với password hiện tại của Neon role
+□ Fix:
+  1. Vào Neon Console → Project → Connection Details → copy password từ connection string
+  2. Render Dashboard → Environment → update DATABASE_PASSWORD → Save Changes
+  3. Render sẽ tự redeploy với password mới
+□ Note: Sau khi rotate password trong Neon, PHẢI sync ngay vào Render — không có retry tự động
+```
+
 ### Render service không response (connection refused)
 
 ```
@@ -216,7 +234,29 @@ git push --force origin main
 
 ---
 
-## 7. Cost Watch
+## 7. Known Pitfalls
+
+### Render Blueprint vs Web Service
+
+**Pitfall:** Render Blueprint (`render.yaml`) requires the YAML file to define services at the root of the repo. If the YAML is present but doesn't match what the Dashboard expects, Blueprint deploy silently fails or behaves unexpectedly.
+
+**Solution:** Always create the service via **Render Dashboard → + New → Web Service** (manual configuration), NOT via Blueprint auto-deploy. The `render.yaml` in this repo is kept for reference only — it does NOT drive the production deploy.
+
+### UptimeRobot / Keep-Alive Required
+
+**Pitfall:** Render free tier spins down the container after 15 minutes of inactivity. The next request triggers a cold start of ~60-90 seconds (JVM startup + Neon resume). This breaks mobile clients if they haven't pinged recently.
+
+**Solution:** Configure UptimeRobot (or equivalent) to ping `/api/v1/actuator/health` every 5 minutes. This keeps the service warm during active hours.
+
+### Neon Password Sync After Rotation
+
+**Pitfall:** Rotating a Neon role password does NOT automatically update the Render env var. The next deploy fails with `28P01 authentication failed`.
+
+**Solution:** Immediately after rotating in Neon, update `DATABASE_PASSWORD` in Render Dashboard → Environment → Save Changes → wait for redeploy.
+
+---
+
+## 8. Cost Watch
 
 ### Render Free Tier
 

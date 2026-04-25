@@ -5,6 +5,7 @@
 ![Android](https://img.shields.io/badge/Android-Java-green?logo=android)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-brightgreen?logo=springboot)
 ![PostgreSQL](https://img.shields.io/badge/Database-Neon%20PostgreSQL-blue?logo=postgresql)
+![Backend](https://img.shields.io/badge/backend-live-success)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
 ---
@@ -191,6 +192,24 @@ http://localhost:8080/api/v1/swagger-ui.html
 - **API Error Codes:** [`docs/API_ERROR_CODES.md`](docs/API_ERROR_CODES.md) — error catalog, response envelope, rate limits
 - **Smoke Tests:** [`docs/SMOKE_CHECKLIST.md`](docs/SMOKE_CHECKLIST.md) — 25 TCs (15 Android + 10 Backend)
 - **Smoke Scripts:** `docs/scripts/smoke_auth.sh`, `docs/scripts/smoke_sessions.sh`
+
+---
+
+## 🌐 Production Endpoints
+
+| | |
+|---|---|
+| **Base URL** | `https://vsat-compass-api.onrender.com/api/v1/` |
+| **Health** | `https://vsat-compass-api.onrender.com/api/v1/actuator/health` |
+| **Region** | Singapore (Render.com, Free tier, Docker runtime) |
+| **Database** | Neon PostgreSQL (ap-southeast-1) |
+| **Monitoring** | UptimeRobot — health check every 5 minutes |
+
+> **Note:** Render free tier spins down after 15 minutes of inactivity. Cold start takes ~60-90 seconds.
+> UptimeRobot keep-alive prevents this during active hours.
+
+For deploy and rollback procedures, see [`docs/DEPLOY_RUNBOOK.md`](docs/DEPLOY_RUNBOOK.md).
+For error codes and response envelope, see [`docs/API_ERROR_CODES.md`](docs/API_ERROR_CODES.md).
 
 ---
 

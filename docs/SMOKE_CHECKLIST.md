@@ -277,6 +277,9 @@
 
 > Bổ sung từ Phase B. Chạy trực tiếp bằng `docs/scripts/smoke_auth.sh` và `smoke_sessions.sh`,
 > hoặc kiểm tra thủ công từng TC dưới đây.
+>
+> **Production-verified: 2026-04-25 ✅** — TC-016 đến TC-025 đã pass 14/14 trên production
+> (`https://vsat-compass-api.onrender.com/api/v1/`). Xem kết quả đầy đủ trong `CHANGELOG.md [0.8.1]`.
 
 ---
 
@@ -400,10 +403,11 @@
 
 | Tổng TC | Pass | Fail | Bỏ qua |
 |---------|------|------|--------|
-| 25      |      |      |        |
+| 25      | 10 backend TCs (TC-016→TC-025) verified 2026-04-25 | 0 | 0 |
 
-**Ghi chú lần chạy:**
-- Ngày: ___________
-- Thiết bị: ___________
-- Build version: ___________
-- Tester: ___________
+**Ghi chú lần chạy (Phase B — Backend TCs):**
+- Ngày: 2026-04-25
+- Môi trường: Production (`https://vsat-compass-api.onrender.com/api/v1/`)
+- Build version: v0.8.1 (commit `727f9a4`)
+- Tester: smoke_auth.sh (9/9) + smoke_sessions.sh (5/5) tự động
+- Ghi chú: TC-024 (rate limit) và TC-025 (timestamp) được verify thủ công qua curl
