@@ -60,8 +60,8 @@ public class SecurityConfig {
                 )
             )
             .authorizeHttpRequests(auth -> auth
-                // Public endpoints
-                .requestMatchers("/auth/**").permitAll()
+                // Public endpoints — only truly unauthenticated endpoints; /auth/me and /auth/me/password require Bearer
+                .requestMatchers("/auth/login", "/auth/register", "/auth/refresh", "/auth/logout").permitAll()
                 .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers(HttpMethod.GET, "/subjects/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/exams/**").permitAll()
