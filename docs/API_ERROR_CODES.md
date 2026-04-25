@@ -79,6 +79,7 @@ Tất cả response từ API đều tuân theo cấu trúc sau:
 |------|------------|----------|-----------------|
 | `VALIDATION_FAILED` | 400 | Dữ liệu đầu vào không hợp lệ | Thiếu field bắt buộc, vi phạm ràng buộc (min/max/pattern) |
 | `BAD_REQUEST` | 400 | Yêu cầu không hợp lệ | Logic lỗi (ví dụ: mode không hợp lệ, correctCount > totalQuestions) |
+| `DATA_INTEGRITY_VIOLATION` | 400 | Vi phạm ràng buộc database | FK không tồn tại (examId chưa có trong DB), vi phạm NOT NULL hoặc UNIQUE |
 
 ### Resource Errors
 

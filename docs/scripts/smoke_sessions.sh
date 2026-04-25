@@ -7,6 +7,9 @@
 # ============================================================
 
 BASE_URL="${BASE_URL:-https://vsat-compass-api.onrender.com/api/v1}"
+# EXAM_ID: ID of a published exam in the DB. Override via env if exam table has a different ID.
+# Run docs/seed/smoke_test_seed.sql in Neon Console once to seed exam SMOKE_001.
+EXAM_ID="${EXAM_ID:-1}"
 PASS=0
 FAIL=0
 TOTAL=0
@@ -62,7 +65,7 @@ echo "--- TC-SESSION-1: POST /sessions/start (authenticated) ---"
 START_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/sessions/start" \
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer $ACCESS_TOKEN" \
-    -d "{\"examId\":1,\"mode\":\"MOCK_EXAM\",\"totalQuestions\":30}")
+    -d "{\"examId\":$EXAM_ID,\"mode\":\"MOCK_EXAM\",\"totalQuestions\":30}")
 START_BODY=$(echo "$START_RESPONSE" | sed '$d')
 START_STATUS=$(echo "$START_RESPONSE" | tail -1)
 check_status "Start session (authenticated)" "201" "$START_STATUS"
@@ -77,7 +80,7 @@ echo "  Session ID: $SESSION_ID"
 echo "--- TC-SESSION-2: POST /sessions/start (no Bearer) ---"
 STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/sessions/start" \
     -H "Content-Type: application/json" \
-    -d "{\"examId\":1,\"mode\":\"MOCK_EXAM\",\"totalQuestions\":30}")
+    -d "{\"examId\":$EXAM_ID,\"mode\":\"MOCK_EXAM\",\"totalQuestions\":30}")
 check_status "Start session (no Bearer)" "401" "$STATUS"
 
 # -----------------------------------------------------------
@@ -139,7 +142,7 @@ if [ -n "$ALT_TOKEN" ] && [ -n "$SESSION_ID" ]; then
     NEW_START=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/sessions/start" \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $ACCESS_TOKEN" \
-        -d "{\"examId\":1,\"mode\":\"PRACTICE\",\"totalQuestions\":10}")
+        -d "{\"examId\":$EXAM_ID,\"mode\":\"PRACTICE\",\"totalQuestions\":10}")
     NEW_BODY=$(echo "$NEW_START" | sed '$d')
     NEW_SESSION_ID=$(echo "$NEW_BODY" | grep -o '"id":[0-9]*' | head -1 | cut -d':' -f2)
 

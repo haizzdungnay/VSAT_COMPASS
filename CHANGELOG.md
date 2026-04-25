@@ -1,5 +1,51 @@
 # V-SAT COMPASS — CHANGELOG
 
+## [0.8.1] - 2026-04-25 — Phase B Production Hardening
+
+### Bug Fixes
+
+- **fix(auth): GET /auth/me, PUT /auth/me, PUT /auth/me/password returned 500 instead of 401
+  when Bearer token was missing.**
+  Root cause: `SecurityConfig` used `.requestMatchers("/auth/**").permitAll()` which
+  allowed unauthenticated requests through to the controller. The controller called
+  `SecurityUtils.getCurrentUserId()` → `null` → `findById(null)` → `IllegalArgumentException` → 500.
+  Fix: tightened the permitAll allowlist to `/auth/login`, `/auth/register`, `/auth/refresh`,
+  `/auth/logout` only. Spring Security now rejects unauthenticated `/auth/me` at the filter
+  layer before the controller is reached.
+  Shipped in commit `24b73af` — CHANGELOG entry backfilled here.
+
+- **fix(security): Spring Security returned 403 instead of 401 for missing Bearer token.**
+  RESTful convention requires 401 (Unauthorized) for missing/invalid auth and 403 only
+  for authenticated-but-lacks-role cases. Spring Security's default `ExceptionTranslationFilter`
+  produces 403 when no `AuthenticationEntryPoint` is configured.
+  Fix: added `restAuthenticationEntryPoint()` bean to `SecurityConfig` that returns 401
+  with the standard `ApiResponse.error()` envelope (`AUTH_UNAUTHORIZED`). Wired via
+  `.exceptionHandling(ex -> ex.authenticationEntryPoint(...))`.
+
+- **fix(api): POST /sessions/start returned 500 INTERNAL_ERROR when `exam_id` FK was violated.**
+  Root cause: `GlobalExceptionHandler` had no handler for `DataIntegrityViolationException`,
+  which fell through to the generic `Exception` handler → 500.
+  Fix: added `@ExceptionHandler(DataIntegrityViolationException.class)` returning
+  400 `DATA_INTEGRITY_VIOLATION`. Future callers sending a non-existent `examId` now
+  receive a clear 400 instead of a misleading 500.
+  Root trigger: `exams` table was empty (Exam management is Phase C scope).
+  Resolved via manual SQL seed (see `docs/seed/smoke_test_seed.sql`).
+
+### Documentation
+
+- **docs/seed/smoke_test_seed.sql** — new. Idempotent SQL seed for smoke testing the
+  Session API. Inserts subject `MATH` and placeholder exam `SMOKE_001`. Run once in
+  Neon Console before executing `smoke_sessions.sh`. Will be replaced by Phase C fixtures.
+- **docs/scripts/smoke_sessions.sh** — updated to use `EXAM_ID` env var (default `1`)
+  instead of hardcoded `examId=1`. Override with `EXAM_ID=<id>` if seed assigns a
+  different ID.
+- **docs/API_ERROR_CODES.md** — added `DATA_INTEGRITY_VIOLATION` (400) error code entry.
+
+### Notes
+- Phase B production smoke verification: `<pending — to be updated after retest>`
+
+---
+
 ## [0.8.0] - 2026-04-23 — Phase B: Backend Production-Ready
 
 ### Mục tiêu
