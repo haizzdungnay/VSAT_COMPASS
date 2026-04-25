@@ -188,6 +188,7 @@ http://localhost:8080/api/v1/swagger-ui.html
 
 ### Deployment & Operations
 
+- **Task Tracker:** [`TASKS.md`](TASKS.md) — tiến độ Phase A/B/C/D, bug fixes, DB verification
 - **Deploy Runbook:** [`docs/DEPLOY_RUNBOOK.md`](docs/DEPLOY_RUNBOOK.md) — deploy, rollback, secret rotation, incident triage
 - **API Error Codes:** [`docs/API_ERROR_CODES.md`](docs/API_ERROR_CODES.md) — error catalog, response envelope, rate limits
 - **Smoke Tests:** [`docs/SMOKE_CHECKLIST.md`](docs/SMOKE_CHECKLIST.md) — 25 TCs (15 Android + 10 Backend)
