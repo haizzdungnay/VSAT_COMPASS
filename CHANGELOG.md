@@ -41,10 +41,30 @@
   different ID.
 - **docs/API_ERROR_CODES.md** — added `DATA_INTEGRITY_VIOLATION` (400) error code entry.
 
+### Neon DB Verification (2026-04-25)
+
+| Table | Result |
+|-------|--------|
+| `users` | 4 seeded accounts confirmed (STUDENT, COLLABORATOR, CONTENT_ADMIN, SUPER_ADMIN) all status=ACTIVE |
+| `refresh_tokens` | 6 tokens created during smoke window (14:01–14:36 UTC); mix of revoked=true (logout TC) and revoked=false; expires_at = +30 days |
+| `exam_sessions` | 2 rows: session id=4 (MOCK_EXAM, SUBMITTED, score=73.33, correct=22/30) + id=5 (PRACTICE, IN_PROGRESS) |
+| `exam_sessions` orphans | 0 — all sessions correctly linked to user_id=4 (student@vsat.com) and exam_id=1 (SMOKE_001) |
+
+- Anti-replay verified at both HTTP (409) and DB levels (`status=SUBMITTED` prevents re-submit)
+- Owner check verified at both HTTP (403) and DB (`user_id` enforced in service layer)
+- Foreign key integrity: `exam_id` → `exams.id` confirmed via 0 orphan sessions
+
 ### Notes
 - Phase B production smoke verification: **14/14 PASS** (9 auth + 5 session) on 2026-04-25
 - Anti-replay verified: duplicate `/sessions/{id}/client-submit` returns 409 SESSION_ALREADY_SUBMITTED
 - TC-SESSION-2: `/sessions/start` without Bearer now returns 401 (AuthenticationEntryPoint active)
+- Phase B officially closed 2026-04-25
+
+### Operational Status
+- API: LIVE at `https://vsat-compass-api.onrender.com/api/v1/`
+- Database: CONNECTED (Neon PostgreSQL pooler, ap-southeast-1)
+- Android client: USING PRODUCTION (`BASE_URL_CLOUD` verified)
+- Monitoring: ACTIVE (UptimeRobot 5-minute interval)
 
 ---
 
