@@ -159,6 +159,11 @@ Backend khởi động tại: `http://localhost:8080/api/v1`
 http://localhost:8080/api/v1/swagger-ui.html
 ```
 
+### API URL
+
+**Production:** https://vsat-compass-api.onrender.com/api/v1/
+**Health:** https://vsat-compass-api.onrender.com/api/v1/actuator/health
+
 ---
 
 ## API Modules
