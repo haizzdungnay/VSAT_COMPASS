@@ -168,7 +168,7 @@ http://localhost:8080/api/v1/swagger-ui.html
 
 ## API Modules
 
-> **Trạng thái backend hiện tại (v0.8.0):** Production-ready cho Auth + Session sync. Module Auth và Session Engine hoàn chỉnh, hardened with rate limiting. Các module còn lại là Phase C scope — Android app tự fallback về dữ liệu cục bộ (`sample_math_exam.json`).
+> **Trạng thái backend hiện tại (v0.8.0+):** Production-ready trên Render.com — Auth + Session sync đã hardened (rate limiting Bucket4j, HSTS, JWT cleanup job, error codes chuẩn hoá). Smoke 25 TCs pass. Các module quản trị nội dung (C/D scope) — Android app tự fallback về dữ liệu cục bộ khi chưa có.
 
 | Module | Base Path | Endpoints | Trạng thái |
 |--------|-----------|-----------|------------|
@@ -320,12 +320,14 @@ Các phần timer, chọn đáp án, bookmark, chấm điểm, hiển thị kế
 | Bảng database | 27 |
 | ENUM types PostgreSQL | 20 |
 | API endpoints (thiết kế) | ~52 MVP |
-| Backend Java files (hiện tại) | ~25 (Auth module) |
-| Android Java files | 30+ |
-| Android XML layouts | 18+ |
+| Backend Java files (hiện tại) | 40+ (Auth + Session + infrastructure) |
+| Android Java files | 35+ |
+| Android XML layouts | 20+ |
 | Android Drawable resources | 20+ |
-| Local exam data (JSON assets) | 1 (sample_math_exam.json) |
-| Features live | Login, Register, Exam list, Exam session, Timer, Scoring, Result |
+| Local exam data (JSON assets) | 5 packs (2 Toán, 2 Tiếng Anh, 1 Vật lí) |
+| Unit tests pass | 6/6 (ExamHistoryRepository) |
+| Smoke test cases | 25 TCs (15 Android + 10 Backend) |
+| Features live | Login, Register, Exam list, Session, Timer, Scoring, Result, Review, History, Rate limiting |
 
 ---
 

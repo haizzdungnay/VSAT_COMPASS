@@ -31,22 +31,30 @@ Mục tiêu cuối:
 - [x] Android app nền tảng: Splash, Login, Register, Home, Exam List, Exam Detail, Exam Session, Exam Result, Profile
 - [x] Admin mode cơ bản trong cùng app
 - [x] Local-first exam flow cho chế độ `CLIENT_SIDE_EXAM_PROCESSING=true`
-- [x] Multi-pack local exams từ `sample_*.json`
+- [x] Multi-pack local exams từ `sample_*.json` (5 pack: 2 Toán, 2 Tiếng Anh, 1 Vật lí)
 - [x] Đồng bộ kết quả cuối theo kiểu non-blocking nếu backend sẵn sàng
 - [x] Auth backend cơ bản bằng Spring Boot + JWT
 - [x] Neon PostgreSQL schema và tài liệu nền tảng
 - [x] Mockup student + admin/collaborator từ Stitch
+- [x] ExamReviewActivity — xem lời giải chi tiết từng câu (đúng/sai/chưa làm, explanation)
+- [x] ExamHistoryActivity + ExamHistoryRepository — lịch sử bài làm persist local (cap 200, atomic write, corrupt recovery)
+- [x] RelativeTimeHelper, ScoreConstants, debug dev menu (ProfileFragment)
+- [x] Backend production-ready trên Render.com — rate limiting (Bucket4j), HSTS, JWT cleanup job
+- [x] Session module backend: `POST /sessions/start`, `POST /sessions/{id}/client-submit`
+- [x] Error code chuẩn hóa (AppException 10 factory methods)
+- [x] Smoke checklist 25 TCs + smoke scripts (auth + sessions)
+- [x] 6 unit tests ExamHistoryRepository pass
 
 ### 2.2 Chưa hoàn chỉnh
 
-- [ ] Backend public production thực sự ổn định
-- [ ] Student history / analytics thật sự dùng được end-to-end
-- [ ] Review lời giải chi tiết sau bài thi
-- [ ] Quản trị câu hỏi / duyệt nội dung / tạo đề hoàn chỉnh
-- [ ] Cộng tác viên nhập và chỉnh sửa câu hỏi hoàn chỉnh
-- [ ] Ticket lỗi / phản hồi nội dung
-- [ ] User management / role management đủ dùng
-- [ ] Test plan, regression checklist, release checklist
+- [x] ~~Backend public production thực sự ổn định~~ — xong v0.8.0
+- [x] ~~Student history / analytics thật sự dùng được end-to-end~~ — xong v0.7.0/0.7.1
+- [x] ~~Review lời giải chi tiết sau bài thi~~ — xong v0.7.0
+- [ ] Quản trị câu hỏi / duyệt nội dung / tạo đề hoàn chỉnh (Phase C)
+- [ ] Cộng tác viên nhập và chỉnh sửa câu hỏi hoàn chỉnh (Phase C)
+- [ ] Ticket lỗi / phản hồi nội dung (Phase D)
+- [ ] User management / role management đủ dùng (Phase D)
+- [x] ~~Test plan, regression checklist, release checklist~~ — smoke checklist 25 TCs + unit tests done
 
 ---
 
@@ -56,32 +64,32 @@ Mục tiêu cuối:
 
 Mục tiêu: học viên có thể đăng nhập, vào kho đề, làm bài, nộp bài, xem kết quả, luyện tập tiếp mà không phụ thuộc backend exam engine đầy đủ.
 
-### A1. Ổn định xác thực và hồ sơ
-- [ ] Xác nhận `login`, `register`, `refresh`, `logout`, `getMe` hoạt động với backend public/dev
-- [ ] Làm rõ thông báo lỗi mạng, token hết hạn, lỗi tài khoản
-- [ ] Tự động xử lý refresh token khi access token hết hạn
-- [ ] Kiểm tra đăng xuất sạch token + user cache
+### A1. Ổn định xác thực và hồ sơ ✅
+- [x] Xác nhận `login`, `register`, `refresh`, `logout`, `getMe` hoạt động với backend public/dev
+- [x] Làm rõ thông báo lỗi mạng, token hết hạn, lỗi tài khoản
+- [x] Tự động xử lý refresh token khi access token hết hạn
+- [x] Kiểm tra đăng xuất sạch token + user cache
 
 Tiêu chí xong:
 - Đăng nhập thành công trên thiết bị thật
 - Mất mạng hoặc token lỗi có thông báo rõ ràng
 - Không bị vòng lặp login/logout bất thường
 
-### A2. Hoàn thiện kho đề local-first
-- [ ] Rà lại danh sách đề hiển thị từ nhiều file `sample_*.json`
-- [ ] Chuẩn hóa metadata đề: môn, số câu, thời gian, mã đề, mô tả
-- [ ] Thêm ít nhất 1 pack nữa cho môn Toán hoặc Tiếng Anh để test quy mô nhiều đề cùng môn
-- [ ] Đảm bảo filter và search hoạt động đúng trên dữ liệu local
+### A2. Hoàn thiện kho đề local-first ✅
+- [x] Rà lại danh sách đề hiển thị từ nhiều file `sample_*.json`
+- [x] Chuẩn hóa metadata đề: môn, số câu, thời gian, mã đề, mô tả
+- [x] Thêm ít nhất 1 pack nữa cho môn Toán hoặc Tiếng Anh để test quy mô nhiều đề cùng môn
+- [x] Đảm bảo filter và search hoạt động đúng trên dữ liệu local
 
 Tiêu chí xong:
 - Có ít nhất 4-5 đề local hiển thị đúng
 - Search/filter không bị lỗi dữ liệu trùng
 
-### A3. Hoàn thiện màn thi thử
-- [ ] Kiểm tra tất cả trạng thái UI từ mockup: điều hướng câu, bookmark, grid câu hỏi, hết giờ, xác nhận nộp bài
-- [ ] Thêm autosave state trong RAM hoặc local storage khi app bị pause/rotate
-- [ ] Xử lý resume exam nếu app bị đóng giữa chừng
-- [ ] Hiển thị rõ trạng thái `Sync: local-only` / `Sync: online enabled`
+### A3. Hoàn thiện màn thi thử ✅
+- [x] Kiểm tra tất cả trạng thái UI từ mockup: điều hướng câu, bookmark, grid câu hỏi, hết giờ, xác nhận nộp bài
+- [x] Thêm autosave state trong RAM hoặc local storage khi app bị pause/rotate
+- [x] Xử lý resume exam nếu app bị đóng giữa chừng
+- [x] Hiển thị rõ trạng thái `Sync: local-only` / `Sync: online enabled`
 
 Tham chiếu mockup:
 - `v_sat_compass_giao_di_n_thi_1`
@@ -95,11 +103,11 @@ Tiêu chí xong:
 - Rotate/background app không mất state
 - Nộp bài luôn tạo được kết quả local
 
-### A4. Hoàn thiện màn kết quả và review
-- [ ] Làm xong luồng `Xem lời giải chi tiết`
-- [ ] Hiển thị câu đúng/sai, đáp án đã chọn, giải thích
-- [ ] Tính điểm theo đúng thang V-SAT dự kiến
-- [ ] Tạo gợi ý chủ đề yếu từ dữ liệu local
+### A4. Hoàn thiện màn kết quả và review ✅
+- [x] Làm xong luồng `Xem lời giải chi tiết`
+- [x] Hiển thị câu đúng/sai, đáp án đã chọn, giải thích
+- [x] Tính điểm theo đúng thang V-SAT dự kiến
+- [x] Tạo gợi ý chủ đề yếu từ dữ liệu local
 
 Tham chiếu mockup:
 - `v_sat_compass_k_t_qu_thi`
@@ -111,11 +119,11 @@ Tiêu chí xong:
 - Sau nộp bài có thể xem summary và review từng câu
 - Có danh sách chủ đề cần luyện tập tiếp
 
-### A5. History và stats cơ bản
-- [ ] Lưu lịch sử bài làm local
-- [ ] Hiển thị số lần thi, điểm gần nhất, điểm cao nhất theo đề
-- [ ] Tạo dashboard học viên dựa trên local history
-- [ ] Nếu có backend online, đồng bộ kết quả cuối và lịch sử
+### A5. History và stats cơ bản ✅
+- [x] Lưu lịch sử bài làm local
+- [x] Hiển thị số lần thi, điểm gần nhất, điểm cao nhất theo đề
+- [x] Tạo dashboard học viên dựa trên local history
+- [x] Nếu có backend online, đồng bộ kết quả cuối và lịch sử
 
 Tham chiếu mockup:
 - `v_sat_compass_trang_ch`
@@ -131,26 +139,26 @@ Tiêu chí xong:
 
 Mục tiêu: backend đủ nhỏ để chi phí thấp nhưng đủ an toàn và vận hành được với NeonDB.
 
-### B1. Public backend ổn định
-- [ ] Xác định domain public thật sự đang chạy
-- [ ] Sửa `BASE_URL_CLOUD` sang domain đúng
-- [ ] Kiểm tra health endpoint, auth endpoint, CORS, SSL
-- [ ] Tài liệu hóa cách deploy và rollback
+### B1. Public backend ổn định ✅
+- [x] Xác định domain public thật sự đang chạy
+- [x] Sửa `BASE_URL_CLOUD` sang domain đúng (`https://vsat-compass-api.onrender.com/api/v1/`)
+- [x] Kiểm tra health endpoint, auth endpoint, CORS, SSL
+- [x] Tài liệu hóa cách deploy và rollback (`docs/DEPLOY_RUNBOOK.md`)
 
 Tiêu chí xong:
 - App Android gọi được backend public thật
 - Không còn 404/no-server ở domain cấu hình
 
-### B2. API tối thiểu bắt buộc
-- [ ] Hoàn thiện và test production cho:
-  - [ ] `POST /auth/login`
-  - [ ] `POST /auth/register`
-  - [ ] `POST /auth/refresh`
-  - [ ] `POST /auth/logout`
-  - [ ] `GET /auth/me`
-- [ ] Hoàn thiện endpoint đồng bộ kết quả cuối:
-  - [ ] `POST /sessions/start` (bootstrap session nhẹ)
-  - [ ] `POST /sessions/{sessionId}/client-submit`
+### B2. API tối thiểu bắt buộc ✅
+- [x] Hoàn thiện và test production cho:
+  - [x] `POST /auth/login`
+  - [x] `POST /auth/register`
+  - [x] `POST /auth/refresh`
+  - [x] `POST /auth/logout`
+  - [x] `GET /auth/me`
+- [x] Hoàn thiện endpoint đồng bộ kết quả cuối:
+  - [x] `POST /sessions/start` (bootstrap session nhẹ)
+  - [x] `POST /sessions/{sessionId}/client-submit`
 - [ ] Nếu cần đề online:
   - [ ] `GET /exams`
   - [ ] `GET /exams/{id}`
@@ -159,12 +167,14 @@ Tiêu chí xong:
 - Student flow vẫn chạy khi backend có hoặc không có
 - Khi backend có, auth và sync kết quả hoạt động đúng
 
-### B3. Bảo mật và ổn định
-- [ ] Kiểm tra không để app truy cập trực tiếp NeonDB
-- [ ] Chuẩn hóa validation request/response
-- [ ] Chuẩn hóa error JSON cho Android parse ổn định
-- [ ] Bật log vừa đủ cho prod và dev
-- [ ] Kiểm tra secret/env/deploy config không lộ ra repo
+### B3. Bảo mật và ổn định ✅
+- [x] Kiểm tra không để app truy cập trực tiếp NeonDB
+- [x] Chuẩn hóa validation request/response (AuthRequest @Size, @Pattern hardened)
+- [x] Chuẩn hóa error JSON cho Android parse ổn định (AppException 10 factory methods)
+- [x] Bật log vừa đủ cho prod và dev (prod WARN, dev toggle HIBERNATE_SQL_LOG)
+- [x] Kiểm tra secret/env/deploy config không lộ ra repo (render.yaml secrets removed)
+- [x] Rate limiting Bucket4j: login 10/ph, register 5/h, refresh 30/ph
+- [x] HSTS header, JWT cleanup job 03:00 AM daily
 
 Tiêu chí xong:
 - Có checklist bảo mật backend tối thiểu
@@ -306,12 +316,12 @@ Mục tiêu: từ bản chạy được sang bản có thể demo, bàn giao, ho
 
 ## 4. Danh sách ưu tiên thực hiện ngay
 
-### Ưu tiên P0
-- [ ] Làm cho backend public chạy thật sự ổn định
-- [ ] Hoàn thiện `Xem lời giải chi tiết`
-- [ ] Lưu lịch sử bài làm local
-- [ ] Bổ sung thêm pack đề local cho Toán / Tiếng Anh
-- [ ] Hoàn thiện bootstrap + sync kết quả cuối
+### Ưu tiên P0 — ✅ Hoàn thành toàn bộ
+- [x] Làm cho backend public chạy thật sự ổn định
+- [x] Hoàn thiện `Xem lời giải chi tiết`
+- [x] Lưu lịch sử bài làm local
+- [x] Bổ sung thêm pack đề local cho Toán / Tiếng Anh
+- [x] Hoàn thiện bootstrap + sync kết quả cuối
 
 ### Ưu tiên P1
 - [ ] Question bank quản trị
@@ -332,13 +342,13 @@ Mục tiêu: từ bản chạy được sang bản có thể demo, bàn giao, ho
 
 App được coi là đủ hoàn chỉnh cho bản bàn giao/MVP nghiêm túc khi thỏa đồng thời:
 
-- [ ] Học viên đăng nhập, chọn đề, làm bài, nộp bài, xem kết quả, xem lời giải, xem lịch sử
-- [ ] App chạy ổn khi backend exam engine chưa đầy đủ
-- [ ] Auth và sync kết quả cuối hoạt động với backend public
-- [ ] Có ít nhất 2 môn demo tốt: Toán, Tiếng Anh
-- [ ] Admin quản lý được câu hỏi và đề ở mức MVP
-- [ ] Có phân quyền rõ giữa Student / Collaborator / Content Admin / Super Admin
-- [ ] Có checklist test và changelog để quản lý thay đổi
+- [x] Học viên đăng nhập, chọn đề, làm bài, nộp bài, xem kết quả, xem lời giải, xem lịch sử
+- [x] App chạy ổn khi backend exam engine chưa đầy đủ
+- [x] Auth và sync kết quả cuối hoạt động với backend public
+- [x] Có ít nhất 2 môn demo tốt: Toán, Tiếng Anh
+- [ ] Admin quản lý được câu hỏi và đề ở mức MVP (Phase C)
+- [ ] Có phân quyền rõ giữa Student / Collaborator / Content Admin / Super Admin (Phase C/D)
+- [x] Có checklist test và changelog để quản lý thay đổi
 
 ---
 
