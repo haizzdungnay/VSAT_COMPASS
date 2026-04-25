@@ -42,7 +42,9 @@
 - **docs/API_ERROR_CODES.md** — added `DATA_INTEGRITY_VIOLATION` (400) error code entry.
 
 ### Notes
-- Phase B production smoke verification: `<pending — to be updated after retest>`
+- Phase B production smoke verification: **14/14 PASS** (9 auth + 5 session) on 2026-04-25
+- Anti-replay verified: duplicate `/sessions/{id}/client-submit` returns 409 SESSION_ALREADY_SUBMITTED
+- TC-SESSION-2: `/sessions/start` without Bearer now returns 401 (AuthenticationEntryPoint active)
 
 ---
 
