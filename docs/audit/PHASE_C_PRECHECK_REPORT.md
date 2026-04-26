@@ -320,3 +320,32 @@ Total: 1
 app/src/main/java/…/ui/admin/exam/AdminCreateExamActivity.java:138:
   // TODO: Mở màn hình chọn câu từ ngân hàng (phase 2)
 ```
+
+---
+
+## Batch 1 Resolution Log
+
+**Applied:** 2026-04-26 in commit `1319a5c` (chore(repo): Batch 1 quick wins)
+
+**Tag mapping applied:**
+
+| Version | Commit | Note |
+|---------|--------|------|
+| v0.5.0 | `ed2637e` | Direct match — "feat: v0.5.0" commit on main |
+| v0.6.0 | `b5f2134` | Retroactive — backfilled into CHANGELOG at v0.8.0 commit |
+| v0.7.0 | `b5f2134` | Retroactive — same |
+| v0.7.1 | `b5f2134` | Retroactive — same |
+| v0.8.0 | `b5f2134` | Direct match — "feat: v0.8.0" commit |
+| v0.8.1 | `53f8b21` | Audit baseline commit (last pre-audit Phase B commit) |
+
+**Findings resolved:**
+
+| # | Severity | Status |
+|---|----------|--------|
+| 1 | HIGH     | ✅ RESOLVED — 6 annotated tags created and pushed to origin |
+| 3 | MEDIUM   | ✅ RESOLVED — `.claude/` untracked from index + added to `.gitignore` |
+| 6 | MEDIUM   | ✅ RESOLVED — `.gitignore` patterns added: `.claude/`, `local.properties`, `*.keystore`, `*.jks` |
+| 9 | MEDIUM   | ✅ RESOLVED — stale branch `backup-before-author-fix-20260410` deleted |
+| 13| LOW      | ✅ RESOLVED — `docs/SMOKE_CHECKLIST.md` stamp updated to `v0.8.1 / 2026-04-26` |
+
+Remaining open items go to Batch 2 (HIGH #2, MEDIUM #4, #5, #7, #8) or are deferred (LOW #10, #11, #12).
