@@ -31,3 +31,13 @@ Thumbs.db
 
 # Node
 npm-debug.log
+
+# Claude Code local config
+.claude/
+
+# Android local SDK path config
+local.properties
+
+# Android signing keystores (NEVER commit)
+*.keystore
+*.jks

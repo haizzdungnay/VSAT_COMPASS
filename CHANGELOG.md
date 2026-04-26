@@ -3,7 +3,18 @@
 ## [Unreleased]
 
 ### Documentation
-- Add Phase C precheck audit report (`docs/audit/PHASE_C_PRECHECK_REPORT.md`) — read-only baseline before Phase C kickoff. No source changes.
+- Add Phase C precheck audit report (`docs/audit/PHASE_C_PRECHECK_REPORT.md`) — read-only baseline before Phase C kickoff. No source changes. *(prior audit commit)*
+
+### Repo Hygiene (Batch 1)
+- Tag retroactive releases v0.5.0 through v0.8.1 (6 annotated tags) so previous CHANGELOG versions are checkout-able.
+- Add `.claude/`, `local.properties`, `*.keystore`, `*.jks` to root `.gitignore`.
+- Untrack `.claude/settings.json` and `.claude/settings.local.json` from the repository (files preserved on disk).
+- Delete stale local branch `backup-before-author-fix-20260410` (commit `009350a` is the pre-rebase equivalent of `ed2637e` / `v0.5.0`).
+- Update `docs/SMOKE_CHECKLIST.md` version stamp to `v0.8.1 / 2026-04-26`.
+
+### Notes
+- No production code changes; this batch is purely repo hygiene.
+- Spring Boot 3.2.5 → 3.4.x upgrade and AuthService/SessionService unit tests will follow in Batch 2.
 
 ## [0.8.1] - 2026-04-25 — Phase B Production Hardening
 

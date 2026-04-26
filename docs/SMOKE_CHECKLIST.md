@@ -1,6 +1,6 @@
 # V-SAT Compass — Smoke Test Checklist (Student MVP)
 
-> Phiên bản: v0.8.0 | Cập nhật: 2026-04-23
+> Phiên bản: v0.8.1 | Cập nhật: 2026-04-26
 > Chạy checklist này trước mỗi release hoặc sau mỗi thay đổi lớn ảnh hưởng đến student flow.
 > Thiết bị test tối thiểu: 1 emulator (API 28+) + 1 thiết bị vật lý.
 
