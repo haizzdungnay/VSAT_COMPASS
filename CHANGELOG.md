@@ -1,5 +1,10 @@
 # V-SAT COMPASS — CHANGELOG
 
+## [Unreleased]
+
+### Documentation
+- Add Phase C precheck audit report (`docs/audit/PHASE_C_PRECHECK_REPORT.md`) — read-only baseline before Phase C kickoff. No source changes.
+
 ## [0.8.1] - 2026-04-25 — Phase B Production Hardening
 
 ### Bug Fixes
