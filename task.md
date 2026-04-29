@@ -1,6 +1,6 @@
 # V-SAT Compass — Task Tracker & Roadmap
 
-> Cập nhật: 2026-04-26 | Phiên bản hiện tại: **v0.8.1**
+> Cập nhật: 2026-04-30 | Phiên bản hiện tại: **v0.8.1**
 
 Tài liệu này tổng hợp lộ trình hoàn thiện app dựa trên:
 - `VSAT/ui/tong_hop_du_an_vsat_android_web_v2.txt`
@@ -60,6 +60,7 @@ Mục tiêu cuối:
 - [x] 6 unit tests ExamHistoryRepository pass
 - [x] B4 bug fixes: 401/403/500 hardening trong production smoke
 - [x] B5 DB verification: 14/14 smoke test PASS, DB integrity xác nhận
+- [x] B6 Characterization tests cho AuthService + SessionService — 10+8 tests Mockito PASS trên Spring Boot 3.2.5 baseline (Batch 2a, 2026-04-30; IT tests deferred to Batch 2a-bis)
 
 ### 2.2 Chưa hoàn chỉnh
 
@@ -244,6 +245,27 @@ Tiêu chí xong:
 | refresh_tokens | Tạo đúng khi login, revoke đúng khi logout |
 | exam_sessions | 2 rows từ smoke test, score/correct_count đúng, 0 orphan sessions |
 | Tổng smoke test | **14/14 PASS** (9 auth + 5 session) |
+
+### B6 — Pre-Phase C Quality Hardening (Batch 2a) ✅ HOÀN THÀNH (2026-04-30)
+
+Mục tiêu: Lock down behavior contract của AuthService + SessionService trên Spring Boot 3.2.5 trước khi Batch 2b upgrade Spring Boot. Tests sẽ được re-run sau upgrade để detect regression.
+
+| ID | Hạng mục | Trạng thái | Ghi chú |
+|----|----------|------------|---------|
+| B6.1 | AuthServiceTest — register, login, refresh, logout (Mockito unit) | ✅ Done | 10 tests PASS |
+| B6.2 | SessionServiceTest — start, client-submit, anti-replay 409, owner 403 | ✅ Done | 8 tests PASS, trust-boundary documented |
+| B6.3 | Repository slice tests via Testcontainers Postgres (`*RepositoryIT`) | ⏸️ Deferred | Batch 2a-bis — VMware/Hyper-V conflict on dev machine |
+| B6.4 | `application-test.yml` — disable cron jobs + Bucket4j rate limit | N/A | Mockito-only tests don't load Spring context; defer to Batch 2a-bis |
+| B6.5 | Test-scoped dependencies: spring-security-test (testcontainers deferred) | ✅ Done | Already on classpath; production deps untouched |
+| B6.6 | Spring Boot 3.2.5 → 3.4.x upgrade + Postgres driver bump | ⏳ Batch 2b | Mockito characterization tests sẵn sàng verify |
+
+> **Note (Batch 2a Option B):** Repository slice tests via Testcontainers were deferred because Docker Desktop on the dev machine cannot start due to a Hyper-V/VMware hypervisor conflict (`bcdedit hypervisorlaunchtype=off` set by VMware Workstation). Mockito unit tests cover service-layer logic; integration tests will follow in a Batch 2a-bis run once Docker is available. Phase C readiness is preserved — characterization baseline for Batch 2b upgrade verification is intact.
+
+Tiêu chí xong (B6):
+- [x] `./gradlew test` BUILD SUCCESSFUL với 10+8 = 18 tests PASS
+- [x] Zero failures, zero @Disabled
+- [x] Không có file nào trong `src/main/` bị thay đổi
+- [x] Audit report (`docs/audit/PHASE_C_PRECHECK_REPORT.md`) marks #4 và #5 RESOLVED
 
 ---
 

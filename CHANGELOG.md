@@ -12,9 +12,16 @@
 - Delete stale local branch `backup-before-author-fix-20260410` (commit `009350a` is the pre-rebase equivalent of `ed2637e` / `v0.5.0`).
 - Update `docs/SMOKE_CHECKLIST.md` version stamp to `v0.8.1 / 2026-04-26`.
 
+### Tests (Batch 2a)
+- Add `AuthServiceTest` — 10 Mockito unit tests covering register (happy path + duplicate email), login (happy path, wrong password, non-existent email, non-ACTIVE account), refreshToken (rotate + revoke old, unknown/revoked token, expired token), and logout. Characterizes current Spring Boot 3.2.5 behavior (baseline contract for Batch 2b upgrade verification).
+- Add `SessionServiceTest` — 8 Mockito unit tests covering startSession (happy path, invalid mode), clientSubmit (happy path with client-trusted score persistence, unknown sessionId 404, different user 403, anti-replay 409, abandoned session 400, correctCount > totalQuestions VALIDATION_FAILED). Documents the trust-boundary that the server persists the client-supplied score as-is per `CLIENT_SIDE_EXAM_PROCESSING=true`.
+- Repository slice tests via Testcontainers — DEFERRED to Batch 2a-bis pending Docker Desktop / WSL2 availability on dev machine (VMware/Hyper-V conflict — `bcdedit hypervisorlaunchtype=off` set by VMware Workstation prevents Hyper-V/Docker Desktop from starting).
+- No `build.gradle` change required — `spring-boot-starter-test` and `spring-security-test` were already on the test classpath. Production deps untouched.
+
 ### Notes
-- No production code changes; this batch is purely repo hygiene.
-- Spring Boot 3.2.5 → 3.4.x upgrade and AuthService/SessionService unit tests will follow in Batch 2.
+- No production code changes; tests are purely characterization (lock down current behavior before the SB upgrade).
+- Spring Boot 3.2.5 → 3.4.x upgrade will follow in Batch 2b. The 18 tests added here will be re-run after the upgrade to detect regressions.
+- Repository custom-query characterization (`*RepositoryIT.java` with Testcontainers Postgres) is deferred to Batch 2a-bis once Docker is available.
 
 ## [0.8.1] - 2026-04-25 — Phase B Production Hardening
 
