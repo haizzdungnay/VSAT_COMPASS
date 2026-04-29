@@ -349,3 +349,26 @@ app/src/main/java/…/ui/admin/exam/AdminCreateExamActivity.java:138:
 | 13| LOW      | ✅ RESOLVED — `docs/SMOKE_CHECKLIST.md` stamp updated to `v0.8.1 / 2026-04-26` |
 
 Remaining open items go to Batch 2 (HIGH #2, MEDIUM #4, #5, #7, #8) or are deferred (LOW #10, #11, #12).
+
+---
+
+## Batch 2a Resolution Log
+
+**Applied:** 2026-04-30 in commit `740a73a` (tests + docs) and the next commit (audit log update)
+
+| # | Severity | Status |
+|---|----------|--------|
+| 4 | MEDIUM   | ✅ RESOLVED — AuthServiceTest added (10 tests Mockito, all PASS on SB 3.2.5) |
+| 5 | MEDIUM   | ✅ RESOLVED — SessionServiceTest added (8 tests Mockito, all PASS on SB 3.2.5) |
+
+Notes:
+- Tests are characterization tests (lock down current behavior) and will be re-run after Batch 2b's Spring Boot upgrade.
+- Coverage scope per user direction (Option B): happy path + key edge cases — 18 tests total (10 Auth + 8 Session).
+- Test architecture: Mockito unit tests for service-layer logic. No Spring context loaded.
+- Documentation synced: CHANGELOG.md `[Unreleased]` Tests (Batch 2a) section + task.md `B6 — Pre-Phase C Quality Hardening` subsection.
+
+> **Batch 2a executed in Option B (Mockito-only) mode.** Repository custom-query characterization via Testcontainers was deferred to Batch 2a-bis because Docker Desktop could not start on the dev machine (VMware Workstation set `bcdedit hypervisorlaunchtype=off`, blocking Hyper-V and therefore Docker Desktop). Audit items #4 and #5 are still RESOLVED — service-level tests cover the security-boundary logic the audit flagged. Custom-query coverage will be addressed in a follow-up run when Docker is available.
+
+> **Tooling note:** Dev machine had no `JAVA_HOME` set; `./gradlew test` was executed using the JDK 21 bundled with Android Studio (`C:\Program Files\Android\Android Studio\jbr`) via session-scoped env vars only — no system config or committed file changed. This is the same JAVA_HOME class of issue flagged as MEDIUM #8 (Android side); the API server now needs a permanent JAVA_HOME setup too. Tracked under Batch 2a-bis along with Docker.
+
+Remaining open items: HIGH #2 (Spring Boot upgrade — Batch 2b), MEDIUM #7 (Postgres driver — Batch 2b), #8 (JAVA_HOME — Batch 2a-bis), Testcontainers IT (Batch 2a-bis).
