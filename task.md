@@ -1,6 +1,6 @@
 # V-SAT Compass — Task Tracker & Roadmap
 
-> Cập nhật: 2026-04-30 | Phiên bản hiện tại: **v0.8.1**
+> Cập nhật: 2026-04-30 | Phiên bản hiện tại: **v0.8.2** (feature branch — prod vẫn ở v0.8.1 chờ deploy 2b.2)
 
 Tài liệu này tổng hợp lộ trình hoàn thiện app dựa trên:
 - `VSAT/ui/tong_hop_du_an_vsat_android_web_v2.txt`
@@ -61,6 +61,7 @@ Mục tiêu cuối:
 - [x] B4 bug fixes: 401/403/500 hardening trong production smoke
 - [x] B5 DB verification: 14/14 smoke test PASS, DB integrity xác nhận
 - [x] B6 Characterization tests cho AuthService + SessionService — 10+8 tests Mockito PASS trên Spring Boot 3.2.5 baseline (Batch 2a, 2026-04-30; IT tests deferred to Batch 2a-bis)
+- [x] Spring Boot 3.2.5 → 3.5.9 upgrade (Batch 2b) — 18 characterization tests + 9/9 auth smoke local PASS, prod deploy in Batch 2b.2 (2026-04-30)
 
 ### 2.2 Chưa hoàn chỉnh
 
@@ -257,7 +258,7 @@ Mục tiêu: Lock down behavior contract của AuthService + SessionService trê
 | B6.3 | Repository slice tests via Testcontainers Postgres (`*RepositoryIT`) | ⏸️ Deferred | Batch 2a-bis — VMware/Hyper-V conflict on dev machine |
 | B6.4 | `application-test.yml` — disable cron jobs + Bucket4j rate limit | N/A | Mockito-only tests don't load Spring context; defer to Batch 2a-bis |
 | B6.5 | Test-scoped dependencies: spring-security-test (testcontainers deferred) | ✅ Done | Already on classpath; production deps untouched |
-| B6.6 | Spring Boot 3.2.5 → 3.4.x upgrade + Postgres driver bump | ⏳ Batch 2b | Mockito characterization tests sẵn sàng verify |
+| B6.6 | Spring Boot 3.2.5 → 3.5.9 upgrade + Postgres driver bump | ✅ Done | 3.5.9 trên feature branch, prod deploy in 2b.2 |
 
 > **Note (Batch 2a Option B):** Repository slice tests via Testcontainers were deferred because Docker Desktop on the dev machine cannot start due to a Hyper-V/VMware hypervisor conflict (`bcdedit hypervisorlaunchtype=off` set by VMware Workstation). Mockito unit tests cover service-layer logic; integration tests will follow in a Batch 2a-bis run once Docker is available. Phase C readiness is preserved — characterization baseline for Batch 2b upgrade verification is intact.
 
@@ -266,6 +267,35 @@ Tiêu chí xong (B6):
 - [x] Zero failures, zero @Disabled
 - [x] Không có file nào trong `src/main/` bị thay đổi
 - [x] Audit report (`docs/audit/PHASE_C_PRECHECK_REPORT.md`) marks #4 và #5 RESOLVED
+
+### B7 — Spring Boot 3.5 Upgrade (Batch 2b — feature branch, awaiting deploy)
+
+**Branch:** `batch-2b/spring-boot-3-5-upgrade`
+**Backup branch:** `backup-pre-batch-2b-20260430` (points at pre-upgrade main commit `1f88ee2`)
+
+| ID | Hạng mục | Trạng thái |
+|----|----------|------------|
+| B7.1 | Bump Spring Boot 3.2.5 → 3.5.9 in build.gradle (one-line plugin version change) | ✅ Done |
+| B7.2 | Compile success on JDK 21 (Android Studio JBR) | ✅ Done |
+| B7.3 | 18 Batch 2a characterization tests PASS on 3.5.9 | ✅ Done |
+| B7.4 | Local actuator health UP (Hibernate 6.6.39, Tomcat 10.1.50, started in ~7s) | ✅ Done |
+| B7.5 | Local smoke_auth.sh 9/9 PASS | ✅ Done |
+| B7.6 | Local smoke_sessions.sh | ⏸️ Deferred (local DB seed not set; defer to prod smoke in 2b.2) |
+| B7.7 | Merge feature branch to main | ⏳ Batch 2b.2 (after user review of GitHub diff) |
+| B7.8 | Render production deploy + prod smoke (auth 9/9 + sessions 5/5) | ⏳ Batch 2b.2 |
+| B7.9 | Roll forward to v0.8.2 git tag | ⏳ Batch 2b.2 |
+
+**Transitive bumps via SB BOM:**
+- Spring Security 6.2.4 → 6.5.7
+- Spring Framework 6.1.x → 6.2.15
+- Hibernate ORM 6.4.4.Final → 6.6.39.Final
+- Tomcat embed 10.1.20 → 10.1.50
+- Jackson 2.15.4 → 2.19.4
+- PostgreSQL JDBC 42.6.2 → 42.7.8 (resolves audit MEDIUM #7)
+
+**Pinned deps unchanged:** jjwt 0.12.5, bucket4j 8.10.1, mapstruct 1.5.5.Final, springdoc-openapi 2.5.0.
+
+> **Production state during 2b window:** prod endpoint `https://vsat-compass-api.onrender.com/api/v1/` is still on **3.2.5**. Branch `batch-2b/spring-boot-3-5-upgrade` is awaiting human review of the GitHub diff before Batch 2b.2 (merge → Render auto-deploy → prod smoke).
 
 ---
 
