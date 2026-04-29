@@ -372,3 +372,40 @@ Notes:
 > **Tooling note:** Dev machine had no `JAVA_HOME` set; `./gradlew test` was executed using the JDK 21 bundled with Android Studio (`C:\Program Files\Android\Android Studio\jbr`) via session-scoped env vars only — no system config or committed file changed. This is the same JAVA_HOME class of issue flagged as MEDIUM #8 (Android side); the API server now needs a permanent JAVA_HOME setup too. Tracked under Batch 2a-bis along with Docker.
 
 Remaining open items: HIGH #2 (Spring Boot upgrade — Batch 2b), MEDIUM #7 (Postgres driver — Batch 2b), #8 (JAVA_HOME — Batch 2a-bis), Testcontainers IT (Batch 2a-bis).
+
+---
+
+## Batch 2b Resolution Log (Partial — local verify done, prod deploy pending)
+
+**Applied:** 2026-04-30 on branch `batch-2b/spring-boot-3-5-upgrade`, commit `00e1c3f` (upgrade + docs) and the next commit (audit log update).
+**NOT yet on main; production NOT yet deployed.**
+
+| # | Severity | Status |
+|---|----------|--------|
+| 2 | HIGH     | 🟡 PARTIAL — Spring Boot 3.2.5 → 3.5.9 done on branch, awaiting Batch 2b.2 (merge + Render deploy + prod smoke) |
+| 7 | MEDIUM   | 🟡 PARTIAL — PostgreSQL JDBC 42.6.2 → 42.7.8 patched transitively via SB BOM, awaiting prod verification |
+
+**Local verification (2026-04-30):**
+- `./gradlew clean compileJava` BUILD SUCCESSFUL (JDK 21 / Android Studio JBR).
+- `./gradlew test` 18/0/0/0 PASS on Spring Boot 3.5.9 — zero behavior regression at the service layer.
+- `./gradlew bootRun` started cleanly: actuator `/health` returned `{"status":"UP"}`; "Started VsatCompassApiApplication in 7.048 seconds"; Hibernate ORM 6.6.39.Final; Tomcat 10.1.50; Spring 6.2.15. One benign WARN about explicit `hibernate.dialect` property (deferred — `src/main` change out of scope for this batch).
+- `BASE_URL=http://localhost:8080/api/v1 bash docs/scripts/smoke_auth.sh` returned 9/9 PASS (TC-AUTH-1 through TC-AUTH-9).
+- `smoke_sessions.sh` deferred to 2b.2 production verification — local DB is a Neon dev branch without the smoke-test exam seed.
+
+**Dep diff (sensitive families):**
+| Library | Before | After |
+|---------|--------|-------|
+| spring-boot | 3.2.5 | 3.5.9 |
+| spring-security | 6.2.4 | 6.5.7 |
+| spring-framework | 6.1.x | 6.2.15 |
+| hibernate-core | 6.4.4.Final | 6.6.39.Final |
+| tomcat-embed | 10.1.20 | 10.1.50 |
+| jackson | 2.15.4 | 2.19.4 |
+| postgresql | 42.6.2 | 42.7.8 |
+| jjwt / bucket4j / mapstruct / springdoc | unchanged (we pin) | unchanged |
+
+Notes:
+- Conservative target chosen: 3.5.9 (latest 3.5.x patch). 3.5 line OSS support through Jun 30, 2026.
+- A separate Batch 2c will address 3.5 → 4.0.x upgrade after Phase C.
+- Backup branch `backup-pre-batch-2b-20260430` retained — rollback path is `git reset --hard backup-pre-batch-2b-20260430` from main.
+- Items #2 and #7 will flip from 🟡 PARTIAL to ✅ RESOLVED in Batch 2b.2 after production smoke verification.
