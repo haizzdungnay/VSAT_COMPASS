@@ -409,3 +409,25 @@ Notes:
 - A separate Batch 2c will address 3.5 → 4.0.x upgrade after Phase C.
 - Backup branch `backup-pre-batch-2b-20260430` retained — rollback path is `git reset --hard backup-pre-batch-2b-20260430` from main.
 - Items #2 and #7 will flip from 🟡 PARTIAL to ✅ RESOLVED in Batch 2b.2 after production smoke verification.
+
+---
+
+## Batch 2b Resolution Log (FINAL — production verified)
+
+**Applied:** 2026-04-30 20:09 ICT in merge commit `0a0f341f1b543845e14c9df35dc9b2e0ab0a87c9` on `main`.
+**Tag:** `v0.8.2`.
+
+| # | Severity | Status |
+|---|----------|--------|
+| 2 | HIGH     | ✅ **RESOLVED** — Spring Boot 3.2.5 → 3.5.9 deployed and verified in production. 14/14 prod smoke PASS (auth 9/9, sessions 5/5). |
+| 7 | MEDIUM   | ✅ **RESOLVED** — PostgreSQL JDBC 42.6.2 → 42.7.8 deployed transitively via SB 3.5 BOM. |
+
+Notes:
+- Merge strategy: `--no-ff` (Option C, per user direction) so a single revert point exists at the merge commit.
+- Backup branch `backup-pre-batch-2b-20260430` retained through end of May 2026 (1 month). Rollback path:
+  ```
+  git revert -m 1 0a0f341f1b543845e14c9df35dc9b2e0ab0a87c9
+  git push origin main   # Render auto-deploys back to 3.2.5
+  ```
+- Feature branch `batch-2b/spring-boot-3-5-upgrade` has been deleted (local + remote) since its content is now on main.
+- Spring Boot 3.5.x OSS support runs through Jun 30, 2026. Batch 2c (3.5 → 4.0) will be scheduled post-Phase C.

@@ -12,7 +12,7 @@
 - Delete stale local branch `backup-before-author-fix-20260410` (commit `009350a` is the pre-rebase equivalent of `ed2637e` / `v0.5.0`).
 - Update `docs/SMOKE_CHECKLIST.md` version stamp to `v0.8.1 / 2026-04-26`.
 
-## [0.8.2] - 2026-04-30 — Spring Boot 3.5.9 Upgrade (Batch 2b — feature branch)
+## [0.8.2] - 2026-04-30 — Spring Boot 3.5.9 Upgrade (Batch 2b)
 
 ### Changed
 - **Spring Boot 3.2.5 → 3.5.9** (latest 3.5.x patch). 3.2 line reached EOL Nov 2024;
@@ -25,11 +25,11 @@
 - PostgreSQL JDBC `42.6.2 → 42.7.8` (resolves audit MEDIUM #7 transitively).
 - Pinned deps unchanged: jjwt 0.12.5, bucket4j 8.10.1, mapstruct 1.5.5.Final, springdoc-openapi 2.5.0.
 
-### Verified (local)
+### Verified
 - All 18 Batch 2a characterization tests still PASS on 3.5.9 (zero behavior regression detected at service layer).
 - Local `bootRun` startup: actuator health UP, JVM started in 7s, no ERROR-level startup log entries (one benign WARN about explicit PostgreSQLDialect property — left for a follow-up since `src/main` was out of scope for this run).
 - Local `smoke_auth.sh`: 9/9 PASS against `http://localhost:8080/api/v1` (TC-AUTH-1 through TC-AUTH-9).
-- `smoke_sessions.sh`: deferred to Batch 2b.2 production verification — local DB is a Neon dev branch without the smoke-test exam seed.
+- **Production smoke 14/14 PASS** (`smoke_auth.sh` 9/9 + `smoke_sessions.sh` 5/5) on Render Singapore at 2026-04-30 20:09 ICT, post merge commit `0a0f341`.
 
 ### Tests (originally drafted as Batch 2a, ships with 0.8.2)
 - Add `AuthServiceTest` — 10 Mockito unit tests covering register (happy path + duplicate email), login (happy path, wrong password, non-existent email, non-ACTIVE account), refreshToken (rotate + revoke old, unknown/revoked token, expired token), and logout. Re-verified on Spring Boot 3.5.9.
@@ -37,13 +37,13 @@
 - Repository slice tests via Testcontainers — DEFERRED to Batch 2a-bis pending Docker Desktop / WSL2 availability on dev machine (VMware/Hyper-V conflict — `bcdedit hypervisorlaunchtype=off` set by VMware Workstation).
 
 ### Notes
-- This release lives on branch `batch-2b/spring-boot-3-5-upgrade`. Production deploy + production smoke happen in Batch 2b.2 after user review.
-- Backup branch `backup-pre-batch-2b-20260430` retained at the pre-upgrade `main` commit (`1f88ee2`) — rollback path is `git reset --hard backup-pre-batch-2b-20260430`.
+- Released on `main` via no-ff merge commit `0a0f341` and tagged `v0.8.2`. Render auto-deploy completed 2026-04-30; production now runs Spring Boot 3.5.9.
+- Backup branch `backup-pre-batch-2b-20260430` retained at the pre-upgrade `main` commit (`1f88ee2`) through end of May 2026 — emergency rollback path is `git revert -m 1 0a0f341 && git push origin main` (Render auto-deploys back to 3.2.5).
 - Spring Boot 3.5 → 4.0 upgrade is tracked separately as Batch 2c (post-Phase C).
 
-### Resolved audit findings (PARTIAL — pending production verification in 2b.2)
-- HIGH #2 — Spring Boot EOL upgrade (3.2 → 3.5)
-- MEDIUM #7 — PostgreSQL JDBC driver patch (42.6.2 → 42.7.8 via BOM resolution)
+### Resolved audit findings
+- HIGH #2 — Spring Boot EOL upgrade (3.2.5 → 3.5.9 in production)
+- MEDIUM #7 — PostgreSQL driver patched transitively via SB BOM (42.6.2 → 42.7.8)
 
 ## [0.8.1] - 2026-04-25 — Phase B Production Hardening
 
