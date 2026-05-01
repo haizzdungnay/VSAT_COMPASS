@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+### Added (Phase C1.0 — feature branch)
+- `Subject` and `Topic` JPA entities mapped to existing `subjects` and `topics` Postgres tables.
+- `SubjectRepository`, `TopicRepository` with active-only ordered query methods.
+- `SubjectService` interface + `SubjectServiceImpl` for read-only listing.
+- Public endpoints: `GET /subjects`, `GET /subjects/{id}/topics` (wrapped in `ApiResponse` envelope).
+- `SubjectServiceTest` — 10 Mockito unit tests covering listing, ordering, 404 propagation, and DTO field selection.
+- No SecurityConfig change needed — existing `requestMatchers(GET, "/subjects/**").permitAll()` already covers both endpoints.
+
+### Notes
+- This block lives on branch `phase-c/c1-0-subject-topic`. Production deploy + production smoke happens in C1.0.2 after user review.
+- No schema change: the entities map to existing frozen schema columns.
+- 28/28 tests PASS locally (10 AuthService + 8 SessionService + 10 SubjectServiceTest).
+
 ### Documentation
 - Add Phase C precheck audit report (`docs/audit/PHASE_C_PRECHECK_REPORT.md`) — read-only baseline before Phase C kickoff. No source changes. *(prior audit commit)*
 

@@ -62,6 +62,7 @@ Mục tiêu cuối:
 - [x] B5 DB verification: 14/14 smoke test PASS, DB integrity xác nhận
 - [x] B6 Characterization tests cho AuthService + SessionService — 10+8 tests Mockito PASS trên Spring Boot 3.2.5 baseline (Batch 2a, 2026-04-30; IT tests deferred to Batch 2a-bis)
 - [x] Spring Boot 3.2.5 → 3.5.9 upgrade (Batch 2b) — 18 characterization tests + 14/14 prod smoke PASS, deployed to Render Singapore (2026-04-30)
+- [x] Phase C1.0 — Subject + Topic foundation backend (entities, repo, service, 2 public endpoints, 10 Mockito tests) on feature branch (2026-04-30)
 
 ### 2.2 Chưa hoàn chỉnh
 
@@ -308,7 +309,7 @@ Mục tiêu: Collaborator có thể soạn câu hỏi, Content Admin duyệt, t�
 
 | ID | Hạng mục | Trạng thái |
 |----|----------|------------|
-| C1.1 | GET /subjects (public) | 📋 TODO |
+| C1.1 | GET /subjects (public) | 🟡 PARTIAL — feature branch (C1.0), prod deploy in C1.0.2 |
 | C1.2 | POST /collaborator/questions (tạo câu hỏi) | 📋 TODO |
 | C1.3 | GET/PUT /collaborator/questions/{id} (sửa, xem câu hỏi) | 📋 TODO |
 | C1.4 | POST /collaborator/questions/{id}/reviews (tạo review) | 📋 TODO |
