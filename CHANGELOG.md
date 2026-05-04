@@ -2,7 +2,11 @@
 
 ## [Unreleased]
 
-### Added (Phase C1.0 — feature branch)
+_(no unreleased changes)_
+
+## [0.8.3] - 2026-05-04 — Phase C1.0: Subject + Topic Foundation (Read-Only)
+
+### Added (Phase C1.0)
 - `Subject` and `Topic` JPA entities mapped to existing `subjects` and `topics` Postgres tables.
 - `SubjectRepository`, `TopicRepository` with active-only ordered query methods.
 - `SubjectService` interface + `SubjectServiceImpl` for read-only listing.
@@ -10,15 +14,26 @@
 - `SubjectServiceTest` — 10 Mockito unit tests covering listing, ordering, 404 propagation, and DTO field selection.
 - No SecurityConfig change needed — existing `requestMatchers(GET, "/subjects/**").permitAll()` already covers both endpoints.
 
+### Tests
+- `docs/scripts/smoke_subjects.sh` — 3 TCs covering the new public endpoints (TC-SUBJ-1 list, TC-SUBJ-2 valid topics, TC-SUBJ-3 404 RESOURCE_NOT_FOUND). Shipped as chore PR #3 on `chore/c102-smoke-script`, merge commit `91a90ff`.
+
+### Verified
+- 28/28 unit tests PASS locally (10 AuthService + 8 SessionService + 10 SubjectServiceTest).
+- **Production smoke 17/17 PASS** on Render Singapore at 2026-05-04 09:49 UTC against `https://vsat-compass-api.onrender.com/api/v1`:
+  - `smoke_subjects.sh` 3/3 (TC-SUBJ-1 → TC-SUBJ-3)
+  - `smoke_auth.sh` 9/9 (TC-AUTH-1 → TC-AUTH-9, no regression vs v0.8.2)
+  - `smoke_sessions.sh` 5/5 (TC-SESSION-1 → TC-SESSION-5, no regression vs v0.8.2)
+
 ### Notes
-- This block lives on branch `phase-c/c1-0-subject-topic`. Production deploy + production smoke happens in C1.0.2 after user review.
+- Released on `main` via no-ff merge commit `6319766` (PR #2 Phase C1.0 feature) and tagged `v0.8.3` at that commit. Smoke-script chore PR #3 (`91a90ff`) ships unversioned on `main` — tag deliberately points at the feature merge to keep release history aligned with shipped code rather than tooling.
 - No schema change: the entities map to existing frozen schema columns.
-- 28/28 tests PASS locally (10 AuthService + 8 SessionService + 10 SubjectServiceTest).
+- Render auto-deploy completed 2026-05-04 from `main`; production now exposes `/subjects` and `/subjects/{id}/topics`.
+- Feature branch `phase-c/c1-0-subject-topic` and chore branch `chore/c102-smoke-script` deleted (local + remote) after merge + smoke verification.
 
 ### Documentation
-- Add Phase C precheck audit report (`docs/audit/PHASE_C_PRECHECK_REPORT.md`) — read-only baseline before Phase C kickoff. No source changes. *(prior audit commit)*
+- Add Phase C precheck audit report (`docs/audit/PHASE_C_PRECHECK_REPORT.md`) — read-only baseline before Phase C kickoff. No source changes. *(prior audit commit, shipped with this release)*
 
-### Repo Hygiene (Batch 1)
+### Repo Hygiene (Batch 1, shipped with 0.8.3)
 - Tag retroactive releases v0.5.0 through v0.8.1 (6 annotated tags) so previous CHANGELOG versions are checkout-able.
 - Add `.claude/`, `local.properties`, `*.keystore`, `*.jks` to root `.gitignore`.
 - Untrack `.claude/settings.json` and `.claude/settings.local.json` from the repository (files preserved on disk).

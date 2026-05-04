@@ -1,6 +1,6 @@
 # V-SAT Compass — Task Tracker & Roadmap
 
-> Cập nhật: 2026-04-30 | Phiên bản hiện tại: **v0.8.2** (Spring Boot 3.5.9 live in production)
+> Cập nhật: 2026-05-04 | Phiên bản hiện tại: **v0.8.3** (Phase C1.0 Subject + Topic foundation live in production)
 
 Tài liệu này tổng hợp lộ trình hoàn thiện app dựa trên:
 - `VSAT/ui/tong_hop_du_an_vsat_android_web_v2.txt`
@@ -22,7 +22,7 @@ Mục tiêu cuối:
 |-----------|------------|------------|
 | A — Student MVP | ✅ XONG | 100% |
 | B — Backend Production | ✅ XONG | 100% (2026-04-25) |
-| C — Content Management | ⏳ TIẾP THEO | 0% |
+| C — Content Management | 🟡 IN PROGRESS | C1.0 done (read-only Subject+Topic in prod) |
 | D — Admin & Operations | 🔜 Tương lai | — |
 | E — Chất lượng sản phẩm | 🔜 Tương lai | — |
 
@@ -62,7 +62,7 @@ Mục tiêu cuối:
 - [x] B5 DB verification: 14/14 smoke test PASS, DB integrity xác nhận
 - [x] B6 Characterization tests cho AuthService + SessionService — 10+8 tests Mockito PASS trên Spring Boot 3.2.5 baseline (Batch 2a, 2026-04-30; IT tests deferred to Batch 2a-bis)
 - [x] Spring Boot 3.2.5 → 3.5.9 upgrade (Batch 2b) — 18 characterization tests + 14/14 prod smoke PASS, deployed to Render Singapore (2026-04-30)
-- [x] Phase C1.0 — Subject + Topic foundation backend (entities, repo, service, 2 public endpoints, 10 Mockito tests) on feature branch (2026-04-30)
+- [x] Phase C1.0 — Subject + Topic foundation backend (entities, repo, service, 2 public endpoints, 10 Mockito tests) merged to main + tagged v0.8.3 (2026-05-04). Production smoke 17/17 PASS (subjects 3 + auth 9 + sessions 5).
 
 ### 2.2 Chưa hoàn chỉnh
 
@@ -301,7 +301,7 @@ Tiêu chí xong (B6):
 
 ---
 
-## Giai đoạn C — Quản trị nội dung MVP ⏳ TIẾP THEO
+## Giai đoạn C — Quản trị nội dung MVP 🟡 IN PROGRESS (C1.0 shipped 2026-05-04)
 
 Mục tiêu: Collaborator có thể soạn câu hỏi, Content Admin duyệt, tạo đề. Android hiển thị đề thật từ server.
 
@@ -309,7 +309,7 @@ Mục tiêu: Collaborator có thể soạn câu hỏi, Content Admin duyệt, t�
 
 | ID | Hạng mục | Trạng thái |
 |----|----------|------------|
-| C1.1 | GET /subjects (public) | 🟡 PARTIAL — feature branch (C1.0), prod deploy in C1.0.2 |
+| C1.1 | GET /subjects + GET /subjects/{id}/topics (public, read-only) | ✅ Done (2026-05-04, v0.8.3) — prod smoke 3/3 PASS |
 | C1.2 | POST /collaborator/questions (tạo câu hỏi) | 📋 TODO |
 | C1.3 | GET/PUT /collaborator/questions/{id} (sửa, xem câu hỏi) | 📋 TODO |
 | C1.4 | POST /collaborator/questions/{id}/reviews (tạo review) | 📋 TODO |
