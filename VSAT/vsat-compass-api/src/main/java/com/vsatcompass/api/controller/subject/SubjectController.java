@@ -2,8 +2,10 @@ package com.vsatcompass.api.controller.subject;
 
 import com.vsatcompass.api.dto.common.ApiResponse;
 import com.vsatcompass.api.dto.response.SubjectResponse;
+import com.vsatcompass.api.dto.response.SubtopicResponse;
 import com.vsatcompass.api.dto.response.TopicResponse;
 import com.vsatcompass.api.service.SubjectService;
+import com.vsatcompass.api.service.SubtopicService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ import java.util.List;
 public class SubjectController {
 
     private final SubjectService subjectService;
+    private final SubtopicService subtopicService;
 
     @GetMapping
     @Operation(summary = "SB-01: Danh sách môn học đang hoạt động")
@@ -31,6 +34,16 @@ public class SubjectController {
     @Operation(summary = "SB-02: Danh sách chủ đề thuộc một môn")
     public ResponseEntity<ApiResponse<List<TopicResponse>>> listTopics(@PathVariable Long subjectId) {
         List<TopicResponse> result = subjectService.listActiveTopicsBySubjectId(subjectId);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    @GetMapping("/{subjectId}/topics/{topicId}/subtopics")
+    @Operation(summary = "SB-03: Danh sách chủ đề con thuộc một chủ đề trong môn")
+    public ResponseEntity<ApiResponse<List<SubtopicResponse>>> listSubtopics(
+            @PathVariable Long subjectId,
+            @PathVariable Long topicId) {
+        List<SubtopicResponse> result = subtopicService
+                .listActiveSubtopicsBySubjectAndTopic(subjectId, topicId);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 }

@@ -2,7 +2,20 @@
 
 ## [Unreleased]
 
-_(no unreleased changes)_
+### Added (Phase C1.1a — feature branch)
+- 4 enum types mapped to Postgres ENUMs: `Difficulty` (→ `difficulty_level`), `QuestionType`, `QuestionStatus`, `ReviewAction`. Mapped via `@Enumerated(EnumType.STRING) + @JdbcTypeCode(SqlTypes.NAMED_ENUM) + columnDefinition` (Phase B `User.role` pattern).
+- 4 JPA entities mapped to existing frozen schema: `Subtopic`, `Question`, `QuestionOption`, `QuestionReview`. FK-as-Long convention; no bidirectional relations.
+- 4 repositories with the query methods C1.1b will exercise (paged listings on `Question`, derived deletes on `QuestionOption`, etc.).
+- `SubtopicResponse` DTO + `SubtopicService` interface + `SubtopicServiceImpl`.
+- New public endpoint: `GET /subjects/{subjectId}/topics/{topicId}/subtopics` (subject + topic existence + topic-belongs-to-subject validation).
+- `SubtopicServiceTest` — 6 Mockito unit tests covering happy path, 404 propagation order (subject-first), topic/subject mismatch (400 VALIDATION_FAILED), empty list, DTO field selection.
+
+### Notes
+- Branch `phase-c/c1-1a-question-bank-schema`. Production deploy + smoke happen in C1.1a.2 after user review.
+- No write endpoints, no role-based authorization in this batch — those land in C1.1b (target tag `v0.9.0`).
+- No schema change; no dependency change. SecurityConfig unchanged (existing `/subjects/**` GET permitAll covers the new endpoint).
+- 34/34 tests PASS locally on JDK 21 (10 AuthService + 8 SessionService + 10 SubjectService + 6 SubtopicService).
+- Local bootRun against Neon (Spring Boot 3.5.9): schema validation passes for all 4 new entities + new ENUM mappings; `/subjects/9999/topics/1/subtopics` → 404 RESOURCE_NOT_FOUND ("Subject"); `/subjects/1/topics/9999/subtopics` → 404 RESOURCE_NOT_FOUND ("Topic"); existing `/subjects` regression 200 OK. Subtopics not seeded yet so 200-with-empty-list happy path is exercised in Mockito.
 
 ## [0.8.3] - 2026-05-04 — Phase C1.0: Subject + Topic Foundation (Read-Only)
 
