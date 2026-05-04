@@ -1,8 +1,8 @@
 #!/bin/bash
 # ============================================================
 # V-SAT Compass — Subjects Smoke Tests
-# Runs 3 test cases against the Subject + Topic public endpoints
-# (Phase C1.0 — read-only API).
+# Runs 4 test cases against the Subject + Topic + Subtopic
+# public endpoints (Phase C1.0 + C1.1a — read-only API).
 # Usage: BASE_URL=https://your-api.com/api/v1 bash smoke_subjects.sh
 # Compatible with bash 3.2+ (macOS default)
 # ============================================================
@@ -95,6 +95,40 @@ if [ "$NF_STATUS" = "404" ]; then
     else
         echo "    [WARN] 404 returned but body missing RESOURCE_NOT_FOUND code — body: $NF_BODY"
     fi
+fi
+
+# -----------------------------------------------------------
+# TC-SUBJ-4: GET /subjects/{id}/topics/{topicId}/subtopics
+# (Phase C1.1a — Subtopic listing endpoint)
+# -----------------------------------------------------------
+echo "--- TC-SUBJ-4: GET /subjects/${FIRST_SUBJECT_ID}/topics/{topicId}/subtopics (subtopics) ---"
+
+# Resolve a real topic id under the first subject
+FIRST_TOPIC_ID=$(echo "$TOPICS_BODY" | grep -o '"id":[0-9]*' | head -1 | cut -d':' -f2)
+if [ -z "$FIRST_TOPIC_ID" ]; then
+    FIRST_TOPIC_ID=1
+    echo "    [WARN] No topics for subject ${FIRST_SUBJECT_ID} — falling back to topic id 1 for shape probe"
+fi
+
+SUBT_RESPONSE=$(curl -s -w "\n%{http_code}" -X GET "$BASE_URL/subjects/${FIRST_SUBJECT_ID}/topics/${FIRST_TOPIC_ID}/subtopics" \
+    -H "Accept: application/json")
+SUBT_BODY=$(echo "$SUBT_RESPONSE" | sed '$d')
+SUBT_STATUS=$(echo "$SUBT_RESPONSE" | tail -1)
+
+# Accept 200 (subject+topic+ownership all OK, possibly empty list) as PASS.
+# If the topic id belongs to a different subject, expect 400 VALIDATION_FAILED (still live signal).
+# If topic id doesn't exist, expect 404 RESOURCE_NOT_FOUND (still live signal).
+if [ "$SUBT_STATUS" = "200" ] && echo "$SUBT_BODY" | grep -q '"data"'; then
+    check_status "List subtopics for subject ${FIRST_SUBJECT_ID} / topic ${FIRST_TOPIC_ID}" "200" "$SUBT_STATUS"
+    echo "    -> ApiResponse envelope with subtopics list ✓"
+elif [ "$SUBT_STATUS" = "400" ] && echo "$SUBT_BODY" | grep -q '"VALIDATION_FAILED"'; then
+    echo "    [INFO] Got 400 VALIDATION_FAILED — topic ${FIRST_TOPIC_ID} not in subject ${FIRST_SUBJECT_ID}. Endpoint live."
+    check_status "Subtopics endpoint reachable (400 VALIDATION_FAILED accepted)" "400" "$SUBT_STATUS"
+elif [ "$SUBT_STATUS" = "404" ] && echo "$SUBT_BODY" | grep -q '"RESOURCE_NOT_FOUND"'; then
+    echo "    [INFO] Got 404 RESOURCE_NOT_FOUND — topic ${FIRST_TOPIC_ID} not found. Endpoint live."
+    check_status "Subtopics endpoint reachable (404 RESOURCE_NOT_FOUND accepted)" "404" "$SUBT_STATUS"
+else
+    check_status "List subtopics for subject ${FIRST_SUBJECT_ID} / topic ${FIRST_TOPIC_ID}" "200" "$SUBT_STATUS"
 fi
 
 # -----------------------------------------------------------

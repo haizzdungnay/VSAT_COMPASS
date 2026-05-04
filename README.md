@@ -3,7 +3,7 @@
 > Nền tảng mô phỏng thi và ôn luyện V-SAT đa nền tảng — Android Native + Spring Boot REST API
 
 ![Android](https://img.shields.io/badge/Android-Java-green?logo=android)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-brightgreen?logo=springboot)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.9-brightgreen?logo=springboot)
 ![PostgreSQL](https://img.shields.io/badge/Database-Neon%20PostgreSQL-blue?logo=postgresql)
 ![Backend](https://img.shields.io/badge/backend-live-success)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
@@ -25,7 +25,7 @@
 | Công nghệ | Phiên bản |
 |-----------|-----------|
 | Java | 17 |
-| Spring Boot | 3.2.5 |
+| Spring Boot | 3.5.9 |
 | PostgreSQL (Neon Serverless) | latest |
 | Spring Security + JWT | jjwt 0.12.5 |
 | Spring Data JPA + Hibernate | — |
@@ -169,12 +169,13 @@ http://localhost:8080/api/v1/swagger-ui.html
 
 ## API Modules
 
-> **Trạng thái backend hiện tại (v0.8.0+):** Production-ready trên Render.com — Auth + Session sync đã hardened (rate limiting Bucket4j, HSTS, JWT cleanup job, error codes chuẩn hoá). Smoke 25 TCs pass. Các module quản trị nội dung (C/D scope) — Android app tự fallback về dữ liệu cục bộ khi chưa có.
+> **Trạng thái backend hiện tại (v0.8.4+):** Production-ready trên Render.com — Auth + Session sync đã hardened (rate limiting Bucket4j, HSTS, JWT cleanup job, error codes chuẩn hoá). Smoke 26 TCs pass. Các module quản trị nội dung (C/D scope) — Android app tự fallback về dữ liệu cục bộ khi chưa có.
 
 | Module | Base Path | Endpoints | Trạng thái |
 |--------|-----------|-----------|------------|
 | Auth | `/auth` | register, login, refresh, logout, getMe, updateProfile, changePassword | ✅ Verified prod |
 | Session Engine | `/sessions` | start, **client-submit** | ✅ Verified prod |
+| Subjects (Public) | `/subjects` | list subjects, topics, subtopics | ✅ Verified prod |
 | Questions (Collaborator) | `/collaborator/questions` | CRUD + filter + options | 📋 Phase C |
 | Questions (Admin) | `/admin/questions` | status, version | 📋 Phase C |
 | Review Workflow | `/collaborator/questions/{id}/reviews` | create, list, comment | 📋 Phase C |
@@ -191,8 +192,8 @@ http://localhost:8080/api/v1/swagger-ui.html
 - **Task Tracker:** [`task.md`](task.md) — tiến độ Phase A/B/C/D, bug fixes, DB verification
 - **Deploy Runbook:** [`docs/DEPLOY_RUNBOOK.md`](docs/DEPLOY_RUNBOOK.md) — deploy, rollback, secret rotation, incident triage
 - **API Error Codes:** [`docs/API_ERROR_CODES.md`](docs/API_ERROR_CODES.md) — error catalog, response envelope, rate limits
-- **Smoke Tests:** [`docs/SMOKE_CHECKLIST.md`](docs/SMOKE_CHECKLIST.md) — 25 TCs (15 Android + 10 Backend)
-- **Smoke Scripts:** `docs/scripts/smoke_auth.sh`, `docs/scripts/smoke_sessions.sh`
+- **Smoke Tests:** [`docs/SMOKE_CHECKLIST.md`](docs/SMOKE_CHECKLIST.md) — 26 TCs (15 Android + 11 Backend)
+- **Smoke Scripts:** `docs/scripts/smoke_auth.sh`, `docs/scripts/smoke_sessions.sh`, `docs/scripts/smoke_subjects.sh`
 
 ---
 
@@ -346,7 +347,7 @@ Các phần timer, chọn đáp án, bookmark, chấm điểm, hiển thị kế
 | Android Drawable resources | 20+ |
 | Local exam data (JSON assets) | 5 packs (2 Toán, 2 Tiếng Anh, 1 Vật lí) |
 | Unit tests pass | 6/6 (ExamHistoryRepository) |
-| Smoke test cases | 25 TCs (15 Android + 10 Backend) |
+| Smoke test cases | 26 TCs (15 Android + 11 Backend) |
 | Features live | Login, Register, Exam list, Session, Timer, Scoring, Result, Review, History, Rate limiting |
 
 ---
