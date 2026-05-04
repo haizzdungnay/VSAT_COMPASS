@@ -1,6 +1,6 @@
 # V-SAT Compass — Task Tracker & Roadmap
 
-> Cập nhật: 2026-05-04 | Phiên bản hiện tại: **v0.8.4** (Phase C1.1a Question Bank schema live in production)
+> Cập nhật: 2026-05-05 | Phiên bản hiện tại: **v0.9.0** (Phase C1.1b Question CRUD workflow live in production)
 
 Tài liệu này tổng hợp lộ trình hoàn thiện app dựa trên:
 - `VSAT/ui/tong_hop_du_an_vsat_android_web_v2.txt`
@@ -22,7 +22,7 @@ Mục tiêu cuối:
 |-----------|------------|------------|
 | A — Student MVP | ✅ XONG | 100% |
 | B — Backend Production | ✅ XONG | 100% (2026-04-25) |
-| C — Content Management | 🟡 IN PROGRESS | C1.0 done (read-only Subject+Topic in prod) |
+| C — Content Management | 🟡 IN PROGRESS | C1.0 + C1.1a + C1.1b done in prod |
 | D — Admin & Operations | 🔜 Tương lai | — |
 | E — Chất lượng sản phẩm | 🔜 Tương lai | — |
 
@@ -64,14 +64,15 @@ Mục tiêu cuối:
 - [x] Spring Boot 3.2.5 → 3.5.9 upgrade (Batch 2b) — 18 characterization tests + 14/14 prod smoke PASS, deployed to Render Singapore (2026-04-30)
 - [x] Phase C1.0 — Subject + Topic foundation backend (entities, repo, service, 2 public endpoints, 10 Mockito tests) merged to main + tagged v0.8.3 (2026-05-04). Production smoke 17/17 PASS (subjects 3 + auth 9 + sessions 5).
 - [x] Phase C1.1a — Question Bank schema foundation (4 enums Difficulty/QuestionType/QuestionStatus/ReviewAction, Subtopic/Question/QuestionOption/QuestionReview entities, 4 repositories, public GET subtopics endpoint, 6 Mockito tests) merged to main + tagged v0.8.4 (2026-05-04). Production smoke 18/18 PASS.
+- [x] Phase C1.1b — Question CRUD workflow backend (collaborator create/list/detail/update/submit + admin queue/approve/request-revision/reject), role-based authorization, owner-check, status state machine, 33 Mockito tests, production smoke PASS, tagged v0.9.0.
 
 ### 2.2 Chưa hoàn chỉnh
 
 - [x] ~~Backend public production thực sự ổn định~~ — xong v0.8.0
 - [x] ~~Student history / analytics thật sự dùng được end-to-end~~ — xong v0.7.0/0.7.1
 - [x] ~~Review lời giải chi tiết sau bài thi~~ — xong v0.7.0
-- [ ] Quản trị câu hỏi / duyệt nội dung / tạo đề hoàn chỉnh (Phase C)
-- [ ] Cộng tác viên nhập và chỉnh sửa câu hỏi hoàn chỉnh (Phase C)
+- [ ] Quản trị câu hỏi / duyệt nội dung / tạo đề hoàn chỉnh (Phase C) — backend Question CRUD + review workflow đã xong ở C1.1b; exam composition/publication còn lại.
+- [ ] Cộng tác viên nhập và chỉnh sửa câu hỏi hoàn chỉnh (Phase C) — backend API đã xong ở C1.1b; Android/admin UI còn lại.
 - [ ] Ticket lỗi / phản hồi nội dung (Phase D)
 - [ ] User management / role management đủ dùng (Phase D)
 - [x] ~~Test plan, regression checklist, release checklist~~ — smoke checklist 25 TCs + unit tests done
@@ -302,7 +303,7 @@ Tiêu chí xong (B6):
 
 ---
 
-## Giai đoạn C — Quản trị nội dung MVP 🟡 IN PROGRESS (C1.0 shipped 2026-05-04)
+## Giai đoạn C — Quản trị nội dung MVP 🟡 IN PROGRESS (C1.0 + C1.1a + C1.1b shipped)
 
 Mục tiêu: Collaborator có thể soạn câu hỏi, Content Admin duyệt, tạo đề. Android hiển thị đề thật từ server.
 
@@ -311,18 +312,32 @@ Mục tiêu: Collaborator có thể soạn câu hỏi, Content Admin duyệt, t�
 | ID | Hạng mục | Trạng thái |
 |----|----------|------------|
 | C1.1 | GET /subjects + GET /subjects/{id}/topics (public, read-only) | ✅ Done (2026-05-04, v0.8.3) — prod smoke 3/3 PASS |
+| C1.2 | POST /collaborator/questions (tạo câu hỏi) | ✅ Done (2026-05-05, v0.9.0) |
+| C1.3 | GET/PUT /collaborator/questions/{id} (sửa, xem câu hỏi) | ✅ Done (2026-05-05, v0.9.0) |
+| C1.4 | Submit/review workflow (`submit-for-review`, admin approve/request-revision/reject) | ✅ Done (2026-05-05, v0.9.0) |
+| C1.5 | Content Admin: queue + approve/reject/request revision câu hỏi | ✅ Done (2026-05-05, v0.9.0) |
 
-> **C1.1a status:** Question Bank JPA layer (4 enums + 4 entities + 4 repositories) and read-only Subtopic API (`GET /subjects/{id}/topics/{topicId}/subtopics`) merged to `main` and tagged `v0.8.4`. 34/34 tests PASS local. Production smoke 18/18 PASS (auth 9 + sessions 5 + subjects+subtopics 4). C1.1b (Question CRUD + role enforcement, target `v0.9.0`) is the next batch.
-| C1.2 | POST /collaborator/questions (tạo câu hỏi) | 📋 TODO |
-| C1.3 | GET/PUT /collaborator/questions/{id} (sửa, xem câu hỏi) | 📋 TODO |
-| C1.4 | POST /collaborator/questions/{id}/reviews (tạo review) | 📋 TODO |
-| C1.5 | Content Admin: approve/reject câu hỏi | 📋 TODO |
+- **C1.1a status:** Question Bank JPA layer (4 enums + 4 entities + 4 repositories) and read-only Subtopic API (`GET /subjects/{id}/topics/{topicId}/subtopics`) merged to `main` and tagged `v0.8.4`. Production smoke 18/18 PASS.
+- **C1.1b status:** Question CRUD + review workflow backend merged to `main`, production smoke PASS, and tagged `v0.9.0` at deployed code commit `752c15e`.
 
-- [ ] Danh sách câu hỏi
-- [ ] Xem chi tiết câu hỏi
-- [ ] Tạo mới câu hỏi
-- [ ] Chỉnh sửa câu hỏi
-- [ ] Gắn môn / chủ đề / mức độ / đáp án / lời giải
+### C1.1b — Question CRUD + Review Workflow Backend ✅ HOÀN THÀNH (2026-05-05)
+
+| ID | Hạng mục | Trạng thái | Ghi chú |
+|----|----------|------------|---------|
+| C1.1b.1 | Collaborator create/list/detail/update question APIs | ✅ Done | `/collaborator/questions` |
+| C1.1b.2 | Submit-for-review transition | ✅ Done | `DRAFT/NEEDS_REVISION → PENDING_REVIEW` |
+| C1.1b.3 | Admin review queue | ✅ Done | `GET /admin/questions?status=PENDING_REVIEW` |
+| C1.1b.4 | Admin approve/request-revision/reject actions | ✅ Done | `APPROVE`, `REQUEST_REVISION`, `REJECT` |
+| C1.1b.5 | Role-based authorization | ✅ Done | HTTP + `@PreAuthorize` + service owner-check |
+| C1.1b.6 | State machine validation | ✅ Done | forbidden transitions return `409 INVALID_STATE` |
+| C1.1b.7 | Mockito test coverage | ✅ Done | 33 QuestionService tests; 67 total backend tests PASS |
+| C1.1b.8 | Production smoke | ✅ Done | `smoke_questions.sh` 32/32 + regression scripts PASS |
+
+- [x] Danh sách câu hỏi (backend API)
+- [x] Xem chi tiết câu hỏi (backend API)
+- [x] Tạo mới câu hỏi (backend API)
+- [x] Chỉnh sửa câu hỏi (backend API, owner-check + state machine)
+- [x] Gắn môn / chủ đề / mức độ / đáp án / lời giải (backend DTO/entity mapping)
 - [ ] Filter nâng cao
 
 Tham chiếu mockup:
@@ -346,8 +361,8 @@ Tiêu chí xong:
 | C2.4 | GET /exams (public list — Android dùng) | 📋 TODO |
 | C2.5 | GET /exams/{id} (public detail) | 📋 TODO |
 
-- [ ] Gửi duyệt câu hỏi
-- [ ] Duyệt / từ chối / yêu cầu chỉnh sửa
+- [x] Gửi duyệt câu hỏi (backend API C1.1b)
+- [x] Duyệt / từ chối / yêu cầu chỉnh sửa (backend API C1.1b)
 - [ ] Xem lịch sử phiên bản nội dung
 - [ ] Ghi comment phản hồi
 
@@ -358,7 +373,7 @@ Tham chiếu mockup:
 - `qu_n_tr_y_u_c_u_ch_nh_s_a`
 
 Tiêu chí xong:
-- Có workflow ít nhất: draft → pending → approved/rejected
+- Có workflow backend ít nhất: draft → pending → approved/rejected/request-revision
 
 ### C3 — Exam Management & Android Integration
 

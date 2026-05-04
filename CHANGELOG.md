@@ -1,5 +1,39 @@
 # V-SAT COMPASS — CHANGELOG
 
+## [0.9.0] - 2026-05-05 — Phase C1.1b: Question CRUD Workflow + Role-Based Authorization
+
+### Added
+- Collaborator Question CRUD workflow:
+  - `POST /collaborator/questions`
+  - `GET /collaborator/questions`
+  - `GET /collaborator/questions/{id}`
+  - `PUT /collaborator/questions/{id}`
+  - `POST /collaborator/questions/{id}/submit-for-review`
+- Admin question review workflow:
+  - `GET /admin/questions?status=...`
+  - `POST /admin/questions/{id}/approve`
+  - `POST /admin/questions/{id}/request-revision`
+  - `POST /admin/questions/{id}/reject`
+- Role-based authorization for Question Bank endpoints using HTTP security rules + method-level `@PreAuthorize` + service-layer owner checks.
+- Question status state machine for `DRAFT`, `NEEDS_REVISION`, `PENDING_REVIEW`, `APPROVED`, and `ARCHIVED` transitions.
+- `VSAT/vsat-compass-api/docs/scripts/smoke_questions.sh` production smoke script for collaborator/admin question workflow.
+
+### Verified
+- Local backend test suite PASS: 67/67 tests.
+- Production smoke PASS on Render Singapore:
+  - `smoke_auth.sh`: 9/9 PASS earlier in the same C1.1b.2 release run. A later auth rerun hit expected `429 RATE_LIMIT_EXCEEDED` on register-heavy TC-AUTH-7/8 after repeated smoke account setup; not treated as an Auth regression.
+  - `smoke_sessions.sh`: 5/5 PASS.
+  - `smoke_subjects.sh`: 4/4 PASS.
+  - `smoke_questions.sh`: 32/32 PASS.
+- 5-minute post-deploy stability watch completed: health UP, valid student login PASS, `GET /auth/me` with Bearer PASS, and `smoke_questions.sh` rerun 32/32 PASS.
+
+### Notes
+- Released from merged C1.1b code on `main` and tagged `v0.9.0` at deployed code commit `752c15e`.
+- No database schema change; C1.1b maps to existing frozen schema from C1.1a.
+- Production smoke required minimal taxonomy seed data (`MATH_SMOKE_ALGEBRA`, `MATH_SMOKE_LINEAR`) and qbank smoke role accounts.
+- `question_versions`, `question_groups`, publication scheduling, Excel import, and exam composition remain deferred to later Phase C batches.
+- Generated smoke test questions remain in production as test data because no delete/archive endpoint exists in C1.1b.
+
 ## [0.8.4] - 2026-05-04 — Phase C1.1a: Question Bank Schema Foundation
 
 ### Added (Phase C1.1a — production)

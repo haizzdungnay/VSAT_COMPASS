@@ -169,16 +169,16 @@ http://localhost:8080/api/v1/swagger-ui.html
 
 ## API Modules
 
-> **Trạng thái backend hiện tại (v0.8.4+):** Production-ready trên Render.com — Auth + Session sync đã hardened (rate limiting Bucket4j, HSTS, JWT cleanup job, error codes chuẩn hoá). Smoke 26 TCs pass. Các module quản trị nội dung (C/D scope) — Android app tự fallback về dữ liệu cục bộ khi chưa có.
+> **Trạng thái backend hiện tại (v0.9.0+):** Production-ready trên Render.com — Auth + Session sync đã hardened; Subject/Topic/Subtopic read APIs và Question Bank write/review workflow đã live. Smoke 50 backend checks pass trong C1.1b.2; Android/admin UI cho content workflow còn deferred.
 
 | Module | Base Path | Endpoints | Trạng thái |
 |--------|-----------|-----------|------------|
 | Auth | `/auth` | register, login, refresh, logout, getMe, updateProfile, changePassword | ✅ Verified prod |
 | Session Engine | `/sessions` | start, **client-submit** | ✅ Verified prod |
 | Subjects (Public) | `/subjects` | list subjects, topics, subtopics | ✅ Verified prod |
-| Questions (Collaborator) | `/collaborator/questions` | CRUD + filter + options | 📋 Phase C |
-| Questions (Admin) | `/admin/questions` | status, version | 📋 Phase C |
-| Review Workflow | `/collaborator/questions/{id}/reviews` | create, list, comment | 📋 Phase C |
+| Questions (Collaborator) | `/collaborator/questions` | create, list own, detail, update, submit-for-review | ✅ Verified prod |
+| Questions (Admin) | `/admin/questions` | queue by status, approve, request revision, reject | ✅ Verified prod |
+| Review Workflow | `/admin/questions/{id}/approve`, `/request-revision`, `/reject` | admin review actions + review history records | ✅ Verified prod |
 | Exams (Admin) | `/admin/exams` | CRUD + questions + status | 📋 Phase C |
 | Exams (Public) | `/exams` | list published, detail | 📋 Phase C |
 | Student Stats | `/my-stats` | topic stats, weak topics, history | 📋 Phase C |
@@ -187,13 +187,30 @@ http://localhost:8080/api/v1/swagger-ui.html
 | Dashboard | `/admin/dashboard` | overview counts | 📋 Phase C |
 | User Management | `/admin/users` | list, detail, role, status | 📋 Phase C |
 
+### Question Bank API status
+
+As of `v0.9.0`, backend Question Bank write workflow is available in production:
+
+- Collaborator can create draft questions, list own questions, view own detail, update editable questions, and submit for review.
+- Content admin can list review queue and approve, request revision, or reject submitted questions.
+- Service-layer owner checks prevent one collaborator from editing another collaborator's draft.
+- Invalid status transitions return `409 INVALID_STATE`.
+
+Deferred:
+- question version snapshots
+- passage/question groups
+- exam composition from approved questions
+- publication scheduling
+- Excel import
+- Android/admin UI integration
+
 ### Deployment & Operations
 
 - **Task Tracker:** [`task.md`](task.md) — tiến độ Phase A/B/C/D, bug fixes, DB verification
 - **Deploy Runbook:** [`docs/DEPLOY_RUNBOOK.md`](docs/DEPLOY_RUNBOOK.md) — deploy, rollback, secret rotation, incident triage
 - **API Error Codes:** [`docs/API_ERROR_CODES.md`](docs/API_ERROR_CODES.md) — error catalog, response envelope, rate limits
-- **Smoke Tests:** [`docs/SMOKE_CHECKLIST.md`](docs/SMOKE_CHECKLIST.md) — 26 TCs (15 Android + 11 Backend)
-- **Smoke Scripts:** `docs/scripts/smoke_auth.sh`, `docs/scripts/smoke_sessions.sh`, `docs/scripts/smoke_subjects.sh`
+- **Smoke Tests:** [`docs/SMOKE_CHECKLIST.md`](docs/SMOKE_CHECKLIST.md) — 15 Android manual checks; backend smoke scripts cover 50 release checks
+- **Smoke Scripts:** `docs/scripts/smoke_auth.sh`, `docs/scripts/smoke_sessions.sh`, `docs/scripts/smoke_subjects.sh`, `VSAT/vsat-compass-api/docs/scripts/smoke_questions.sh`
 
 ---
 
@@ -341,14 +358,14 @@ Các phần timer, chọn đáp án, bookmark, chấm điểm, hiển thị kế
 | Bảng database | 27 |
 | ENUM types PostgreSQL | 20 |
 | API endpoints (thiết kế) | ~52 MVP |
-| Backend Java files (hiện tại) | 40+ (Auth + Session + infrastructure) |
+| Backend Java files (hiện tại) | 50+ (Auth + Session + Content foundations + infrastructure) |
 | Android Java files | 35+ |
 | Android XML layouts | 20+ |
 | Android Drawable resources | 20+ |
 | Local exam data (JSON assets) | 5 packs (2 Toán, 2 Tiếng Anh, 1 Vật lí) |
 | Unit tests pass | 6/6 (ExamHistoryRepository) |
-| Smoke test cases | 26 TCs (15 Android + 11 Backend) |
-| Features live | Login, Register, Exam list, Session, Timer, Scoring, Result, Review, History, Rate limiting |
+| Smoke test cases | 65 checks (15 Android manual + 50 Backend smoke checks) |
+| Features live | Login, Register, Exam list, Session, Timer, Scoring, Result, Review, History, Rate limiting, Subject/Topic/Subtopic read APIs, Question CRUD workflow |
 
 ---
 
