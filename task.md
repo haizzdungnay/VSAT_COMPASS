@@ -1,6 +1,6 @@
 # V-SAT Compass — Task Tracker & Roadmap
 
-> Cập nhật: 2026-05-04 | Phiên bản hiện tại: **v0.8.3** (Phase C1.0 Subject + Topic foundation live in production)
+> Cập nhật: 2026-05-04 | Phiên bản hiện tại: **v0.8.3** (Phase C1.0 Subject + Topic foundation live in production); C1.1a Question Bank schema on feature branch awaiting review
 
 Tài liệu này tổng hợp lộ trình hoàn thiện app dựa trên:
 - `VSAT/ui/tong_hop_du_an_vsat_android_web_v2.txt`
@@ -63,6 +63,7 @@ Mục tiêu cuối:
 - [x] B6 Characterization tests cho AuthService + SessionService — 10+8 tests Mockito PASS trên Spring Boot 3.2.5 baseline (Batch 2a, 2026-04-30; IT tests deferred to Batch 2a-bis)
 - [x] Spring Boot 3.2.5 → 3.5.9 upgrade (Batch 2b) — 18 characterization tests + 14/14 prod smoke PASS, deployed to Render Singapore (2026-04-30)
 - [x] Phase C1.0 — Subject + Topic foundation backend (entities, repo, service, 2 public endpoints, 10 Mockito tests) merged to main + tagged v0.8.3 (2026-05-04). Production smoke 17/17 PASS (subjects 3 + auth 9 + sessions 5).
+- [x] Phase C1.1a — Question Bank schema foundation (4 enums Difficulty/QuestionType/QuestionStatus/ReviewAction, Subtopic/Question/QuestionOption/QuestionReview entities, 4 repositories, public GET subtopics endpoint, 6 Mockito tests) on feature branch `phase-c/c1-1a-question-bank-schema` (2026-05-04). 34/34 tests PASS local; schema validation OK on Neon.
 
 ### 2.2 Chưa hoàn chỉnh
 
@@ -310,6 +311,8 @@ Mục tiêu: Collaborator có thể soạn câu hỏi, Content Admin duyệt, t�
 | ID | Hạng mục | Trạng thái |
 |----|----------|------------|
 | C1.1 | GET /subjects + GET /subjects/{id}/topics (public, read-only) | ✅ Done (2026-05-04, v0.8.3) — prod smoke 3/3 PASS |
+
+> **C1.1a status:** Question Bank JPA layer (4 enums + 4 entities + 4 repositories) and read-only Subtopic API (`GET /subjects/{id}/topics/{topicId}/subtopics`) on feature branch `phase-c/c1-1a-question-bank-schema`. 34/34 tests PASS local (28 prior + 6 new SubtopicServiceTest). Schema validation passed against Neon (Spring Boot 3.5.9) — all 4 new tables + 4 new ENUM types map correctly. Awaiting user review before C1.1a.2 (merge + deploy + smoke + tag `v0.8.4`). C1.1b (Question CRUD + role enforcement, target `v0.9.0`) ships after C1.1a.2.
 | C1.2 | POST /collaborator/questions (tạo câu hỏi) | 📋 TODO |
 | C1.3 | GET/PUT /collaborator/questions/{id} (sửa, xem câu hỏi) | 📋 TODO |
 | C1.4 | POST /collaborator/questions/{id}/reviews (tạo review) | 📋 TODO |
