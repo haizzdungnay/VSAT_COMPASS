@@ -254,6 +254,35 @@ git push --force origin main
 
 **Solution:** Immediately after rotating in Neon, update `DATABASE_PASSWORD` in Render Dashboard → Environment → Save Changes → wait for redeploy.
 
+### Render Post-Deploy Warm-Up for New Endpoints
+
+**Pitfall:** `/actuator/health` may return `200 UP` before newly deployed controllers/endpoints are fully stable. On Render free tier, freshly deployed endpoints may need additional warm-up time after the health check first turns green — early calls can return `500` even though the health probe is already passing.
+
+**Observed example:** During the v0.9.1 deploy watch, `/actuator/health` returned `200` shortly after deploy, but `GET /api/v1/exams` initially returned `500` before stabilizing to `200` after a short warm-up window. The endpoint then stayed healthy for the full 5-minute stability watch.
+
+**Solution:**
+- Future deploy watches must probe **both**:
+  1. `/api/v1/actuator/health`
+  2. At least one newly deployed endpoint (e.g. `/api/v1/exams` for v0.9.1)
+- Do not tag a release until the new endpoint-specific probe also returns the expected status consistently across the stability window.
+
+### Curl JSON Quoting on Windows / Bash During Manual Probes
+
+**Pitfall:** Malformed JSON request bodies in manual `curl` probes can produce `HttpMessageNotReadableException` from the backend. The error is purely about request-body parsing, not credentials or auth.
+
+**Example symptom:**
+
+```
+JSON parse error: Unexpected character ('p'): was expecting double-quote to start field name
+```
+
+This typically happens when `curl -d '{"email":"..."}'` is run from CMD (which strips single quotes) or when shell variable expansion mangles the body.
+
+**Solution:**
+- Use safe JSON construction in bash smoke / debug probes — for example, build the body via `printf` into a variable, or pass it via `--data-raw` with explicit escaping.
+- On CMD / PowerShell, use CMD-compatible escaping (e.g. `--data "{\"email\":\"...\"}"` with backslash-escaped double quotes) or pipe the body in via `curl --data-binary @body.json`.
+- Do **not** interpret `HttpMessageNotReadableException` as a password / auth failure unless the request body has been confirmed to be valid JSON (e.g. by piping the same string through `jq .`).
+
 ---
 
 ## 8. Cost Watch

@@ -2,13 +2,22 @@
 # ============================================================
 # V-SAT Compass — Auth Smoke Tests
 # Runs 9 test cases against the Auth endpoints.
-# Usage: BASE_URL=https://your-api.com/api/v1 bash smoke_auth.sh
+# Usage:
+#   # Full auth smoke, includes register tests
+#   BASE_URL=https://your-api.com/api/v1 bash smoke_auth.sh
+#
+#   # Re-run-safe production smoke, skips register tests to avoid
+#   # hitting the /auth/register rate limit (HTTP 429) on repeated runs
+#   SMOKE_AUTH_SKIP_REGISTER=1 bash smoke_auth.sh
+#
 # Compatible with bash 3.2+ (macOS default)
 # ============================================================
 
 BASE_URL="${BASE_URL:-https://vsat-compass-api.onrender.com/api/v1}"
+SKIP_REGISTER="${SMOKE_AUTH_SKIP_REGISTER:-0}"
 PASS=0
 FAIL=0
+SKIP=0
 TOTAL=0
 
 # Test account credentials
@@ -21,6 +30,11 @@ echo "========================================"
 echo "V-SAT Compass — Auth Smoke Tests"
 echo "Base URL: $BASE_URL"
 echo "Date: $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+if [ "$SKIP_REGISTER" = "1" ]; then
+    echo "Mode: NO-REGISTER (SMOKE_AUTH_SKIP_REGISTER=1)"
+else
+    echo "Mode: FULL (includes register tests)"
+fi
 echo "========================================"
 echo ""
 
@@ -36,6 +50,14 @@ check_status() {
         echo "  [FAIL] TC-AUTH-$TOTAL: $test_name (expected $expected_status, got $actual_status)"
         FAIL=$((FAIL + 1))
     fi
+}
+
+skip_test() {
+    local test_name="$1"
+    local reason="$2"
+    TOTAL=$((TOTAL + 1))
+    echo "  [SKIP] TC-AUTH-$TOTAL: $test_name ($reason)"
+    SKIP=$((SKIP + 1))
 }
 
 # -----------------------------------------------------------
@@ -110,23 +132,37 @@ check_status "Refresh invalid token" "401" "$STATUS"
 
 # -----------------------------------------------------------
 # TC-AUTH-7: Register new account
+# (Skipped when SMOKE_AUTH_SKIP_REGISTER=1 to avoid /auth/register
+#  rate limit, HTTP 429, on repeated production runs.)
 # -----------------------------------------------------------
-echo "--- TC-AUTH-7: Register (new email) ---"
-REG_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/auth/register" \
-    -H "Content-Type: application/json" \
-    -d "{\"email\":\"$REGISTER_EMAIL\",\"password\":\"$REGISTER_PASSWORD\",\"fullName\":\"Smoke Tester\"}")
-REG_BODY=$(echo "$REG_RESPONSE" | sed '$d')
-REG_STATUS=$(echo "$REG_RESPONSE" | tail -1)
-check_status "Register new email" "201" "$REG_STATUS"
+if [ "$SKIP_REGISTER" = "1" ]; then
+    echo "--- TC-AUTH-7: Register (new email) ---"
+    skip_test "Register new email" "SMOKE_AUTH_SKIP_REGISTER=1; avoids /auth/register 429"
+else
+    echo "--- TC-AUTH-7: Register (new email) ---"
+    REG_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/auth/register" \
+        -H "Content-Type: application/json" \
+        -d "{\"email\":\"$REGISTER_EMAIL\",\"password\":\"$REGISTER_PASSWORD\",\"fullName\":\"Smoke Tester\"}")
+    REG_BODY=$(echo "$REG_RESPONSE" | sed '$d')
+    REG_STATUS=$(echo "$REG_RESPONSE" | tail -1)
+    check_status "Register new email" "201" "$REG_STATUS"
+fi
 
 # -----------------------------------------------------------
 # TC-AUTH-8: Register duplicate email
+# (Skipped when SMOKE_AUTH_SKIP_REGISTER=1: this case requires
+#  TC-AUTH-7 to have registered an account in the same run.)
 # -----------------------------------------------------------
-echo "--- TC-AUTH-8: Register (duplicate email) ---"
-STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/auth/register" \
-    -H "Content-Type: application/json" \
-    -d "{\"email\":\"$REGISTER_EMAIL\",\"password\":\"$REGISTER_PASSWORD\",\"fullName\":\"Smoke Tester\"}")
-check_status "Register duplicate email" "409" "$STATUS"
+if [ "$SKIP_REGISTER" = "1" ]; then
+    echo "--- TC-AUTH-8: Register (duplicate email) ---"
+    skip_test "Register duplicate email" "SMOKE_AUTH_SKIP_REGISTER=1; depends on TC-AUTH-7"
+else
+    echo "--- TC-AUTH-8: Register (duplicate email) ---"
+    STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/auth/register" \
+        -H "Content-Type: application/json" \
+        -d "{\"email\":\"$REGISTER_EMAIL\",\"password\":\"$REGISTER_PASSWORD\",\"fullName\":\"Smoke Tester\"}")
+    check_status "Register duplicate email" "409" "$STATUS"
+fi
 
 # -----------------------------------------------------------
 # TC-AUTH-9: Logout
@@ -148,7 +184,7 @@ check_status "Logout" "200" "$STATUS"
 # -----------------------------------------------------------
 echo ""
 echo "========================================"
-echo "Results: $PASS/$TOTAL passed, $FAIL failed"
+echo "Results: $PASS passed, $FAIL failed, $SKIP skipped (of $TOTAL total)"
 echo "========================================"
 
 if [ "$FAIL" -gt 0 ]; then

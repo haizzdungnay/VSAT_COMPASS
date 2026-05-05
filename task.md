@@ -541,3 +541,32 @@ Mỗi khi hoàn thành một task:
 - nếu thay đổi lớn, cập nhật thêm vào `CHANGELOG.md`
 - nếu phát sinh scope mới, chỉ thêm vào đúng giai đoạn tương ứng, không ghi rải rác
 - cập nhật bảng "Tóm tắt tiến độ" ở đầu file khi một phase kết thúc
+
+---
+
+## 7. Operational Debt — sau v0.9.1
+
+> Các hạng mục vận hành / tooling tích lũy sau Phase C1.2a.2 (v0.9.1).
+> Đây **không** phải feature milestone — không thuộc bất kỳ phase A/B/C/D/E nào.
+> Chỉ track để không quên; không tự ý xử lý nếu chưa có quyết định của user.
+
+- [x] **smoke_auth.sh — `SMOKE_AUTH_SKIP_REGISTER=1` no-register mode**
+  Script `docs/scripts/smoke_auth.sh` hỗ trợ chạy lại nhiều lần trên production mà không trigger 429 từ `/auth/register`.
+  Khi env var `SMOKE_AUTH_SKIP_REGISTER=1`: TC-AUTH-7 và TC-AUTH-8 (register tests) bị skip, các test còn lại (login, /me, refresh, logout, unauthorized) vẫn chạy. Summary phân biệt rõ PASS / FAIL / SKIP.
+  Lý do: hạn chế rate-limit của Render free tier khi smoke quá thường xuyên.
+
+- [x] **DEPLOY_RUNBOOK.md — Render post-deploy warm-up note**
+  Thêm Known Pitfall: `/actuator/health` có thể return 200 trước khi endpoint mới deploy thực sự ổn định. Future deploy watch phải probe cả `/actuator/health` **và** ít nhất một endpoint mới.
+  Tham chiếu: v0.9.1, `/exams` ban đầu trả 500 sau deploy rồi mới ổn định 200.
+
+- [x] **DEPLOY_RUNBOOK.md — curl JSON quoting pitfall**
+  Thêm Known Pitfall: malformed JSON trong manual curl probe có thể trả `HttpMessageNotReadableException` ("Unexpected character ('p'): was expecting double-quote..."). Không hiểu nhầm là sai password — phải confirm body là JSON hợp lệ trước.
+
+- [ ] **Local JDK / Pleiades stash cleanup (deferred)**
+  Pleiades / IDE auto-generate Gradle config local làm dirty working tree.
+  Sau Batch 2b + C1.2a.2 còn 2 stash JDK preserved:
+  - `stash@{0}` — `local jdk25 config — re-applied by IDE before C1.2a (2026-05-05)`
+  - `stash@{1}` — `local jdk25 config -- restore after C1.1b`
+
+  **Quyết định cleanup chờ user.** KHÔNG được tự ý `stash pop` / `stash drop`.
+  Cần xác định cùng user xem stash nào còn cần re-apply, stash nào có thể drop, trước khi đụng vào.
