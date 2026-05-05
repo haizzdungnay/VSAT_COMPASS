@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+### Added
+- Add Phase C1.2b-1 admin exam CRUD foundation: admin-only create/list/detail/update metadata endpoints for exams (`/admin/exams`, `/admin/exams/{id}`).
+- New DTOs `AdminExamCreateRequest`, `AdminExamUpdateRequest`, `AdminExamResponse`, `AdminExamSummaryResponse` with explicit field whitelists; no `questions`, `correctOptionId`, `explanation`, or composition detail exposed by admin metadata endpoints.
+- New `AdminExamService` + `AdminExamServiceImpl` — server-controls `status=DRAFT`, `questionCount=0`, `pricingType=FREE`, `price=0`, `version=1`, `createdBy` from authenticated user; `examCode` validated against `^[A-Z][A-Z0-9_]{2,49}$`; metadata update allowed only for `DRAFT`/`HIDDEN` exams; `examCode`, `status`, `questionCount`, `createdBy`, `version`, `publishDate` immutable from client on update.
+- `ExamRepository.existsByExamCode(...)` and `findAdminList(status, subjectId, pageable)` JPQL query for admin listing with optional filters.
+- `AdminExamController` at `/admin/exams` with method-level `@PreAuthorize("hasAnyRole('CONTENT_ADMIN','SUPER_ADMIN')")` (defense-in-depth on top of the existing `/admin/**` security matcher).
+- 22 Mockito unit tests for `AdminExamService` covering create/update/list/get happy paths, duplicate `examCode`, non-FREE pricing, non-zero price, missing/inactive subject, invalid-state update on `PUBLISHED`/`ARCHIVED`, and DTO field-whitelist enforcement.
+
+### Notes
+- Exam composition, add/remove/reorder questions, publish workflow (DRAFT → PENDING_REVIEW → PUBLISHED → HIDDEN/ARCHIVED), version bump rules, paid pricing, and access control remain deferred to Phase C1.2b-2.
+- No schema, build, or application config changes. Public `/exams` API still exposes `PUBLISHED` + `FREE` only.
+
 ### Operational
 - Add `SMOKE_AUTH_SKIP_REGISTER=1` no-register mode for `docs/scripts/smoke_auth.sh` to allow repeated production regression runs without hitting the `/auth/register` rate limit (HTTP 429). Skipped TCs (TC-AUTH-7, TC-AUTH-8) are clearly reported and the summary distinguishes passed / failed / skipped.
 - Document Render free-tier post-deploy warm-up behavior for newly deployed endpoints in `docs/DEPLOY_RUNBOOK.md` Known Pitfalls. Future deploy watches must probe both `/actuator/health` and at least one newly deployed endpoint before tagging a release.
