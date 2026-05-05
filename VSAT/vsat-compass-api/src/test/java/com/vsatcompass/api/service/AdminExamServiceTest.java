@@ -141,6 +141,26 @@ class AdminExamServiceTest {
     }
 
     @Test
+    @DisplayName("create: invalid examCode -> 400 VALIDATION_FAILED")
+    void create_invalidExamCode_throwsValidationOrBadRequest() {
+        AdminExamCreateRequest req = baseCreateRequest();
+        req.setExamCode("bad-code");
+
+        assertThatThrownBy(() -> adminExamService.createExam(ADMIN_USER_ID, req))
+                .isInstanceOf(AppException.class)
+                .satisfies(ex -> {
+                    AppException ae = (AppException) ex;
+                    assertThat(ae.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(ae.getCode()).isEqualTo("VALIDATION_FAILED");
+                    assertThat(ae.getMessage()).contains("examCode");
+                });
+
+        verify(subjectRepository, never()).findById(any());
+        verify(examRepository, never()).existsByExamCode(any());
+        verify(examRepository, never()).save(any(Exam.class));
+    }
+
+    @Test
     @DisplayName("create: PAID pricingType → 400 VALIDATION_FAILED")
     void create_nonFreePricing_throwsValidation() {
         AdminExamCreateRequest req = baseCreateRequest();
@@ -405,6 +425,38 @@ class AdminExamServiceTest {
                     assertThat(ae.getCode()).isEqualTo("VALIDATION_FAILED");
                 });
 
+        verify(examRepository, never()).save(any(Exam.class));
+    }
+
+    @Test
+    @DisplayName("update: omitted subjectId still validates current subject is active")
+    void update_currentSubjectInactive_throwsValidationOrBadRequest() {
+        Exam existing = baseExam(15L, ExamStatus.DRAFT);
+        Subject inactiveCurrentSubject = Subject.builder()
+                .id(SUBJECT_ACTIVE_ID)
+                .code(SUBJECT_ACTIVE_CODE)
+                .name("Inactive Math")
+                .isActive(false)
+                .displayOrder(1)
+                .build();
+        AdminExamUpdateRequest req = AdminExamUpdateRequest.builder()
+                .title("Should Not Save")
+                .build();
+
+        when(examRepository.findById(15L)).thenReturn(Optional.of(existing));
+        when(subjectRepository.findById(SUBJECT_ACTIVE_ID))
+                .thenReturn(Optional.of(inactiveCurrentSubject));
+
+        assertThatThrownBy(() -> adminExamService.updateExam(15L, req))
+                .isInstanceOf(AppException.class)
+                .satisfies(ex -> {
+                    AppException ae = (AppException) ex;
+                    assertThat(ae.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(ae.getCode()).isEqualTo("VALIDATION_FAILED");
+                    assertThat(ae.getMessage()).contains("not active");
+                });
+
+        assertThat(existing.getTitle()).isEqualTo("Existing exam 15");
         verify(examRepository, never()).save(any(Exam.class));
     }
 

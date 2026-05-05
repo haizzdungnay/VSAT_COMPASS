@@ -22,12 +22,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AdminExamServiceImpl implements AdminExamService {
+
+    private static final Pattern EXAM_CODE_PATTERN =
+            Pattern.compile("^[A-Z][A-Z0-9_]{2,49}$");
 
     private final ExamRepository examRepository;
     private final ExamQuestionRepository examQuestionRepository;
@@ -53,6 +57,7 @@ public class AdminExamServiceImpl implements AdminExamService {
     @Override
     @Transactional
     public AdminExamResponse createExam(Long currentUserId, AdminExamCreateRequest req) {
+        validateExamCode(req.getExamCode());
         validateFreeOnlyPricing(req.getPricingType(), req.getPrice());
         Subject subject = loadActiveSubject(req.getSubjectId());
 
@@ -105,8 +110,10 @@ public class AdminExamServiceImpl implements AdminExamService {
                     req.getPrice() != null ? req.getPrice() : exam.getPrice());
         }
 
-        if (req.getSubjectId() != null && !req.getSubjectId().equals(exam.getSubjectId())) {
-            Subject subject = loadActiveSubject(req.getSubjectId());
+        Long effectiveSubjectId =
+                req.getSubjectId() != null ? req.getSubjectId() : exam.getSubjectId();
+        Subject subject = loadActiveSubject(effectiveSubjectId);
+        if (!subject.getId().equals(exam.getSubjectId())) {
             exam.setSubjectId(subject.getId());
         }
 
@@ -130,6 +137,13 @@ public class AdminExamServiceImpl implements AdminExamService {
     }
 
     // ---------- HELPERS ----------
+    private void validateExamCode(String examCode) {
+        if (examCode == null || !EXAM_CODE_PATTERN.matcher(examCode).matches()) {
+            throw AppException.validationFailed(
+                    "examCode must match ^[A-Z][A-Z0-9_]{2,49}$");
+        }
+    }
+
     private void validateFreeOnlyPricing(ExamPricingType pricingType, BigDecimal price) {
         if (pricingType != null && pricingType != ExamPricingType.FREE) {
             throw AppException.validationFailed(
