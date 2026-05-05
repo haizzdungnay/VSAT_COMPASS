@@ -169,7 +169,7 @@ http://localhost:8080/api/v1/swagger-ui.html
 
 ## API Modules
 
-> **Trạng thái backend hiện tại (v0.9.1+):** Production-ready trên Render.com — Auth + Session sync đã hardened; Subject/Topic/Subtopic read APIs, Question Bank write/review workflow, and public Exam read API đã live. C1.2a.2 release smoke passed exams 10/10 + subjects 4/4 + sessions 5/5 + questions 32/32; auth register-heavy smoke remains deferred because of production rate limiting. Android/admin UI cho content workflow còn deferred.
+> **Trạng thái backend hiện tại (v0.9.2):** Production-ready trên Render.com — Auth + Session sync đã hardened; Subject/Topic/Subtopic read APIs, Question Bank write/review workflow, public Exam read API, and Admin Exam CRUD metadata API đã live. C1.2b-1 release smoke passed admin exams 10/10 + exams 10/10 + subjects 4/4 + sessions 5/5 + questions 32/32; auth no-register smoke passed 7/0/2. Android/admin UI cho content workflow còn deferred.
 
 | Module | Base Path | Endpoints | Trạng thái |
 |--------|-----------|-----------|------------|
@@ -179,7 +179,7 @@ http://localhost:8080/api/v1/swagger-ui.html
 | Questions (Collaborator) | `/collaborator/questions` | create, list own, detail, update, submit-for-review | ✅ Verified prod |
 | Questions (Admin) | `/admin/questions` | queue by status, approve, request revision, reject | ✅ Verified prod |
 | Review Workflow | `/admin/questions/{id}/approve`, `/request-revision`, `/reject` | admin review actions + review history records | ✅ Verified prod |
-| Exams (Admin) | `/admin/exams` | CRUD + questions + status | 📋 Phase C |
+| Exams (Admin) | `/admin/exams` | metadata-only create/list/detail/update | ✅ Verified prod (C1.2b-1) |
 | Exams (Public) | `/exams` | list `PUBLISHED` + `FREE`, detail with anti-leak 404 | ✅ Verified prod |
 | Student Stats | `/my-stats` | topic stats, weak topics, history | 📋 Phase C |
 | Tickets (Student) | `/tickets` | create, list, detail, comment | 📋 Phase C |
@@ -206,17 +206,18 @@ Deferred:
 
 ### Exam API status
 
-As of `v0.9.1`, the public Exam read-only foundation is available in production:
+As of `v0.9.2`, the Exam API foundation is available in production:
 
 - `GET /exams` returns a paged `data.content[]` list of `PUBLISHED` + `FREE` exams.
 - `GET /exams/{id}` returns public detail for a `PUBLISHED` + `FREE` exam.
 - Non-existent, non-published, or non-free exams return `404 RESOURCE_NOT_FOUND` to avoid enumeration leaks.
 - DTO responses expose only public fields; status, price, audit fields, questions, correct options, and explanations are not returned.
+- `GET /admin/exams`, `GET /admin/exams/{id}`, `POST /admin/exams`, and `PUT /admin/exams/{id}` are verified for CONTENT_ADMIN/SUPER_ADMIN metadata CRUD.
+- Admin exam create/update remains metadata-only: DRAFT/HIDDEN editing, FREE+price=0, server-controlled status/question count/version/audit fields.
 
 Deferred:
-- admin exam CRUD
 - add/remove/reorder exam questions
-- status workflow
+- publish/hide/archive status workflow
 - paid/package pricing
 - Android integration with the production Exam API
 
@@ -225,8 +226,8 @@ Deferred:
 - **Task Tracker:** [`task.md`](task.md) — tiến độ Phase A/B/C/D, bug fixes, DB verification
 - **Deploy Runbook:** [`docs/DEPLOY_RUNBOOK.md`](docs/DEPLOY_RUNBOOK.md) — deploy, rollback, secret rotation, incident triage
 - **API Error Codes:** [`docs/API_ERROR_CODES.md`](docs/API_ERROR_CODES.md) — error catalog, response envelope, rate limits
-- **Smoke Tests:** [`docs/SMOKE_CHECKLIST.md`](docs/SMOKE_CHECKLIST.md) — 15 Android manual checks; backend smoke scripts cover 60 release checks
-- **Smoke Scripts:** `docs/scripts/smoke_auth.sh`, `docs/scripts/smoke_sessions.sh`, `docs/scripts/smoke_subjects.sh`, `VSAT/vsat-compass-api/docs/scripts/smoke_questions.sh`, `VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh`
+- **Smoke Tests:** [`docs/SMOKE_CHECKLIST.md`](docs/SMOKE_CHECKLIST.md) — 15 Android manual checks; backend smoke scripts cover 70 release checks
+- **Smoke Scripts:** `docs/scripts/smoke_auth.sh`, `docs/scripts/smoke_sessions.sh`, `docs/scripts/smoke_subjects.sh`, `docs/scripts/smoke_admin_exams.sh`, `VSAT/vsat-compass-api/docs/scripts/smoke_questions.sh`, `VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh`
 
 ---
 

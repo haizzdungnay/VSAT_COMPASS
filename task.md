@@ -1,6 +1,6 @@
 # V-SAT Compass — Task Tracker & Roadmap
 
-> Cập nhật: 2026-05-05 | Phiên bản hiện tại: **v0.9.1** (Phase C1.2a Exam read-only public API live in production)
+> Cập nhật: 2026-05-05 | Phiên bản hiện tại: **v0.9.2** (Phase C1.2b-1 Admin Exam CRUD metadata API live in production)
 
 Tài liệu này tổng hợp lộ trình hoàn thiện app dựa trên:
 - `VSAT/ui/tong_hop_du_an_vsat_android_web_v2.txt`
@@ -22,7 +22,7 @@ Mục tiêu cuối:
 |-----------|------------|------------|
 | A — Student MVP | ✅ XONG | 100% |
 | B — Backend Production | ✅ XONG | 100% (2026-04-25) |
-| C — Content Management | 🟡 IN PROGRESS | C1.0 + C1.1a + C1.1b + C1.2a done in prod |
+| C — Content Management | 🟡 IN PROGRESS | C1.0 + C1.1a + C1.1b + C1.2a + C1.2b-1 done in prod |
 | D — Admin & Operations | 🔜 Tương lai | — |
 | E — Chất lượng sản phẩm | 🔜 Tương lai | — |
 
@@ -66,6 +66,7 @@ Mục tiêu cuối:
 - [x] Phase C1.1a — Question Bank schema foundation (4 enums Difficulty/QuestionType/QuestionStatus/ReviewAction, Subtopic/Question/QuestionOption/QuestionReview entities, 4 repositories, public GET subtopics endpoint, 6 Mockito tests) merged to main + tagged v0.8.4 (2026-05-04). Production smoke 18/18 PASS.
 - [x] Phase C1.1b — Question CRUD workflow backend (collaborator create/list/detail/update/submit + admin queue/approve/request-revision/reject), role-based authorization, owner-check, status state machine, 33 Mockito tests, production smoke PASS, tagged v0.9.0.
 - [x] Phase C1.2a — Exam read-only foundation (entities, repo, service, 2 public endpoints, 12 Mockito tests, idempotent smoke seed) live in production and tagged v0.9.1 (2026-05-05). Production smoke PASS: exams 10/10 + regression scripts PASS.
+- [x] Phase C1.2b-1 — Admin Exam CRUD foundation (metadata-only create/list/detail/update, DRAFT/HIDDEN edit only, FREE+price=0 only) live in production and tagged v0.9.2 (2026-05-05). Production smoke PASS: admin exams 10/10 + auth no-register 7/0/2 + subjects 4/4 + sessions 5/5 + questions 32/32 + exams 10/10.
 
 ### 2.2 Chưa hoàn chỉnh
 
@@ -357,7 +358,7 @@ Tiêu chí xong:
 
 | ID | Hạng mục | Trạng thái |
 |----|----------|------------|
-| C2.1 | POST /admin/exams (tạo đề) | 🟡 IN PROGRESS — backend done on feature branch (C1.2b-1), not yet merged/tagged/deployed |
+| C2.1 | POST /admin/exams (tạo đề metadata) | ✅ Done in production (2026-05-05, v0.9.2, C1.2b-1) |
 | C2.2 | PUT /admin/exams/{id}/questions (thêm câu vào đề) | 📋 TODO (C1.2b-2) |
 | C2.3 | PUT /admin/exams/{id}/status (publish/draft) | 📋 TODO (C1.2b-2) |
 | C2.4 | GET /exams (public list — Android dùng) | ✅ Done in production (2026-05-05, v0.9.1) |
@@ -369,7 +370,7 @@ C1.2b is split into two batches to ship value incrementally and keep production 
 
 | Sub-phase | Scope | Trạng thái |
 |-----------|-------|------------|
-| **C1.2b-1** | Admin Exam CRUD foundation: metadata-only create/list/detail/update endpoints (`/admin/exams`, `/admin/exams/{id}`). DRAFT/HIDDEN editing only. FREE+price=0 only. Server-controls `status`, `questionCount`, `version`, `createdBy`. `examCode` immutable on update. 22 Mockito tests + full suite green. | 🟡 IN PROGRESS — completed on feature branch `phase-c/c1-2b-1-admin-exam-crud`, **not yet** merged to `main`, tagged, or deployed |
+| **C1.2b-1** | Admin Exam CRUD foundation: metadata-only create/list/detail/update endpoints (`/admin/exams`, `/admin/exams/{id}`). DRAFT/HIDDEN editing only. FREE+price=0 only. Server-controls `status`, `questionCount`, `version`, `createdBy`. `examCode` immutable on update. 25 Mockito tests + full suite green. | ✅ Done in production (2026-05-05, v0.9.2) — `smoke_admin_exams.sh` 10/10 PASS; hotfix replaced nullable JPQL optional filters with derived repository dispatch. |
 | **C1.2b-2** | Exam composition + publish workflow: add/remove/reorder questions, draft → pending review → published, hide/archive, version-bump rules, smoke scripts, deploy + tag. | 📋 TODO |
 
 C1.2b-1 explicitly defers (handled in C1.2b-2):
@@ -377,8 +378,6 @@ C1.2b-1 explicitly defers (handled in C1.2b-2):
 - publish / hide / archive workflow
 - version-bump semantics on metadata vs composition vs publish
 - paid/package pricing
-- production smoke script for admin exam endpoints
-- deploy + tag
 
 Do not mark C1.2b complete until C1.2b-2 ships to production.
 

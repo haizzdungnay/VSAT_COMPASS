@@ -2,17 +2,38 @@
 
 ## [Unreleased]
 
+### Notes
+- No unreleased changes yet.
+
+## [0.9.2] - 2026-05-05 - Phase C1.2b-1: Admin Exam CRUD Foundation
+
 ### Added
 - Add Phase C1.2b-1 admin exam CRUD foundation: admin-only create/list/detail/update metadata endpoints for exams (`/admin/exams`, `/admin/exams/{id}`).
 - New DTOs `AdminExamCreateRequest`, `AdminExamUpdateRequest`, `AdminExamResponse`, `AdminExamSummaryResponse` with explicit field whitelists; no `questions`, `correctOptionId`, `explanation`, or composition detail exposed by admin metadata endpoints.
 - New `AdminExamService` + `AdminExamServiceImpl` — server-controls `status=DRAFT`, `questionCount=0`, `pricingType=FREE`, `price=0`, `version=1`, `createdBy` from authenticated user; `examCode` validated against `^[A-Z][A-Z0-9_]{2,49}$`; metadata update allowed only for `DRAFT`/`HIDDEN` exams; `examCode`, `status`, `questionCount`, `createdBy`, `version`, `publishDate` immutable from client on update.
-- `ExamRepository.existsByExamCode(...)` and `findAdminList(status, subjectId, pageable)` JPQL query for admin listing with optional filters.
+- `ExamRepository.existsByExamCode(...)` and null-safe derived repository dispatch for admin listing filters (`status`, `subjectId`, or both).
 - `AdminExamController` at `/admin/exams` with method-level `@PreAuthorize("hasAnyRole('CONTENT_ADMIN','SUPER_ADMIN')")` (defense-in-depth on top of the existing `/admin/**` security matcher).
-- 22 Mockito unit tests for `AdminExamService` covering create/update/list/get happy paths, duplicate `examCode`, non-FREE pricing, non-zero price, missing/inactive subject, invalid-state update on `PUBLISHED`/`ARCHIVED`, and DTO field-whitelist enforcement.
+- `docs/scripts/smoke_admin_exams.sh` production smoke script for admin exam metadata CRUD.
+- 25 Mockito unit tests for `AdminExamService` covering create/update/list/get happy paths, duplicate/invalid `examCode`, non-FREE pricing, non-zero price, missing/inactive subject, invalid-state update on `PUBLISHED`/`ARCHIVED`, list filter dispatch, and DTO field-whitelist enforcement.
+
+### Fixed
+- Replaced nullable optional-filter JPQL for `GET /admin/exams` with derived repository dispatch after production PostgreSQL returned `could not determine data type of parameter $1` for `(:status IS NULL OR ...)` style predicates.
+
+### Verified
+- Local backend test suite PASS: 104/104 tests.
+- Production smoke PASS on Render Singapore:
+  - `smoke_admin_exams.sh`: 10/10 PASS.
+  - `smoke_auth.sh` no-register mode: 7 pass / 0 fail / 2 skipped.
+  - `smoke_subjects.sh`: 4/4 PASS.
+  - `smoke_sessions.sh`: 5/5 PASS.
+  - `smoke_questions.sh`: 32/32 PASS.
+  - `smoke_exams.sh`: 10/10 PASS.
+- 5-minute post-deploy stability watch completed: `/actuator/health` 200, `/exams` 200, and authenticated `/admin/exams` 200 through 2026-05-05 08:41:12 UTC.
 
 ### Notes
 - Exam composition, add/remove/reorder questions, publish workflow (DRAFT → PENDING_REVIEW → PUBLISHED → HIDDEN/ARCHIVED), version bump rules, paid pricing, and access control remain deferred to Phase C1.2b-2.
 - No schema, build, or application config changes. Public `/exams` API still exposes `PUBLISHED` + `FREE` only.
+- Smoke-created DRAFT admin exams remain as production smoke artifacts because C1.2b-1 intentionally has no delete/archive endpoint.
 
 ### Operational
 - Add `SMOKE_AUTH_SKIP_REGISTER=1` no-register mode for `docs/scripts/smoke_auth.sh` to allow repeated production regression runs without hitting the `/auth/register` rate limit (HTTP 429). Skipped TCs (TC-AUTH-7, TC-AUTH-8) are clearly reported and the summary distinguishes passed / failed / skipped.

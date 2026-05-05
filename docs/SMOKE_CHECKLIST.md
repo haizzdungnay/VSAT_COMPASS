@@ -1,6 +1,6 @@
 # V-SAT Compass — Smoke Test Checklist (Student MVP)
 
-> Phiên bản: v0.8.1 | Cập nhật: 2026-04-26
+> Phiên bản: v0.9.2 | Cập nhật: 2026-05-05
 > Chạy checklist này trước mỗi release hoặc sau mỗi thay đổi lớn ảnh hưởng đến student flow.
 > Thiết bị test tối thiểu: 1 emulator (API 28+) + 1 thiết bị vật lý.
 
@@ -411,3 +411,27 @@
 - Build version: v0.8.1 (commit `727f9a4`)
 - Tester: smoke_auth.sh (9/9) + smoke_sessions.sh (5/5) tự động
 - Ghi chú: TC-024 (rate limit) và TC-025 (timestamp) được verify thủ công qua curl
+
+---
+
+# Backend Smoke Scripts (v0.9.2)
+
+Run these production smoke scripts before release tagging:
+
+- `SMOKE_AUTH_SKIP_REGISTER=1 bash docs/scripts/smoke_auth.sh` — expected 7 pass / 0 fail / 2 skipped.
+- `bash docs/scripts/smoke_subjects.sh` — expected 4/4 PASS.
+- `bash docs/scripts/smoke_sessions.sh` — expected 5/5 PASS.
+- `SMOKE_ADMIN_PASSWORD=... bash docs/scripts/smoke_admin_exams.sh` — expected 10/10 PASS for C1.2b-1 admin exam metadata CRUD.
+- `SMOKE_COLLAB1_PASSWORD=... SMOKE_COLLAB2_PASSWORD=... SMOKE_ADMIN_PASSWORD=... bash VSAT/vsat-compass-api/docs/scripts/smoke_questions.sh` — expected 32/32 PASS.
+- `EXAM_ID=2 bash VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh` — expected 10/10 PASS.
+
+Production-verified for v0.9.2 on 2026-05-05:
+
+| Script | Result |
+|--------|--------|
+| `smoke_admin_exams.sh` | 10/10 PASS |
+| `smoke_auth.sh` no-register | 7 pass / 0 fail / 2 skipped |
+| `smoke_subjects.sh` | 4/4 PASS |
+| `smoke_sessions.sh` | 5/5 PASS |
+| `smoke_questions.sh` | 32/32 PASS |
+| `smoke_exams.sh` | 10/10 PASS |
