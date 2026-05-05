@@ -65,6 +65,7 @@ Mục tiêu cuối:
 - [x] Phase C1.0 — Subject + Topic foundation backend (entities, repo, service, 2 public endpoints, 10 Mockito tests) merged to main + tagged v0.8.3 (2026-05-04). Production smoke 17/17 PASS (subjects 3 + auth 9 + sessions 5).
 - [x] Phase C1.1a — Question Bank schema foundation (4 enums Difficulty/QuestionType/QuestionStatus/ReviewAction, Subtopic/Question/QuestionOption/QuestionReview entities, 4 repositories, public GET subtopics endpoint, 6 Mockito tests) merged to main + tagged v0.8.4 (2026-05-04). Production smoke 18/18 PASS.
 - [x] Phase C1.1b — Question CRUD workflow backend (collaborator create/list/detail/update/submit + admin queue/approve/request-revision/reject), role-based authorization, owner-check, status state machine, 33 Mockito tests, production smoke PASS, tagged v0.9.0.
+- [x] Phase C1.2a — Exam read-only foundation (entities, repo, service, 2 public endpoints, 12 Mockito tests, idempotent smoke seed) on feature branch (2026-05-05).
 
 ### 2.2 Chưa hoàn chỉnh
 
@@ -379,7 +380,7 @@ Tiêu chí xong:
 
 | ID | Hạng mục | Trạng thái |
 |----|----------|------------|
-| C3.1 | Android: load danh sách đề từ GET /exams (thay local fallback) | 📋 TODO |
+| C3.1 | Android: load danh sách đề từ GET /exams (thay local fallback) | 🟡 PARTIAL — feature branch (C1.2a read-only), prod deploy in C1.2a.2 |
 | C3.2 | Android: load câu hỏi từ GET /sessions/{id}/questions/{qId} | 📋 TODO |
 | C3.3 | Android: replace smoke seed exam bằng đề thật từ server | 📋 TODO |
 | C3.4 | Xóa smoke_test_seed.sql sau khi Phase C có đề thật | 📋 TODO |

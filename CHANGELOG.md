@@ -1,5 +1,25 @@
 # V-SAT COMPASS — CHANGELOG
 
+## [Unreleased]
+
+### Phase C1.2a — Exam Foundation (Read-Only Public API) [feature branch]
+- Added `Exam` and `ExamQuestion` JPA entities mapped to frozen schema.
+- Added `ExamStatus` and `ExamPricingType` enums (full schema values for
+  load-compatibility; only `PUBLISHED` + `FREE` exposed publicly).
+- Added `ExamRepository` and `ExamQuestionRepository`.
+- Added `ExamService` (interface + impl) — read-only methods.
+- Added `ExamPublicController` with `GET /exams` and `GET /exams/{id}`.
+- Added `ExamSummaryResponse` and `ExamDetailResponse` with explicit
+  field whitelist; correct-option / explanation / questions array NOT
+  exposed in any response.
+- Added Mockito unit tests for ExamService (12 tests including positive
+  and negative DTO field assertions).
+- Added idempotent smoke seed `docs/scripts/seed_c1_2a_smoke.sql`.
+- SecurityConfig allowlist updated for `GET /exams` and `GET /exams/**`
+  only (non-GET methods remain on default auth chain).
+- No production deploy in this batch — feature branch only. C1.2a.2 will
+  merge, deploy, smoke, and tag `v0.9.1`.
+
 ## [0.9.0] - 2026-05-05 — Phase C1.1b: Question CRUD Workflow + Role-Based Authorization
 
 ### Added
