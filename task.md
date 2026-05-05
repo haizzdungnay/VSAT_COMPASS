@@ -357,11 +357,30 @@ Tiêu chí xong:
 
 | ID | Hạng mục | Trạng thái |
 |----|----------|------------|
-| C2.1 | POST /admin/exams (tạo đề) | 📋 TODO |
-| C2.2 | PUT /admin/exams/{id}/questions (thêm câu vào đề) | 📋 TODO |
-| C2.3 | PUT /admin/exams/{id}/status (publish/draft) | 📋 TODO |
+| C2.1 | POST /admin/exams (tạo đề) | 🟡 IN PROGRESS — backend done on feature branch (C1.2b-1), not yet merged/tagged/deployed |
+| C2.2 | PUT /admin/exams/{id}/questions (thêm câu vào đề) | 📋 TODO (C1.2b-2) |
+| C2.3 | PUT /admin/exams/{id}/status (publish/draft) | 📋 TODO (C1.2b-2) |
 | C2.4 | GET /exams (public list — Android dùng) | ✅ Done in production (2026-05-05, v0.9.1) |
 | C2.5 | GET /exams/{id} (public detail) | ✅ Done in production (2026-05-05, v0.9.1) |
+
+### C1.2b — Admin Exam Management (split)
+
+C1.2b is split into two batches to ship value incrementally and keep production risk low:
+
+| Sub-phase | Scope | Trạng thái |
+|-----------|-------|------------|
+| **C1.2b-1** | Admin Exam CRUD foundation: metadata-only create/list/detail/update endpoints (`/admin/exams`, `/admin/exams/{id}`). DRAFT/HIDDEN editing only. FREE+price=0 only. Server-controls `status`, `questionCount`, `version`, `createdBy`. `examCode` immutable on update. 22 Mockito tests + full suite green. | 🟡 IN PROGRESS — completed on feature branch `phase-c/c1-2b-1-admin-exam-crud`, **not yet** merged to `main`, tagged, or deployed |
+| **C1.2b-2** | Exam composition + publish workflow: add/remove/reorder questions, draft → pending review → published, hide/archive, version-bump rules, smoke scripts, deploy + tag. | 📋 TODO |
+
+C1.2b-1 explicitly defers (handled in C1.2b-2):
+- exam composition (add/remove/reorder questions)
+- publish / hide / archive workflow
+- version-bump semantics on metadata vs composition vs publish
+- paid/package pricing
+- production smoke script for admin exam endpoints
+- deploy + tag
+
+Do not mark C1.2b complete until C1.2b-2 ships to production.
 
 - [x] Gửi duyệt câu hỏi (backend API C1.1b)
 - [x] Duyệt / từ chối / yêu cầu chỉnh sửa (backend API C1.1b)
