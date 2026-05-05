@@ -81,7 +81,7 @@ public class SecurityConfig {
                 .requestMatchers("/auth/login", "/auth/register", "/auth/refresh", "/auth/logout").permitAll()
                 .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers(HttpMethod.GET, "/subjects/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/exams/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/exams", "/exams/**").permitAll()
 
                 // Actuator — health only (restricted by management.endpoints config)
                 .requestMatchers("/actuator/health").permitAll()
