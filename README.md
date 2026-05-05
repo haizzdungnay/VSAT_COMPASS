@@ -169,7 +169,7 @@ http://localhost:8080/api/v1/swagger-ui.html
 
 ## API Modules
 
-> **Trạng thái backend hiện tại (v0.9.0+):** Production-ready trên Render.com — Auth + Session sync đã hardened; Subject/Topic/Subtopic read APIs và Question Bank write/review workflow đã live. Smoke 50 backend checks pass trong C1.1b.2; Android/admin UI cho content workflow còn deferred.
+> **Trạng thái backend hiện tại (v0.9.1+):** Production-ready trên Render.com — Auth + Session sync đã hardened; Subject/Topic/Subtopic read APIs, Question Bank write/review workflow, and public Exam read API đã live. C1.2a.2 release smoke passed exams 10/10 + subjects 4/4 + sessions 5/5 + questions 32/32; auth register-heavy smoke remains deferred because of production rate limiting. Android/admin UI cho content workflow còn deferred.
 
 | Module | Base Path | Endpoints | Trạng thái |
 |--------|-----------|-----------|------------|
@@ -180,7 +180,7 @@ http://localhost:8080/api/v1/swagger-ui.html
 | Questions (Admin) | `/admin/questions` | queue by status, approve, request revision, reject | ✅ Verified prod |
 | Review Workflow | `/admin/questions/{id}/approve`, `/request-revision`, `/reject` | admin review actions + review history records | ✅ Verified prod |
 | Exams (Admin) | `/admin/exams` | CRUD + questions + status | 📋 Phase C |
-| Exams (Public) | `/exams` | list published, detail | 📋 Phase C |
+| Exams (Public) | `/exams` | list `PUBLISHED` + `FREE`, detail with anti-leak 404 | ✅ Verified prod |
 | Student Stats | `/my-stats` | topic stats, weak topics, history | 📋 Phase C |
 | Tickets (Student) | `/tickets` | create, list, detail, comment | 📋 Phase C |
 | Tickets (Admin) | `/admin/tickets` | list, assign, resolve, status | 📋 Phase C |
@@ -204,13 +204,29 @@ Deferred:
 - Excel import
 - Android/admin UI integration
 
+### Exam API status
+
+As of `v0.9.1`, the public Exam read-only foundation is available in production:
+
+- `GET /exams` returns a paged `data.content[]` list of `PUBLISHED` + `FREE` exams.
+- `GET /exams/{id}` returns public detail for a `PUBLISHED` + `FREE` exam.
+- Non-existent, non-published, or non-free exams return `404 RESOURCE_NOT_FOUND` to avoid enumeration leaks.
+- DTO responses expose only public fields; status, price, audit fields, questions, correct options, and explanations are not returned.
+
+Deferred:
+- admin exam CRUD
+- add/remove/reorder exam questions
+- status workflow
+- paid/package pricing
+- Android integration with the production Exam API
+
 ### Deployment & Operations
 
 - **Task Tracker:** [`task.md`](task.md) — tiến độ Phase A/B/C/D, bug fixes, DB verification
 - **Deploy Runbook:** [`docs/DEPLOY_RUNBOOK.md`](docs/DEPLOY_RUNBOOK.md) — deploy, rollback, secret rotation, incident triage
 - **API Error Codes:** [`docs/API_ERROR_CODES.md`](docs/API_ERROR_CODES.md) — error catalog, response envelope, rate limits
-- **Smoke Tests:** [`docs/SMOKE_CHECKLIST.md`](docs/SMOKE_CHECKLIST.md) — 15 Android manual checks; backend smoke scripts cover 50 release checks
-- **Smoke Scripts:** `docs/scripts/smoke_auth.sh`, `docs/scripts/smoke_sessions.sh`, `docs/scripts/smoke_subjects.sh`, `VSAT/vsat-compass-api/docs/scripts/smoke_questions.sh`
+- **Smoke Tests:** [`docs/SMOKE_CHECKLIST.md`](docs/SMOKE_CHECKLIST.md) — 15 Android manual checks; backend smoke scripts cover 60 release checks
+- **Smoke Scripts:** `docs/scripts/smoke_auth.sh`, `docs/scripts/smoke_sessions.sh`, `docs/scripts/smoke_subjects.sh`, `VSAT/vsat-compass-api/docs/scripts/smoke_questions.sh`, `VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh`
 
 ---
 
@@ -226,6 +242,7 @@ Deferred:
 
 > **Note:** Render free tier spins down after 15 minutes of inactivity. Cold start takes ~60-90 seconds.
 > UptimeRobot keep-alive prevents this during active hours.
+> After a fresh deploy, newly added endpoints may need an extra 3-5 minute JVM/ApplicationContext warm-up window even after actuator health already returns 200.
 
 For deploy and rollback procedures, see [`docs/DEPLOY_RUNBOOK.md`](docs/DEPLOY_RUNBOOK.md).
 For error codes and response envelope, see [`docs/API_ERROR_CODES.md`](docs/API_ERROR_CODES.md).
@@ -364,8 +381,8 @@ Các phần timer, chọn đáp án, bookmark, chấm điểm, hiển thị kế
 | Android Drawable resources | 20+ |
 | Local exam data (JSON assets) | 5 packs (2 Toán, 2 Tiếng Anh, 1 Vật lí) |
 | Unit tests pass | 6/6 (ExamHistoryRepository) |
-| Smoke test cases | 65 checks (15 Android manual + 50 Backend smoke checks) |
-| Features live | Login, Register, Exam list, Session, Timer, Scoring, Result, Review, History, Rate limiting, Subject/Topic/Subtopic read APIs, Question CRUD workflow |
+| Smoke test cases | 75 checks (15 Android manual + 60 Backend smoke checks) |
+| Features live | Login, Register, Exam list, Session, Timer, Scoring, Result, Review, History, Rate limiting, Subject/Topic/Subtopic read APIs, Question CRUD workflow, Exam read-only public API |
 
 ---
 

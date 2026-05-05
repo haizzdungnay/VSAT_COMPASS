@@ -1,6 +1,6 @@
 # V-SAT Compass — Task Tracker & Roadmap
 
-> Cập nhật: 2026-05-05 | Phiên bản hiện tại: **v0.9.0** (Phase C1.1b Question CRUD workflow live in production)
+> Cập nhật: 2026-05-05 | Phiên bản hiện tại: **v0.9.1** (Phase C1.2a Exam read-only public API live in production)
 
 Tài liệu này tổng hợp lộ trình hoàn thiện app dựa trên:
 - `VSAT/ui/tong_hop_du_an_vsat_android_web_v2.txt`
@@ -22,7 +22,7 @@ Mục tiêu cuối:
 |-----------|------------|------------|
 | A — Student MVP | ✅ XONG | 100% |
 | B — Backend Production | ✅ XONG | 100% (2026-04-25) |
-| C — Content Management | 🟡 IN PROGRESS | C1.0 + C1.1a + C1.1b done in prod |
+| C — Content Management | 🟡 IN PROGRESS | C1.0 + C1.1a + C1.1b + C1.2a done in prod |
 | D — Admin & Operations | 🔜 Tương lai | — |
 | E — Chất lượng sản phẩm | 🔜 Tương lai | — |
 
@@ -65,7 +65,7 @@ Mục tiêu cuối:
 - [x] Phase C1.0 — Subject + Topic foundation backend (entities, repo, service, 2 public endpoints, 10 Mockito tests) merged to main + tagged v0.8.3 (2026-05-04). Production smoke 17/17 PASS (subjects 3 + auth 9 + sessions 5).
 - [x] Phase C1.1a — Question Bank schema foundation (4 enums Difficulty/QuestionType/QuestionStatus/ReviewAction, Subtopic/Question/QuestionOption/QuestionReview entities, 4 repositories, public GET subtopics endpoint, 6 Mockito tests) merged to main + tagged v0.8.4 (2026-05-04). Production smoke 18/18 PASS.
 - [x] Phase C1.1b — Question CRUD workflow backend (collaborator create/list/detail/update/submit + admin queue/approve/request-revision/reject), role-based authorization, owner-check, status state machine, 33 Mockito tests, production smoke PASS, tagged v0.9.0.
-- [x] Phase C1.2a — Exam read-only foundation (entities, repo, service, 2 public endpoints, 12 Mockito tests, idempotent smoke seed) on feature branch (2026-05-05).
+- [x] Phase C1.2a — Exam read-only foundation (entities, repo, service, 2 public endpoints, 12 Mockito tests, idempotent smoke seed) live in production and tagged v0.9.1 (2026-05-05). Production smoke PASS: exams 10/10 + regression scripts PASS.
 
 ### 2.2 Chưa hoàn chỉnh
 
@@ -304,7 +304,7 @@ Tiêu chí xong (B6):
 
 ---
 
-## Giai đoạn C — Quản trị nội dung MVP 🟡 IN PROGRESS (C1.0 + C1.1a + C1.1b shipped)
+## Giai đoạn C — Quản trị nội dung MVP 🟡 IN PROGRESS (C1.0 + C1.1a + C1.1b + C1.2a shipped)
 
 Mục tiêu: Collaborator có thể soạn câu hỏi, Content Admin duyệt, tạo đề. Android hiển thị đề thật từ server.
 
@@ -320,6 +320,7 @@ Mục tiêu: Collaborator có thể soạn câu hỏi, Content Admin duyệt, t�
 
 - **C1.1a status:** Question Bank JPA layer (4 enums + 4 entities + 4 repositories) and read-only Subtopic API (`GET /subjects/{id}/topics/{topicId}/subtopics`) merged to `main` and tagged `v0.8.4`. Production smoke 18/18 PASS.
 - **C1.1b status:** Question CRUD + review workflow backend merged to `main`, production smoke PASS, and tagged `v0.9.0` at deployed code commit `752c15e`.
+- **C1.2a status:** Exam read-only public API merged to `main`, deployed to production, and tagged `v0.9.1` at deployed code commit `1a87721`. Production smoke PASS: `smoke_exams.sh` 10/10, `smoke_subjects.sh` 4/4, `smoke_sessions.sh` 5/5, `smoke_questions.sh` 32/32, 5-minute stability watch PASS.
 
 ### C1.1b — Question CRUD + Review Workflow Backend ✅ HOÀN THÀNH (2026-05-05)
 
@@ -359,8 +360,8 @@ Tiêu chí xong:
 | C2.1 | POST /admin/exams (tạo đề) | 📋 TODO |
 | C2.2 | PUT /admin/exams/{id}/questions (thêm câu vào đề) | 📋 TODO |
 | C2.3 | PUT /admin/exams/{id}/status (publish/draft) | 📋 TODO |
-| C2.4 | GET /exams (public list — Android dùng) | 📋 TODO |
-| C2.5 | GET /exams/{id} (public detail) | 📋 TODO |
+| C2.4 | GET /exams (public list — Android dùng) | ✅ Done in production (2026-05-05, v0.9.1) |
+| C2.5 | GET /exams/{id} (public detail) | ✅ Done in production (2026-05-05, v0.9.1) |
 
 - [x] Gửi duyệt câu hỏi (backend API C1.1b)
 - [x] Duyệt / từ chối / yêu cầu chỉnh sửa (backend API C1.1b)
@@ -380,7 +381,7 @@ Tiêu chí xong:
 
 | ID | Hạng mục | Trạng thái |
 |----|----------|------------|
-| C3.1 | Android: load danh sách đề từ GET /exams (thay local fallback) | 🟡 PARTIAL — feature branch (C1.2a read-only), prod deploy in C1.2a.2 |
+| C3.1 | Android: load danh sách đề từ GET /exams (thay local fallback) | 🟡 PARTIAL — backend C1.2a live; Android integration deferred |
 | C3.2 | Android: load câu hỏi từ GET /sessions/{id}/questions/{qId} | 📋 TODO |
 | C3.3 | Android: replace smoke seed exam bằng đề thật từ server | 📋 TODO |
 | C3.4 | Xóa smoke_test_seed.sql sau khi Phase C có đề thật | 📋 TODO |

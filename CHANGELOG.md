@@ -2,7 +2,11 @@
 
 ## [Unreleased]
 
-### Phase C1.2a — Exam Foundation (Read-Only Public API) [feature branch]
+No unreleased changes.
+
+## [0.9.1] - 2026-05-05 — Phase C1.2a: Exam Read-Only Public API
+
+### Added
 - Added `Exam` and `ExamQuestion` JPA entities mapped to frozen schema.
 - Added `ExamStatus` and `ExamPricingType` enums (full schema values for
   load-compatibility; only `PUBLISHED` + `FREE` exposed publicly).
@@ -14,11 +18,28 @@
   exposed in any response.
 - Added Mockito unit tests for ExamService (12 tests including positive
   and negative DTO field assertions).
-- Added idempotent smoke seed `docs/scripts/seed_c1_2a_smoke.sql`.
+- Added idempotent smoke seed `VSAT/vsat-compass-api/docs/scripts/seed_c1_2a_smoke.sql`.
+- Added `VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh` production smoke script for the public Exam API.
 - SecurityConfig allowlist updated for `GET /exams` and `GET /exams/**`
   only (non-GET methods remain on default auth chain).
-- No production deploy in this batch — feature branch only. C1.2a.2 will
-  merge, deploy, smoke, and tag `v0.9.1`.
+
+### Verified
+- Local backend test suite PASS: 79/79 tests.
+- Production smoke PASS on Render Singapore:
+  - `smoke_exams.sh`: 10/10 PASS.
+  - `smoke_subjects.sh`: 4/4 PASS.
+  - `smoke_sessions.sh`: 5/5 PASS.
+  - `smoke_questions.sh`: 32/32 PASS.
+  - `smoke_auth.sh`: register-heavy cases skipped because of known production `429` rate limit behavior.
+- 5-minute post-deploy stability watch completed: health 200, `GET /exams` 200, and `GET /exams/{id}` 200 through 2026-05-05 13:18:28 +07:00.
+
+### Notes
+- Released from no-ff merge commit `1a87721` on `main`; tag `v0.9.1` points to that deployed code commit, not to the docs/tooling closeout commit.
+- No database schema change; C1.2a maps to existing frozen schema.
+- Public `/exams` response shape is a Spring paged object under `data.content[]`.
+- Render free-tier deploy warm-up was observed: actuator health reached 200 before the new `/exams` endpoint consistently returned 200. Future releases should allow a 3-5 minute post-deploy warm-up window before asserting newly added endpoint health.
+- Smoke login probes should build JSON bodies with Bash-contained `printf` or equivalent structured serialization; Windows shell quoting can malformed curl JSON and produce misleading `HttpMessageNotReadableException` failures.
+- Admin exam CRUD, composition, status workflow, paid/package pricing, and Android production Exam API integration remain deferred.
 
 ## [0.9.0] - 2026-05-05 — Phase C1.1b: Question CRUD Workflow + Role-Based Authorization
 
