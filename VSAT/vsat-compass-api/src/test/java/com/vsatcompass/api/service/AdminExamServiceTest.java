@@ -470,7 +470,7 @@ class AdminExamServiceTest {
         Pageable pageable = PageRequest.of(0, 20);
         Exam draft = baseExam(1L, ExamStatus.DRAFT);
         Exam hidden = baseExam(2L, ExamStatus.HIDDEN);
-        when(examRepository.findAdminList(null, null, pageable))
+        when(examRepository.findAll(pageable))
                 .thenReturn(new PageImpl<>(List.of(draft, hidden), pageable, 2));
 
         Page<AdminExamSummaryResponse> result =
@@ -485,6 +485,7 @@ class AdminExamServiceTest {
                 .extracting(java.lang.reflect.Field::getName)
                 .doesNotContain("questions", "publishDate", "createdBy",
                         "reviewedBy", "totalAttempts", "avgScore");
+        verify(examRepository).findAll(pageable);
     }
 
     @Test
@@ -492,7 +493,7 @@ class AdminExamServiceTest {
     void listAdminExams_filterByStatus() {
         Pageable pageable = PageRequest.of(0, 20);
         Exam draft = baseExam(3L, ExamStatus.DRAFT);
-        when(examRepository.findAdminList(eq(ExamStatus.DRAFT), eq(null), eq(pageable)))
+        when(examRepository.findByStatus(eq(ExamStatus.DRAFT), eq(pageable)))
                 .thenReturn(new PageImpl<>(List.of(draft), pageable, 1));
 
         Page<AdminExamSummaryResponse> result =
@@ -500,19 +501,38 @@ class AdminExamServiceTest {
 
         assertThat(result.getContent()).hasSize(1);
         assertThat(result.getContent().get(0).getStatus()).isEqualTo(ExamStatus.DRAFT);
-        verify(examRepository).findAdminList(ExamStatus.DRAFT, null, pageable);
+        verify(examRepository).findByStatus(ExamStatus.DRAFT, pageable);
     }
 
     @Test
     @DisplayName("list: filterBySubjectId propagates subject arg to repository")
     void listAdminExams_filterBySubjectId() {
         Pageable pageable = PageRequest.of(0, 20);
-        when(examRepository.findAdminList(eq(null), eq(SUBJECT_ACTIVE_ID), eq(pageable)))
+        when(examRepository.findBySubjectId(eq(SUBJECT_ACTIVE_ID), eq(pageable)))
                 .thenReturn(new PageImpl<>(List.of(), pageable, 0));
 
         adminExamService.listAdminExams(null, SUBJECT_ACTIVE_ID, pageable);
 
-        verify(examRepository).findAdminList(null, SUBJECT_ACTIVE_ID, pageable);
+        verify(examRepository).findBySubjectId(SUBJECT_ACTIVE_ID, pageable);
+    }
+
+    @Test
+    @DisplayName("list: filterByStatusAndSubjectId propagates both args to repository")
+    void listAdminExams_filterByStatusAndSubjectId() {
+        Pageable pageable = PageRequest.of(0, 20);
+        Exam draft = baseExam(4L, ExamStatus.DRAFT);
+        when(examRepository.findByStatusAndSubjectId(
+                eq(ExamStatus.DRAFT), eq(SUBJECT_ACTIVE_ID), eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of(draft), pageable, 1));
+
+        Page<AdminExamSummaryResponse> result =
+                adminExamService.listAdminExams(
+                        ExamStatus.DRAFT, SUBJECT_ACTIVE_ID, pageable);
+
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getSubjectId()).isEqualTo(SUBJECT_ACTIVE_ID);
+        verify(examRepository).findByStatusAndSubjectId(
+                ExamStatus.DRAFT, SUBJECT_ACTIVE_ID, pageable);
     }
 
     @Test

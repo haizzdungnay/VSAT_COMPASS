@@ -41,8 +41,17 @@ public class AdminExamServiceImpl implements AdminExamService {
     @Override
     public Page<AdminExamSummaryResponse> listAdminExams(
             ExamStatus status, Long subjectId, Pageable pageable) {
-        return examRepository.findAdminList(status, subjectId, pageable)
-                .map(this::toSummaryResponse);
+        Page<Exam> exams;
+        if (status != null && subjectId != null) {
+            exams = examRepository.findByStatusAndSubjectId(status, subjectId, pageable);
+        } else if (status != null) {
+            exams = examRepository.findByStatus(status, pageable);
+        } else if (subjectId != null) {
+            exams = examRepository.findBySubjectId(subjectId, pageable);
+        } else {
+            exams = examRepository.findAll(pageable);
+        }
+        return exams.map(this::toSummaryResponse);
     }
 
     // ---------- GET ----------

@@ -6,8 +6,6 @@ import com.vsatcompass.api.entity.enums.ExamStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -27,11 +25,12 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 
     boolean existsByExamCode(String examCode);
 
-    @Query("SELECT e FROM Exam e "
-            + "WHERE (:status IS NULL OR e.status = :status) "
-            + "AND (:subjectId IS NULL OR e.subjectId = :subjectId)")
-    Page<Exam> findAdminList(
-            @Param("status") ExamStatus status,
-            @Param("subjectId") Long subjectId,
+    Page<Exam> findByStatus(ExamStatus status, Pageable pageable);
+
+    Page<Exam> findBySubjectId(Long subjectId, Pageable pageable);
+
+    Page<Exam> findByStatusAndSubjectId(
+            ExamStatus status,
+            Long subjectId,
             Pageable pageable);
 }
