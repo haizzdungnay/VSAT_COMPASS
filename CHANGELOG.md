@@ -2,7 +2,11 @@
 
 ## [Unreleased]
 
-No unreleased changes.
+### Operational
+- Add `SMOKE_AUTH_SKIP_REGISTER=1` no-register mode for `docs/scripts/smoke_auth.sh` to allow repeated production regression runs without hitting the `/auth/register` rate limit (HTTP 429). Skipped TCs (TC-AUTH-7, TC-AUTH-8) are clearly reported and the summary distinguishes passed / failed / skipped.
+- Document Render free-tier post-deploy warm-up behavior for newly deployed endpoints in `docs/DEPLOY_RUNBOOK.md` Known Pitfalls. Future deploy watches must probe both `/actuator/health` and at least one newly deployed endpoint before tagging a release.
+- Document curl JSON quoting pitfall in `docs/DEPLOY_RUNBOOK.md` Known Pitfalls — malformed JSON request bodies during manual probes can produce `HttpMessageNotReadableException`, which must not be confused with an auth/credential failure.
+- Track deferred local JDK / Pleiades stash cleanup as operational debt in `task.md` (two preserved stashes from Batch 2b and Phase C1.2a; cleanup awaits explicit user decision).
 
 ## [0.9.1] - 2026-05-05 — Phase C1.2a: Exam Read-Only Public API
 
