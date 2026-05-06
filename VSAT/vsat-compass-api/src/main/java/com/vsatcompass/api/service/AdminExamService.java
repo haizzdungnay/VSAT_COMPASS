@@ -8,6 +8,8 @@ import com.vsatcompass.api.entity.enums.ExamStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+
 public interface AdminExamService {
 
     Page<AdminExamSummaryResponse> listAdminExams(
@@ -20,4 +22,22 @@ public interface AdminExamService {
     AdminExamResponse createExam(Long currentUserId, AdminExamCreateRequest request);
 
     AdminExamResponse updateExam(Long id, AdminExamUpdateRequest request);
+
+    AdminExamResponse addQuestion(Long examId, Long questionId);
+
+    AdminExamResponse removeQuestion(Long examId, Long questionId);
+
+    AdminExamResponse reorderQuestions(Long examId, List<Long> questionIds);
+
+    AdminExamResponse submitReview(Long examId);
+
+    AdminExamResponse publish(Long currentUserId, Long examId);
+
+    AdminExamResponse hide(Long examId);
+
+    AdminExamResponse archive(Long examId);
+
+    AdminExamResponse rejectReview(Long examId);
+
+    AdminExamResponse returnToDraft(Long examId);
 }

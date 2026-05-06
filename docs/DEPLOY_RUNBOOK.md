@@ -264,6 +264,7 @@ git push --force origin main
 - Future deploy watches must probe **both**:
   1. `/api/v1/actuator/health`
   2. At least one newly deployed endpoint (e.g. `/api/v1/exams` for v0.9.1)
+- For C1.2b-2 post-deploy, include warm-up probes for every new admin exam composition/workflow endpoint: add/remove/reorder, submit-review, publish, hide, archive, reject-review, and return-to-draft.
 - Do not tag a release until the new endpoint-specific probe also returns the expected status consistently across the stability window.
 
 ### Curl JSON Quoting on Windows / Bash During Manual Probes

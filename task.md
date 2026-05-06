@@ -580,6 +580,18 @@ Mỗi khi hoàn thành một task:
 - [x] **DEPLOY_RUNBOOK.md — curl JSON quoting pitfall**
   Thêm Known Pitfall: malformed JSON trong manual curl probe có thể trả `HttpMessageNotReadableException` ("Unexpected character ('p'): was expecting double-quote..."). Không hiểu nhầm là sai password — phải confirm body là JSON hợp lệ trước.
 
+- [ ] **Concurrency control for exam workflow/composition deferred**
+  Verify `Exam.version` semantics before enabling JPA `@Version`. Phase C1.2b-2 relies on Postgres READ_COMMITTED + last-write-wins for workflow/composition transitions.
+
+- [ ] **Publish bottleneck: SUPER_ADMIN-only publish**
+  Only `SUPER_ADMIN` can publish exams in Phase C1.2b-2. Ensure at least one active `SUPER_ADMIN` exists before production smoke.
+
+- [ ] **DRAFT cleanup deferred**
+  No DELETE/archive path exists for abandoned `DRAFT` exams in Phase C1.2b-2. DRAFT -> ARCHIVED remains intentionally unsupported.
+
+- [ ] **LOCKED enum defined but unused**
+  `ExamStatus.LOCKED` exists but no current business logic transitions to or from it. Revisit when locking semantics are needed.
+
 - [ ] **Local JDK / Pleiades stash cleanup (deferred)**
   Pleiades / IDE auto-generate Gradle config local làm dirty working tree.
   Sau Batch 2b + C1.2a.2 còn 2 stash JDK preserved:

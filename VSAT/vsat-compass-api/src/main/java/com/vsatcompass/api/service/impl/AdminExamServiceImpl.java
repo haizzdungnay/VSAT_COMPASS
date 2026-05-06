@@ -5,12 +5,16 @@ import com.vsatcompass.api.dto.request.AdminExamUpdateRequest;
 import com.vsatcompass.api.dto.response.AdminExamResponse;
 import com.vsatcompass.api.dto.response.AdminExamSummaryResponse;
 import com.vsatcompass.api.entity.Exam;
+import com.vsatcompass.api.entity.ExamQuestion;
+import com.vsatcompass.api.entity.Question;
 import com.vsatcompass.api.entity.Subject;
 import com.vsatcompass.api.entity.enums.ExamPricingType;
 import com.vsatcompass.api.entity.enums.ExamStatus;
+import com.vsatcompass.api.entity.enums.QuestionStatus;
 import com.vsatcompass.api.exception.AppException;
 import com.vsatcompass.api.repository.ExamQuestionRepository;
 import com.vsatcompass.api.repository.ExamRepository;
+import com.vsatcompass.api.repository.QuestionRepository;
 import com.vsatcompass.api.repository.SubjectRepository;
 import com.vsatcompass.api.service.AdminExamService;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +26,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 @Slf4j
@@ -35,6 +45,7 @@ public class AdminExamServiceImpl implements AdminExamService {
 
     private final ExamRepository examRepository;
     private final ExamQuestionRepository examQuestionRepository;
+    private final QuestionRepository questionRepository;
     private final SubjectRepository subjectRepository;
 
     // ---------- LIST ----------
@@ -145,7 +156,162 @@ public class AdminExamServiceImpl implements AdminExamService {
         return toAdminResponse(saved);
     }
 
+    // ---------- COMPOSITION ----------
+    @Override
+    @Transactional
+    public AdminExamResponse addQuestion(Long examId, Long questionId) {
+        Exam exam = loadExam(examId);
+        requireDraftCompositionState(exam, "add questions to");
+
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> AppException.notFound("Question", questionId));
+        validateComposableQuestion(question);
+
+        if (examQuestionRepository.existsByExamIdAndQuestionId(examId, questionId)) {
+            throw AppException.conflict(
+                    "Question " + questionId + " already exists in exam " + examId);
+        }
+
+        Integer maxOrder = examQuestionRepository.findMaxQuestionOrderByExamId(examId);
+        examQuestionRepository.save(ExamQuestion.builder()
+                .examId(examId)
+                .questionId(questionId)
+                .questionOrder((maxOrder == null ? 0 : maxOrder) + 1)
+                .build());
+
+        syncQuestionCount(exam);
+        Exam saved = examRepository.save(exam);
+        log.info("Admin exam question added examId={} questionId={}", examId, questionId);
+        return toAdminResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public AdminExamResponse removeQuestion(Long examId, Long questionId) {
+        Exam exam = loadExam(examId);
+        requireDraftCompositionState(exam, "remove questions from");
+
+        int deleted = examQuestionRepository.deleteByExamIdAndQuestionId(examId, questionId);
+        if (deleted == 0) {
+            throw AppException.notFound("ExamQuestion",
+                    "examId=" + examId + ", questionId=" + questionId);
+        }
+
+        syncQuestionCount(exam);
+        Exam saved = examRepository.save(exam);
+        log.info("Admin exam question removed examId={} questionId={}", examId, questionId);
+        return toAdminResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public AdminExamResponse reorderQuestions(Long examId, List<Long> questionIds) {
+        Exam exam = loadExam(examId);
+        requireDraftCompositionState(exam, "reorder questions in");
+
+        List<ExamQuestion> currentMappings =
+                examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(examId);
+        validateReorderRequest(questionIds, currentMappings);
+
+        examQuestionRepository.moveQuestionOrdersToTemporaryNegativeRange(examId);
+        for (int i = 0; i < questionIds.size(); i++) {
+            examQuestionRepository.updateQuestionOrder(examId, questionIds.get(i), i + 1);
+        }
+
+        log.info("Admin exam questions reordered examId={} count={}", examId, questionIds.size());
+        return toAdminResponse(exam);
+    }
+
+    // ---------- WORKFLOW ----------
+    @Override
+    @Transactional
+    public AdminExamResponse submitReview(Long examId) {
+        Exam exam = loadExam(examId);
+        requireStatus(exam, ExamStatus.DRAFT, "submit exam for review");
+
+        exam.setStatus(ExamStatus.PENDING_REVIEW);
+        Exam saved = examRepository.save(exam);
+        log.info("Admin exam submitted for review examId={}", examId);
+        return toAdminResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public AdminExamResponse publish(Long currentUserId, Long examId) {
+        Exam exam = loadExam(examId);
+        if (exam.getStatus() != ExamStatus.PENDING_REVIEW
+                && exam.getStatus() != ExamStatus.HIDDEN) {
+            throw invalidState("Cannot publish exam in status " + exam.getStatus()
+                    + ". Only PENDING_REVIEW or HIDDEN exams can be published.");
+        }
+
+        validatePublishReadiness(exam);
+
+        exam.setStatus(ExamStatus.PUBLISHED);
+        exam.setReviewedBy(currentUserId);
+        exam.setPublishDate(OffsetDateTime.now(ZoneOffset.UTC));
+        Exam saved = examRepository.save(exam);
+        log.info("Admin exam published examId={} reviewer={}", examId, currentUserId);
+        return toAdminResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public AdminExamResponse hide(Long examId) {
+        Exam exam = loadExam(examId);
+        requireStatus(exam, ExamStatus.PUBLISHED, "hide exam");
+
+        exam.setStatus(ExamStatus.HIDDEN);
+        Exam saved = examRepository.save(exam);
+        log.info("Admin exam hidden examId={}", examId);
+        return toAdminResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public AdminExamResponse archive(Long examId) {
+        Exam exam = loadExam(examId);
+        if (exam.getStatus() != ExamStatus.PUBLISHED && exam.getStatus() != ExamStatus.HIDDEN) {
+            throw invalidState("Cannot archive exam in status " + exam.getStatus()
+                    + ". Only PUBLISHED or HIDDEN exams can be archived.");
+        }
+
+        exam.setStatus(ExamStatus.ARCHIVED);
+        Exam saved = examRepository.save(exam);
+        log.info("Admin exam archived examId={}", examId);
+        return toAdminResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public AdminExamResponse rejectReview(Long examId) {
+        Exam exam = loadExam(examId);
+        requireStatus(exam, ExamStatus.PENDING_REVIEW, "reject exam review");
+
+        exam.setStatus(ExamStatus.DRAFT);
+        Exam saved = examRepository.save(exam);
+        log.info("Admin exam review rejected examId={}", examId);
+        return toAdminResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public AdminExamResponse returnToDraft(Long examId) {
+        Exam exam = loadExam(examId);
+        requireStatus(exam, ExamStatus.HIDDEN, "return exam to draft");
+
+        exam.setStatus(ExamStatus.DRAFT);
+        Exam saved = examRepository.save(exam);
+        log.info("Admin exam returned to draft examId={}", examId);
+        return toAdminResponse(saved);
+    }
+
     // ---------- HELPERS ----------
+    private Exam loadExam(Long examId) {
+        return examRepository.findById(examId)
+                .orElseThrow(() -> AppException.notFound("Exam", examId));
+    }
+
     private void validateExamCode(String examCode) {
         if (examCode == null || !EXAM_CODE_PATTERN.matcher(examCode).matches()) {
             throw AppException.validationFailed(
@@ -164,6 +330,18 @@ public class AdminExamServiceImpl implements AdminExamService {
         }
     }
 
+    private void validatePublishPricing(Exam exam) {
+        if (exam.getPricingType() != ExamPricingType.FREE) {
+            throw AppException.validationFailed(
+                    "Only FREE pricingType is allowed for publish, got " + exam.getPricingType());
+        }
+        if (exam.getPrice() == null || exam.getPrice().compareTo(BigDecimal.ZERO) != 0) {
+            String price = exam.getPrice() == null ? "null" : exam.getPrice().toPlainString();
+            throw AppException.validationFailed(
+                    "Only price=0 is allowed for publish, got " + price);
+        }
+    }
+
     private Subject loadActiveSubject(Long subjectId) {
         Subject subject = subjectRepository.findById(subjectId)
                 .orElseThrow(() -> AppException.notFound("Subject", subjectId));
@@ -172,6 +350,86 @@ public class AdminExamServiceImpl implements AdminExamService {
                     "Subject " + subjectId + " is not active");
         }
         return subject;
+    }
+
+    private void validateComposableQuestion(Question question) {
+        if (!isComposableQuestionStatus(question.getStatus())) {
+            throw AppException.validationFailed(
+                    "Question " + question.getId()
+                            + " must be APPROVED or PUBLISHED before it can be added to an exam.");
+        }
+    }
+
+    private void validatePublishReadiness(Exam exam) {
+        long actualCount = examQuestionRepository.countByExamId(exam.getId());
+        if (actualCount < 1) {
+            throw invalidState("Cannot publish exam without at least one question.");
+        }
+        if (exam.getQuestionCount() == null || exam.getQuestionCount().longValue() != actualCount) {
+            throw invalidState("Cannot publish exam because question_count="
+                    + exam.getQuestionCount() + " but actual exam_questions count=" + actualCount);
+        }
+
+        List<ExamQuestion> mappings =
+                examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(exam.getId());
+        List<Long> questionIds = mappings.stream()
+                .map(ExamQuestion::getQuestionId)
+                .toList();
+        List<Question> questions = questionRepository.findAllById(questionIds);
+        if (questions.size() != questionIds.size()
+                || questions.stream().anyMatch(q -> !isComposableQuestionStatus(q.getStatus()))) {
+            throw AppException.validationFailed(
+                    "All exam questions must be APPROVED or PUBLISHED before publish.");
+        }
+
+        validatePublishPricing(exam);
+    }
+
+    private void validateReorderRequest(List<Long> requestedQuestionIds, List<ExamQuestion> currentMappings) {
+        if (requestedQuestionIds == null || requestedQuestionIds.isEmpty()) {
+            throw AppException.validationFailed("questionIds must contain the current exam questions in order.");
+        }
+        if (requestedQuestionIds.stream().anyMatch(id -> id == null)) {
+            throw AppException.validationFailed("questionIds must not contain null values.");
+        }
+
+        Set<Long> requestedSet = new HashSet<>(requestedQuestionIds);
+        if (requestedSet.size() != requestedQuestionIds.size()) {
+            throw AppException.validationFailed("questionIds must not contain duplicate IDs.");
+        }
+
+        Set<Long> currentSet = new HashSet<>(
+                currentMappings.stream().map(ExamQuestion::getQuestionId).toList());
+        if (!requestedSet.equals(currentSet)) {
+            throw AppException.validationFailed(
+                    "questionIds must contain every current exam question exactly once, with no extras.");
+        }
+    }
+
+    private void syncQuestionCount(Exam exam) {
+        exam.setQuestionCount(Math.toIntExact(examQuestionRepository.countByExamId(exam.getId())));
+    }
+
+    private void requireDraftCompositionState(Exam exam, String action) {
+        if (exam.getStatus() != ExamStatus.DRAFT) {
+            throw invalidState("Cannot " + action + " exam in status " + exam.getStatus()
+                    + ". Only DRAFT exams allow composition changes.");
+        }
+    }
+
+    private void requireStatus(Exam exam, ExamStatus requiredStatus, String action) {
+        if (exam.getStatus() != requiredStatus) {
+            throw invalidState("Cannot " + action + " in status " + exam.getStatus()
+                    + ". Required status is " + requiredStatus + ".");
+        }
+    }
+
+    private static AppException invalidState(String message) {
+        return new AppException(HttpStatus.CONFLICT, "INVALID_STATE", message);
+    }
+
+    private static boolean isComposableQuestionStatus(QuestionStatus status) {
+        return EnumSet.of(QuestionStatus.APPROVED, QuestionStatus.PUBLISHED).contains(status);
     }
 
     private static boolean isMetadataEditable(ExamStatus status) {
