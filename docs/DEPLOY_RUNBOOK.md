@@ -260,11 +260,14 @@ git push --force origin main
 
 **Observed example:** During the v0.9.1 deploy watch, `/actuator/health` returned `200` shortly after deploy, but `GET /api/v1/exams` initially returned `500` before stabilizing to `200` after a short warm-up window. The endpoint then stayed healthy for the full 5-minute stability watch.
 
+**Probable deploy-readiness timing example:** A prior C1.2c.1 smoke run saw `DELETE /admin/exams/{id}` return `500` before Render finished serving the new build consistently. A later retry passed without code changes, and the v0.9.4 release smoke passed all scripts before tagging.
+
 **Solution:**
 - Future deploy watches must probe **both**:
   1. `/api/v1/actuator/health`
   2. At least one newly deployed endpoint (e.g. `/api/v1/exams` for v0.9.1)
 - For C1.2b-2 post-deploy, include warm-up probes for every new admin exam composition/workflow endpoint: add/remove/reorder, submit-review, publish, hide, archive, reject-review, and return-to-draft.
+- For C1.2c-1 and later admin endpoint releases, include the newly added admin endpoint in the stability window or production smoke before tagging.
 - Do not tag a release until the new endpoint-specific probe also returns the expected status consistently across the stability window.
 
 ### Curl JSON Quoting on Windows / Bash During Manual Probes

@@ -1,6 +1,6 @@
 # V-SAT Compass — Task Tracker & Roadmap
 
-> Cập nhật: 2026-05-06 | Phiên bản hiện tại: **v0.9.3** (Phase C1.2b-2 Exam Composition + Publish Workflow live in production)
+> Cập nhật: 2026-05-06 | Phiên bản hiện tại: **v0.9.4** (Phase C1.2c.1 Admin Exam DRAFT Discard live in production)
 
 Tài liệu này tổng hợp lộ trình hoàn thiện app dựa trên:
 - `VSAT/ui/tong_hop_du_an_vsat_android_web_v2.txt`
@@ -22,7 +22,7 @@ Mục tiêu cuối:
 |-----------|------------|------------|
 | A — Student MVP | ✅ XONG | 100% |
 | B — Backend Production | ✅ XONG | 100% (2026-04-25) |
-| C — Content Management | 🟡 IN PROGRESS | C1.0 + C1.1a + C1.1b + C1.2a + C1.2b-1 + C1.2b-2 done in prod |
+| C — Content Management | 🟡 IN PROGRESS | C1.0 + C1.1a + C1.1b + C1.2a + C1.2b-1 + C1.2b-2 + C1.2c-1 done in prod |
 | D — Admin & Operations | 🔜 Tương lai | — |
 | E — Chất lượng sản phẩm | 🔜 Tương lai | — |
 
@@ -68,13 +68,14 @@ Mục tiêu cuối:
 - [x] Phase C1.2a — Exam read-only foundation (entities, repo, service, 2 public endpoints, 12 Mockito tests, idempotent smoke seed) live in production and tagged v0.9.1 (2026-05-05). Production smoke PASS: exams 10/10 + regression scripts PASS.
 - [x] Phase C1.2b-1 — Admin Exam CRUD foundation (metadata-only create/list/detail/update, DRAFT/HIDDEN edit only, FREE+price=0 only) live in production and tagged v0.9.2 (2026-05-05). Production smoke PASS: admin exams 10/10 + auth no-register 7/0/2 + subjects 4/4 + sessions 5/5 + questions 32/32 + exams 10/10.
 - [x] Phase C1.2b-2 — Exam composition + publish workflow (add/remove/reorder questions, submit-review, publish, hide, archive, reject-review, return-to-draft) live in production and tagged v0.9.3 (2026-05-06). Production smoke PASS: admin exam composition 17/0/0/0 + admin exams 10/10 + auth no-register 7/0/2 + subjects 4/4 + sessions 5/5 + questions 32/32 + exams 10/10.
+- [x] Phase C1.2c-1 — Admin Exam DRAFT Discard (`DELETE /admin/exams/{examId}`) live in production and tagged v0.9.4 (2026-05-06). Production smoke PASS: admin exams 12/12 including create-own-DRAFT -> discard -> GET 404; all 7 smoke scripts passed.
 
 ### 2.2 Chưa hoàn chỉnh
 
 - [x] ~~Backend public production thực sự ổn định~~ — xong v0.8.0
 - [x] ~~Student history / analytics thật sự dùng được end-to-end~~ — xong v0.7.0/0.7.1
 - [x] ~~Review lời giải chi tiết sau bài thi~~ — xong v0.7.0
-- [ ] Quản trị câu hỏi / duyệt nội dung / tạo đề hoàn chỉnh (Phase C) — backend Question CRUD + review workflow đã xong ở C1.1b; backend exam composition/publication đã xong ở C1.2b-2; Android/admin UI còn lại.
+- [ ] Quản trị câu hỏi / duyệt nội dung / tạo đề hoàn chỉnh (Phase C) — backend Question CRUD + review workflow đã xong ở C1.1b; backend exam composition/publication đã xong ở C1.2b-2; DRAFT discard backend đã xong ở C1.2c-1; Android/admin UI còn lại.
 - [ ] Cộng tác viên nhập và chỉnh sửa câu hỏi hoàn chỉnh (Phase C) — backend API đã xong ở C1.1b; Android/admin UI còn lại.
 - [ ] Ticket lỗi / phản hồi nội dung (Phase D)
 - [ ] User management / role management đủ dùng (Phase D)
@@ -364,6 +365,7 @@ Tiêu chí xong:
 | C2.3 | Admin exam workflow endpoints (submit-review/publish/hide/archive/reject/return-to-draft) | ✅ Done in production (2026-05-06, v0.9.3, C1.2b-2) |
 | C2.4 | GET /exams (public list — Android dùng) | ✅ Done in production (2026-05-05, v0.9.1) |
 | C2.5 | GET /exams/{id} (public detail) | ✅ Done in production (2026-05-05, v0.9.1) |
+| C2.6 | DELETE /admin/exams/{examId} (DRAFT discard) | ✅ Done in production (2026-05-06, v0.9.4, C1.2c-1) |
 
 ### C1.2b — Admin Exam Management (split)
 
@@ -381,6 +383,15 @@ C1.2b backend scope is production released as of v0.9.3:
 - paid/package pricing remains deferred
 
 C1.2b production closeout completed after tag `v0.9.3`; Android/admin UI integration remains deferred.
+
+### C1.2c — Admin Exam Ops
+
+| Sub-phase | Scope | Trạng thái |
+|-----------|-------|------------|
+| **C1.2c-1** | Admin Exam DRAFT Discard: `DELETE /admin/exams/{examId}` hard-deletes DRAFT exams only, rejects non-DRAFT with `409 INVALID_STATE`, returns `404 RESOURCE_NOT_FOUND` for missing exams, and keeps `CONTENT_ADMIN` / `SUPER_ADMIN` authorization. No schema, enum, migration, or `SecurityConfig` change. | ✅ Done in production (2026-05-06, v0.9.4) — production stability 5/5 PASS; all 7 smoke scripts PASS; `smoke_admin_exams.sh` 12/12 PASS including DRAFT discard. |
+| **C1.2c-2** | Docs closeout after `v0.9.4`: release notes, task tracker, DRAFT cleanup design note, smoke checklist, and operational docs. Closeout commit is intentionally after the release tag and untagged. | ✅ Done (2026-05-06) — docs-only closeout; `v0.9.4` remains tagged at release commit `c4c2993deba664883132edf043401e41ffdbca61`. |
+
+Audit logging for draft discard remains deferred because no reusable production audit service/repository pattern exists yet. LOCKED semantics and `Exam.version` optimistic-locking behavior remain design-only/deferred.
 
 - [x] Gửi duyệt câu hỏi (backend API C1.1b)
 - [x] Duyệt / từ chối / yêu cầu chỉnh sửa (backend API C1.1b)
@@ -586,8 +597,11 @@ Mỗi khi hoàn thành một task:
   Documented the exam-family smoke scripts' `jq`-unavailable fallback contract in `docs/DEPLOY_RUNBOOK.md` ("Smoke Script jq Fallback") and `docs/SMOKE_CHECKLIST.md` runner prerequisites; codifies `EXAM_ID=<seeded-public-exam-id>` as the required override for `VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh` (production v0.9.3 used `EXAM_ID=2`).
   Follow-up completed script-level hardening for `VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh`: runnable-`jq` detection, optional-env header docs, `EXAM_ID` override logging, and actionable no-`jq` fallback messaging. Added deferred design notes for DRAFT cleanup, LOCKED semantics, and Exam.version. No backend source / schema / tag changes.
 
-- [ ] **Phase C1.2c-1 — Admin Exam DRAFT Discard (release pending)**
-  Implement `DELETE /admin/exams/{examId}` for DRAFT-only hard delete using existing admin authorization. Non-DRAFT statuses return `409 INVALID_STATE`; missing exams return `404 RESOURCE_NOT_FOUND`. No schema / enum / SecurityConfig changes. `docs/scripts/smoke_admin_exams.sh` now covers create-own-DRAFT -> discard -> GET 404. Release/tag `v0.9.4` remains pending approved merge and production smoke.
+- [x] **Phase C1.2c-1 — Admin Exam DRAFT Discard (2026-05-06, v0.9.4)**
+  Implemented `DELETE /admin/exams/{examId}` for DRAFT-only hard delete using existing admin authorization. Non-DRAFT statuses return `409 INVALID_STATE`; missing exams return `404 RESOURCE_NOT_FOUND`. No schema / enum / SecurityConfig changes. `docs/scripts/smoke_admin_exams.sh` covers create-own-DRAFT -> discard -> GET 404 and passed 12/12 in production. Tagged `v0.9.4` at `c4c2993deba664883132edf043401e41ffdbca61` after production stability 5/5 and all 7 smoke scripts passed. No code hotfix was committed; the earlier DELETE 500 was treated as probable deploy-readiness timing after retry passed without code changes.
+
+- [x] **Phase C1.2c-2 — Docs closeout after v0.9.4 (2026-05-06)**
+  Docs-only closeout records the `v0.9.4` release, updates the DRAFT cleanup design note to implemented-for-backend status, updates smoke checklist/admin exam discard notes, and keeps the closeout commit intentionally untagged after the release tag.
 
 - [ ] **Concurrency control for exam workflow/composition deferred**
   Verify `Exam.version` semantics before enabling JPA `@Version`. Phase C1.2b-2 relies on Postgres READ_COMMITTED + last-write-wins for workflow/composition transitions.
@@ -596,9 +610,9 @@ Mỗi khi hoàn thành một task:
 - [ ] **Publish bottleneck: SUPER_ADMIN-only publish**
   Only `SUPER_ADMIN` can publish exams in Phase C1.2b-2. Ensure at least one active `SUPER_ADMIN` exists before production smoke.
 
-- [ ] **DRAFT cleanup deferred**
-  No DELETE/archive path exists for abandoned `DRAFT` exams in Phase C1.2b-2. DRAFT -> ARCHIVED remains intentionally unsupported.
-  Design note added: `docs/design/DESIGN_DRAFT_CLEANUP.md`. Implementation remains deferred.
+- [x] **DRAFT cleanup implemented for backend DRAFT hard delete**
+  `DELETE /admin/exams/{examId}` now hard-deletes only `DRAFT` exams in C1.2c-1 / `v0.9.4`. DRAFT -> ARCHIVED remains unsupported; cleanup is not overloaded onto archive semantics. Audit logging and frontend confirmation UX remain deferred.
+  Design note updated: `docs/design/DESIGN_DRAFT_CLEANUP.md`.
 
 - [ ] **LOCKED enum defined but unused**
   `ExamStatus.LOCKED` exists but no current business logic transitions to or from it. Revisit when locking semantics are needed.

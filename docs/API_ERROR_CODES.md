@@ -81,11 +81,19 @@ Tất cả response từ API đều tuân theo cấu trúc sau:
 | `BAD_REQUEST` | 400 | Yêu cầu không hợp lệ | Logic lỗi (ví dụ: mode không hợp lệ, correctCount > totalQuestions) |
 | `DATA_INTEGRITY_VIOLATION` | 400 | Vi phạm ràng buộc database | FK không tồn tại (examId chưa có trong DB), vi phạm NOT NULL hoặc UNIQUE |
 
+### State / Workflow Errors
+
+| Code | HTTP Status | Ý nghĩa | Khi nào xảy ra |
+|------|------------|----------|-----------------|
+| `INVALID_STATE` | 409 | Trạng thái hiện tại không cho phép thao tác | Ví dụ: `DELETE /admin/exams/{examId}` chỉ cho phép exam `DRAFT`; các trạng thái `COMPOSING`, `PENDING_REVIEW`, `PUBLISHED`, `HIDDEN`, `ARCHIVED`, hoặc `LOCKED` bị từ chối |
+
 ### Resource Errors
 
 | Code | HTTP Status | Ý nghĩa | Khi nào xảy ra |
 |------|------------|----------|-----------------|
 | `RESOURCE_NOT_FOUND` | 404 | Không tìm thấy | Entity không tồn tại với ID đã cho |
+
+Admin exam discard uses `RESOURCE_NOT_FOUND` when `DELETE /admin/exams/{examId}` or the follow-up admin `GET` targets an exam id that no longer exists.
 
 ### Rate Limiting
 

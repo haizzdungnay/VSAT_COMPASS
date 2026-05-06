@@ -414,7 +414,7 @@
 
 ---
 
-# Backend Smoke Scripts (v0.9.3)
+# Backend Smoke Scripts (v0.9.4)
 
 Run these production smoke scripts before release tagging:
 
@@ -426,7 +426,13 @@ Run these production smoke scripts before release tagging:
 - `EXAM_ID=2 bash VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh` — expected 10/10 PASS.
 - `bash docs/scripts/smoke_admin_exam_composition.sh` — expected 17 PASS / 0 FAIL / 0 SKIP / 0 BLOCKED when production has at least three APPROVED/PUBLISHED question fixtures.
 
-Production-verified for v0.9.3 on 2026-05-06:
+`smoke_admin_exams.sh` DRAFT discard safety contract:
+- The script creates its own DRAFT exam for the discard check.
+- It calls `DELETE /admin/exams/{id}` only for that smoke-created DRAFT exam.
+- It verifies the follow-up `GET /admin/exams/{id}` returns `404 RESOURCE_NOT_FOUND`.
+- It must not delete any pre-existing production exam.
+
+Production-verified for v0.9.4 on 2026-05-06:
 
 | Script | Result |
 |--------|--------|
@@ -435,19 +441,19 @@ Production-verified for v0.9.3 on 2026-05-06:
 | `smoke_sessions.sh` | 5/5 PASS |
 | `smoke_questions.sh` | 32/32 PASS |
 | `smoke_exams.sh` | 10/10 PASS |
-| `smoke_admin_exams.sh` | 10/10 PASS |
+| `smoke_admin_exams.sh` | 12/12 PASS, including DRAFT discard |
 | `smoke_admin_exam_composition.sh` | 17 pass / 0 fail / 0 skip / 0 blocked |
 
-v0.9.3 deploy verification also passed warm-up and stability probes:
+v0.9.4 deploy verification also passed warm-up and stability probes:
 
 - `/actuator/health`: 200.
 - `/exams`: 200.
 - authenticated `/admin/exams`: 200.
-- Stability watch: 10/10 rounds all 200.
+- Stability watch: 5/5 rounds all 200.
 
 Additional C1.2b-2 regression script:
 
-- `SMOKE_QUESTION_IDS="1,2,3" bash docs/scripts/smoke_admin_exam_composition.sh` - covers admin exam composition, workflow, public visibility, republish audit overwrite, and ARCHIVED rejection. The script attempts to auto-discover APPROVED/PUBLISHED question IDs and exits BLOCKED instead of false FAIL when fixtures are missing. Production PASS for v0.9.3: 17 pass / 0 fail / 0 skip / 0 blocked.
+- `SMOKE_QUESTION_IDS="1,2,3" bash docs/scripts/smoke_admin_exam_composition.sh` - covers admin exam composition, workflow, public visibility, republish audit overwrite, and ARCHIVED rejection. The script attempts to auto-discover APPROVED/PUBLISHED question IDs and exits BLOCKED instead of false FAIL when fixtures are missing. Production PASS for v0.9.4: 17 pass / 0 fail / 0 skip / 0 blocked.
 
 ### Runner prerequisites (Phase C1.2b-3)
 
