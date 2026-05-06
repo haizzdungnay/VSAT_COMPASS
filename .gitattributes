@@ -1,1 +1,6 @@
-docs/scripts/smoke_admin_exam_composition.sh text eol=lf
+# Shell scripts must always be checked out with LF line endings.
+# Bash refuses CRLF on `set -uo pipefail`, here-docs, and continuation
+# backslashes, which broke smoke runs on Windows checkouts during
+# v0.9.3 closeout. Apply globally so any future script under
+# docs/scripts/ or VSAT/**/docs/scripts/ inherits the rule.
+*.sh text eol=lf

@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Phase C1.2b-3 — Exam Ops Cleanup
+
+#### Operational
+- Generalized `.gitattributes` to enforce LF line endings repo-wide for `*.sh`, replacing the single-file `docs/scripts/smoke_admin_exam_composition.sh` rule introduced as a hotfix in `6c2b8fc`. All current and future shell scripts under `docs/scripts/` and `VSAT/**/docs/scripts/` now check out LF on Windows without manual conversion. Closes the `smoke_auth.sh` CRLF follow-up flagged in `docs/DEPLOY_RUNBOOK.md` Smoke Script Runner Notes.
+- Renormalized tracked shell scripts under `docs/scripts/` to LF (`git add --renormalize`); only working-tree EOLs change — script bodies are unchanged.
+- Documented the `jq`-unavailable fallback contract for the exam-family smoke scripts (`smoke_admin_exams.sh`, `smoke_admin_exam_composition.sh`, and `VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh`) in `docs/DEPLOY_RUNBOOK.md` ("Smoke Script jq Fallback") and surfaced the prerequisites in `docs/SMOKE_CHECKLIST.md`. Notes that `EXAM_ID=<seeded-public-exam-id>` is the required override for `smoke_exams.sh` when `jq` is missing (production v0.9.3 used `EXAM_ID=2`).
+- No backend source code changes (`src/main/**` untouched); no schema, build, or release-tag activity.
+
 ## [0.9.3] - 2026-05-06 - Phase C1.2b-2: Exam Composition + Publish Workflow
 
 ### Added

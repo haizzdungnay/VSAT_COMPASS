@@ -581,6 +581,10 @@ Mỗi khi hoàn thành một task:
 - [x] **DEPLOY_RUNBOOK.md — curl JSON quoting pitfall**
   Thêm Known Pitfall: malformed JSON trong manual curl probe có thể trả `HttpMessageNotReadableException` ("Unexpected character ('p'): was expecting double-quote..."). Không hiểu nhầm là sai password — phải confirm body là JSON hợp lệ trước.
 
+- [x] **Phase C1.2b-3 — Exam Ops Cleanup (2026-05-06)**
+  Repo-wide LF normalization for `*.sh` via `.gitattributes` (replaces the single-file `smoke_admin_exam_composition.sh` rule from `6c2b8fc`); resolves the `smoke_auth.sh` CRLF follow-up flagged in `docs/DEPLOY_RUNBOOK.md` Smoke Script Runner Notes.
+  Documented the exam-family smoke scripts' `jq`-unavailable fallback contract in `docs/DEPLOY_RUNBOOK.md` ("Smoke Script jq Fallback") and `docs/SMOKE_CHECKLIST.md` runner prerequisites; codifies `EXAM_ID=<seeded-public-exam-id>` as the required override for `VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh` (production v0.9.3 used `EXAM_ID=2`). No backend source / schema / tag changes.
+
 - [ ] **Concurrency control for exam workflow/composition deferred**
   Verify `Exam.version` semantics before enabling JPA `@Version`. Phase C1.2b-2 relies on Postgres READ_COMMITTED + last-write-wins for workflow/composition transitions.
 

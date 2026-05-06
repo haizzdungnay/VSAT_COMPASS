@@ -448,3 +448,12 @@ v0.9.3 deploy verification also passed warm-up and stability probes:
 Additional C1.2b-2 regression script:
 
 - `SMOKE_QUESTION_IDS="1,2,3" bash docs/scripts/smoke_admin_exam_composition.sh` - covers admin exam composition, workflow, public visibility, republish audit overwrite, and ARCHIVED rejection. The script attempts to auto-discover APPROVED/PUBLISHED question IDs and exits BLOCKED instead of false FAIL when fixtures are missing. Production PASS for v0.9.3: 17 pass / 0 fail / 0 skip / 0 blocked.
+
+### Runner prerequisites (Phase C1.2b-3)
+
+- **Line endings:** all scripts under `docs/scripts/*.sh` are pinned to LF via `.gitattributes` (`*.sh text eol=lf`). Fresh clones on Windows check out LF without manual conversion.
+- **`jq` (recommended):** all exam-family scripts auto-detect `jq` and fall back to `grep`/`sed` JSON parsing when missing. The runner header reports `JSON parser: jq` vs. `JSON parser: grep fallback`.
+- **No-`jq` fallback contract** (see `docs/DEPLOY_RUNBOOK.md` → "Smoke Script jq Fallback" for full detail):
+  - `smoke_admin_exams.sh` — self-discovers subject id; no env override required.
+  - `smoke_admin_exam_composition.sh` — set `SMOKE_QUESTION_IDS="<id1>,<id2>,<id3>"` if three APPROVED/PUBLISHED fixtures cannot be auto-resolved.
+  - `VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh` — set `EXAM_ID=<seeded-public-exam-id>` explicitly (the grep fallback cannot reliably pick the smoke exam from a paginated `/exams` response). Production v0.9.3 used `EXAM_ID=2`.
