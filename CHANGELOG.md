@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### Phase C1.2c-1 — Admin Exam DRAFT Discard
+
+#### Added
+- Added `DELETE /admin/exams/{examId}` for admin DRAFT discard. DRAFT exams are hard-deleted; non-DRAFT statuses return `409 INVALID_STATE`; missing exams return `404 RESOURCE_NOT_FOUND`.
+- Authorization follows existing admin exam rules: `CONTENT_ADMIN` and `SUPER_ADMIN` are allowed, anonymous requests remain unauthorized, and `STUDENT` remains forbidden.
+- Extended `docs/scripts/smoke_admin_exams.sh` to create its own DRAFT exam, discard it, and verify the deleted exam returns `404 RESOURCE_NOT_FOUND`.
+
+#### Notes
+- No schema, migration, enum, dependency, `SecurityConfig`, or Render config changes.
+- No audit implementation in this phase; no active production audit service/repository pattern exists to reuse.
+
 ### Phase C1.2b-3 — Exam Ops Cleanup
 
 #### Operational

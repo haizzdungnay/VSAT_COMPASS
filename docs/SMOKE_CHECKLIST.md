@@ -421,7 +421,7 @@ Run these production smoke scripts before release tagging:
 - `SMOKE_AUTH_SKIP_REGISTER=1 bash docs/scripts/smoke_auth.sh` — expected 7 pass / 0 fail / 2 skipped.
 - `bash docs/scripts/smoke_subjects.sh` — expected 4/4 PASS.
 - `bash docs/scripts/smoke_sessions.sh` — expected 5/5 PASS.
-- `SMOKE_ADMIN_PASSWORD=... bash docs/scripts/smoke_admin_exams.sh` — expected 10/10 PASS for C1.2b-1 admin exam metadata CRUD.
+- `SMOKE_ADMIN_PASSWORD=... bash docs/scripts/smoke_admin_exams.sh` — expected 12/12 PASS for admin exam metadata CRUD plus DRAFT discard.
 - `SMOKE_COLLAB1_PASSWORD=... SMOKE_COLLAB2_PASSWORD=... SMOKE_ADMIN_PASSWORD=... bash VSAT/vsat-compass-api/docs/scripts/smoke_questions.sh` — expected 32/32 PASS.
 - `EXAM_ID=2 bash VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh` — expected 10/10 PASS.
 - `bash docs/scripts/smoke_admin_exam_composition.sh` — expected 17 PASS / 0 FAIL / 0 SKIP / 0 BLOCKED when production has at least three APPROVED/PUBLISHED question fixtures.

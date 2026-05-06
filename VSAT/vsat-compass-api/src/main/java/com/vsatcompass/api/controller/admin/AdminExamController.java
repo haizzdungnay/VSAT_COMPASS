@@ -78,6 +78,14 @@ public class AdminExamController {
         return ResponseEntity.ok(ApiResponse.success(result, "C\u1eadp nh\u1eadt \u0111\u1ec1 thi th\u00e0nh c\u00f4ng"));
     }
 
+    @DeleteMapping("/{examId}")
+    @PreAuthorize("hasAnyRole('CONTENT_ADMIN', 'SUPER_ADMIN')")
+    @Operation(summary = "EX-ADM-04b: Discard DRAFT exam")
+    public ResponseEntity<ApiResponse<Void>> discardDraft(@PathVariable Long examId) {
+        adminExamService.discardDraftExam(examId);
+        return ResponseEntity.ok(ApiResponse.<Void>success(null, "Draft exam discarded"));
+    }
+
     @PostMapping("/{examId}/questions")
     @PreAuthorize("hasAnyRole('CONTENT_ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "EX-ADM-05: Add question to DRAFT exam")
