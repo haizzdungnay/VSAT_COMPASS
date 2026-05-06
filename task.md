@@ -586,6 +586,9 @@ Mỗi khi hoàn thành một task:
   Documented the exam-family smoke scripts' `jq`-unavailable fallback contract in `docs/DEPLOY_RUNBOOK.md` ("Smoke Script jq Fallback") and `docs/SMOKE_CHECKLIST.md` runner prerequisites; codifies `EXAM_ID=<seeded-public-exam-id>` as the required override for `VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh` (production v0.9.3 used `EXAM_ID=2`).
   Follow-up completed script-level hardening for `VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh`: runnable-`jq` detection, optional-env header docs, `EXAM_ID` override logging, and actionable no-`jq` fallback messaging. Added deferred design notes for DRAFT cleanup, LOCKED semantics, and Exam.version. No backend source / schema / tag changes.
 
+- [ ] **Phase C1.2c-1 — Admin Exam DRAFT Discard (release pending)**
+  Implement `DELETE /admin/exams/{examId}` for DRAFT-only hard delete using existing admin authorization. Non-DRAFT statuses return `409 INVALID_STATE`; missing exams return `404 RESOURCE_NOT_FOUND`. No schema / enum / SecurityConfig changes. `docs/scripts/smoke_admin_exams.sh` now covers create-own-DRAFT -> discard -> GET 404. Release/tag `v0.9.4` remains pending approved merge and production smoke.
+
 - [ ] **Concurrency control for exam workflow/composition deferred**
   Verify `Exam.version` semantics before enabling JPA `@Version`. Phase C1.2b-2 relies on Postgres READ_COMMITTED + last-write-wins for workflow/composition transitions.
   Design note added: `docs/design/DESIGN_EXAM_VERSION.md`. Implementation remains deferred.
