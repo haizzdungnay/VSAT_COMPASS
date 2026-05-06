@@ -298,13 +298,13 @@ These are smoke-runner issues only; production endpoint verification passed afte
 
 ### Smoke Script jq Fallback
 
-All exam-family smoke scripts (`smoke_admin_exams.sh`, `smoke_admin_exam_composition.sh`, and `VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh`) auto-detect `jq` and fall back to `grep`/`sed` JSON parsing when `jq` is not on `PATH`. The runner header line `JSON parser: jq` vs. `JSON parser: grep fallback` reports which mode is active.
+All exam-family smoke scripts (`smoke_admin_exams.sh`, `smoke_admin_exam_composition.sh`, and `VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh`) auto-detect `jq` and fall back to `grep`/`sed` JSON parsing when `jq` is unavailable. The public exam script validates that `jq` is runnable, not only present on `PATH`. The runner header line `JSON parser: jq` vs. `JSON parser: grep/sed fallback` reports which mode is active.
 
 **Behavior contract when `jq` is unavailable:**
 
 - `smoke_admin_exams.sh` — fully self-discovers: subject id is resolved by scanning the `/subjects` response for `"code":"MATH"`, then the first `"id":` numeric field. No env override needed.
 - `smoke_admin_exam_composition.sh` — same self-discovery for subject id and APPROVED/PUBLISHED question fixtures. If three fixtures cannot be resolved without `jq`, set `SMOKE_QUESTION_IDS="<id1>,<id2>,<id3>"` explicitly. The script exits `BLOCKED` (not `FAIL`) when fixtures are missing.
-- `VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh` — the public exam list is paginated and the grep fallback cannot reliably pick the seeded smoke exam id from the response. **Set `EXAM_ID=<seeded-public-exam-id>` explicitly** when running without `jq`. For v0.9.3 production smoke, this was `EXAM_ID=2`.
+- `VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh` — the public exam list is paginated and the grep/sed fallback cannot reliably pick the seeded smoke exam id from the response. **Set `EXAM_ID=<seeded-public-exam-id>` explicitly** when running without `jq`. The script logs `EXAM_ID` override use and exits with an actionable message if `jq` is unavailable and `EXAM_ID` is missing. For v0.9.3 production smoke, this was `EXAM_ID=2`.
 
 **Recommended invocation when `jq` is missing:**
 

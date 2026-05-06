@@ -583,19 +583,23 @@ Mỗi khi hoàn thành một task:
 
 - [x] **Phase C1.2b-3 — Exam Ops Cleanup (2026-05-06)**
   Repo-wide LF normalization for `*.sh` via `.gitattributes` (replaces the single-file `smoke_admin_exam_composition.sh` rule from `6c2b8fc`); resolves the `smoke_auth.sh` CRLF follow-up flagged in `docs/DEPLOY_RUNBOOK.md` Smoke Script Runner Notes.
-  Documented the exam-family smoke scripts' `jq`-unavailable fallback contract in `docs/DEPLOY_RUNBOOK.md` ("Smoke Script jq Fallback") and `docs/SMOKE_CHECKLIST.md` runner prerequisites; codifies `EXAM_ID=<seeded-public-exam-id>` as the required override for `VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh` (production v0.9.3 used `EXAM_ID=2`). No backend source / schema / tag changes.
+  Documented the exam-family smoke scripts' `jq`-unavailable fallback contract in `docs/DEPLOY_RUNBOOK.md` ("Smoke Script jq Fallback") and `docs/SMOKE_CHECKLIST.md` runner prerequisites; codifies `EXAM_ID=<seeded-public-exam-id>` as the required override for `VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh` (production v0.9.3 used `EXAM_ID=2`).
+  Follow-up completed script-level hardening for `VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh`: runnable-`jq` detection, optional-env header docs, `EXAM_ID` override logging, and actionable no-`jq` fallback messaging. Added deferred design notes for DRAFT cleanup, LOCKED semantics, and Exam.version. No backend source / schema / tag changes.
 
 - [ ] **Concurrency control for exam workflow/composition deferred**
   Verify `Exam.version` semantics before enabling JPA `@Version`. Phase C1.2b-2 relies on Postgres READ_COMMITTED + last-write-wins for workflow/composition transitions.
+  Design note added: `docs/design/DESIGN_EXAM_VERSION.md`. Implementation remains deferred.
 
 - [ ] **Publish bottleneck: SUPER_ADMIN-only publish**
   Only `SUPER_ADMIN` can publish exams in Phase C1.2b-2. Ensure at least one active `SUPER_ADMIN` exists before production smoke.
 
 - [ ] **DRAFT cleanup deferred**
   No DELETE/archive path exists for abandoned `DRAFT` exams in Phase C1.2b-2. DRAFT -> ARCHIVED remains intentionally unsupported.
+  Design note added: `docs/design/DESIGN_DRAFT_CLEANUP.md`. Implementation remains deferred.
 
 - [ ] **LOCKED enum defined but unused**
   `ExamStatus.LOCKED` exists but no current business logic transitions to or from it. Revisit when locking semantics are needed.
+  Design note added: `docs/design/DESIGN_LOCKED_SEMANTICS.md`. Implementation remains deferred.
 
 - [ ] **Local JDK / Pleiades stash cleanup (deferred)**
   Pleiades / IDE auto-generate Gradle config local làm dirty working tree.

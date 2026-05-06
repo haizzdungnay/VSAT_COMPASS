@@ -8,7 +8,9 @@
 - Generalized `.gitattributes` to enforce LF line endings repo-wide for `*.sh`, replacing the single-file `docs/scripts/smoke_admin_exam_composition.sh` rule introduced as a hotfix in `6c2b8fc`. All current and future shell scripts under `docs/scripts/` and `VSAT/**/docs/scripts/` now check out LF on Windows without manual conversion. Closes the `smoke_auth.sh` CRLF follow-up flagged in `docs/DEPLOY_RUNBOOK.md` Smoke Script Runner Notes.
 - Renormalized tracked shell scripts under `docs/scripts/` to LF (`git add --renormalize`); only working-tree EOLs change — script bodies are unchanged.
 - Documented the `jq`-unavailable fallback contract for the exam-family smoke scripts (`smoke_admin_exams.sh`, `smoke_admin_exam_composition.sh`, and `VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh`) in `docs/DEPLOY_RUNBOOK.md` ("Smoke Script jq Fallback") and surfaced the prerequisites in `docs/SMOKE_CHECKLIST.md`. Notes that `EXAM_ID=<seeded-public-exam-id>` is the required override for `smoke_exams.sh` when `jq` is missing (production v0.9.3 used `EXAM_ID=2`).
-- No backend source code changes (`src/main/**` untouched); no schema, build, or release-tag activity.
+- Hardened the real public exam smoke script at `VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh`: validates runnable `jq`, documents optional env vars, logs `EXAM_ID` override use, and fails with an actionable `EXAM_ID=2` fallback instruction when detail checks cannot auto-discover an exam id.
+- Added design notes for deferred DRAFT cleanup, LOCKED semantics, and Exam.version / optimistic-locking choices under `docs/design/`.
+- No Java source changes; no schema changes; no build changes; no tag created.
 
 ## [0.9.3] - 2026-05-06 - Phase C1.2b-2: Exam Composition + Publish Workflow
 
