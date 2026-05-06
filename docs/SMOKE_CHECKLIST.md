@@ -414,7 +414,7 @@
 
 ---
 
-# Backend Smoke Scripts (v0.9.2)
+# Backend Smoke Scripts (v0.9.3)
 
 Run these production smoke scripts before release tagging:
 
@@ -424,18 +424,27 @@ Run these production smoke scripts before release tagging:
 - `SMOKE_ADMIN_PASSWORD=... bash docs/scripts/smoke_admin_exams.sh` — expected 10/10 PASS for C1.2b-1 admin exam metadata CRUD.
 - `SMOKE_COLLAB1_PASSWORD=... SMOKE_COLLAB2_PASSWORD=... SMOKE_ADMIN_PASSWORD=... bash VSAT/vsat-compass-api/docs/scripts/smoke_questions.sh` — expected 32/32 PASS.
 - `EXAM_ID=2 bash VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh` — expected 10/10 PASS.
+- `bash docs/scripts/smoke_admin_exam_composition.sh` — expected 17 PASS / 0 FAIL / 0 SKIP / 0 BLOCKED when production has at least three APPROVED/PUBLISHED question fixtures.
 
-Production-verified for v0.9.2 on 2026-05-05:
+Production-verified for v0.9.3 on 2026-05-06:
 
 | Script | Result |
 |--------|--------|
-| `smoke_admin_exams.sh` | 10/10 PASS |
 | `smoke_auth.sh` no-register | 7 pass / 0 fail / 2 skipped |
 | `smoke_subjects.sh` | 4/4 PASS |
 | `smoke_sessions.sh` | 5/5 PASS |
 | `smoke_questions.sh` | 32/32 PASS |
 | `smoke_exams.sh` | 10/10 PASS |
+| `smoke_admin_exams.sh` | 10/10 PASS |
+| `smoke_admin_exam_composition.sh` | 17 pass / 0 fail / 0 skip / 0 blocked |
+
+v0.9.3 deploy verification also passed warm-up and stability probes:
+
+- `/actuator/health`: 200.
+- `/exams`: 200.
+- authenticated `/admin/exams`: 200.
+- Stability watch: 10/10 rounds all 200.
 
 Additional C1.2b-2 regression script:
 
-- `SMOKE_QUESTION_IDS="1,2,3" bash docs/scripts/smoke_admin_exam_composition.sh` - covers admin exam composition, workflow, public visibility, republish audit overwrite, and ARCHIVED rejection. The script attempts to auto-discover APPROVED/PUBLISHED question IDs and exits BLOCKED instead of false FAIL when fixtures are missing. Not run against production during implementation.
+- `SMOKE_QUESTION_IDS="1,2,3" bash docs/scripts/smoke_admin_exam_composition.sh` - covers admin exam composition, workflow, public visibility, republish audit overwrite, and ARCHIVED rejection. The script attempts to auto-discover APPROVED/PUBLISHED question IDs and exits BLOCKED instead of false FAIL when fixtures are missing. Production PASS for v0.9.3: 17 pass / 0 fail / 0 skip / 0 blocked.

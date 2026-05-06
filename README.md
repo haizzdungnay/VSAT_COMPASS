@@ -169,7 +169,7 @@ http://localhost:8080/api/v1/swagger-ui.html
 
 ## API Modules
 
-> **Trạng thái backend hiện tại (v0.9.2):** Production-ready trên Render.com — Auth + Session sync đã hardened; Subject/Topic/Subtopic read APIs, Question Bank write/review workflow, public Exam read API, and Admin Exam CRUD metadata API đã live. C1.2b-1 release smoke passed admin exams 10/10 + exams 10/10 + subjects 4/4 + sessions 5/5 + questions 32/32; auth no-register smoke passed 7/0/2. Android/admin UI cho content workflow còn deferred.
+> **Trạng thái backend hiện tại (v0.9.3):** Production-ready trên Render.com — Auth + Session sync đã hardened; Subject/Topic/Subtopic read APIs, Question Bank write/review workflow, public Exam read API, Admin Exam CRUD metadata API, and Admin Exam Composition + Publish Workflow đã live. C1.2b-2 release smoke passed admin exam composition 17/0/0/0 + admin exams 10/10 + exams 10/10 + subjects 4/4 + sessions 5/5 + questions 32/32; auth no-register smoke passed 7/0/2. Android/admin UI cho content workflow còn deferred.
 
 | Module | Base Path | Endpoints | Trạng thái |
 |--------|-----------|-----------|------------|
@@ -179,7 +179,7 @@ http://localhost:8080/api/v1/swagger-ui.html
 | Questions (Collaborator) | `/collaborator/questions` | create, list own, detail, update, submit-for-review | ✅ Verified prod |
 | Questions (Admin) | `/admin/questions` | queue by status, approve, request revision, reject | ✅ Verified prod |
 | Review Workflow | `/admin/questions/{id}/approve`, `/request-revision`, `/reject` | admin review actions + review history records | ✅ Verified prod |
-| Exams (Admin) | `/admin/exams` | metadata-only create/list/detail/update | ✅ Verified prod (C1.2b-1) |
+| Exams (Admin) | `/admin/exams` | metadata CRUD, composition add/remove/reorder, publish workflow | ✅ Verified prod (C1.2b-2) |
 | Exams (Public) | `/exams` | list `PUBLISHED` + `FREE`, detail with anti-leak 404 | ✅ Verified prod |
 | Student Stats | `/my-stats` | topic stats, weak topics, history | 📋 Phase C |
 | Tickets (Student) | `/tickets` | create, list, detail, comment | 📋 Phase C |
@@ -206,7 +206,7 @@ Deferred:
 
 ### Exam API status
 
-As of `v0.9.2`, the Exam API foundation is available in production:
+As of `v0.9.3`, the Exam API foundation and admin composition workflow are available in production:
 
 - `GET /exams` returns a paged `data.content[]` list of `PUBLISHED` + `FREE` exams.
 - `GET /exams/{id}` returns public detail for a `PUBLISHED` + `FREE` exam.
@@ -214,17 +214,18 @@ As of `v0.9.2`, the Exam API foundation is available in production:
 - DTO responses expose only public fields; status, price, audit fields, questions, correct options, and explanations are not returned.
 - `GET /admin/exams`, `GET /admin/exams/{id}`, `POST /admin/exams`, and `PUT /admin/exams/{id}` are verified for CONTENT_ADMIN/SUPER_ADMIN metadata CRUD.
 - Admin exam create/update remains metadata-only: DRAFT/HIDDEN editing, FREE+price=0, server-controlled status/question count/version/audit fields.
-- Phase C1.2b-2 adds admin composition endpoints:
+- Admin composition endpoints are verified in production:
   - `POST /admin/exams/{examId}/questions`
   - `DELETE /admin/exams/{examId}/questions/{questionId}`
   - `PUT /admin/exams/{examId}/questions/reorder`
-- Phase C1.2b-2 adds admin workflow endpoints:
+- Admin workflow endpoints are verified in production:
   - `POST /admin/exams/{examId}/submit-review`
   - `POST /admin/exams/{examId}/publish` (`SUPER_ADMIN` only)
   - `POST /admin/exams/{examId}/hide`
   - `POST /admin/exams/{examId}/archive`
   - `POST /admin/exams/{examId}/reject-review`
   - `POST /admin/exams/{examId}/return-to-draft`
+- `smoke_admin_exam_composition.sh` production PASS for v0.9.3: 17 pass / 0 fail / 0 skip / 0 blocked.
 
 Deferred:
 - concurrency control via `@Version` until `Exam.version` semantics are verified

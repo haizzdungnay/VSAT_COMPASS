@@ -284,6 +284,14 @@ This typically happens when `curl -d '{"email":"..."}'` is run from CMD (which s
 - On CMD / PowerShell, use CMD-compatible escaping (e.g. `--data "{\"email\":\"...\"}"` with backslash-escaped double quotes) or pipe the body in via `curl --data-binary @body.json`.
 - Do **not** interpret `HttpMessageNotReadableException` as a password / auth failure unless the request body has been confirmed to be valid JSON (e.g. by piping the same string through `jq .`).
 
+### Smoke Script Runner Notes
+
+**Observed during v0.9.3 closeout:**
+- `docs/scripts/smoke_auth.sh` still checked out with CRLF on the Windows machine and failed under Bash until run through an LF-normalized stream. Normalize that script to LF in a follow-up docs/tooling pass.
+- `VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh` may need the documented `EXAM_ID` fallback when `jq` is unavailable. For v0.9.3 production smoke, the seeded public smoke exam was resolved as `EXAM_ID=2`.
+
+These are smoke-runner issues only; production endpoint verification passed after using the documented fallbacks.
+
 ---
 
 ## 8. Cost Watch

@@ -2,9 +2,9 @@
 
 ## [Unreleased]
 
-### Phase C1.2b-2 - Exam Composition + Publish Workflow
+## [0.9.3] - 2026-05-06 - Phase C1.2b-2: Exam Composition + Publish Workflow
 
-#### Added
+### Added
 - Admin exam composition endpoints:
   - `POST /admin/exams/{examId}/questions`
   - `DELETE /admin/exams/{examId}/questions/{questionId}`
@@ -19,7 +19,29 @@
 - Two-phase exam question reorder: rows first move to a negative temporary order range, then final 1-based positive order is applied to avoid `UNIQUE(exam_id, question_order)` collisions.
 - `docs/scripts/smoke_admin_exam_composition.sh` smoke script for composition, workflow, public visibility, republish audit overwrite, and archived-state rejection coverage.
 
-#### Notes
+### Released
+- Tagged `v0.9.3` after production smoke passed.
+- Tag target commit: `e2ccd9cc08b8d4d2d48f1549152139e1851bfdb9`.
+- PR context:
+  - PR #7 merged the C1.2b-2 feature implementation (`2434c11161a4f0cd2d5839146213c88f5da39c34`).
+  - PR #8 merged the follow-up smoke-script LF handling guard (`6c2b8fc031c5dd90caff5c7c9ba3fc639ad534a9`).
+
+### Verified
+- Production warm-up probes passed before tagging:
+  - `/actuator/health`: 200.
+  - `/exams`: 200.
+  - authenticated `/admin/exams`: 200.
+- Render stability watch passed: 10/10 rounds all returned 200 for health, `/exams`, and authenticated `/admin/exams`.
+- Production smoke PASS:
+  - `smoke_auth.sh` no-register mode: 7 pass / 0 fail / 2 skipped.
+  - `smoke_subjects.sh`: 4/4 PASS.
+  - `smoke_sessions.sh`: 5/5 PASS.
+  - `smoke_questions.sh`: 32/32 PASS.
+  - `smoke_exams.sh`: 10/10 PASS.
+  - `smoke_admin_exams.sh`: 10/10 PASS.
+  - `smoke_admin_exam_composition.sh`: 17 pass / 0 fail / 0 skip / 0 blocked.
+
+### Notes
 - `publish` is intentionally `SUPER_ADMIN` only. This is a release bottleneck; production smoke requires at least one active SUPER_ADMIN account.
 - Concurrency control for exam workflow/composition transitions is deferred. MVP relies on Postgres READ_COMMITTED + last-write-wins. Optimistic locking via `@Version` to follow once `Exam.version` semantics are verified.
 - DRAFT -> ARCHIVED remains intentionally unsupported in this phase; there is no archive path for abandoned drafts.
