@@ -3,8 +3,19 @@
 # V-SAT Compass - Smoke (C1.2a Exams)
 # Runs read-only production checks for the public Exam API.
 # Usage:
-#   EXAM_ID=2 bash docs/scripts/smoke_exams.sh
-#   BASE_URL=https://your-api.com/api/v1 EXAM_ID=2 bash docs/scripts/smoke_exams.sh
+#   EXAM_ID=2 bash VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh
+#   BASE_URL=https://your-api.com/api/v1 EXAM_ID=2 bash VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh
+#
+# Optional env:
+#   BASE_URL          API base URL. Default: https://vsat-compass-api.onrender.com/api/v1
+#   SMOKE_EXAM_CODE   Published smoke exam code. Default: SMOKE_C1_2A_001
+#   EXAM_ID           Exam id used by detail checks. If provided, the script uses
+#                     this override and logs it. Production fallback historically
+#                     uses EXAM_ID=2 when jq is unavailable.
+#   jq                Optional. If jq is unavailable, list checks use grep/sed
+#                     fallback and detail checks require EXAM_ID.
+#   SUPER_ADMIN_EMAIL / SUPER_ADMIN_PASSWORD
+#                     Not used by this public read-only smoke script.
 # Compatible with bash 3.2+ (macOS default)
 # ============================================================
 
@@ -28,7 +39,7 @@ DETAIL_QUERY_STATUS=""
 PAGE_BODY=""
 PAGE_STATUS=""
 
-if command -v jq >/dev/null 2>&1; then
+if command -v jq >/dev/null 2>&1 && jq --version >/dev/null 2>&1; then
     HAS_JQ=1
 else
     HAS_JQ=0
@@ -42,7 +53,12 @@ echo "Date: $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 if [ "$HAS_JQ" -eq 1 ]; then
     echo "JSON parser: jq"
 else
-    echo "JSON parser: grep fallback (set EXAM_ID when jq is unavailable)"
+    echo "JSON parser: grep/sed fallback (jq unavailable)"
+fi
+if [ -n "$EXAM_ID" ]; then
+    echo "Exam id source: EXAM_ID override ($EXAM_ID)"
+else
+    echo "Exam id source: auto-discover with jq; set EXAM_ID explicitly without jq"
 fi
 echo "========================================"
 echo ""
@@ -147,7 +163,13 @@ else
 fi
 
 if [ -z "$EXAM_ID" ]; then
-    echo "  [WARN] EXAM_ID was not provided and jq is unavailable or could not discover it."
+    if [ "$HAS_JQ" -eq 0 ]; then
+        echo "  [FAIL] EXAM_ID is required for detail checks when jq is unavailable."
+        echo "  [FAIL] Run with EXAM_ID=<seeded-public-exam-id>; production v0.9.3 used EXAM_ID=2."
+        echo "  [FAIL] Example: EXAM_ID=2 bash VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh"
+        exit 1
+    fi
+    echo "  [WARN] EXAM_ID was not provided and jq could not discover it."
     echo "  [WARN] Detail checks will use /exams/<missing> and fail. Set EXAM_ID to the seeded smoke exam id."
 fi
 
