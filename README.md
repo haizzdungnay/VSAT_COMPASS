@@ -169,7 +169,7 @@ http://localhost:8080/api/v1/swagger-ui.html
 
 ## API Modules
 
-> **Trạng thái backend hiện tại (v0.9.3):** Production-ready trên Render.com — Auth + Session sync đã hardened; Subject/Topic/Subtopic read APIs, Question Bank write/review workflow, public Exam read API, Admin Exam CRUD metadata API, and Admin Exam Composition + Publish Workflow đã live. C1.2b-2 release smoke passed admin exam composition 17/0/0/0 + admin exams 10/10 + exams 10/10 + subjects 4/4 + sessions 5/5 + questions 32/32; auth no-register smoke passed 7/0/2. Android/admin UI cho content workflow còn deferred.
+> **Trạng thái backend hiện tại (v0.9.4):** Production-ready trên Render.com — Auth + Session sync đã hardened; Subject/Topic/Subtopic read APIs, Question Bank write/review workflow, public Exam read API, Admin Exam CRUD metadata API, Admin Exam Composition + Publish Workflow, and Admin Exam DRAFT Discard đã live. v0.9.4 release smoke passed all 7 scripts: admin exam composition 17/0/0/0, admin exams 12/12 including DRAFT discard, exams 10/10, subjects 4/4, sessions 5/5, questions 32/32, and auth no-register 7/0/2. Android/admin UI cho content workflow còn deferred.
 
 | Module | Base Path | Endpoints | Trạng thái |
 |--------|-----------|-----------|------------|
@@ -179,7 +179,7 @@ http://localhost:8080/api/v1/swagger-ui.html
 | Questions (Collaborator) | `/collaborator/questions` | create, list own, detail, update, submit-for-review | ✅ Verified prod |
 | Questions (Admin) | `/admin/questions` | queue by status, approve, request revision, reject | ✅ Verified prod |
 | Review Workflow | `/admin/questions/{id}/approve`, `/request-revision`, `/reject` | admin review actions + review history records | ✅ Verified prod |
-| Exams (Admin) | `/admin/exams` | metadata CRUD, composition add/remove/reorder, publish workflow | ✅ Verified prod (C1.2b-2) |
+| Exams (Admin) | `/admin/exams` | metadata CRUD, composition add/remove/reorder, publish workflow, DRAFT discard | ✅ Verified prod (C1.2c-1 / v0.9.4) |
 | Exams (Public) | `/exams` | list `PUBLISHED` + `FREE`, detail with anti-leak 404 | ✅ Verified prod |
 | Student Stats | `/my-stats` | topic stats, weak topics, history | 📋 Phase C |
 | Tickets (Student) | `/tickets` | create, list, detail, comment | 📋 Phase C |
@@ -206,7 +206,7 @@ Deferred:
 
 ### Exam API status
 
-As of `v0.9.3`, the Exam API foundation and admin composition workflow are available in production:
+As of `v0.9.4`, the Exam API foundation, admin composition workflow, and DRAFT discard operation are available in production:
 
 - `GET /exams` returns a paged `data.content[]` list of `PUBLISHED` + `FREE` exams.
 - `GET /exams/{id}` returns public detail for a `PUBLISHED` + `FREE` exam.
@@ -214,6 +214,11 @@ As of `v0.9.3`, the Exam API foundation and admin composition workflow are avail
 - DTO responses expose only public fields; status, price, audit fields, questions, correct options, and explanations are not returned.
 - `GET /admin/exams`, `GET /admin/exams/{id}`, `POST /admin/exams`, and `PUT /admin/exams/{id}` are verified for CONTENT_ADMIN/SUPER_ADMIN metadata CRUD.
 - Admin exam create/update remains metadata-only: DRAFT/HIDDEN editing, FREE+price=0, server-controlled status/question count/version/audit fields.
+- Admin DRAFT discard is verified in production:
+  - `DELETE /admin/exams/{examId}` hard-deletes DRAFT exams only
+  - non-DRAFT statuses return `409 INVALID_STATE`
+  - missing exams return `404 RESOURCE_NOT_FOUND`
+  - `CONTENT_ADMIN` and `SUPER_ADMIN` are allowed; anonymous requests return `401`; `STUDENT` returns `403`
 - Admin composition endpoints are verified in production:
   - `POST /admin/exams/{examId}/questions`
   - `DELETE /admin/exams/{examId}/questions/{questionId}`
@@ -225,7 +230,8 @@ As of `v0.9.3`, the Exam API foundation and admin composition workflow are avail
   - `POST /admin/exams/{examId}/archive`
   - `POST /admin/exams/{examId}/reject-review`
   - `POST /admin/exams/{examId}/return-to-draft`
-- `smoke_admin_exam_composition.sh` production PASS for v0.9.3: 17 pass / 0 fail / 0 skip / 0 blocked.
+- `smoke_admin_exams.sh` production PASS for v0.9.4: 12/12, including create-own-DRAFT -> discard -> GET 404.
+- `smoke_admin_exam_composition.sh` production PASS for v0.9.4: 17 pass / 0 fail / 0 skip / 0 blocked.
 
 Deferred:
 - concurrency control via `@Version` until `Exam.version` semantics are verified
@@ -237,7 +243,7 @@ Deferred:
 - **Task Tracker:** [`task.md`](task.md) — tiến độ Phase A/B/C/D, bug fixes, DB verification
 - **Deploy Runbook:** [`docs/DEPLOY_RUNBOOK.md`](docs/DEPLOY_RUNBOOK.md) — deploy, rollback, secret rotation, incident triage
 - **API Error Codes:** [`docs/API_ERROR_CODES.md`](docs/API_ERROR_CODES.md) — error catalog, response envelope, rate limits
-- **Smoke Tests:** [`docs/SMOKE_CHECKLIST.md`](docs/SMOKE_CHECKLIST.md) — 15 Android manual checks; backend smoke scripts cover 70 release checks
+- **Smoke Tests:** [`docs/SMOKE_CHECKLIST.md`](docs/SMOKE_CHECKLIST.md) — 15 Android manual checks; backend smoke scripts cover the current release smoke set
 - **Smoke Scripts:** `docs/scripts/smoke_auth.sh`, `docs/scripts/smoke_sessions.sh`, `docs/scripts/smoke_subjects.sh`, `docs/scripts/smoke_admin_exams.sh`, `docs/scripts/smoke_admin_exam_composition.sh`, `VSAT/vsat-compass-api/docs/scripts/smoke_questions.sh`, `VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh`
 
 ---
@@ -393,8 +399,8 @@ Các phần timer, chọn đáp án, bookmark, chấm điểm, hiển thị kế
 | Android Drawable resources | 20+ |
 | Local exam data (JSON assets) | 5 packs (2 Toán, 2 Tiếng Anh, 1 Vật lí) |
 | Unit tests pass | 6/6 (ExamHistoryRepository) |
-| Smoke test cases | 75 checks (15 Android manual + 60 Backend smoke checks) |
-| Features live | Login, Register, Exam list, Session, Timer, Scoring, Result, Review, History, Rate limiting, Subject/Topic/Subtopic read APIs, Question CRUD workflow, Exam read-only public API |
+| Smoke test cases | 102 pass checks in v0.9.4 closeout scope (15 Android manual + 87 backend smoke pass checks; auth no-register also reports 2 expected skips) |
+| Features live | Login, Register, Exam list, Session, Timer, Scoring, Result, Review, History, Rate limiting, Subject/Topic/Subtopic read APIs, Question CRUD workflow, Exam read-only public API, Admin Exam composition/workflow, Admin Exam DRAFT discard |
 
 ---
 

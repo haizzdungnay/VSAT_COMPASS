@@ -2,16 +2,24 @@
 
 ## [Unreleased]
 
-### Phase C1.2c-1 — Admin Exam DRAFT Discard
+## [0.9.4] - 2026-05-06 — Phase C1.2c.1: Admin Exam DRAFT Discard
 
 #### Added
 - Added `DELETE /admin/exams/{examId}` for admin DRAFT discard. DRAFT exams are hard-deleted; non-DRAFT statuses return `409 INVALID_STATE`; missing exams return `404 RESOURCE_NOT_FOUND`.
-- Authorization follows existing admin exam rules: `CONTENT_ADMIN` and `SUPER_ADMIN` are allowed, anonymous requests remain unauthorized, and `STUDENT` remains forbidden.
+- Authorization follows existing admin exam rules: `CONTENT_ADMIN` and `SUPER_ADMIN` are allowed, anonymous requests return `401`, and `STUDENT` returns `403`.
 - Extended `docs/scripts/smoke_admin_exams.sh` to create its own DRAFT exam, discard it, and verify the deleted exam returns `404 RESOURCE_NOT_FOUND`.
+
+#### Verified
+- Tagged `v0.9.4` at release commit `c4c2993deba664883132edf043401e41ffdbca61`.
+- Production stability watch passed: 5/5 rounds returned 200 for `/actuator/health`, `/exams`, and authenticated `/admin/exams`.
+- Production smoke passed all 7 scripts.
+- `smoke_admin_exams.sh` passed 12/12 checks, including the new DRAFT discard case.
 
 #### Notes
 - No schema, migration, enum, dependency, `SecurityConfig`, or Render config changes.
-- No audit implementation in this phase; no active production audit service/repository pattern exists to reuse.
+- Audit implementation is deferred because no active production audit service/repository pattern exists to reuse.
+- A prior transient `DELETE /admin/exams/{id}` 500 during smoke was diagnosed as probable deploy-readiness timing after production later passed without a code hotfix.
+- No code hotfix was committed.
 
 ### Phase C1.2b-3 — Exam Ops Cleanup
 
