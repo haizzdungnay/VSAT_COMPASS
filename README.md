@@ -214,10 +214,20 @@ As of `v0.9.2`, the Exam API foundation is available in production:
 - DTO responses expose only public fields; status, price, audit fields, questions, correct options, and explanations are not returned.
 - `GET /admin/exams`, `GET /admin/exams/{id}`, `POST /admin/exams`, and `PUT /admin/exams/{id}` are verified for CONTENT_ADMIN/SUPER_ADMIN metadata CRUD.
 - Admin exam create/update remains metadata-only: DRAFT/HIDDEN editing, FREE+price=0, server-controlled status/question count/version/audit fields.
+- Phase C1.2b-2 adds admin composition endpoints:
+  - `POST /admin/exams/{examId}/questions`
+  - `DELETE /admin/exams/{examId}/questions/{questionId}`
+  - `PUT /admin/exams/{examId}/questions/reorder`
+- Phase C1.2b-2 adds admin workflow endpoints:
+  - `POST /admin/exams/{examId}/submit-review`
+  - `POST /admin/exams/{examId}/publish` (`SUPER_ADMIN` only)
+  - `POST /admin/exams/{examId}/hide`
+  - `POST /admin/exams/{examId}/archive`
+  - `POST /admin/exams/{examId}/reject-review`
+  - `POST /admin/exams/{examId}/return-to-draft`
 
 Deferred:
-- add/remove/reorder exam questions
-- publish/hide/archive status workflow
+- concurrency control via `@Version` until `Exam.version` semantics are verified
 - paid/package pricing
 - Android integration with the production Exam API
 
@@ -227,7 +237,7 @@ Deferred:
 - **Deploy Runbook:** [`docs/DEPLOY_RUNBOOK.md`](docs/DEPLOY_RUNBOOK.md) — deploy, rollback, secret rotation, incident triage
 - **API Error Codes:** [`docs/API_ERROR_CODES.md`](docs/API_ERROR_CODES.md) — error catalog, response envelope, rate limits
 - **Smoke Tests:** [`docs/SMOKE_CHECKLIST.md`](docs/SMOKE_CHECKLIST.md) — 15 Android manual checks; backend smoke scripts cover 70 release checks
-- **Smoke Scripts:** `docs/scripts/smoke_auth.sh`, `docs/scripts/smoke_sessions.sh`, `docs/scripts/smoke_subjects.sh`, `docs/scripts/smoke_admin_exams.sh`, `VSAT/vsat-compass-api/docs/scripts/smoke_questions.sh`, `VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh`
+- **Smoke Scripts:** `docs/scripts/smoke_auth.sh`, `docs/scripts/smoke_sessions.sh`, `docs/scripts/smoke_subjects.sh`, `docs/scripts/smoke_admin_exams.sh`, `docs/scripts/smoke_admin_exam_composition.sh`, `VSAT/vsat-compass-api/docs/scripts/smoke_questions.sh`, `VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh`
 
 ---
 

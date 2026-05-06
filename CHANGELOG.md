@@ -2,8 +2,28 @@
 
 ## [Unreleased]
 
-### Notes
-- No unreleased changes yet.
+### Phase C1.2b-2 - Exam Composition + Publish Workflow
+
+#### Added
+- Admin exam composition endpoints:
+  - `POST /admin/exams/{examId}/questions`
+  - `DELETE /admin/exams/{examId}/questions/{questionId}`
+  - `PUT /admin/exams/{examId}/questions/reorder`
+- Admin exam workflow endpoints:
+  - `POST /admin/exams/{examId}/submit-review`
+  - `POST /admin/exams/{examId}/publish`
+  - `POST /admin/exams/{examId}/hide`
+  - `POST /admin/exams/{examId}/archive`
+  - `POST /admin/exams/{examId}/reject-review`
+  - `POST /admin/exams/{examId}/return-to-draft`
+- Two-phase exam question reorder: rows first move to a negative temporary order range, then final 1-based positive order is applied to avoid `UNIQUE(exam_id, question_order)` collisions.
+- `docs/scripts/smoke_admin_exam_composition.sh` smoke script for composition, workflow, public visibility, republish audit overwrite, and archived-state rejection coverage.
+
+#### Notes
+- `publish` is intentionally `SUPER_ADMIN` only. This is a release bottleneck; production smoke requires at least one active SUPER_ADMIN account.
+- Concurrency control for exam workflow/composition transitions is deferred. MVP relies on Postgres READ_COMMITTED + last-write-wins. Optimistic locking via `@Version` to follow once `Exam.version` semantics are verified.
+- DRAFT -> ARCHIVED remains intentionally unsupported in this phase; there is no archive path for abandoned drafts.
+- `LOCKED` is defined in the enum but unused by business logic; this phase defensively rejects it as a source state and does not transition into it.
 
 ## [0.9.2] - 2026-05-05 - Phase C1.2b-1: Admin Exam CRUD Foundation
 

@@ -299,6 +299,100 @@ class ExamServiceTest {
         assertThat(result.getTags()).isEqualTo("algebra,smoke");
     }
 
+    @Test
+    @DisplayName("Pub-01 DRAFT exam not in GET /exams or /exams/{id}")
+    void pub01_draftExamNotVisible() {
+        assertPublicInvisible(201L, ExamStatus.DRAFT);
+    }
+
+    @Test
+    @DisplayName("Pub-02 PENDING_REVIEW exam not visible")
+    void pub02_pendingReviewExamNotVisible() {
+        assertPublicInvisible(202L, ExamStatus.PENDING_REVIEW);
+    }
+
+    @Test
+    @DisplayName("Pub-03 HIDDEN exam not visible")
+    void pub03_hiddenExamNotVisible() {
+        assertPublicInvisible(203L, ExamStatus.HIDDEN);
+    }
+
+    @Test
+    @DisplayName("Pub-04 ARCHIVED exam not visible")
+    void pub04_archivedExamNotVisible() {
+        assertPublicInvisible(204L, ExamStatus.ARCHIVED);
+    }
+
+    @Test
+    @DisplayName("Pub-05 PUBLISHED + FREE visible")
+    void pub05_publishedFreeVisible() {
+        Pageable pageable = PageRequest.of(0, 20);
+        when(examRepository.findByStatusAndPricingType(
+                ExamStatus.PUBLISHED, ExamPricingType.FREE, pageable))
+                .thenReturn(new PageImpl<>(List.of(algebraExam), pageable, 1));
+        when(examQuestionRepository.countByExamId(1L)).thenReturn(12L);
+        when(examRepository.findByIdAndStatusAndPricingType(
+                1L, ExamStatus.PUBLISHED, ExamPricingType.FREE))
+                .thenReturn(Optional.of(algebraExam));
+
+        Page<ExamSummaryResponse> listResult = examService.listPublishedFreeExams(pageable);
+        ExamDetailResponse detailResult = examService.getPublicExam(1L);
+
+        assertThat(listResult.getContent()).hasSize(1);
+        assertThat(listResult.getContent().get(0).getId()).isEqualTo(1L);
+        assertThat(detailResult.getId()).isEqualTo(1L);
+    }
+
+    @Test
+    @DisplayName("Pub-06 Public DTO does not contain questions/options/correct answers/explanations/composition internals")
+    void pub06_publicDtoDoesNotExposeCompositionInternals() throws Exception {
+        ExamDetailResponse detail = ExamDetailResponse.builder()
+                .id(1L)
+                .examCode("SMOKE_C1_2A_001")
+                .title("Algebra Smoke Exam")
+                .subjectId(10L)
+                .description("Published free smoke exam")
+                .questionCount(12)
+                .durationMinutes(90)
+                .difficulty(Difficulty.MEDIUM)
+                .pricingType(ExamPricingType.FREE)
+                .tags("algebra,smoke")
+                .publishDate(OffsetDateTime.parse("2026-05-05T00:00:00Z"))
+                .build();
+
+        String json = objectMapper.writeValueAsString(detail);
+
+        assertThat(json).doesNotContain("questions", "correctOptionId", "explanation",
+                "options", "exam_questions", "examQuestions", "questionOrder");
+        assertThat(ExamDetailResponse.class.getDeclaredFields())
+                .extracting(java.lang.reflect.Field::getName)
+                .doesNotContain("questions", "correctOptionId", "explanation",
+                        "options", "examQuestions", "questionOrder");
+    }
+
+    private void assertPublicInvisible(Long examId, ExamStatus sourceStatus) {
+        Pageable pageable = PageRequest.of(0, 20);
+        when(examRepository.findByStatusAndPricingType(
+                ExamStatus.PUBLISHED, ExamPricingType.FREE, pageable))
+                .thenReturn(new PageImpl<>(Collections.emptyList(), pageable, 0));
+        when(examRepository.findByIdAndStatusAndPricingType(
+                examId, ExamStatus.PUBLISHED, ExamPricingType.FREE))
+                .thenReturn(Optional.empty());
+
+        Page<ExamSummaryResponse> listResult = examService.listPublishedFreeExams(pageable);
+
+        assertThat(listResult.getContent()).isEmpty();
+        assertThatThrownBy(() -> examService.getPublicExam(examId))
+                .isInstanceOf(AppException.class)
+                .satisfies(ex -> {
+                    AppException ae = (AppException) ex;
+                    assertThat(ae.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    assertThat(ae.getCode()).isEqualTo("RESOURCE_NOT_FOUND");
+                });
+        verify(examRepository, never()).findById(any());
+        assertThat(sourceStatus).isNotEqualTo(ExamStatus.PUBLISHED);
+    }
+
     private Exam exam(
             Long id,
             String examCode,

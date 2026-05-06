@@ -5,13 +5,17 @@ import com.vsatcompass.api.dto.request.AdminExamUpdateRequest;
 import com.vsatcompass.api.dto.response.AdminExamResponse;
 import com.vsatcompass.api.dto.response.AdminExamSummaryResponse;
 import com.vsatcompass.api.entity.Exam;
+import com.vsatcompass.api.entity.ExamQuestion;
+import com.vsatcompass.api.entity.Question;
 import com.vsatcompass.api.entity.Subject;
 import com.vsatcompass.api.entity.enums.Difficulty;
 import com.vsatcompass.api.entity.enums.ExamPricingType;
 import com.vsatcompass.api.entity.enums.ExamStatus;
+import com.vsatcompass.api.entity.enums.QuestionStatus;
 import com.vsatcompass.api.exception.AppException;
 import com.vsatcompass.api.repository.ExamQuestionRepository;
 import com.vsatcompass.api.repository.ExamRepository;
+import com.vsatcompass.api.repository.QuestionRepository;
 import com.vsatcompass.api.repository.SubjectRepository;
 import com.vsatcompass.api.service.impl.AdminExamServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +51,7 @@ class AdminExamServiceTest {
 
     @Mock ExamRepository examRepository;
     @Mock ExamQuestionRepository examQuestionRepository;
+    @Mock QuestionRepository questionRepository;
     @Mock SubjectRepository subjectRepository;
 
     @InjectMocks AdminExamServiceImpl adminExamService;
@@ -461,6 +466,547 @@ class AdminExamServiceTest {
     }
 
     // =========================================================
+    // COMPOSITION - Phase C1.2b-2
+    // =========================================================
+
+    @Test
+    @DisplayName("Comp-01 add APPROVED question to DRAFT exam -> 200, mapping created, question_count incremented")
+    void comp01_addApprovedQuestionToDraft_success() {
+        Exam exam = baseExam(20L, ExamStatus.DRAFT);
+        Question question = question(101L, QuestionStatus.APPROVED);
+        when(examRepository.findById(20L)).thenReturn(Optional.of(exam));
+        when(questionRepository.findById(101L)).thenReturn(Optional.of(question));
+        when(examQuestionRepository.existsByExamIdAndQuestionId(20L, 101L)).thenReturn(false);
+        when(examQuestionRepository.findMaxQuestionOrderByExamId(20L)).thenReturn(0);
+        when(examRepository.save(any(Exam.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubAdminResponseDependencies(20L, 1L);
+
+        AdminExamResponse result = adminExamService.addQuestion(20L, 101L);
+
+        ArgumentCaptor<ExamQuestion> mappingCaptor = ArgumentCaptor.forClass(ExamQuestion.class);
+        verify(examQuestionRepository).save(mappingCaptor.capture());
+        assertThat(mappingCaptor.getValue().getExamId()).isEqualTo(20L);
+        assertThat(mappingCaptor.getValue().getQuestionId()).isEqualTo(101L);
+        assertThat(mappingCaptor.getValue().getQuestionOrder()).isEqualTo(1);
+        assertThat(exam.getQuestionCount()).isEqualTo(1);
+        assertThat(result.getQuestionCount()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Comp-02 add PUBLISHED question to DRAFT exam -> 200")
+    void comp02_addPublishedQuestionToDraft_success() {
+        Exam exam = baseExam(21L, ExamStatus.DRAFT);
+        when(examRepository.findById(21L)).thenReturn(Optional.of(exam));
+        when(questionRepository.findById(102L)).thenReturn(Optional.of(question(102L, QuestionStatus.PUBLISHED)));
+        when(examQuestionRepository.existsByExamIdAndQuestionId(21L, 102L)).thenReturn(false);
+        when(examQuestionRepository.findMaxQuestionOrderByExamId(21L)).thenReturn(3);
+        when(examRepository.save(any(Exam.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubAdminResponseDependencies(21L, 4L);
+
+        AdminExamResponse result = adminExamService.addQuestion(21L, 102L);
+
+        ArgumentCaptor<ExamQuestion> mappingCaptor = ArgumentCaptor.forClass(ExamQuestion.class);
+        verify(examQuestionRepository).save(mappingCaptor.capture());
+        assertThat(mappingCaptor.getValue().getQuestionOrder()).isEqualTo(4);
+        assertThat(result.getQuestionCount()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Comp-03 add DRAFT-status question -> 400 VALIDATION_FAILED")
+    void comp03_addDraftQuestion_rejectedValidation() {
+        Exam exam = baseExam(22L, ExamStatus.DRAFT);
+        when(examRepository.findById(22L)).thenReturn(Optional.of(exam));
+        when(questionRepository.findById(103L)).thenReturn(Optional.of(question(103L, QuestionStatus.DRAFT)));
+
+        assertAppException(
+                () -> adminExamService.addQuestion(22L, 103L),
+                HttpStatus.BAD_REQUEST,
+                "VALIDATION_FAILED");
+
+        verify(examQuestionRepository, never()).save(any(ExamQuestion.class));
+        verify(examRepository, never()).save(any(Exam.class));
+    }
+
+    @Test
+    @DisplayName("Comp-04 add ARCHIVED-status question -> 400 VALIDATION_FAILED")
+    void comp04_addArchivedQuestion_rejectedValidation() {
+        Exam exam = baseExam(23L, ExamStatus.DRAFT);
+        when(examRepository.findById(23L)).thenReturn(Optional.of(exam));
+        when(questionRepository.findById(104L)).thenReturn(Optional.of(question(104L, QuestionStatus.ARCHIVED)));
+
+        assertAppException(
+                () -> adminExamService.addQuestion(23L, 104L),
+                HttpStatus.BAD_REQUEST,
+                "VALIDATION_FAILED");
+
+        verify(examQuestionRepository, never()).save(any(ExamQuestion.class));
+        verify(examRepository, never()).save(any(Exam.class));
+    }
+
+    @Test
+    @DisplayName("Comp-05 add duplicate question -> 409 DUPLICATE")
+    void comp05_addDuplicateQuestion_rejectedConflict() {
+        Exam exam = baseExam(24L, ExamStatus.DRAFT);
+        when(examRepository.findById(24L)).thenReturn(Optional.of(exam));
+        when(questionRepository.findById(105L)).thenReturn(Optional.of(question(105L, QuestionStatus.APPROVED)));
+        when(examQuestionRepository.existsByExamIdAndQuestionId(24L, 105L)).thenReturn(true);
+
+        assertAppException(
+                () -> adminExamService.addQuestion(24L, 105L),
+                HttpStatus.CONFLICT,
+                "DUPLICATE");
+
+        verify(examQuestionRepository, never()).save(any(ExamQuestion.class));
+        verify(examRepository, never()).save(any(Exam.class));
+    }
+
+    @Test
+    @DisplayName("Comp-06 add to PENDING_REVIEW exam -> 409 INVALID_STATE")
+    void comp06_addToPendingReview_rejectedInvalidState() {
+        assertAddRejectedForExamStatus(25L, ExamStatus.PENDING_REVIEW);
+    }
+
+    @Test
+    @DisplayName("Comp-07 add to PUBLISHED exam -> 409 INVALID_STATE")
+    void comp07_addToPublished_rejectedInvalidState() {
+        assertAddRejectedForExamStatus(26L, ExamStatus.PUBLISHED);
+    }
+
+    @Test
+    @DisplayName("Comp-08 add to HIDDEN exam -> 409 INVALID_STATE")
+    void comp08_addToHidden_rejectedInvalidState() {
+        assertAddRejectedForExamStatus(27L, ExamStatus.HIDDEN);
+    }
+
+    @Test
+    @DisplayName("Comp-09 add to ARCHIVED exam -> 409 INVALID_STATE")
+    void comp09_addToArchived_rejectedInvalidState() {
+        assertAddRejectedForExamStatus(28L, ExamStatus.ARCHIVED);
+    }
+
+    @Test
+    @DisplayName("Comp-10 remove question from DRAFT -> 200, mapping deleted, count decremented, Question preserved")
+    void comp10_removeQuestionFromDraft_successMappingOnly() {
+        Exam exam = baseExam(29L, ExamStatus.DRAFT);
+        exam.setQuestionCount(2);
+        when(examRepository.findById(29L)).thenReturn(Optional.of(exam));
+        when(examQuestionRepository.deleteByExamIdAndQuestionId(29L, 106L)).thenReturn(1);
+        when(examRepository.save(any(Exam.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubAdminResponseDependencies(29L, 1L);
+
+        AdminExamResponse result = adminExamService.removeQuestion(29L, 106L);
+
+        assertThat(exam.getQuestionCount()).isEqualTo(1);
+        assertThat(result.getQuestionCount()).isEqualTo(1);
+        verify(examQuestionRepository).deleteByExamIdAndQuestionId(29L, 106L);
+        verify(questionRepository, never()).delete(any(Question.class));
+    }
+
+    @Test
+    @DisplayName("Comp-11 remove from non-DRAFT -> 409 INVALID_STATE")
+    void comp11_removeFromNonDraft_rejectedInvalidState() {
+        Exam exam = baseExam(30L, ExamStatus.PUBLISHED);
+        when(examRepository.findById(30L)).thenReturn(Optional.of(exam));
+
+        assertAppException(
+                () -> adminExamService.removeQuestion(30L, 106L),
+                HttpStatus.CONFLICT,
+                "INVALID_STATE");
+
+        verify(examQuestionRepository, never()).deleteByExamIdAndQuestionId(any(), any());
+    }
+
+    @Test
+    @DisplayName("Comp-12 remove a question not in the exam -> 404 RESOURCE_NOT_FOUND")
+    void comp12_removeQuestionNotInExam_rejectedNotFound() {
+        Exam exam = baseExam(31L, ExamStatus.DRAFT);
+        when(examRepository.findById(31L)).thenReturn(Optional.of(exam));
+        when(examQuestionRepository.deleteByExamIdAndQuestionId(31L, 404L)).thenReturn(0);
+
+        assertAppException(
+                () -> adminExamService.removeQuestion(31L, 404L),
+                HttpStatus.NOT_FOUND,
+                "RESOURCE_NOT_FOUND");
+
+        verify(examRepository, never()).save(any(Exam.class));
+    }
+
+    @Test
+    @DisplayName("Comp-13 reorder simple ([1,2,3] -> [2,1,3]) -> 200")
+    void comp13_reorderSimple_success() {
+        Exam exam = baseExam(32L, ExamStatus.DRAFT);
+        when(examRepository.findById(32L)).thenReturn(Optional.of(exam));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(32L))
+                .thenReturn(mappings(32L, 1L, 2L, 3L));
+        stubAdminResponseDependencies(32L, 3L);
+
+        AdminExamResponse result = adminExamService.reorderQuestions(32L, List.of(2L, 1L, 3L));
+
+        assertThat(result.getQuestionCount()).isEqualTo(3);
+        verify(examQuestionRepository).moveQuestionOrdersToTemporaryNegativeRange(32L);
+        verify(examQuestionRepository).updateQuestionOrder(32L, 2L, 1);
+        verify(examQuestionRepository).updateQuestionOrder(32L, 1L, 2);
+        verify(examQuestionRepository).updateQuestionOrder(32L, 3L, 3);
+    }
+
+    @Test
+    @DisplayName("Comp-14 reorder full reverse ([1,2,3,4] -> [4,3,2,1]) -> 200 via two-phase update")
+    void comp14_reorderFullReverse_successTwoPhase() {
+        Exam exam = baseExam(33L, ExamStatus.DRAFT);
+        when(examRepository.findById(33L)).thenReturn(Optional.of(exam));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(33L))
+                .thenReturn(mappings(33L, 1L, 2L, 3L, 4L));
+        stubAdminResponseDependencies(33L, 4L);
+
+        AdminExamResponse result = adminExamService.reorderQuestions(33L, List.of(4L, 3L, 2L, 1L));
+
+        assertThat(result.getQuestionCount()).isEqualTo(4);
+        verify(examQuestionRepository).moveQuestionOrdersToTemporaryNegativeRange(33L);
+        verify(examQuestionRepository).updateQuestionOrder(33L, 4L, 1);
+        verify(examQuestionRepository).updateQuestionOrder(33L, 3L, 2);
+        verify(examQuestionRepository).updateQuestionOrder(33L, 2L, 3);
+        verify(examQuestionRepository).updateQuestionOrder(33L, 1L, 4);
+    }
+
+    @Test
+    @DisplayName("Comp-15 reorder with duplicate IDs -> 400 VALIDATION_FAILED")
+    void comp15_reorderDuplicateIds_rejectedValidation() {
+        assertInvalidReorder(List.of(1L, 1L, 3L));
+    }
+
+    @Test
+    @DisplayName("Comp-16 reorder with missing IDs -> 400 VALIDATION_FAILED")
+    void comp16_reorderMissingIds_rejectedValidation() {
+        assertInvalidReorder(List.of(1L, 2L));
+    }
+
+    @Test
+    @DisplayName("Comp-17 reorder with extra IDs -> 400 VALIDATION_FAILED")
+    void comp17_reorderExtraIds_rejectedValidation() {
+        assertInvalidReorder(List.of(1L, 2L, 3L, 99L));
+    }
+
+    @Test
+    @DisplayName("Comp-18 reorder of non-DRAFT exam -> 409 INVALID_STATE")
+    void comp18_reorderNonDraft_rejectedInvalidState() {
+        Exam exam = baseExam(35L, ExamStatus.PUBLISHED);
+        when(examRepository.findById(35L)).thenReturn(Optional.of(exam));
+
+        assertAppException(
+                () -> adminExamService.reorderQuestions(35L, List.of(1L, 2L, 3L)),
+                HttpStatus.CONFLICT,
+                "INVALID_STATE");
+
+        verify(examQuestionRepository, never()).moveQuestionOrdersToTemporaryNegativeRange(any());
+    }
+
+    @Test
+    @DisplayName("Comp-19 reorder empty exam with empty list -> 400 VALIDATION_FAILED")
+    void comp19_reorderEmptyExamWithEmptyList_rejectedValidation() {
+        Exam exam = baseExam(36L, ExamStatus.DRAFT);
+        when(examRepository.findById(36L)).thenReturn(Optional.of(exam));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(36L))
+                .thenReturn(List.of());
+
+        assertAppException(
+                () -> adminExamService.reorderQuestions(36L, List.of()),
+                HttpStatus.BAD_REQUEST,
+                "VALIDATION_FAILED");
+
+        verify(examQuestionRepository, never()).moveQuestionOrdersToTemporaryNegativeRange(any());
+    }
+
+    // =========================================================
+    // WORKFLOW - Phase C1.2b-2
+    // =========================================================
+
+    @Test
+    @DisplayName("WF-01 DRAFT -> submit-review -> PENDING_REVIEW; reviewedBy & publishDate unchanged")
+    void wf01_submitReviewFromDraft_successAuditUnchanged() {
+        Exam exam = baseExam(40L, ExamStatus.DRAFT);
+        OffsetDateTime oldPublishDate = FIXED_TIME.minusDays(1);
+        exam.setReviewedBy(777L);
+        exam.setPublishDate(oldPublishDate);
+        when(examRepository.findById(40L)).thenReturn(Optional.of(exam));
+        when(examRepository.save(any(Exam.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubAdminResponseDependencies(40L, 0L);
+
+        AdminExamResponse result = adminExamService.submitReview(40L);
+
+        assertThat(result.getStatus()).isEqualTo(ExamStatus.PENDING_REVIEW);
+        assertThat(result.getReviewedBy()).isEqualTo(777L);
+        assertThat(result.getPublishDate()).isEqualTo(oldPublishDate);
+    }
+
+    @Test
+    @DisplayName("WF-02 submit-review on PUBLISHED -> 409 INVALID_STATE")
+    void wf02_submitReviewOnPublished_rejectedInvalidState() {
+        assertWorkflowInvalidState(41L, ExamStatus.PUBLISHED, () -> adminExamService.submitReview(41L));
+    }
+
+    @Test
+    @DisplayName("WF-03 submit-review on HIDDEN -> 409 INVALID_STATE")
+    void wf03_submitReviewOnHidden_rejectedInvalidState() {
+        assertWorkflowInvalidState(42L, ExamStatus.HIDDEN, () -> adminExamService.submitReview(42L));
+    }
+
+    @Test
+    @DisplayName("WF-04 submit-review on ARCHIVED -> 409 INVALID_STATE")
+    void wf04_submitReviewOnArchived_rejectedInvalidState() {
+        assertWorkflowInvalidState(43L, ExamStatus.ARCHIVED, () -> adminExamService.submitReview(43L));
+    }
+
+    @Test
+    @DisplayName("WF-05 PENDING_REVIEW -> publish (SUPER_ADMIN) -> PUBLISHED; reviewedBy set, publishDate set")
+    void wf05_publishPendingReviewAsSuperAdmin_successAuditSet() {
+        Exam exam = publishableExam(44L, ExamStatus.PENDING_REVIEW, 1);
+        when(examRepository.findById(44L)).thenReturn(Optional.of(exam));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(44L))
+                .thenReturn(mappings(44L, 201L));
+        when(questionRepository.findAllById(List.of(201L)))
+                .thenReturn(List.of(question(201L, QuestionStatus.APPROVED)));
+        when(examRepository.save(any(Exam.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubAdminResponseDependencies(44L, 1L);
+
+        AdminExamResponse result = adminExamService.publish(902L, 44L);
+
+        assertThat(result.getStatus()).isEqualTo(ExamStatus.PUBLISHED);
+        assertThat(result.getReviewedBy()).isEqualTo(902L);
+        assertThat(result.getPublishDate()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("WF-07 publish on DRAFT -> 409 INVALID_STATE")
+    void wf07_publishOnDraft_rejectedInvalidState() {
+        assertWorkflowInvalidState(45L, ExamStatus.DRAFT, () -> adminExamService.publish(902L, 45L));
+    }
+
+    @Test
+    @DisplayName("WF-08 publish with zero questions -> 409 INVALID_STATE")
+    void wf08_publishWithZeroQuestions_rejectedInvalidState() {
+        Exam exam = publishableExam(46L, ExamStatus.PENDING_REVIEW, 0);
+        when(examRepository.findById(46L)).thenReturn(Optional.of(exam));
+        when(examQuestionRepository.countByExamId(46L)).thenReturn(0L);
+
+        assertAppException(
+                () -> adminExamService.publish(902L, 46L),
+                HttpStatus.CONFLICT,
+                "INVALID_STATE");
+
+        verify(examRepository, never()).save(any(Exam.class));
+    }
+
+    @Test
+    @DisplayName("WF-09 publish when one question is not APPROVED/PUBLISHED -> 400 VALIDATION_FAILED")
+    void wf09_publishWithInvalidQuestionStatus_rejectedValidation() {
+        Exam exam = publishableExam(47L, ExamStatus.PENDING_REVIEW, 1);
+        when(examRepository.findById(47L)).thenReturn(Optional.of(exam));
+        when(examQuestionRepository.countByExamId(47L)).thenReturn(1L);
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(47L))
+                .thenReturn(mappings(47L, 202L));
+        when(questionRepository.findAllById(List.of(202L)))
+                .thenReturn(List.of(question(202L, QuestionStatus.DRAFT)));
+
+        assertAppException(
+                () -> adminExamService.publish(902L, 47L),
+                HttpStatus.BAD_REQUEST,
+                "VALIDATION_FAILED");
+
+        assertThat(exam.getStatus()).isEqualTo(ExamStatus.PENDING_REVIEW);
+        verify(examRepository, never()).save(any(Exam.class));
+    }
+
+    @Test
+    @DisplayName("WF-10 publish when pricingType != FREE -> 400 VALIDATION_FAILED")
+    void wf10_publishWithPaidPricing_rejectedValidation() {
+        Exam exam = publishableExam(48L, ExamStatus.PENDING_REVIEW, 1);
+        exam.setPricingType(ExamPricingType.PAID);
+        when(examRepository.findById(48L)).thenReturn(Optional.of(exam));
+        when(examQuestionRepository.countByExamId(48L)).thenReturn(1L);
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(48L))
+                .thenReturn(mappings(48L, 203L));
+        when(questionRepository.findAllById(List.of(203L)))
+                .thenReturn(List.of(question(203L, QuestionStatus.APPROVED)));
+
+        assertAppException(
+                () -> adminExamService.publish(902L, 48L),
+                HttpStatus.BAD_REQUEST,
+                "VALIDATION_FAILED");
+
+        assertThat(exam.getStatus()).isEqualTo(ExamStatus.PENDING_REVIEW);
+        verify(examRepository, never()).save(any(Exam.class));
+    }
+
+    @Test
+    @DisplayName("publish validation: question_count mismatch -> 409 INVALID_STATE")
+    void publishQuestionCountMismatch_rejectedInvalidState() {
+        Exam exam = publishableExam(49L, ExamStatus.PENDING_REVIEW, 2);
+        when(examRepository.findById(49L)).thenReturn(Optional.of(exam));
+        when(examQuestionRepository.countByExamId(49L)).thenReturn(1L);
+
+        assertAppException(
+                () -> adminExamService.publish(902L, 49L),
+                HttpStatus.CONFLICT,
+                "INVALID_STATE");
+
+        verify(examRepository, never()).save(any(Exam.class));
+    }
+
+    @Test
+    @DisplayName("publish validation: price != 0 -> 400 VALIDATION_FAILED")
+    void publishNonZeroPrice_rejectedValidation() {
+        Exam exam = publishableExam(50L, ExamStatus.PENDING_REVIEW, 1);
+        exam.setPrice(new BigDecimal("10.00"));
+        when(examRepository.findById(50L)).thenReturn(Optional.of(exam));
+        when(examQuestionRepository.countByExamId(50L)).thenReturn(1L);
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(50L))
+                .thenReturn(mappings(50L, 204L));
+        when(questionRepository.findAllById(List.of(204L)))
+                .thenReturn(List.of(question(204L, QuestionStatus.APPROVED)));
+
+        assertAppException(
+                () -> adminExamService.publish(902L, 50L),
+                HttpStatus.BAD_REQUEST,
+                "VALIDATION_FAILED");
+
+        verify(examRepository, never()).save(any(Exam.class));
+    }
+
+    @Test
+    @DisplayName("WF-11 PENDING_REVIEW -> reject-review -> DRAFT; reviewedBy & publishDate unchanged")
+    void wf11_rejectReviewFromPending_successAuditUnchanged() {
+        Exam exam = baseExam(51L, ExamStatus.PENDING_REVIEW);
+        OffsetDateTime oldPublishDate = FIXED_TIME.minusDays(1);
+        exam.setReviewedBy(777L);
+        exam.setPublishDate(oldPublishDate);
+        when(examRepository.findById(51L)).thenReturn(Optional.of(exam));
+        when(examRepository.save(any(Exam.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubAdminResponseDependencies(51L, 0L);
+
+        AdminExamResponse result = adminExamService.rejectReview(51L);
+
+        assertThat(result.getStatus()).isEqualTo(ExamStatus.DRAFT);
+        assertThat(result.getReviewedBy()).isEqualTo(777L);
+        assertThat(result.getPublishDate()).isEqualTo(oldPublishDate);
+    }
+
+    @Test
+    @DisplayName("WF-13 reject-review on DRAFT -> 409 INVALID_STATE")
+    void wf13_rejectReviewOnDraft_rejectedInvalidState() {
+        assertWorkflowInvalidState(52L, ExamStatus.DRAFT, () -> adminExamService.rejectReview(52L));
+    }
+
+    @Test
+    @DisplayName("WF-14 PUBLISHED -> hide -> HIDDEN; audit unchanged")
+    void wf14_hidePublished_successAuditUnchanged() {
+        Exam exam = baseExam(53L, ExamStatus.PUBLISHED);
+        OffsetDateTime oldPublishDate = FIXED_TIME.minusDays(1);
+        exam.setReviewedBy(777L);
+        exam.setPublishDate(oldPublishDate);
+        when(examRepository.findById(53L)).thenReturn(Optional.of(exam));
+        when(examRepository.save(any(Exam.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubAdminResponseDependencies(53L, 0L);
+
+        AdminExamResponse result = adminExamService.hide(53L);
+
+        assertThat(result.getStatus()).isEqualTo(ExamStatus.HIDDEN);
+        assertThat(result.getReviewedBy()).isEqualTo(777L);
+        assertThat(result.getPublishDate()).isEqualTo(oldPublishDate);
+    }
+
+    @Test
+    @DisplayName("WF-15 hide on DRAFT -> 409 INVALID_STATE")
+    void wf15_hideOnDraft_rejectedInvalidState() {
+        assertWorkflowInvalidState(54L, ExamStatus.DRAFT, () -> adminExamService.hide(54L));
+    }
+
+    @Test
+    @DisplayName("WF-16 HIDDEN -> publish (SUPER_ADMIN) -> PUBLISHED; reviewedBy AND publishDate overwritten")
+    void wf16_publishHidden_successAuditOverwritten() {
+        Exam exam = publishableExam(55L, ExamStatus.HIDDEN, 1);
+        OffsetDateTime oldPublishDate = FIXED_TIME.minusDays(2);
+        exam.setReviewedBy(777L);
+        exam.setPublishDate(oldPublishDate);
+        when(examRepository.findById(55L)).thenReturn(Optional.of(exam));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(55L))
+                .thenReturn(mappings(55L, 205L));
+        when(questionRepository.findAllById(List.of(205L)))
+                .thenReturn(List.of(question(205L, QuestionStatus.PUBLISHED)));
+        when(examRepository.save(any(Exam.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubAdminResponseDependencies(55L, 1L);
+
+        AdminExamResponse result = adminExamService.publish(902L, 55L);
+
+        assertThat(result.getStatus()).isEqualTo(ExamStatus.PUBLISHED);
+        assertThat(result.getReviewedBy()).isEqualTo(902L);
+        assertThat(result.getPublishDate()).isNotNull();
+        assertThat(result.getPublishDate()).isNotEqualTo(oldPublishDate);
+    }
+
+    @Test
+    @DisplayName("WF-17 HIDDEN -> return-to-draft -> DRAFT; reviewedBy & publishDate unchanged")
+    void wf17_returnHiddenToDraft_successAuditUnchanged() {
+        Exam exam = baseExam(56L, ExamStatus.HIDDEN);
+        OffsetDateTime oldPublishDate = FIXED_TIME.minusDays(1);
+        exam.setReviewedBy(777L);
+        exam.setPublishDate(oldPublishDate);
+        when(examRepository.findById(56L)).thenReturn(Optional.of(exam));
+        when(examRepository.save(any(Exam.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubAdminResponseDependencies(56L, 0L);
+
+        AdminExamResponse result = adminExamService.returnToDraft(56L);
+
+        assertThat(result.getStatus()).isEqualTo(ExamStatus.DRAFT);
+        assertThat(result.getReviewedBy()).isEqualTo(777L);
+        assertThat(result.getPublishDate()).isEqualTo(oldPublishDate);
+    }
+
+    @Test
+    @DisplayName("WF-18 return-to-draft on PENDING_REVIEW -> 409 INVALID_STATE")
+    void wf18_returnPendingReviewToDraft_rejectedInvalidState() {
+        assertWorkflowInvalidState(57L, ExamStatus.PENDING_REVIEW, () -> adminExamService.returnToDraft(57L));
+    }
+
+    @Test
+    @DisplayName("WF-19 return-to-draft on DRAFT -> 409 INVALID_STATE")
+    void wf19_returnDraftToDraft_rejectedInvalidState() {
+        assertWorkflowInvalidState(58L, ExamStatus.DRAFT, () -> adminExamService.returnToDraft(58L));
+    }
+
+    @Test
+    @DisplayName("WF-20 PUBLISHED -> archive -> ARCHIVED")
+    void wf20_archivePublished_success() {
+        assertArchiveSuccess(59L, ExamStatus.PUBLISHED);
+    }
+
+    @Test
+    @DisplayName("WF-21 HIDDEN -> archive -> ARCHIVED")
+    void wf21_archiveHidden_success() {
+        assertArchiveSuccess(60L, ExamStatus.HIDDEN);
+    }
+
+    @Test
+    @DisplayName("WF-22 DRAFT -> archive -> 409 INVALID_STATE")
+    void wf22_archiveDraft_rejectedInvalidState() {
+        assertWorkflowInvalidState(61L, ExamStatus.DRAFT, () -> adminExamService.archive(61L));
+    }
+
+    @Test
+    @DisplayName("WF-23 ARCHIVED -> any workflow transition -> 409 INVALID_STATE")
+    void wf23_archivedRejectsAllWorkflowTransitions() {
+        Exam archived = baseExam(62L, ExamStatus.ARCHIVED);
+        when(examRepository.findById(62L)).thenReturn(Optional.of(archived));
+
+        assertAppException(() -> adminExamService.submitReview(62L), HttpStatus.CONFLICT, "INVALID_STATE");
+        assertAppException(() -> adminExamService.publish(902L, 62L), HttpStatus.CONFLICT, "INVALID_STATE");
+        assertAppException(() -> adminExamService.hide(62L), HttpStatus.CONFLICT, "INVALID_STATE");
+        assertAppException(() -> adminExamService.archive(62L), HttpStatus.CONFLICT, "INVALID_STATE");
+        assertAppException(() -> adminExamService.rejectReview(62L), HttpStatus.CONFLICT, "INVALID_STATE");
+        assertAppException(() -> adminExamService.returnToDraft(62L), HttpStatus.CONFLICT, "INVALID_STATE");
+        verify(examRepository, never()).save(any(Exam.class));
+    }
+
+    // =========================================================
     // LIST / GET
     // =========================================================
 
@@ -596,6 +1142,101 @@ class AdminExamServiceTest {
     // =========================================================
     // Helpers
     // =========================================================
+
+    private void assertAddRejectedForExamStatus(Long examId, ExamStatus status) {
+        Exam exam = baseExam(examId, status);
+        when(examRepository.findById(examId)).thenReturn(Optional.of(exam));
+
+        assertAppException(
+                () -> adminExamService.addQuestion(examId, 999L),
+                HttpStatus.CONFLICT,
+                "INVALID_STATE");
+
+        verify(questionRepository, never()).findById(any());
+        verify(examQuestionRepository, never()).save(any(ExamQuestion.class));
+        verify(examRepository, never()).save(any(Exam.class));
+    }
+
+    private void assertInvalidReorder(List<Long> requestedQuestionIds) {
+        Exam exam = baseExam(34L, ExamStatus.DRAFT);
+        when(examRepository.findById(34L)).thenReturn(Optional.of(exam));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(34L))
+                .thenReturn(mappings(34L, 1L, 2L, 3L));
+
+        assertAppException(
+                () -> adminExamService.reorderQuestions(34L, requestedQuestionIds),
+                HttpStatus.BAD_REQUEST,
+                "VALIDATION_FAILED");
+
+        verify(examQuestionRepository, never()).moveQuestionOrdersToTemporaryNegativeRange(any());
+    }
+
+    private void assertWorkflowInvalidState(Long examId, ExamStatus status, Runnable action) {
+        Exam exam = baseExam(examId, status);
+        when(examRepository.findById(examId)).thenReturn(Optional.of(exam));
+
+        assertAppException(action, HttpStatus.CONFLICT, "INVALID_STATE");
+
+        verify(examRepository, never()).save(any(Exam.class));
+    }
+
+    private void assertArchiveSuccess(Long examId, ExamStatus status) {
+        Exam exam = baseExam(examId, status);
+        when(examRepository.findById(examId)).thenReturn(Optional.of(exam));
+        when(examRepository.save(any(Exam.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubAdminResponseDependencies(examId, 0L);
+
+        AdminExamResponse result = adminExamService.archive(examId);
+
+        assertThat(result.getStatus()).isEqualTo(ExamStatus.ARCHIVED);
+    }
+
+    private void assertAppException(Runnable action, HttpStatus expectedStatus, String expectedCode) {
+        assertThatThrownBy(action::run)
+                .isInstanceOf(AppException.class)
+                .satisfies(ex -> {
+                    AppException ae = (AppException) ex;
+                    assertThat(ae.getStatus()).isEqualTo(expectedStatus);
+                    assertThat(ae.getCode()).isEqualTo(expectedCode);
+                });
+    }
+
+    private void stubAdminResponseDependencies(Long examId, Long count) {
+        when(subjectRepository.findById(SUBJECT_ACTIVE_ID)).thenReturn(Optional.of(activeSubject));
+        when(examQuestionRepository.countByExamId(examId)).thenReturn(count);
+    }
+
+    private Question question(Long id, QuestionStatus status) {
+        return Question.builder()
+                .id(id)
+                .status(status)
+                .build();
+    }
+
+    private ExamQuestion mapping(Long examId, Long questionId, int order) {
+        return ExamQuestion.builder()
+                .id(questionId + 1000)
+                .examId(examId)
+                .questionId(questionId)
+                .questionOrder(order)
+                .build();
+    }
+
+    private List<ExamQuestion> mappings(Long examId, Long... questionIds) {
+        java.util.ArrayList<ExamQuestion> mappings = new java.util.ArrayList<>();
+        for (int i = 0; i < questionIds.length; i++) {
+            mappings.add(mapping(examId, questionIds[i], i + 1));
+        }
+        return mappings;
+    }
+
+    private Exam publishableExam(Long id, ExamStatus status, int questionCount) {
+        Exam exam = baseExam(id, status);
+        exam.setQuestionCount(questionCount);
+        exam.setPricingType(ExamPricingType.FREE);
+        exam.setPrice(BigDecimal.ZERO);
+        return exam;
+    }
 
     private AdminExamCreateRequest baseCreateRequest() {
         return AdminExamCreateRequest.builder()
