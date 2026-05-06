@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================
 # V-SAT Compass - Admin Exam CRUD Smoke Tests
-# Runs production checks for C1.2b-1 admin exam metadata CRUD.
+# Runs production checks for admin exam metadata CRUD and DRAFT discard.
 # Usage:
 #   SMOKE_ADMIN_PASSWORD=... bash docs/scripts/smoke_admin_exams.sh
 #   BASE_URL=https://your-api.com/api/v1 SMOKE_ADMIN_PASSWORD=... bash docs/scripts/smoke_admin_exams.sh
@@ -284,10 +284,30 @@ else
     record_result "TC-ADMIN-EXAM-10" "Public /exams does not include DRAFT admin smoke exam" 0 "HTTP $PUBLIC_LIST_STATUS"
 fi
 
+echo "--- TC-ADMIN-EXAM-11: DELETE /admin/exams/{id} discards DRAFT smoke exam ---"
+DISCARD_RESPONSE=$(request_json "DELETE" "$BASE_URL/admin/exams/$CREATED_ID" "$ADMIN_TOKEN")
+DISCARD_BODY=$(body_from_response "$DISCARD_RESPONSE")
+DISCARD_STATUS=$(status_from_response "$DISCARD_RESPONSE")
+if [ "$DISCARD_STATUS" = "200" ] && body_contains "$DISCARD_BODY" "Draft exam discarded"; then
+    record_result "TC-ADMIN-EXAM-11" "DELETE /admin/exams/{id} discards the DRAFT smoke exam" 1
+else
+    record_result "TC-ADMIN-EXAM-11" "DELETE /admin/exams/{id} discards the DRAFT smoke exam" 0 "HTTP $DISCARD_STATUS; body=$DISCARD_BODY"
+fi
+
+echo "--- TC-ADMIN-EXAM-12: GET discarded exam returns 404 ---"
+DISCARDED_GET_RESPONSE=$(request_json "GET" "$BASE_URL/admin/exams/$CREATED_ID" "$ADMIN_TOKEN")
+DISCARDED_GET_BODY=$(body_from_response "$DISCARDED_GET_RESPONSE")
+DISCARDED_GET_STATUS=$(status_from_response "$DISCARDED_GET_RESPONSE")
+if [ "$DISCARDED_GET_STATUS" = "404" ] && body_contains "$DISCARDED_GET_BODY" "RESOURCE_NOT_FOUND"; then
+    record_result "TC-ADMIN-EXAM-12" "GET discarded DRAFT smoke exam returns 404 RESOURCE_NOT_FOUND" 1
+else
+    record_result "TC-ADMIN-EXAM-12" "GET discarded DRAFT smoke exam returns 404 RESOURCE_NOT_FOUND" 0 "HTTP $DISCARDED_GET_STATUS; body=$DISCARDED_GET_BODY"
+fi
+
 echo ""
 echo "========================================"
 echo "Smoke (admin exams): $PASS/$TOTAL PASS"
-echo "Note: created DRAFT smoke exam remains as a smoke artifact; no delete/archive endpoint exists in C1.2b-1."
+echo "Note: created DRAFT smoke exam is discarded by this smoke script."
 echo "========================================"
 
 if [ "$FAIL" -gt 0 ]; then
