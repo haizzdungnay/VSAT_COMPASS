@@ -21,6 +21,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -67,6 +68,47 @@ class AdminExamControllerSecurityTest {
                 .andExpect(jsonPath("$.data.status").value("DRAFT"));
 
         verify(adminExamService).rejectReview(1L);
+    }
+
+    @Test
+    @DisplayName("discard DRAFT by CONTENT_ADMIN -> 200")
+    @WithMockUser(roles = "CONTENT_ADMIN")
+    void discardDraft_contentAdmin_succeeds() throws Exception {
+        mockMvc.perform(delete("/admin/exams/1").with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Draft exam discarded"));
+
+        verify(adminExamService).discardDraftExam(1L);
+    }
+
+    @Test
+    @DisplayName("discard DRAFT by SUPER_ADMIN -> 200")
+    @WithMockUser(roles = "SUPER_ADMIN")
+    void discardDraft_superAdmin_succeeds() throws Exception {
+        mockMvc.perform(delete("/admin/exams/1").with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Draft exam discarded"));
+
+        verify(adminExamService).discardDraftExam(1L);
+    }
+
+    @Test
+    @DisplayName("discard DRAFT by STUDENT -> 403")
+    @WithMockUser(roles = "STUDENT")
+    void discardDraft_student_forbidden() throws Exception {
+        mockMvc.perform(delete("/admin/exams/1").with(csrf()))
+                .andExpect(status().isForbidden());
+
+        verify(adminExamService, never()).discardDraftExam(1L);
+    }
+
+    @Test
+    @DisplayName("discard DRAFT anonymous -> 401")
+    void discardDraft_anonymous_unauthorized() throws Exception {
+        mockMvc.perform(delete("/admin/exams/1").with(csrf()))
+                .andExpect(status().isUnauthorized());
+
+        verify(adminExamService, never()).discardDraftExam(1L);
     }
 
     @TestConfiguration

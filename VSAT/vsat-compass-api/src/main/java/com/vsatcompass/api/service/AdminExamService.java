@@ -23,6 +23,8 @@ public interface AdminExamService {
 
     AdminExamResponse updateExam(Long id, AdminExamUpdateRequest request);
 
+    void discardDraftExam(Long examId);
+
     AdminExamResponse addQuestion(Long examId, Long questionId);
 
     AdminExamResponse removeQuestion(Long examId, Long questionId);

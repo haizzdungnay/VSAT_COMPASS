@@ -156,6 +156,17 @@ public class AdminExamServiceImpl implements AdminExamService {
         return toAdminResponse(saved);
     }
 
+    // ---------- DISCARD ----------
+    @Override
+    @Transactional
+    public void discardDraftExam(Long examId) {
+        Exam exam = loadExam(examId);
+        requireStatus(exam, ExamStatus.DRAFT, "discard draft exam");
+
+        examRepository.delete(exam);
+        log.info("Admin draft exam discarded examId={} code={}", examId, exam.getExamCode());
+    }
+
     // ---------- COMPOSITION ----------
     @Override
     @Transactional

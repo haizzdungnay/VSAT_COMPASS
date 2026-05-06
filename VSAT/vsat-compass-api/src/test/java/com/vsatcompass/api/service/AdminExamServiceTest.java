@@ -1007,6 +1007,84 @@ class AdminExamServiceTest {
     }
 
     // =========================================================
+    // DISCARD
+    // =========================================================
+
+    @Test
+    @DisplayName("discardDraft: DRAFT exam is hard-deleted")
+    void discardDraft_deletesExam_whenStatusDraft() {
+        Exam draft = baseExam(70L, ExamStatus.DRAFT);
+        when(examRepository.findById(70L)).thenReturn(Optional.of(draft));
+
+        adminExamService.discardDraftExam(70L);
+
+        verify(examRepository).delete(draft);
+        verify(examRepository, never()).save(any(Exam.class));
+        verify(questionRepository, never()).delete(any(Question.class));
+    }
+
+    @Test
+    @DisplayName("discardDraft: missing exam -> 404 RESOURCE_NOT_FOUND")
+    void discardDraft_throws404_whenExamMissing() {
+        when(examRepository.findById(404L)).thenReturn(Optional.empty());
+
+        assertAppException(
+                () -> adminExamService.discardDraftExam(404L),
+                HttpStatus.NOT_FOUND,
+                "RESOURCE_NOT_FOUND");
+
+        verify(examRepository, never()).delete(any(Exam.class));
+    }
+
+    @Test
+    @DisplayName("discardDraft: COMPOSING exam -> 409 INVALID_STATE")
+    void discardDraft_rejectsComposing_409() {
+        assertDiscardRejectedForStatus(71L, ExamStatus.COMPOSING);
+    }
+
+    @Test
+    @DisplayName("discardDraft: PENDING_REVIEW exam -> 409 INVALID_STATE")
+    void discardDraft_rejectsPendingReview_409() {
+        assertDiscardRejectedForStatus(72L, ExamStatus.PENDING_REVIEW);
+    }
+
+    @Test
+    @DisplayName("discardDraft: PUBLISHED exam -> 409 INVALID_STATE")
+    void discardDraft_rejectsPublished_409() {
+        assertDiscardRejectedForStatus(73L, ExamStatus.PUBLISHED);
+    }
+
+    @Test
+    @DisplayName("discardDraft: HIDDEN exam -> 409 INVALID_STATE")
+    void discardDraft_rejectsHidden_409() {
+        assertDiscardRejectedForStatus(74L, ExamStatus.HIDDEN);
+    }
+
+    @Test
+    @DisplayName("discardDraft: ARCHIVED exam -> 409 INVALID_STATE")
+    void discardDraft_rejectsArchived_409() {
+        assertDiscardRejectedForStatus(75L, ExamStatus.ARCHIVED);
+    }
+
+    @Test
+    @DisplayName("discardDraft: LOCKED exam -> 409 INVALID_STATE")
+    void discardDraft_rejectsLocked_409() {
+        assertDiscardRejectedForStatus(76L, ExamStatus.LOCKED);
+    }
+
+    @Test
+    @DisplayName("discardDraft: service has no Question delete path")
+    void discardDraft_doesNotDeleteQuestions_serviceInteraction() {
+        Exam draft = baseExam(77L, ExamStatus.DRAFT);
+        when(examRepository.findById(77L)).thenReturn(Optional.of(draft));
+
+        adminExamService.discardDraftExam(77L);
+
+        verify(examRepository).delete(draft);
+        verify(questionRepository, never()).delete(any(Question.class));
+    }
+
+    // =========================================================
     // LIST / GET
     // =========================================================
 
@@ -1178,6 +1256,20 @@ class AdminExamServiceTest {
         assertAppException(action, HttpStatus.CONFLICT, "INVALID_STATE");
 
         verify(examRepository, never()).save(any(Exam.class));
+    }
+
+    private void assertDiscardRejectedForStatus(Long examId, ExamStatus status) {
+        Exam exam = baseExam(examId, status);
+        when(examRepository.findById(examId)).thenReturn(Optional.of(exam));
+
+        assertAppException(
+                () -> adminExamService.discardDraftExam(examId),
+                HttpStatus.CONFLICT,
+                "INVALID_STATE");
+
+        verify(examRepository, never()).delete(any(Exam.class));
+        verify(examRepository, never()).save(any(Exam.class));
+        verify(questionRepository, never()).delete(any(Question.class));
     }
 
     private void assertArchiveSuccess(Long examId, ExamStatus status) {
