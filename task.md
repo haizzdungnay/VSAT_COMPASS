@@ -393,6 +393,15 @@ C1.2b production closeout completed after tag `v0.9.3`; Android/admin UI integra
 
 Audit logging for draft discard remains deferred because no reusable production audit service/repository pattern exists yet. LOCKED semantics and `Exam.version` optimistic-locking behavior remain design-only/deferred.
 
+### C1.2d — Session Hardening (test/smoke/docs only)
+
+| Sub-phase | Scope | Trạng thái |
+|-----------|-------|------------|
+| **C1.2d-1a** | SessionService unit coverage expansion: behavior-preserving Mockito tests for `startSession` null-mode default, null-`totalQuestions` default, `clientSubmit` `correctCount==totalQuestions` boundary, and `TIMED_OUT` terminal-state rejection; strengthened `BAD_REQUEST` code assertion on the existing `ABANDONED` test. No `src/main/**`, schema, `SecurityConfig`, smoke script, API docs, or deploy changes. | 🟡 In progress — feature branch only, no tag, no deploy. Smoke/docs follow-up deferred to C1.2d-1b. |
+| **C1.2d-1b** | Session smoke + API docs follow-up: extend `smoke_sessions.sh` with 404 (`RESOURCE_NOT_FOUND`) and 400 (DTO validation) cases; reflect new TCs in `docs/SMOKE_CHECKLIST.md`; clarify the `BAD_REQUEST` row in `docs/API_ERROR_CODES.md` to include non-IN_PROGRESS state rejection. | 🔜 Deferred (not in C1.2d-1a scope). |
+
+C1.2d batch is intentionally split: C1.2d-1a is unit-test-only and ships zero behavior risk; C1.2d-1b touches smoke scripts and API docs in a separate PR.
+
 - [x] Gửi duyệt câu hỏi (backend API C1.1b)
 - [x] Duyệt / từ chối / yêu cầu chỉnh sửa (backend API C1.1b)
 - [ ] Xem lịch sử phiên bản nội dung
