@@ -2,6 +2,24 @@
 
 ## [Unreleased]
 
+### Phase C1.2d-1a — SessionService Unit Coverage Expansion
+
+#### Added
+- Added behavior-preserving Mockito unit tests in `SessionServiceTest`:
+  - `startSession_modeNull_defaultsToMockExam` — locks the existing default-to-`MOCK_EXAM` behavior when the request omits `mode`.
+  - `startSession_totalQuestionsNull_defaultsToZero` — locks the existing default-to-`0` behavior when `totalQuestions` is null at start (client populates via client-submit).
+  - `clientSubmit_correctEqualsTotal_persistsAllAnsweredZeroWrong` — boundary case asserting `correctCount == totalQuestions` is accepted and persists `wrongCount=0`, `answeredCount=totalQuestions`, `skippedCount=0`, `status=SUBMITTED`.
+  - `clientSubmit_timedOutSession_throwsBadRequest` — covers the second non-IN_PROGRESS / non-SUBMITTED terminal state alongside the existing ABANDONED case.
+- Strengthened `clientSubmit_abandonedSession_throwsBadRequest` to also assert the `BAD_REQUEST` error code (previously asserted HTTP status only).
+
+#### Notes
+- No runtime code changes (`src/main/**` untouched).
+- No DTO, controller, service implementation, repository, or entity changes.
+- No schema, migration, or `SecurityConfig` changes.
+- No smoke script, API error-code, smoke checklist, README, or deploy runbook changes.
+- No tag, no Render deploy, no production smoke.
+- Smoke and API-docs follow-up deferred to Phase C1.2d-1b.
+
 ## [0.9.4] - 2026-05-06 — Phase C1.2c.1: Admin Exam DRAFT Discard
 
 #### Added

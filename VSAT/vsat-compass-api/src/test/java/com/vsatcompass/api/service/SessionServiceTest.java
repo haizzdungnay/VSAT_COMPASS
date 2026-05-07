@@ -125,6 +125,44 @@ class SessionServiceTest {
         verify(examSessionRepository, never()).save(any());
     }
 
+    @Test
+    @DisplayName("startSession: null mode defaults to MOCK_EXAM")
+    void startSession_modeNull_defaultsToMockExam() {
+        when(examSessionRepository.save(any(ExamSession.class))).thenAnswer(inv -> {
+            ExamSession s = inv.getArgument(0);
+            s.setId(SESSION_ID);
+            return s;
+        });
+
+        SessionResponse.SessionInfo info = sessionService.startSession(
+                USER_ID, startReq(EXAM_ID, null, 30));
+
+        assertThat(info.getMode()).isEqualTo("MOCK_EXAM");
+
+        ArgumentCaptor<ExamSession> cap = ArgumentCaptor.forClass(ExamSession.class);
+        verify(examSessionRepository).save(cap.capture());
+        assertThat(cap.getValue().getMode()).isEqualTo(SessionMode.MOCK_EXAM);
+    }
+
+    @Test
+    @DisplayName("startSession: null totalQuestions defaults to 0 (client populates via client-submit)")
+    void startSession_totalQuestionsNull_defaultsToZero() {
+        when(examSessionRepository.save(any(ExamSession.class))).thenAnswer(inv -> {
+            ExamSession s = inv.getArgument(0);
+            s.setId(SESSION_ID);
+            return s;
+        });
+
+        SessionResponse.SessionInfo info = sessionService.startSession(
+                USER_ID, startReq(EXAM_ID, "MOCK_EXAM", null));
+
+        assertThat(info.getTotalQuestions()).isEqualTo(0);
+
+        ArgumentCaptor<ExamSession> cap = ArgumentCaptor.forClass(ExamSession.class);
+        verify(examSessionRepository).save(cap.capture());
+        assertThat(cap.getValue().getTotalQuestions()).isEqualTo(0);
+    }
+
     // ===== clientSubmit =====
 
     @Test
@@ -152,6 +190,30 @@ class SessionServiceTest {
         assertThat(saved.getScorePercentage()).isEqualByComparingTo(BigDecimal.valueOf(82.5));
         assertThat(saved.getCorrectCount()).isEqualTo(41);
         assertThat(saved.getWrongCount()).isEqualTo(9);
+        assertThat(saved.getAnsweredCount()).isEqualTo(50);
+        assertThat(saved.getSkippedCount()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("clientSubmit: correctCount == totalQuestions persists all-answered, zero-wrong (boundary)")
+    void clientSubmit_correctEqualsTotal_persistsAllAnsweredZeroWrong() {
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+        when(examSessionRepository.save(any(ExamSession.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        SessionResponse.SessionInfo info = sessionService.clientSubmit(
+                USER_ID, SESSION_ID, submitReq(100.0, 50, 50, 1800));
+
+        assertThat(info.getStatus()).isEqualTo("SUBMITTED");
+        assertThat(info.getCorrectCount()).isEqualTo(50);
+        assertThat(info.getTotalQuestions()).isEqualTo(50);
+
+        ArgumentCaptor<ExamSession> cap = ArgumentCaptor.forClass(ExamSession.class);
+        verify(examSessionRepository).save(cap.capture());
+        ExamSession saved = cap.getValue();
+        assertThat(saved.getStatus()).isEqualTo(SessionStatus.SUBMITTED);
+        assertThat(saved.getCorrectCount()).isEqualTo(50);
+        assertThat(saved.getTotalQuestions()).isEqualTo(50);
+        assertThat(saved.getWrongCount()).isEqualTo(0);
         assertThat(saved.getAnsweredCount()).isEqualTo(50);
         assertThat(saved.getSkippedCount()).isEqualTo(0);
     }
@@ -212,6 +274,23 @@ class SessionServiceTest {
                 USER_ID, SESSION_ID, submitReq(80.0, 40, 50, 1800)))
                 .isInstanceOfSatisfying(AppException.class, ex -> {
                     assertThat(ex.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(ex.getCode()).isEqualTo("BAD_REQUEST");
+                });
+
+        verify(examSessionRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("clientSubmit: session in TIMED_OUT terminal state throws BAD_REQUEST")
+    void clientSubmit_timedOutSession_throwsBadRequest() {
+        inProgressSession.setStatus(SessionStatus.TIMED_OUT);
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+
+        assertThatThrownBy(() -> sessionService.clientSubmit(
+                USER_ID, SESSION_ID, submitReq(80.0, 40, 50, 1800)))
+                .isInstanceOfSatisfying(AppException.class, ex -> {
+                    assertThat(ex.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(ex.getCode()).isEqualTo("BAD_REQUEST");
                 });
 
         verify(examSessionRepository, never()).save(any());
