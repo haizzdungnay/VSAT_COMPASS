@@ -72,6 +72,7 @@ Tất cả response từ API đều tuân theo cấu trúc sau:
 |------|------------|----------|-----------------|
 | `SESSION_ALREADY_SUBMITTED` | 409 | Phiên thi đã nộp | Gọi client-submit lần thứ 2 trên cùng session (anti-replay) |
 | `SESSION_FORBIDDEN` | 403 | Không phải chủ phiên thi | Gọi client-submit với session thuộc user khác |
+| `BAD_REQUEST` | 400 | Phiên thi không ở trạng thái IN_PROGRESS | Gọi `client-submit` khi session đang `TIMED_OUT` hoặc `ABANDONED`. Trạng thái `SUBMITTED` được handle riêng bởi `SESSION_ALREADY_SUBMITTED` (409). |
 
 ### Validation Errors
 
@@ -94,6 +95,8 @@ Tất cả response từ API đều tuân theo cấu trúc sau:
 | `RESOURCE_NOT_FOUND` | 404 | Không tìm thấy | Entity không tồn tại với ID đã cho |
 
 Admin exam discard uses `RESOURCE_NOT_FOUND` when `DELETE /admin/exams/{examId}` or the follow-up admin `GET` targets an exam id that no longer exists.
+
+Session client-submit returns `RESOURCE_NOT_FOUND` (404) when `{sessionId}` does not exist.
 
 ### Rate Limiting
 

@@ -20,6 +20,22 @@
 - No tag, no Render deploy, no production smoke.
 - Smoke and API-docs follow-up deferred to Phase C1.2d-1b.
 
+### Phase C1.2d-1b — Session Smoke + API Docs
+
+#### Added
+- Extended `docs/scripts/smoke_sessions.sh` with TC-SESSION-6 (404 `RESOURCE_NOT_FOUND` for unknown sessionId) and TC-SESSION-7 (400 `VALIDATION_FAILED` for invalid client-submit payload where `correctCount > totalQuestions`). Total cases: 5 → 7.
+- Added TC-026 and TC-027 to `docs/SMOKE_CHECKLIST.md` backend smoke section. Total backend TCs 10 → 12; total checklist 25 → 27.
+- Documented `BAD_REQUEST` (400) for non-IN_PROGRESS session `client-submit` (TIMED_OUT, ABANDONED) and `RESOURCE_NOT_FOUND` (404) for unknown sessionId in `docs/API_ERROR_CODES.md`.
+
+#### Tracking
+- Updated C1.2d-1a status from In Progress → Done in `task.md` to reflect actual merge state at `69dc791` (sync gap from previous batch).
+
+#### Notes
+- No runtime code changes (`src/main/**` untouched).
+- No schema, migration, SecurityConfig, dependency, or build changes.
+- No tag created. No Render deploy. No production smoke run.
+- Smoke script syntax verified via `bash -n` only; no live execution against production.
+
 ## [0.9.4] - 2026-05-06 — Phase C1.2c.1: Admin Exam DRAFT Discard
 
 #### Added

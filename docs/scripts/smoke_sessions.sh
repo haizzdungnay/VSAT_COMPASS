@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================
 # V-SAT Compass — Session Smoke Tests
-# Runs 5 test cases against the Session endpoints.
+# Runs 7 test cases against the Session endpoints.
 # Usage: BASE_URL=https://your-api.com/api/v1 bash smoke_sessions.sh
 # Compatible with bash 3.2+ (macOS default)
 # ============================================================
@@ -159,6 +159,60 @@ if [ -n "$ALT_TOKEN" ] && [ -n "$SESSION_ID" ]; then
     fi
 else
     echo "  [SKIP] Could not login as alternate user or no session"
+    TOTAL=$((TOTAL + 1))
+    FAIL=$((FAIL + 1))
+fi
+
+# -----------------------------------------------------------
+# TC-SESSION-6: Client-submit unknown sessionId (404 RESOURCE_NOT_FOUND)
+# -----------------------------------------------------------
+echo "--- TC-SESSION-6: POST /sessions/999999999/client-submit (unknown sessionId → 404) ---"
+TC6_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/sessions/999999999/client-submit" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $ACCESS_TOKEN" \
+    -d "{\"score\":50.0,\"correctCount\":5,\"totalQuestions\":10,\"timeSpentSeconds\":300}")
+TC6_BODY=$(echo "$TC6_RESPONSE" | sed '$d')
+TC6_STATUS=$(echo "$TC6_RESPONSE" | tail -1)
+check_status "Client-submit unknown sessionId (404)" "404" "$TC6_STATUS"
+
+TC6_CODE=$(echo "$TC6_BODY" | grep -o '"code":"[^"]*"' | head -1 | cut -d'"' -f4)
+if [ "$TC6_CODE" = "RESOURCE_NOT_FOUND" ]; then
+    echo "    -> error.code=RESOURCE_NOT_FOUND ✓"
+else
+    echo "    -> error.code=$TC6_CODE (expected RESOURCE_NOT_FOUND) ✗"
+    FAIL=$((FAIL + 1))
+fi
+
+# -----------------------------------------------------------
+# TC-SESSION-7: Client-submit invalid payload (correctCount > totalQuestions → 400 VALIDATION_FAILED)
+# -----------------------------------------------------------
+echo "--- TC-SESSION-7: POST /sessions/{id}/client-submit (correctCount > totalQuestions → 400) ---"
+# Start a fresh session so it is IN_PROGRESS
+TC7_START=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/sessions/start" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $ACCESS_TOKEN" \
+    -d "{\"examId\":$EXAM_ID,\"mode\":\"PRACTICE\",\"totalQuestions\":10}")
+TC7_START_BODY=$(echo "$TC7_START" | sed '$d')
+TC7_SESSION_ID=$(echo "$TC7_START_BODY" | grep -o '"id":[0-9]*' | head -1 | cut -d':' -f2)
+
+if [ -n "$TC7_SESSION_ID" ]; then
+    TC7_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/sessions/$TC7_SESSION_ID/client-submit" \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $ACCESS_TOKEN" \
+        -d "{\"score\":50.0,\"correctCount\":50,\"totalQuestions\":10,\"timeSpentSeconds\":300}")
+    TC7_BODY=$(echo "$TC7_RESPONSE" | sed '$d')
+    TC7_STATUS=$(echo "$TC7_RESPONSE" | tail -1)
+    check_status "Client-submit invalid payload (correctCount > totalQuestions)" "400" "$TC7_STATUS"
+
+    TC7_CODE=$(echo "$TC7_BODY" | grep -o '"code":"[^"]*"' | head -1 | cut -d'"' -f4)
+    if [ "$TC7_CODE" = "VALIDATION_FAILED" ]; then
+        echo "    -> error.code=VALIDATION_FAILED ✓"
+    else
+        echo "    -> error.code=$TC7_CODE (expected VALIDATION_FAILED) ✗"
+        FAIL=$((FAIL + 1))
+    fi
+else
+    echo "  [SKIP] Could not start fresh session for TC-SESSION-7"
     TOTAL=$((TOTAL + 1))
     FAIL=$((FAIL + 1))
 fi

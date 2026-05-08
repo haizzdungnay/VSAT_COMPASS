@@ -399,11 +399,36 @@
 
 ---
 
+## TC-026: Client-submit với sessionId không tồn tại trả 404
+
+**Bước:**
+1. Login → lấy accessToken
+2. POST `/sessions/999999999/client-submit` với body hợp lệ
+
+**Kỳ vọng:** HTTP 404, `error.code` = `RESOURCE_NOT_FOUND`
+
+**Pass/Fail:** [ ]
+
+---
+
+## TC-027: Client-submit payload không hợp lệ (correctCount > totalQuestions) trả 400
+
+**Bước:**
+1. Login → lấy accessToken
+2. POST `/sessions/start` → lấy sessionId (trạng thái IN_PROGRESS)
+3. POST `/sessions/{sessionId}/client-submit` với `correctCount: 50`, `totalQuestions: 10` (và các field hợp lệ)
+
+**Kỳ vọng:** HTTP 400, `error.code` = `VALIDATION_FAILED`
+
+**Pass/Fail:** [ ]
+
+---
+
 ## Tổng kết
 
 | Tổng TC | Pass | Fail | Bỏ qua |
 |---------|------|------|--------|
-| 25      | 10 backend TCs (TC-016→TC-025) verified 2026-04-25 | 0 | 0 |
+| 27      | 10 backend TCs (TC-016→TC-025) verified 2026-04-25; TC-026 và TC-027 added C1.2d-1b (not yet production-verified) | 0 | 0 |
 
 **Ghi chú lần chạy (Phase B — Backend TCs):**
 - Ngày: 2026-04-25
@@ -420,7 +445,7 @@ Run these production smoke scripts before release tagging:
 
 - `SMOKE_AUTH_SKIP_REGISTER=1 bash docs/scripts/smoke_auth.sh` — expected 7 pass / 0 fail / 2 skipped.
 - `bash docs/scripts/smoke_subjects.sh` — expected 4/4 PASS.
-- `bash docs/scripts/smoke_sessions.sh` — expected 5/5 PASS.
+- `bash docs/scripts/smoke_sessions.sh` — expected 7/7 PASS. _(From C1.2d-1b: script expanded from 5 to 7 cases. Historical production-verified: 5/5 PASS for v0.9.4 on 2026-05-06. TC-SESSION-6 and TC-SESSION-7 not yet production-verified.)_
 - `SMOKE_ADMIN_PASSWORD=... bash docs/scripts/smoke_admin_exams.sh` — expected 12/12 PASS for admin exam metadata CRUD plus DRAFT discard.
 - `SMOKE_COLLAB1_PASSWORD=... SMOKE_COLLAB2_PASSWORD=... SMOKE_ADMIN_PASSWORD=... bash VSAT/vsat-compass-api/docs/scripts/smoke_questions.sh` — expected 32/32 PASS.
 - `EXAM_ID=2 bash VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh` — expected 10/10 PASS.
