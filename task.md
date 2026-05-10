@@ -1,6 +1,6 @@
 # V-SAT Compass — Task Tracker & Roadmap
 
-> Cập nhật: 2026-05-06 | Phiên bản hiện tại: **v0.9.4** (Phase C1.2c.1 Admin Exam DRAFT Discard live in production)
+> Cập nhật: 2026-05-10 | Phiên bản hiện tại: **v0.9.4** (Phase C1.2c.1 Admin Exam DRAFT Discard live in production)
 
 Tài liệu này tổng hợp lộ trình hoàn thiện app dựa trên:
 - `VSAT/ui/tong_hop_du_an_vsat_android_web_v2.txt`
@@ -398,7 +398,7 @@ Audit logging for draft discard remains deferred because no reusable production 
 | Sub-phase | Scope | Trạng thái |
 |-----------|-------|------------|
 | **C1.2d-1a** | SessionService unit coverage expansion: behavior-preserving Mockito tests for `startSession` null-mode default, null-`totalQuestions` default, `clientSubmit` `correctCount==totalQuestions` boundary, and `TIMED_OUT` terminal-state rejection; strengthened `BAD_REQUEST` code assertion on the existing `ABANDONED` test. No `src/main/**`, schema, `SecurityConfig`, smoke script, API docs, or deploy changes. | ✅ Done (2026-05-08) — merged to main at 69dc791; full backend suite 171/171 PASS; no deploy, no tag. |
-| **C1.2d-1b** | Session smoke + API docs follow-up: extend `smoke_sessions.sh` with 404 (`RESOURCE_NOT_FOUND`) and 400 (DTO validation) cases; reflect new TCs in `docs/SMOKE_CHECKLIST.md`; clarify the `BAD_REQUEST` row in `docs/API_ERROR_CODES.md` to include non-IN_PROGRESS state rejection. | 🟡 In progress — feature branch phase-c/c1-2d-1b-session-smoke-docs; smoke script + docs only; no runtime, no tag, no deploy. |
+| **C1.2d-1b** | Session smoke + API docs follow-up: extend `smoke_sessions.sh` with 404 (`RESOURCE_NOT_FOUND`) and 400 (DTO validation) cases; reflect new TCs in `docs/SMOKE_CHECKLIST.md`; clarify the `BAD_REQUEST` row in `docs/API_ERROR_CODES.md` to include non-IN_PROGRESS state rejection. | ✅ Done (2026-05-09) — merged to main at 78f5759; smoke + docs only; no runtime, no tag, no deploy. |
 
 C1.2d batch is intentionally split: C1.2d-1a is unit-test-only and ships zero behavior risk; C1.2d-1b touches smoke scripts and API docs in a separate PR.
 
