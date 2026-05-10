@@ -36,6 +36,13 @@
 - No tag created. No Render deploy. No production smoke run.
 - Smoke script syntax verified via `bash -n` only; no live execution against production.
 
+### Phase C1.2d Closeout — Status Sync + UTF-8 Enforcement (2026-05-10)
+
+- Flipped `task.md` C1.2d-1b status from 🟡 In progress → ✅ Done; recorded merge ref `78f5759`.
+- Added `.gitattributes` rule `*.md text eol=lf working-tree-encoding=UTF-8` to prevent mojibake recurrence (U+FFFD incident from C1.2d-1b initial commit). `working-tree-encoding` requires Git 2.10+ and will fail-fast on checkout if a Markdown file is encoded otherwise.
+- (Conditional) Appended IDE encoding configuration note to `docs/DEVELOPER_SETUP.md` if that file existed.
+- Docs-only batch. No runtime change. No tag. No deploy. `v0.9.4` (`c4c2993...`) remains the production runtime release.
+
 ## [0.9.4] - 2026-05-06 — Phase C1.2c.1: Admin Exam DRAFT Discard
 
 #### Added

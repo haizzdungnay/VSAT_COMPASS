@@ -4,3 +4,9 @@
 # v0.9.3 closeout. Apply globally so any future script under
 # docs/scripts/ or VSAT/**/docs/scripts/ inherits the rule.
 *.sh text eol=lf
+
+# Enforce UTF-8 encoding and LF line endings on all Markdown files.
+# Added 2026-05-10 to prevent mojibake recurrence (U+FFFD incident from C1.2d-1b initial commit).
+# `working-tree-encoding=UTF-8` requires Git 2.10+; checkout will fail-fast if a *.md is encoded otherwise,
+# which is the desired behavior for catching mis-encoded edits early.
+*.md text eol=lf working-tree-encoding=UTF-8
