@@ -50,6 +50,16 @@
 - Build/test infrastructure only — no runtime Android source, backend, schema, SecurityConfig, Render, or production behavior changed.
 - Runtime backend release remains pinned at v0.9.4 (c4c2993deba664883132edf043401e41ffdbca61).
 
+### Phase C1.2b-A — Android Data Layer Foundation (2026-05-15)
+
+- Added admin exam DTO/request POJOs for the Android v0.9.4 contract.
+- Aligned AdminApi with all 14 v0.9.4 admin exam endpoints and reused the existing ApiResponse<T> envelope.
+- Added PageResponse<T> because no existing Android page wrapper was present.
+- Added AdminExamRepository callback wrapper with ApiResponse<T> data unwrapping.
+- Added AdminExamViewModel LiveData state foundation for list, detail, create, update, add-question, and reorder flows.
+- Added unit tests for POJO JSON, AdminApi MockWebServer contracts, repository result/error paths, and ViewModel LiveData transitions.
+- Android data-layer/test batch only — no backend, runtime, schema, tag, deploy, Render, or production behavior changed.
+
 ## [0.9.4] - 2026-05-06 — Phase C1.2c.1: Admin Exam DRAFT Discard
 
 #### Added
