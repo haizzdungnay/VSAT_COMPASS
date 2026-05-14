@@ -378,7 +378,8 @@ C1.2b is split into two batches to ship value incrementally and keep production 
 
 | ID | Hạng mục | Trạng thái | Ghi chú |
 |----|----------|------------|---------|
-| C1.2b-PRE-2 | Android Test Infra Setup | Completed on branch | Adds Mockito, MockWebServer, and arch-core-testing for C1.2b-A tests. |
+| C1.2b-PRE-2 | Android Test Infra Setup | ✅ Done — merged to main at 93c577d | Adds Mockito, MockWebServer, and arch-core-testing for C1.2b-A tests. |
+| C1.2b-A | Android Data Layer Foundation | Completed on branch | Adds admin exam POJOs, 14-endpoint AdminApi contract, repository callback wrapper, ViewModel state, and JVM tests. |
 
 C1.2b backend scope is production released as of v0.9.3:
 - exam composition (add/remove/reorder questions)
