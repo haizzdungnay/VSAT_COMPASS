@@ -9,14 +9,17 @@ activity = "1.13.0"
 constraintlayout = "2.2.1"
 retrofit = "2.11.0"
 okhttp = "4.12.0"
+mockwebserver = "4.12.0"
 gson = "2.11.0"
 glide = "4.16.0"
 lifecycle = "2.8.7"
+archCoreTesting = "2.2.0"
 fragment = "1.8.5"
 swiperefreshlayout = "1.1.0"
 viewpager2 = "1.1.0"
 navigation = "2.8.5"
 circleimageview = "3.1.0"
+mockito = "5.11.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -31,19 +34,21 @@ retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = 
 retrofit-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
+mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "mockwebserver" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 # Image loading
 glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
 # Architecture
 lifecycle-viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "lifecycle" }
 lifecycle-livedata = { group = "androidx.lifecycle", name = "lifecycle-livedata", version.ref = "lifecycle" }
+archCoreTesting = { group = "androidx.arch.core", name = "core-testing", version.ref = "archCoreTesting" }
 fragment = { group = "androidx.fragment", name = "fragment", version.ref = "fragment" }
 swiperefreshlayout = { group = "androidx.swiperefreshlayout", name = "swiperefreshlayout", version.ref = "swiperefreshlayout" }
 viewpager2 = { group = "androidx.viewpager2", name = "viewpager2", version.ref = "viewpager2" }
 navigation-fragment = { group = "androidx.navigation", name = "navigation-fragment", version.ref = "navigation" }
 navigation-ui = { group = "androidx.navigation", name = "navigation-ui", version.ref = "navigation" }
 circleimageview = { group = "de.hdodenhof", name = "circleimageview", version.ref = "circleimageview" }
+mockitoCore = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-

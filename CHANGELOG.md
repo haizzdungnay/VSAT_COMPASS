@@ -43,6 +43,13 @@
 - (Conditional) Appended IDE encoding configuration note to `docs/DEVELOPER_SETUP.md` if that file existed.
 - Docs-only batch. No runtime change. No tag. No deploy. `v0.9.4` (`c4c2993...`) remains the production runtime release.
 
+### Phase C1.2b-PRE-2 — Android Test Infra Setup (2026-05-11)
+
+- Added Android JVM test dependencies: mockito-core, mockwebserver, and androidx.arch.core:core-testing.
+- Added C1_2b_PreSmokeTest verifying JUnit, Mockito, MockWebServer, and LiveData executor support.
+- Build/test infrastructure only — no runtime Android source, backend, schema, SecurityConfig, Render, or production behavior changed.
+- Runtime backend release remains pinned at v0.9.4 (c4c2993deba664883132edf043401e41ffdbca61).
+
 ## [0.9.4] - 2026-05-06 — Phase C1.2c.1: Admin Exam DRAFT Discard
 
 #### Added

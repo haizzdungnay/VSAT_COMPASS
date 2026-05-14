@@ -80,6 +80,9 @@ dependencies {
     implementation(libs.circleimageview)
 
     testImplementation(libs.junit)
+    testImplementation(libs.mockitoCore)
+    testImplementation(libs.mockwebserver)
+    testImplementation(libs.archCoreTesting)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 }
