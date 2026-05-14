@@ -376,6 +376,10 @@ C1.2b is split into two batches to ship value incrementally and keep production 
 | **C1.2b-1** | Admin Exam CRUD foundation: metadata-only create/list/detail/update endpoints (`/admin/exams`, `/admin/exams/{id}`). DRAFT/HIDDEN editing only. FREE+price=0 only. Server-controls `status`, `questionCount`, `version`, `createdBy`. `examCode` immutable on update. 25 Mockito tests + full suite green. | ✅ Done in production (2026-05-05, v0.9.2) — `smoke_admin_exams.sh` 10/10 PASS; hotfix replaced nullable JPQL optional filters with derived repository dispatch. |
 | **C1.2b-2** | Exam composition + publish workflow: add/remove/reorder questions, draft → pending review → published, hide/archive, SUPER_ADMIN-only publish, two-phase reorder, smoke scripts, deploy + tag. | ✅ Done in production (2026-05-06, v0.9.3) — `smoke_admin_exam_composition.sh` 17 PASS / 0 FAIL / 0 SKIP / 0 BLOCKED; full regression smoke PASS. |
 
+| ID | Hạng mục | Trạng thái | Ghi chú |
+|----|----------|------------|---------|
+| C1.2b-PRE-2 | Android Test Infra Setup | Completed on branch | Adds Mockito, MockWebServer, and arch-core-testing for C1.2b-A tests. |
+
 C1.2b backend scope is production released as of v0.9.3:
 - exam composition (add/remove/reorder questions)
 - publish / hide / archive / reject / return-to-draft workflow
