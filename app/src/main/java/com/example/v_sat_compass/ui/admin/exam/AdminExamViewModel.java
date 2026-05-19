@@ -16,6 +16,8 @@ import com.example.v_sat_compass.data.repository.AdminExamRepository;
 import com.example.v_sat_compass.data.repository.Resource;
 import com.example.v_sat_compass.data.repository.SubjectRepository;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class AdminExamViewModel extends ViewModel {
@@ -34,6 +36,11 @@ public class AdminExamViewModel extends ViewModel {
     private final MutableLiveData<Resource<List<SubjectResponse>>> subjectListState =
             new MutableLiveData<>();
     private final MutableLiveData<Resource<AdminExamResponse>> submitReviewState =
+            new MutableLiveData<>();
+    private final MutableLiveData<Resource<AdminExamResponse>> examDetailState =
+            new MutableLiveData<>();
+    private final MutableLiveData<Boolean> editModeState = new MutableLiveData<>(false);
+    private final MutableLiveData<Resource<AdminExamResponse>> actionResultState =
             new MutableLiveData<>();
 
     public AdminExamViewModel() {
@@ -79,6 +86,188 @@ public class AdminExamViewModel extends ViewModel {
 
     public LiveData<Resource<AdminExamResponse>> getSubmitReviewState() {
         return submitReviewState;
+    }
+
+    public LiveData<Resource<AdminExamResponse>> getExamDetailState() {
+        return examDetailState;
+    }
+
+    public LiveData<Boolean> getEditModeState() {
+        return editModeState;
+    }
+
+    public LiveData<Resource<AdminExamResponse>> getActionResultState() {
+        return actionResultState;
+    }
+
+    public void loadDetail(Long id) {
+        examDetailState.setValue(Resource.loading());
+        repository.getExam(id, new AdminExamRepository.RepositoryCallback<AdminExamResponse>() {
+            @Override
+            public void onSuccess(AdminExamResponse data) {
+                examDetailState.setValue(Resource.success(data));
+            }
+
+            @Override
+            public void onError(AdminExamRepository.AdminExamError error) {
+                examDetailState.setValue(Resource.error(message(error)));
+            }
+        });
+    }
+
+    public void enterEditMode() {
+        editModeState.setValue(true);
+    }
+
+    public void cancelEditMode() {
+        editModeState.setValue(false);
+    }
+
+    public void saveEdit(Long id, AdminExamUpdateRequest request) {
+        examDetailState.setValue(Resource.loading());
+        repository.updateExam(id, request, new AdminExamRepository.RepositoryCallback<AdminExamResponse>() {
+            @Override
+            public void onSuccess(AdminExamResponse data) {
+                editModeState.setValue(false);
+                examDetailState.setValue(Resource.success(data));
+            }
+
+            @Override
+            public void onError(AdminExamRepository.AdminExamError error) {
+                examDetailState.setValue(Resource.error(message(error)));
+            }
+        });
+    }
+
+    public void submitForReview(Long examId) {
+        actionResultState.setValue(Resource.loading());
+        repository.submitForReview(examId, new AdminExamRepository.RepositoryCallback<AdminExamResponse>() {
+            @Override
+            public void onSuccess(AdminExamResponse data) {
+                actionResultState.setValue(Resource.success(data));
+                examDetailState.setValue(Resource.success(data));
+            }
+
+            @Override
+            public void onError(AdminExamRepository.AdminExamError error) {
+                actionResultState.setValue(Resource.error(message(error)));
+            }
+        });
+    }
+
+    public void discardDraft(Long examId) {
+        actionResultState.setValue(Resource.loading());
+        repository.discardDraftExam(examId, new AdminExamRepository.RepositoryCallback<Void>() {
+            @Override
+            public void onSuccess(Void data) {
+                actionResultState.setValue(Resource.success(null));
+            }
+
+            @Override
+            public void onError(AdminExamRepository.AdminExamError error) {
+                actionResultState.setValue(Resource.error(message(error)));
+            }
+        });
+    }
+
+    public void publishExam(Long examId) {
+        actionResultState.setValue(Resource.loading());
+        repository.publish(examId, new AdminExamRepository.RepositoryCallback<AdminExamResponse>() {
+            @Override
+            public void onSuccess(AdminExamResponse data) {
+                actionResultState.setValue(Resource.success(data));
+                examDetailState.setValue(Resource.success(data));
+            }
+
+            @Override
+            public void onError(AdminExamRepository.AdminExamError error) {
+                actionResultState.setValue(Resource.error(message(error)));
+            }
+        });
+    }
+
+    public void rejectReview(Long examId) {
+        actionResultState.setValue(Resource.loading());
+        repository.rejectReview(examId, new AdminExamRepository.RepositoryCallback<AdminExamResponse>() {
+            @Override
+            public void onSuccess(AdminExamResponse data) {
+                actionResultState.setValue(Resource.success(data));
+                examDetailState.setValue(Resource.success(data));
+            }
+
+            @Override
+            public void onError(AdminExamRepository.AdminExamError error) {
+                actionResultState.setValue(Resource.error(message(error)));
+            }
+        });
+    }
+
+    public void returnToDraft(Long examId) {
+        actionResultState.setValue(Resource.loading());
+        repository.returnToDraft(examId, new AdminExamRepository.RepositoryCallback<AdminExamResponse>() {
+            @Override
+            public void onSuccess(AdminExamResponse data) {
+                actionResultState.setValue(Resource.success(data));
+                examDetailState.setValue(Resource.success(data));
+            }
+
+            @Override
+            public void onError(AdminExamRepository.AdminExamError error) {
+                actionResultState.setValue(Resource.error(message(error)));
+            }
+        });
+    }
+
+    public void hideExam(Long examId) {
+        actionResultState.setValue(Resource.loading());
+        repository.hide(examId, new AdminExamRepository.RepositoryCallback<AdminExamResponse>() {
+            @Override
+            public void onSuccess(AdminExamResponse data) {
+                actionResultState.setValue(Resource.success(data));
+                examDetailState.setValue(Resource.success(data));
+            }
+
+            @Override
+            public void onError(AdminExamRepository.AdminExamError error) {
+                actionResultState.setValue(Resource.error(message(error)));
+            }
+        });
+    }
+
+    public void archiveExam(Long examId) {
+        actionResultState.setValue(Resource.loading());
+        repository.archive(examId, new AdminExamRepository.RepositoryCallback<AdminExamResponse>() {
+            @Override
+            public void onSuccess(AdminExamResponse data) {
+                actionResultState.setValue(Resource.success(data));
+                examDetailState.setValue(Resource.success(data));
+            }
+
+            @Override
+            public void onError(AdminExamRepository.AdminExamError error) {
+                actionResultState.setValue(Resource.error(message(error)));
+            }
+        });
+    }
+
+    public static List<String> availableActionsForStatus(String status) {
+        if (status == null) {
+            return Collections.emptyList();
+        }
+        switch (status) {
+            case "DRAFT":
+                return Arrays.asList("EDIT", "SUBMIT_FOR_REVIEW", "DISCARD");
+            case "PENDING_REVIEW":
+                return Arrays.asList("PUBLISH", "REJECT", "RETURN_TO_DRAFT");
+            case "PUBLISHED":
+                return Arrays.asList("HIDE", "ARCHIVE");
+            case "HIDDEN":
+                return Arrays.asList("ARCHIVE");
+            case "ARCHIVED":
+                return Collections.emptyList();
+            default:
+                return Collections.emptyList();
+        }
     }
 
     public void submitExam(Long examId) {

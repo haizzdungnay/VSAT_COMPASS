@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Phase C1.2b-C — Android admin exam detail/edit screen (2026-05-19)
+- Implement full AdminExamDetailActivity with read-only detail state and DRAFT-only edit mode.
+- Add status-based admin exam actions with confirmation for destructive transitions (Discard, Reject, Archive).
+- Extend AdminExamViewModel with examDetailState, editModeState, actionResultState LiveData and all status-transition action methods.
+- Add unit tests (17 new tests) for ViewModel state machine and action availability mapping for all 5 statuses.
+
 ### Docs — Add design system reference (2026-05-19)
 - Move the AI/executor design reference document from root `DESIGN.md` to tracked `docs/DESIGN.md`.
 - Keep the design reference available for future implementation planning without treating it as repo trash.
