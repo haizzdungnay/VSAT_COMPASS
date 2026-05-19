@@ -59,4 +59,36 @@
     <string name="empty_state_filter_title">Không tìm thấy kết quả</string>
     <string name="empty_state_filter_subtitle">Không có bài thi nào ở môn này.</string>
     <string name="empty_state_btn_go_exams">Vào kho đề</string>
+
+    <!-- ── Admin Exam Detail Screen (AdminExamDetailActivity) ── -->
+    <string name="detail_error_invalid_id">ID đề thi không hợp lệ</string>
+    <string name="detail_label_subject">Môn học</string>
+    <string name="detail_label_description">Mô tả</string>
+    <string name="detail_label_version">Phiên bản</string>
+    <string name="detail_label_updated_at">Cập nhật lúc</string>
+    <string name="detail_label_question_count">Số câu hỏi</string>
+    <string name="detail_label_title">Tiêu đề</string>
+    <string name="detail_version_format">v%1$d</string>
+    <string name="detail_question_count_format">%1$d câu</string>
+    <string name="detail_subject_id_fallback">Môn #%1$d</string>
+    <string name="detail_btn_edit">Chỉnh sửa</string>
+    <string name="detail_btn_submit_review">Gửi duyệt</string>
+    <string name="detail_btn_publish">Xuất bản</string>
+    <string name="detail_btn_reject">Từ chối</string>
+    <string name="detail_btn_return_to_draft">Trả về nháp</string>
+    <string name="detail_btn_hide">Ẩn</string>
+    <string name="detail_btn_archive">Lưu trữ</string>
+    <string name="detail_btn_discard">Xoá nháp</string>
+    <string name="detail_btn_save">Lưu</string>
+    <string name="detail_btn_cancel">Huỷ</string>
+    <string name="detail_action_success">Thao tác thành công</string>
+    <string name="detail_action_success_discard">Đề thi đã được xoá</string>
+    <string name="detail_confirm_discard_title">Xoá nháp</string>
+    <string name="detail_confirm_discard_msg">Bạn có chắc muốn xoá đề thi nháp này không? Thao tác này không thể hoàn tác.</string>
+    <string name="detail_confirm_reject_title">Từ chối đề thi</string>
+    <string name="detail_confirm_reject_msg">Bạn có chắc muốn từ chối đề thi này không?</string>
+    <string name="detail_confirm_archive_title">Lưu trữ đề thi</string>
+    <string name="detail_confirm_archive_msg">Bạn có chắc muốn lưu trữ đề thi này không?</string>
+    <string name="detail_confirm_yes">Xác nhận</string>
+    <string name="detail_confirm_no">Huỷ</string>
 </resources>
