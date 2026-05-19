@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Docs — Add design system reference (2026-05-19)
+- Move the AI/executor design reference document from root `DESIGN.md` to tracked `docs/DESIGN.md`.
+- Keep the design reference available for future implementation planning without treating it as repo trash.
+
 ### Phase C1.2b-B — Android admin screens fix (2026-05-19)
 - `AdminCreateExamActivity` typed create flow + subject dropdown from public Subject API.
 - `AdminExamListFragment` real list adapter + status filters (All / DRAFT / PENDING_REVIEW / PUBLISHED / HIDDEN / ARCHIVED) + vanilla manual paging (Load More button).
