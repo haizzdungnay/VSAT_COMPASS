@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.example.v_sat_compass.data.model.SubjectResponse;
 import com.example.v_sat_compass.data.model.admin.AdminExamAddQuestionRequest;
 import com.example.v_sat_compass.data.model.admin.AdminExamCreateRequest;
 import com.example.v_sat_compass.data.model.admin.AdminExamReorderQuestionsRequest;
@@ -13,10 +14,14 @@ import com.example.v_sat_compass.data.model.admin.AdminExamUpdateRequest;
 import com.example.v_sat_compass.data.model.admin.PageResponse;
 import com.example.v_sat_compass.data.repository.AdminExamRepository;
 import com.example.v_sat_compass.data.repository.Resource;
+import com.example.v_sat_compass.data.repository.SubjectRepository;
+
+import java.util.List;
 
 public class AdminExamViewModel extends ViewModel {
 
     private final AdminExamRepository repository;
+    private final SubjectRepository subjectRepository;
 
     private final MutableLiveData<Resource<PageResponse<AdminExamSummaryResponse>>> listState =
             new MutableLiveData<>();
@@ -26,13 +31,22 @@ public class AdminExamViewModel extends ViewModel {
     private final MutableLiveData<Resource<AdminExamResponse>> addQuestionState =
             new MutableLiveData<>();
     private final MutableLiveData<Resource<AdminExamResponse>> reorderState = new MutableLiveData<>();
+    private final MutableLiveData<Resource<List<SubjectResponse>>> subjectListState =
+            new MutableLiveData<>();
+    private final MutableLiveData<Resource<AdminExamResponse>> submitReviewState =
+            new MutableLiveData<>();
 
     public AdminExamViewModel() {
-        this(new AdminExamRepository());
+        this(new AdminExamRepository(), new SubjectRepository());
     }
 
     public AdminExamViewModel(AdminExamRepository repository) {
+        this(repository, new SubjectRepository());
+    }
+
+    public AdminExamViewModel(AdminExamRepository repository, SubjectRepository subjectRepository) {
         this.repository = repository;
+        this.subjectRepository = subjectRepository;
     }
 
     public LiveData<Resource<PageResponse<AdminExamSummaryResponse>>> getListState() {
@@ -57,6 +71,35 @@ public class AdminExamViewModel extends ViewModel {
 
     public LiveData<Resource<AdminExamResponse>> getReorderState() {
         return reorderState;
+    }
+
+    public LiveData<Resource<List<SubjectResponse>>> getSubjectListState() {
+        return subjectListState;
+    }
+
+    public LiveData<Resource<AdminExamResponse>> getSubmitReviewState() {
+        return submitReviewState;
+    }
+
+    public void submitExam(Long examId) {
+        submitReviewState.setValue(Resource.loading());
+        repository.submitForReview(examId, new AdminExamResponseCallback(submitReviewState));
+    }
+
+    public void loadSubjects() {
+        subjectListState.setValue(Resource.loading());
+        subjectRepository.getSubjects(new SubjectRepository.SubjectCallback() {
+            @Override
+            public void onSuccess(List<SubjectResponse> subjects) {
+                subjectListState.setValue(Resource.success(subjects));
+            }
+
+            @Override
+            public void onError(SubjectRepository.SubjectError error) {
+                String msg = error.getMessage() != null ? error.getMessage() : error.getType().name();
+                subjectListState.setValue(Resource.error(msg));
+            }
+        });
     }
 
     public void loadExams(String status, Long subjectId, int page, int size) {

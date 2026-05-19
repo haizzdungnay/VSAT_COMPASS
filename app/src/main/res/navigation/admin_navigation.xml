@@ -29,4 +29,9 @@
         android:label="Người dùng"
         tools:layout="@layout/fragment_admin_user_management" />
 
+    <activity
+        android:id="@+id/adminExamDetailActivity"
+        android:name="com.example.v_sat_compass.ui.admin.exam.AdminExamDetailActivity"
+        android:label="Chi tiết đề thi" />
+
 </navigation>
