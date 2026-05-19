@@ -381,7 +381,8 @@ C1.2b is split into two batches to ship value incrementally and keep production 
 | C1.2b-PRE-2 | Android Test Infra Setup | ✅ Done — merged to main at 93c577d | Adds Mockito, MockWebServer, and arch-core-testing for C1.2b-A tests. |
 | C1.2b-A | Android Data Layer Foundation | ✅ Done (2026-05-19) — merged to main at b604ba7 | Adds admin exam POJOs, 14-endpoint AdminApi contract, repository callback wrapper, ViewModel state, and JVM tests. |
 | C1.2b-B | Android admin screens fix | ✅ Done (2026-05-19) — merged to main at 2014897 | AdminCreateExamActivity typed flow + subject dropdown; AdminExamListFragment adapter + filter chips + manual paging; AdminExamDetailActivity stub; SubjectApi/Repo/Model; unit tests. |
-| C1.2b-C | Android admin exam detail/edit screen | 🟡 In progress | Full AdminExamDetailActivity: read-only detail, DRAFT-only edit mode, status-based action buttons, confirmation dialogs, AdminExamViewModel extensions, unit tests. |
+| C1.2b-C | Android admin exam detail/edit screen | ✅ Done (2026-05-19) — merged to main at 1dbe386 | Full AdminExamDetailActivity: read-only detail, DRAFT-only edit mode, status-based action buttons, confirmation dialogs, AdminExamViewModel extensions, unit tests. |
+| C1.2b-D | Android question picker for exam composition | ⏸️ Deferred to C1.3+ | Backend frozen at v0.9.4; requires new picker endpoint with subjectId/questionType/q filters plus questionText in DTO before Android can implement. |
 
 C1.2b backend scope is production released as of v0.9.3:
 - exam composition (add/remove/reorder questions)
@@ -389,7 +390,7 @@ C1.2b backend scope is production released as of v0.9.3:
 - SUPER_ADMIN-only publish bottleneck documented
 - paid/package pricing remains deferred
 
-C1.2b production closeout completed after tag `v0.9.3`; Android/admin UI integration remains deferred.
+C1.2b production closeout completed after tag `v0.9.3`. Android batch: ✅ Closed (2026-05-19) — PRE-2 + A + B + C merged to main; D deferred to C1.3+.
 
 ### C1.2c — Admin Exam Ops
 

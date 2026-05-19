@@ -77,6 +77,14 @@
 - Added unit tests for POJO JSON, AdminApi MockWebServer contracts, repository result/error paths, and ViewModel LiveData transitions.
 - Android data-layer/test batch only — no backend, runtime, schema, tag, deploy, Render, or production behavior changed.
 
+### Phase C1.2b — Closeout (2026-05-19)
+- Closed C1.2b Android admin exam CRUD client work on main: PRE-2 (`93c577d`), A (`b604ba7`), B (`2014897`), C (`1dbe386`), plus design-doc relocate (`947bde0`).
+- Deferred C1.2b-D to C1.3+ because backend remains frozen at v0.9.4 and Android needs a new picker endpoint with `subjectId` / `questionType` / `q` filters plus `questionText` in DTO.
+- Carry-forward: set Windows local repos to `git config core.autocrlf input` to avoid phantom dirty working trees when switching branches.
+- Carry-forward: when creating merge commits through Python subprocess on Windows, use ASCII-only commit subjects and avoid em dash to prevent CP1252 mojibake.
+- Carry-forward: coordinator merge prompts must explicitly forbid `gh api` for commit/ref operations to avoid local/remote desync.
+- No runtime release: backend pin remains v0.9.4, and no tag was created.
+
 ## [0.9.4] - 2026-05-06 — Phase C1.2c.1: Admin Exam DRAFT Discard
 
 #### Added
