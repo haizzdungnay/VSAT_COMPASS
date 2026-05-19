@@ -49,6 +49,7 @@
 
         <!-- Admin: Exam management -->
         <activity android:name=".ui.admin.exam.AdminCreateExamActivity" android:exported="false" />
+        <activity android:name=".ui.admin.exam.AdminExamDetailActivity" android:exported="false" />
 
         <!-- ── Collaborator ── -->
         <activity android:name=".ui.collaborator.CollaboratorWorkspaceActivity" android:exported="false" />

@@ -68,12 +68,12 @@
                     android:inputType="text" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Mã đề (auto) -->
+            <!-- Mã đề -->
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:hint="Mã đề (VD: VSAT-MATH-001)"
+                android:hint="Mã đề (VD: VSAT_MATH_001) — ^[A-Z][A-Z0-9_]{2,49}$"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etExamCode"
@@ -183,71 +183,6 @@
                     android:text="Nâng cao"
                     android:textColor="@color/text_secondary"
                     android:textSize="13sp" />
-            </LinearLayout>
-
-            <!-- Divider -->
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/background" android:layout_marginBottom="16dp" />
-
-            <!-- Cấu trúc đề -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="12dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Cấu trúc đề"
-                    android:textColor="@color/text_primary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvTotalPoints"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0 / 150 điểm"
-                    android:textColor="@color/primary"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvStructure"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false" />
-
-            <!-- Thêm câu hỏi -->
-            <LinearLayout
-                android:id="@+id/btnAddQuestion"
-                android:layout_width="match_parent"
-                android:layout_height="44dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="16dp"
-                android:background="@drawable/bg_chip_unselected"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="+"
-                    android:textColor="@color/primary"
-                    android:textSize="18sp"
-                    android:layout_marginEnd="6dp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Thêm câu hỏi"
-                    android:textColor="@color/primary"
-                    android:textSize="14sp" />
             </LinearLayout>
 
             <!-- Divider -->

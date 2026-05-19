@@ -1,6 +1,7 @@
 package com.example.v_sat_compass.ui.admin.exam;
 
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.widget.ArrayAdapter;
 import android.widget.SeekBar;
 import android.widget.Toast;
@@ -8,47 +9,42 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
-import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.v_sat_compass.R;
-import com.example.v_sat_compass.data.api.AdminApi;
-import com.example.v_sat_compass.data.api.ApiClient;
-import com.example.v_sat_compass.data.model.ApiResponse;
-import com.example.v_sat_compass.data.model.Exam;
-import com.example.v_sat_compass.data.model.ExamStructureQuestion;
+import com.example.v_sat_compass.data.model.SubjectResponse;
+import com.example.v_sat_compass.data.model.admin.AdminExamCreateRequest;
+import com.example.v_sat_compass.data.repository.Resource;
 import com.example.v_sat_compass.databinding.ActivityAdminCreateExamBinding;
 
-import java.util.HashMap;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+import java.util.regex.Pattern;
 
 /**
- * Tạo đề thi mới.
+ * Tạo đề thi mới — DRAFT hoặc PENDING_REVIEW.
  * Quyền: CONTENT_ADMIN, SUPER_ADMIN
  *
- * Luồng:
- *   1. Điền thông tin đề (tên, mã, môn, thời gian, mức độ)
- *   2. Thêm câu hỏi từ ngân hàng
- *   3. Thiết lập phí (miễn phí / trả phí)
- *   4. Lưu nháp hoặc Gửi duyệt
+ * Luồng 2 bước:
+ *   1. Điền thông tin đề (tên, mã ^[A-Z][A-Z0-9_]{2,49}$, môn từ API, thời gian, mức độ)
+ *   2a. Lưu nháp → POST /admin/exams (tạo DRAFT)
+ *   2b. Gửi duyệt → POST /admin/exams rồi POST /admin/exams/{id}/submit-review
  *
- * Lưu ý VSAT Toán: 50 câu × 3 điểm = 150 điểm, 90 phút.
+ * Câu hỏi/cấu trúc đề sẽ được thêm trong phase C1.2b-D.
  */
 public class AdminCreateExamActivity extends AppCompatActivity {
 
+    private static final Pattern EXAM_CODE_PATTERN =
+            Pattern.compile("^[A-Z][A-Z0-9_]{2,49}$");
+
     private ActivityAdminCreateExamBinding binding;
-    private ExamStructureAdapter structureAdapter;
+    private AdminExamViewModel viewModel;
     private String selectedLevel = "MEDIUM";
 
-    // Điểm mỗi câu theo môn:
-    // Toán: 3 điểm/câu (tổng 150 = 50 câu × 3)
-    // Tiếng Anh: 3 điểm/câu (tổng 150 = 50 câu × 3)
-    private static final int POINTS_PER_QUESTION = 3;
-    private static final int MAX_SCORE = 150;
+    private final List<SubjectResponse> subjectList = new ArrayList<>();
+    private Long selectedSubjectId = null;
+    private boolean pendingSubmitReview = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,30 +52,101 @@ public class AdminCreateExamActivity extends AppCompatActivity {
         binding = ActivityAdminCreateExamBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        viewModel = new ViewModelProvider(this).get(AdminExamViewModel.class);
+
         binding.btnBack.setOnClickListener(v -> finish());
 
-        setupSubjectDropdown();
         setupDurationSeekBar();
         setupLevelButtons();
-        setupStructureList();
         setupFeeSwitch();
         setupActionButtons();
+        observeViewModel();
+
+        viewModel.loadSubjects();
     }
 
-    private void setupSubjectDropdown() {
-        String[] subjects = {"Toán học", "Tiếng Anh", "Vật lý", "Hóa học", "Sinh học"};
+    private void observeViewModel() {
+        viewModel.getSubjectListState().observe(this, resource -> {
+            if (resource == null) return;
+            if (resource.getStatus() == Resource.Status.SUCCESS && resource.getData() != null) {
+                populateSubjectDropdown(resource.getData());
+            } else if (resource.getStatus() == Resource.Status.ERROR) {
+                binding.actvSubject.setHint("Lỗi tải môn học");
+            }
+        });
+
+        viewModel.getCreateState().observe(this, resource -> {
+            if (resource == null) return;
+            switch (resource.getStatus()) {
+                case LOADING:
+                    binding.btnSaveDraft.setEnabled(false);
+                    binding.btnSubmitForReview.setEnabled(false);
+                    break;
+                case SUCCESS:
+                    binding.btnSaveDraft.setEnabled(true);
+                    binding.btnSubmitForReview.setEnabled(true);
+                    if (resource.getData() != null) {
+                        Long examId = resource.getData().getId();
+                        if (pendingSubmitReview && examId != null) {
+                            pendingSubmitReview = false;
+                            viewModel.submitExam(examId);
+                        } else {
+                            pendingSubmitReview = false;
+                            Toast.makeText(AdminCreateExamActivity.this,
+                                    "Đã lưu nháp đề thi.", Toast.LENGTH_SHORT).show();
+                            finish();
+                        }
+                    }
+                    break;
+                case ERROR:
+                    binding.btnSaveDraft.setEnabled(true);
+                    binding.btnSubmitForReview.setEnabled(true);
+                    pendingSubmitReview = false;
+                    showError(resource.getMessage());
+                    break;
+            }
+        });
+
+        viewModel.getSubmitReviewState().observe(this, resource -> {
+            if (resource == null) return;
+            if (resource.getStatus() == Resource.Status.SUCCESS) {
+                Toast.makeText(AdminCreateExamActivity.this,
+                        "Đề thi đã được gửi duyệt thành công!", Toast.LENGTH_SHORT).show();
+                finish();
+            } else if (resource.getStatus() == Resource.Status.ERROR) {
+                showError(resource.getMessage());
+            }
+        });
+    }
+
+    private void populateSubjectDropdown(List<SubjectResponse> subjects) {
+        subjectList.clear();
+        subjectList.addAll(subjects);
+        List<String> names = new ArrayList<>();
+        for (SubjectResponse s : subjects) {
+            names.add(s.getName() != null ? s.getName() : s.getCode());
+        }
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_dropdown_item_1line, subjects);
+                android.R.layout.simple_dropdown_item_1line, names);
         binding.actvSubject.setAdapter(adapter);
-        binding.actvSubject.setText("Toán học", false);
+        if (!subjects.isEmpty()) {
+            binding.actvSubject.setText(names.get(0), false);
+            selectedSubjectId = subjects.get(0).getId();
+        }
+        binding.actvSubject.setOnItemClickListener((parent, view, position, id) -> {
+            if (position < subjectList.size()) {
+                selectedSubjectId = subjectList.get(position).getId();
+            }
+        });
     }
 
     private void setupDurationSeekBar() {
-        binding.seekDuration.setProgress(90); // default 90 phút (VSAT chuẩn)
+        binding.seekDuration.setProgress(90);
         binding.tvDuration.setText("90");
         binding.seekDuration.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override public void onProgressChanged(SeekBar s, int p, boolean fromUser) {
-                int value = Math.max(30, p); // min 30 phút
+            @Override
+            public void onProgressChanged(SeekBar s, int p, boolean fromUser) {
+                int value = Math.max(30, p);
                 binding.tvDuration.setText(String.valueOf(value));
             }
             @Override public void onStartTrackingTouch(SeekBar s) {}
@@ -112,60 +179,9 @@ public class AdminCreateExamActivity extends AppCompatActivity {
         btn.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
     }
 
-    private void setupStructureList() {
-        structureAdapter = new ExamStructureAdapter();
-        binding.rvStructure.setLayoutManager(new LinearLayoutManager(this));
-        binding.rvStructure.setAdapter(structureAdapter);
-        binding.rvStructure.setNestedScrollingEnabled(false);
-
-        structureAdapter.setOnRemoveListener(position -> {
-            structureAdapter.removeAt(position);
-            updateTotalPoints();
-        });
-
-        // Nút thêm câu hỏi: mở dialog pick câu từ ngân hàng
-        binding.btnAddQuestion.setOnClickListener(v -> showAddQuestionDialog());
-        updateTotalPoints();
-    }
-
-    private void showAddQuestionDialog() {
-        int current = structureAdapter.getTotalQuestions();
-        if (current >= 50) {
-            Toast.makeText(this, "Đề VSAT tối đa 50 câu.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // TODO: Mở màn hình chọn câu từ ngân hàng (phase 2)
-        // Tạm thời thêm câu mẫu để demo
-        ExamStructureQuestion demo = new ExamStructureQuestion(
-                null,
-                "MATH-V5-" + String.format("%03d", current + 1),
-                "Câu " + (current + 1) + ": Phương trình bậc ha...",
-                "MULTIPLE_CHOICE",
-                current + 1,
-                POINTS_PER_QUESTION
-        );
-        structureAdapter.addQuestion(demo);
-        updateTotalPoints();
-    }
-
-    private void updateTotalPoints() {
-        int count  = structureAdapter.getTotalQuestions();
-        int points = count * POINTS_PER_QUESTION;
-        binding.tvTotalPoints.setText(points + " / " + MAX_SCORE + " điểm  (" + count + " câu)");
-
-        if (points > MAX_SCORE) {
-            binding.tvTotalPoints.setTextColor(ContextCompat.getColor(this, R.color.error));
-        } else if (points == MAX_SCORE) {
-            binding.tvTotalPoints.setTextColor(ContextCompat.getColor(this, R.color.success));
-        } else {
-            binding.tvTotalPoints.setTextColor(ContextCompat.getColor(this, R.color.primary));
-        }
-    }
-
     private void setupFeeSwitch() {
-        binding.switchPaid.setChecked(true);
-        binding.layoutPrice.setVisibility(android.view.View.VISIBLE);
+        binding.switchPaid.setChecked(false);
+        binding.layoutPrice.setVisibility(android.view.View.GONE);
         binding.switchPaid.setOnCheckedChangeListener((btn, checked) ->
                 binding.layoutPrice.setVisibility(checked
                         ? android.view.View.VISIBLE : android.view.View.GONE));
@@ -184,45 +200,53 @@ public class AdminCreateExamActivity extends AppCompatActivity {
             return;
         }
 
-        String subject = binding.actvSubject.getText().toString();
-        int duration = binding.seekDuration.getProgress();
-        boolean isPaid = binding.switchPaid.isChecked();
-
-        List<ExamStructureQuestion> questions = structureAdapter.getItems();
-        if (submit && questions.isEmpty()) {
-            Toast.makeText(this, "Vui lòng thêm ít nhất 1 câu hỏi trước khi gửi duyệt.", Toast.LENGTH_SHORT).show();
+        String examCode = binding.etExamCode.getText() != null
+                ? binding.etExamCode.getText().toString().trim() : "";
+        if (!examCode.isEmpty() && !EXAM_CODE_PATTERN.matcher(examCode).matches()) {
+            binding.etExamCode.setError("Mã đề phải khớp: ^[A-Z][A-Z0-9_]{2,49}$");
             return;
         }
 
-        Map<String, Object> body = new HashMap<>();
-        body.put("title", title);
-        body.put("exam_code", binding.etExamCode.getText() != null
-                ? binding.etExamCode.getText().toString() : "");
-        body.put("subject_name", subject);
-        body.put("duration_minutes", duration);
-        body.put("difficulty", selectedLevel);
-        body.put("is_paid", isPaid);
-        body.put("status", submit ? "PENDING" : "DRAFT");
-        body.put("total_questions", questions.size());
-        body.put("max_score", MAX_SCORE);
+        if (selectedSubjectId == null) {
+            Toast.makeText(this, "Vui lòng chọn môn học.", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-        AdminApi api = ApiClient.getClient().create(AdminApi.class);
-        api.createExam(body).enqueue(new Callback<ApiResponse<Exam>>() {
-            @Override
-            public void onResponse(Call<ApiResponse<Exam>> call, Response<ApiResponse<Exam>> response) {
-                String msg = submit
-                        ? "Đề thi đã được gửi duyệt thành công!"
-                        : "Đã lưu nháp đề thi.";
-                Toast.makeText(AdminCreateExamActivity.this, msg, Toast.LENGTH_SHORT).show();
-                finish();
+        int duration = Math.max(30, binding.seekDuration.getProgress());
+
+        boolean isPaid = binding.switchPaid.isChecked();
+        String pricingType = isPaid ? "PAID_ONCE" : "FREE";
+        BigDecimal price = BigDecimal.ZERO;
+        if (isPaid && binding.etPrice.getText() != null
+                && !TextUtils.isEmpty(binding.etPrice.getText().toString().trim())) {
+            try {
+                price = new BigDecimal(binding.etPrice.getText().toString().trim());
+            } catch (NumberFormatException ignored) {
+                price = BigDecimal.ZERO;
             }
-            @Override
-            public void onFailure(Call<ApiResponse<Exam>> call, Throwable t) {
-                // Giả lập thành công khi offline
-                String msg = submit ? "Đề thi đã được gửi duyệt (demo)." : "Đã lưu nháp (demo).";
-                Toast.makeText(AdminCreateExamActivity.this, msg, Toast.LENGTH_SHORT).show();
-                finish();
-            }
-        });
+        }
+
+        AdminExamCreateRequest request = new AdminExamCreateRequest(
+                examCode.isEmpty() ? null : examCode,
+                title,
+                selectedSubjectId,
+                "",
+                duration,
+                selectedLevel,
+                pricingType,
+                price,
+                null
+        );
+
+        pendingSubmitReview = submit;
+        viewModel.createExam(request);
+    }
+
+    private void showError(String message) {
+        new AlertDialog.Builder(this)
+                .setTitle("Lỗi")
+                .setMessage(message != null ? message : "Đã xảy ra lỗi. Vui lòng thử lại.")
+                .setPositiveButton("OK", null)
+                .show();
     }
 }

@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Phase C1.2b-B — Android admin screens fix (2026-05-19)
+- `AdminCreateExamActivity` typed create flow + subject dropdown from public Subject API.
+- `AdminExamListFragment` real list adapter + status filters (All / DRAFT / PENDING_REVIEW / PUBLISHED / HIDDEN / ARCHIVED) + vanilla manual paging (Load More button).
+- `SubjectApi` / `SubjectResponse` / `SubjectRepository` added for GET /subjects.
+- `AdminExamDetailActivity` stub added for C1.2b-C handoff.
+- Unit tests added: `SubjectApiContractTest`, `SubjectRepositoryTest`, `AdminExamListAdapterTest`.
+
 ### Phase C1.2d-1a — SessionService Unit Coverage Expansion
 
 #### Added
