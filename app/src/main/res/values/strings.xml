@@ -91,4 +91,30 @@
     <string name="detail_confirm_archive_msg">Bạn có chắc muốn lưu trữ đề thi này không?</string>
     <string name="detail_confirm_yes">Xác nhận</string>
     <string name="detail_confirm_no">Huỷ</string>
+    <!-- Collaborator Question List -->
+    <string name="cq_workspace_title">V-SAT Quản trị — Không gian CTV</string>
+    <string name="cq_create_question">Tạo câu hỏi mới</string>
+    <string name="cq_list_title">Câu hỏi của tôi</string>
+    <string name="cq_filter_all">Tất cả</string>
+    <string name="cq_status_draft">Nháp</string>
+    <string name="cq_status_pending_review">Đang chờ duyệt</string>
+    <string name="cq_status_needs_revision">Cần sửa</string>
+    <string name="cq_status_approved">Đã duyệt</string>
+    <string name="cq_status_published">Đã xuất bản</string>
+    <string name="cq_status_hidden">Đã ẩn</string>
+    <string name="cq_status_archived">Đã lưu trữ</string>
+    <string name="cq_difficulty_easy">Dễ</string>
+    <string name="cq_difficulty_medium">Trung bình</string>
+    <string name="cq_difficulty_hard">Khó</string>
+    <string name="cq_difficulty_very_hard">Rất khó</string>
+    <string name="cq_type_single_choice">Trắc nghiệm 1 đáp án</string>
+    <string name="cq_type_multiple_choice">Trắc nghiệm nhiều đáp án</string>
+    <string name="cq_type_true_false">Đúng / Sai</string>
+    <string name="cq_type_fill_in_blank">Điền vào chỗ trống</string>
+    <string name="cq_empty_message">Bạn chưa có câu hỏi nào. Hãy bấm + để tạo!</string>
+    <string name="cq_load_more">Tải thêm</string>
+    <string name="cq_loading">Đang tải...</string>
+    <string name="cq_error_generic">Không tải được danh sách. Thử lại?</string>
+    <string name="cq_error_retry">Thử lại</string>
+    <string name="cq_row_click_placeholder">Chi tiết câu hỏi sẽ có ở C1.3-C</string>
 </resources>
