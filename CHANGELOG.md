@@ -2,6 +2,26 @@
 
 ## [Unreleased]
 
+### Phase C1.3 — Collaborator Question Lifecycle Android UI (2026-05-22)
+
+- Closed the Android collaborator question lifecycle UI track across:
+  - C1.3-A — typed collaborator question data layer foundation, merged to main at 315eca8.
+  - C1.3-B — collaborator question list with status filter and manual paging, merged to main at 87d465b.
+  - C1.3-C1 — collaborator create-question activity with cascade subject/topic/subtopic, dynamic option editor, Save Draft, and Submit for Review, merged to main at 1a2851e.
+  - C1.3-C2 — collaborator question detail, inline edit, submit-for-review, and review history UI, merged to main at c306a97.
+- Replaced the legacy collaborator editor entry point with a deprecated redirect to `CollaboratorCreateQuestionActivity`.
+- Removed obsolete legacy collaborator editor fragments/pager and legacy `CollaboratorApi`.
+- Backend remains frozen at v0.9.4; no runtime release and no tag in this closeout batch.
+- Carry-forward:
+  - Subject/Topic/Subtopic name resolution in detail view.
+  - Reviewer name resolution.
+  - Diff-based `UpdateQuestionRequest`.
+  - Image upload.
+  - `FILL_IN_BLANK` type support.
+  - Admin review actions in Path B / C1.4.
+  - AdminDashboardFragment and AdminQuestionBankFragment still reference deprecated `QuestionEditorActivity` until admin scope cleanup.
+  - `PageResponse` relocation from `data/model/admin/` to common package.
+
 ### Phase C1.2b-C — Android admin exam detail/edit screen (2026-05-19)
 - Implement full AdminExamDetailActivity with read-only detail state and DRAFT-only edit mode.
 - Add status-based admin exam actions with confirmation for destructive transitions (Discard, Reject, Archive).

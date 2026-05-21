@@ -196,13 +196,25 @@ As of `v0.9.0`, backend Question Bank write workflow is available in production:
 - Service-layer owner checks prevent one collaborator from editing another collaborator's draft.
 - Invalid status transitions return `409 INVALID_STATE`.
 
+### Android Collaborator Question UI status
+
+As of C1.3 closeout, the Android collaborator flow is wired against the backend v0.9.4 question APIs:
+
+- Collaborators can view their question list with status filters and manual paging.
+- The create-question screen supports Subject → Topic → Subtopic selection, difficulty/type selection, dynamic option editing, Save Draft, and Submit for Review.
+- Question detail is available from the list, including metadata, read-only options, and review history.
+- Inline edit is available for DRAFT and NEEDS_REVISION questions; other statuses are read-only.
+- Detail view supports submit-for-review for editable questions.
+- The legacy collaborator editor now redirects to `CollaboratorCreateQuestionActivity` for compatibility with existing admin entry points.
+- Backend runtime remains pinned at v0.9.4; no new backend release is required for C1.3 Android UI.
+
 Deferred:
 - question version snapshots
 - passage/question groups
 - exam composition from approved questions
 - publication scheduling
 - Excel import
-- Android/admin UI integration
+- admin review UI integration
 
 ### Exam API status
 
