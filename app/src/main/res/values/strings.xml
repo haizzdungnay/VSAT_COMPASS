@@ -154,4 +154,45 @@
     <string name="ccq_validation_single_choice_correct">Trắc nghiệm 1 đáp án cần đúng 1 đáp án đúng</string>
     <string name="ccq_validation_multi_choice_correct">Trắc nghiệm nhiều đáp án cần ít nhất 1 đáp án đúng</string>
     <string name="ccq_validation_true_false_correct">Đúng/Sai cần chính xác 1 đáp án đúng</string>
+
+    <!-- Collaborator Question Detail -->
+    <string name="cqd_title">Chi tiết câu hỏi</string>
+    <string name="cqd_section_options">Đáp án</string>
+    <string name="cqd_section_explanation">Lời giải</string>
+    <string name="cqd_section_metadata">Thông tin</string>
+    <string name="cqd_section_review_history">Lịch sử duyệt</string>
+    <string name="cqd_option_correct_badge">Đáp án đúng</string>
+    <string name="cqd_label_subject_id">Môn học #%1$d</string>
+    <string name="cqd_label_topic_id">Chủ đề #%1$d</string>
+    <string name="cqd_label_subtopic_id">Chủ đề con #%1$d</string>
+    <string name="cqd_label_reviewer_id">Người duyệt #%1$d</string>
+    <string name="cqd_label_created_at">Tạo lúc: %1$s</string>
+    <string name="cqd_label_updated_at">Cập nhật: %1$s</string>
+    <string name="cqd_label_version">Phiên bản: %1$d</string>
+    <string name="cqd_label_version_reviewed">Phiên bản đã duyệt: %1$d</string>
+    <string name="cqd_label_source">Nguồn: %1$s</string>
+    <string name="cqd_label_tags">Thẻ: %1$s</string>
+    <string name="cqd_label_image_url">URL ảnh: %1$s</string>
+    <string name="cqd_btn_edit">Chỉnh sửa</string>
+    <string name="cqd_btn_submit_review">Gửi duyệt</string>
+    <string name="cqd_btn_save">Lưu thay đổi</string>
+    <string name="cqd_btn_cancel">Huỷ</string>
+    <string name="cqd_confirm_submit_title">Gửi duyệt câu hỏi</string>
+    <string name="cqd_confirm_submit_message">Gửi câu hỏi để duyệt? Sau khi gửi, câu hỏi sẽ không sửa được cho đến khi có phản hồi.</string>
+    <string name="cqd_confirm_ok">Đồng ý</string>
+    <string name="cqd_confirm_cancel">Huỷ</string>
+    <string name="cqd_success_update">Đã cập nhật</string>
+    <string name="cqd_success_submit">Đã gửi duyệt</string>
+    <string name="cqd_error_load">Không tải được câu hỏi. Thử lại?</string>
+    <string name="cqd_error_retry">Thử lại</string>
+    <string name="cqd_error_generic">Có lỗi xảy ra. Vui lòng thử lại.</string>
+    <string name="cqd_error_missing_id">ID câu hỏi không hợp lệ</string>
+    <string name="cqd_review_action_approve">Đã duyệt</string>
+    <string name="cqd_review_action_request_revision">Yêu cầu sửa</string>
+    <string name="cqd_review_action_reject">Đã từ chối</string>
+    <string name="cqd_status_banner_pending">Đang chờ duyệt</string>
+    <string name="cqd_status_banner_approved">Đã duyệt</string>
+    <string name="cqd_status_banner_published">Đã xuất bản</string>
+    <string name="cqd_status_banner_hidden">Đã ẩn</string>
+    <string name="cqd_status_banner_archived">Đã lưu trữ</string>
 </resources>
