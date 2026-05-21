@@ -117,4 +117,41 @@
     <string name="cq_error_generic">Không tải được danh sách. Thử lại?</string>
     <string name="cq_error_retry">Thử lại</string>
     <string name="cq_row_click_placeholder">Chi tiết câu hỏi sẽ có ở C1.3-C</string>
+
+    <!-- Collaborator Create Question -->
+    <string name="ccq_title">Tạo câu hỏi mới</string>
+    <string name="ccq_label_subject">Môn học</string>
+    <string name="ccq_label_topic">Chủ đề</string>
+    <string name="ccq_label_subtopic">Chủ đề con (không bắt buộc)</string>
+    <string name="ccq_label_difficulty">Mức độ</string>
+    <string name="ccq_label_type">Loại câu hỏi</string>
+    <string name="ccq_label_question_text">Nội dung câu hỏi *</string>
+    <string name="ccq_label_options">Đáp án</string>
+    <string name="ccq_label_explanation">Lời giải (không bắt buộc)</string>
+    <string name="ccq_label_source">Nguồn (không bắt buộc)</string>
+    <string name="ccq_label_tags">Thẻ (cách nhau bằng dấu phẩy, không bắt buộc)</string>
+    <string name="ccq_label_image_url">URL ảnh (không bắt buộc)</string>
+    <string name="ccq_btn_add_option">Thêm đáp án</string>
+    <string name="ccq_btn_remove_option">Xoá</string>
+    <string name="ccq_btn_save_draft">Lưu nháp</string>
+    <string name="ccq_btn_submit_review">Gửi duyệt</string>
+    <string name="ccq_hint_option_text">Nội dung đáp án</string>
+    <string name="ccq_true_label">Đúng</string>
+    <string name="ccq_false_label">Sai</string>
+    <string name="ccq_success_draft">Đã lưu nháp</string>
+    <string name="ccq_success_submit">Đã gửi duyệt</string>
+    <string name="ccq_error_generic">Có lỗi xảy ra. Vui lòng thử lại.</string>
+    <string name="ccq_validation_subject_required">Vui lòng chọn môn học</string>
+    <string name="ccq_validation_topic_required">Vui lòng chọn chủ đề</string>
+    <string name="ccq_validation_difficulty_required">Vui lòng chọn mức độ</string>
+    <string name="ccq_validation_type_required">Vui lòng chọn loại câu hỏi</string>
+    <string name="ccq_validation_question_text_required">Vui lòng nhập nội dung câu hỏi</string>
+    <string name="ccq_validation_question_text_too_long">Nội dung câu hỏi tối đa 5000 ký tự</string>
+    <string name="ccq_validation_option_text_required">Vui lòng nhập nội dung đáp án</string>
+    <string name="ccq_validation_option_text_too_long">Đáp án tối đa 2000 ký tự</string>
+    <string name="ccq_validation_options_min">Cần tối thiểu 2 đáp án</string>
+    <string name="ccq_validation_options_max">Tối đa 10 đáp án</string>
+    <string name="ccq_validation_single_choice_correct">Trắc nghiệm 1 đáp án cần đúng 1 đáp án đúng</string>
+    <string name="ccq_validation_multi_choice_correct">Trắc nghiệm nhiều đáp án cần ít nhất 1 đáp án đúng</string>
+    <string name="ccq_validation_true_false_correct">Đúng/Sai cần chính xác 1 đáp án đúng</string>
 </resources>

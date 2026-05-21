@@ -52,6 +52,9 @@
         <activity android:name=".ui.admin.exam.AdminExamDetailActivity" android:exported="false" />
 
         <!-- ── Collaborator ── -->
+        <activity
+            android:name=".ui.collaborator.CollaboratorCreateQuestionActivity"
+            android:exported="false" />
         <activity android:name=".ui.collaborator.CollaboratorWorkspaceActivity" android:exported="false" />
         <activity android:name=".ui.collaborator.QuestionEditorActivity"        android:exported="false" />
 

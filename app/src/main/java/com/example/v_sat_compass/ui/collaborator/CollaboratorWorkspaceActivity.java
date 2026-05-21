@@ -44,7 +44,7 @@ public class CollaboratorWorkspaceActivity extends AppCompatActivity {
         binding.btnBack.setOnClickListener(v -> finish());
 
         binding.fabCreateQuestion.setOnClickListener(v ->
-                editorLauncher.launch(new Intent(this, QuestionEditorActivity.class)));
+                editorLauncher.launch(new Intent(this, CollaboratorCreateQuestionActivity.class)));
     }
 
     private void refreshQuestionList() {
