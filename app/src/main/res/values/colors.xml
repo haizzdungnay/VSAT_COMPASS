@@ -47,4 +47,17 @@
     <!-- Bottom Nav -->
     <color name="nav_selected">#FF4A3ABA</color>
     <color name="nav_unselected">#FF9E9E9E</color>
+
+    <!-- Collaborator question list badges -->
+    <color name="cq_difficulty_easy_bg">#FF27AE60</color>
+    <color name="cq_difficulty_medium_bg">#FFF39C12</color>
+    <color name="cq_difficulty_hard_bg">#FFE67E22</color>
+    <color name="cq_difficulty_very_hard_bg">#FFD32F2F</color>
+    <color name="cq_status_draft_bg">#FF7E8794</color>
+    <color name="cq_status_pending_review_bg">#FFF39C12</color>
+    <color name="cq_status_needs_revision_bg">#FFE67E22</color>
+    <color name="cq_status_approved_bg">#FF27AE60</color>
+    <color name="cq_status_published_bg">#FF2196F3</color>
+    <color name="cq_status_hidden_bg">#FF757575</color>
+    <color name="cq_status_archived_bg">#FF616161</color>
 </resources>
