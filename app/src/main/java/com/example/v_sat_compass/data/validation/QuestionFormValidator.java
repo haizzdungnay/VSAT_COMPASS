@@ -3,6 +3,7 @@ package com.example.v_sat_compass.data.validation;
 import com.example.v_sat_compass.data.model.enums.QuestionType;
 import com.example.v_sat_compass.data.model.question.CreateQuestionRequest;
 import com.example.v_sat_compass.data.model.question.QuestionOptionInput;
+import com.example.v_sat_compass.data.model.question.UpdateQuestionRequest;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -29,6 +30,7 @@ public final class QuestionFormValidator {
     public static final String ERROR_MULTI_CHOICE_CORRECT = "multi_choice_correct";
     public static final String ERROR_TRUE_FALSE_CORRECT = "true_false_correct";
     public static final String ERROR_TRUE_FALSE_SIZE = "true_false_size";
+    public static final String ERROR_CORRECT_REQUIRED = "correct_required";
 
     private static final int QUESTION_TEXT_MAX = 5000;
     private static final int EXPLANATION_MAX = 5000;
@@ -100,8 +102,76 @@ public final class QuestionFormValidator {
         return new ValidationResult(errors.isEmpty() && formError == null, errors, formError);
     }
 
+    /**
+     * Validates only non-null update fields. If options are supplied without
+     * questionType, option size/text/correct nullability are validated, while
+     * per-type correct-count rules are skipped.
+     */
+    public ValidationResult validateUpdate(UpdateQuestionRequest request) {
+        Map<String, String> errors = new LinkedHashMap<>();
+        String formError = null;
+
+        if (request == null) {
+            return new ValidationResult(true, errors, null);
+        }
+
+        if (request.getQuestionText() != null) {
+            validateRequiredText(request.getQuestionText(), FIELD_QUESTION_TEXT,
+                    QUESTION_TEXT_MAX, errors);
+        }
+        validateOptionalText(request.getExplanation(), FIELD_EXPLANATION,
+                EXPLANATION_MAX, errors);
+        validateOptionalText(request.getSource(), FIELD_SOURCE, SOURCE_MAX, errors);
+        validateOptionalText(request.getTags(), FIELD_TAGS, TAGS_MAX, errors);
+        validateOptionalText(request.getImageUrl(), FIELD_IMAGE_URL, IMAGE_URL_MAX, errors);
+
+        List<QuestionOptionInput> options = request.getOptions();
+        int correctCount = 0;
+        if (options != null) {
+            if (options.size() < OPTIONS_MIN) {
+                errors.put(FIELD_OPTIONS, ERROR_OPTIONS_MIN);
+            } else if (options.size() > OPTIONS_MAX) {
+                errors.put(FIELD_OPTIONS, ERROR_OPTIONS_MAX);
+            }
+
+            for (int i = 0; i < options.size(); i++) {
+                QuestionOptionInput option = options.get(i);
+                if (option == null) {
+                    errors.put(optionTextKey(i), ERROR_REQUIRED);
+                    continue;
+                }
+                validateRequiredText(option.getOptionText(), optionTextKey(i),
+                        OPTION_TEXT_MAX, errors);
+                if (option.getIsCorrect() == null) {
+                    errors.put(optionCorrectKey(i), ERROR_CORRECT_REQUIRED);
+                } else if (Boolean.TRUE.equals(option.getIsCorrect())) {
+                    correctCount++;
+                }
+            }
+
+            QuestionType type = request.getQuestionType();
+            if (type == QuestionType.SINGLE_CHOICE && correctCount != 1) {
+                formError = ERROR_SINGLE_CHOICE_CORRECT;
+            } else if (type == QuestionType.MULTIPLE_CHOICE && correctCount < 1) {
+                formError = ERROR_MULTI_CHOICE_CORRECT;
+            } else if (type == QuestionType.TRUE_FALSE) {
+                if (options.size() != 2) {
+                    formError = ERROR_TRUE_FALSE_SIZE;
+                } else if (correctCount != 1) {
+                    formError = ERROR_TRUE_FALSE_CORRECT;
+                }
+            }
+        }
+
+        return new ValidationResult(errors.isEmpty() && formError == null, errors, formError);
+    }
+
     public static String optionTextKey(int index) {
         return FIELD_OPTIONS + "[" + index + "].optionText";
+    }
+
+    public static String optionCorrectKey(int index) {
+        return FIELD_OPTIONS + "[" + index + "].isCorrect";
     }
 
     private static void require(Object value, String field, Map<String, String> errors) {

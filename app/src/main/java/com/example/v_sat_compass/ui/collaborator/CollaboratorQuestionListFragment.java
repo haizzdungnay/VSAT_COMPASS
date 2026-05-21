@@ -1,10 +1,10 @@
 package com.example.v_sat_compass.ui.collaborator;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -50,11 +50,11 @@ public class CollaboratorQuestionListFragment extends Fragment {
 
         viewModel = new ViewModelProvider(requireActivity()).get(CollaboratorQuestionViewModel.class);
         adapter = new CollaboratorQuestionListAdapter();
-        adapter.setOnItemClickListener(question -> Toast.makeText(
-                requireContext(),
-                R.string.cq_row_click_placeholder,
-                Toast.LENGTH_SHORT
-        ).show());
+        adapter.setOnItemClickListener(question -> {
+            Intent intent = new Intent(requireContext(), CollaboratorQuestionDetailActivity.class);
+            intent.putExtra("questionId", question.getId());
+            startActivity(intent);
+        });
 
         binding.rvQuestions.setLayoutManager(new LinearLayoutManager(requireContext()));
         binding.rvQuestions.setAdapter(adapter);

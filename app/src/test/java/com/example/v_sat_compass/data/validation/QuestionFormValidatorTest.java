@@ -9,6 +9,7 @@ import com.example.v_sat_compass.data.model.enums.Difficulty;
 import com.example.v_sat_compass.data.model.enums.QuestionType;
 import com.example.v_sat_compass.data.model.question.CreateQuestionRequest;
 import com.example.v_sat_compass.data.model.question.QuestionOptionInput;
+import com.example.v_sat_compass.data.model.question.UpdateQuestionRequest;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -255,6 +256,171 @@ public class QuestionFormValidatorTest {
         ), QuestionFormValidator.ERROR_TRUE_FALSE_CORRECT);
     }
 
+    @Test
+    public void updateNullRequest_passes() {
+        assertTrue(validator.validateUpdate(null).isValid());
+    }
+
+    @Test
+    public void updateNullFieldsSkipped_passes() {
+        assertTrue(validator.validateUpdate(new UpdateQuestionRequest()).isValid());
+    }
+
+    @Test
+    public void updateValidQuestionText_passes() {
+        UpdateQuestionRequest request = new UpdateQuestionRequest();
+        request.setQuestionText("Updated question");
+
+        assertTrue(validator.validateUpdate(request).isValid());
+    }
+
+    @Test
+    public void updateBlankQuestionText_fails() {
+        UpdateQuestionRequest request = new UpdateQuestionRequest();
+        request.setQuestionText("   ");
+
+        assertUpdateFieldError(request, QuestionFormValidator.FIELD_QUESTION_TEXT,
+                QuestionFormValidator.ERROR_REQUIRED);
+    }
+
+    @Test
+    public void updateQuestionTextExactly5000_passes() {
+        UpdateQuestionRequest request = new UpdateQuestionRequest();
+        request.setQuestionText(repeat('a', 5000));
+
+        assertTrue(validator.validateUpdate(request).isValid());
+    }
+
+    @Test
+    public void updateQuestionText5001_fails() {
+        UpdateQuestionRequest request = new UpdateQuestionRequest();
+        request.setQuestionText(repeat('a', 5001));
+
+        assertUpdateFieldError(request, QuestionFormValidator.FIELD_QUESTION_TEXT,
+                QuestionFormValidator.ERROR_TOO_LONG);
+    }
+
+    @Test
+    public void updateOptionsWithoutType_skipsCorrectCountRule() {
+        UpdateQuestionRequest request = validUpdate(null,
+                option("A", false),
+                option("B", false));
+
+        assertTrue(validator.validateUpdate(request).isValid());
+    }
+
+    @Test
+    public void updateOptionsWithoutType_validatesBlankOptionText() {
+        UpdateQuestionRequest request = validUpdate(null,
+                option("   ", false),
+                option("B", false));
+
+        assertUpdateFieldError(request, QuestionFormValidator.optionTextKey(0),
+                QuestionFormValidator.ERROR_REQUIRED);
+    }
+
+    @Test
+    public void updateSingleChoiceExactlyOneCorrect_passes() {
+        assertTrue(validator.validateUpdate(validUpdate(
+                QuestionType.SINGLE_CHOICE,
+                option("A", true),
+                option("B", false)
+        )).isValid());
+    }
+
+    @Test
+    public void updateSingleChoiceZeroCorrect_fails() {
+        assertUpdateFormError(validUpdate(
+                QuestionType.SINGLE_CHOICE,
+                option("A", false),
+                option("B", false)
+        ), QuestionFormValidator.ERROR_SINGLE_CHOICE_CORRECT);
+    }
+
+    @Test
+    public void updateSingleChoiceTwoCorrect_fails() {
+        assertUpdateFormError(validUpdate(
+                QuestionType.SINGLE_CHOICE,
+                option("A", true),
+                option("B", true)
+        ), QuestionFormValidator.ERROR_SINGLE_CHOICE_CORRECT);
+    }
+
+    @Test
+    public void updateMultipleChoiceAtLeastOneCorrect_passes() {
+        assertTrue(validator.validateUpdate(validUpdate(
+                QuestionType.MULTIPLE_CHOICE,
+                option("A", true),
+                option("B", true),
+                option("C", false)
+        )).isValid());
+    }
+
+    @Test
+    public void updateMultipleChoiceZeroCorrect_fails() {
+        assertUpdateFormError(validUpdate(
+                QuestionType.MULTIPLE_CHOICE,
+                option("A", false),
+                option("B", false)
+        ), QuestionFormValidator.ERROR_MULTI_CHOICE_CORRECT);
+    }
+
+    @Test
+    public void updateTrueFalseValid_passes() {
+        assertTrue(validator.validateUpdate(validUpdate(
+                QuestionType.TRUE_FALSE,
+                option("Đ", true),
+                option("S", false)
+        )).isValid());
+    }
+
+    @Test
+    public void updateTrueFalseWrongSize_fails() {
+        assertUpdateFormError(validUpdate(
+                QuestionType.TRUE_FALSE,
+                option("Đ", true),
+                option("S", false),
+                option("C", false)
+        ), QuestionFormValidator.ERROR_TRUE_FALSE_SIZE);
+    }
+
+    @Test
+    public void updateTrueFalseWrongCorrectCount_fails() {
+        assertUpdateFormError(validUpdate(
+                QuestionType.TRUE_FALSE,
+                option("Đ", true),
+                option("S", true)
+        ), QuestionFormValidator.ERROR_TRUE_FALSE_CORRECT);
+    }
+
+    @Test
+    public void updateOptionalFieldBoundaries_pass() {
+        UpdateQuestionRequest request = new UpdateQuestionRequest();
+        request.setExplanation(repeat('a', 5000));
+        request.setSource(repeat('a', 200));
+        request.setTags(repeat('a', 500));
+        request.setImageUrl(repeat('a', 500));
+
+        assertTrue(validator.validateUpdate(request).isValid());
+    }
+
+    @Test
+    public void updateOptionalFieldsTooLong_fail() {
+        UpdateQuestionRequest request = new UpdateQuestionRequest();
+        request.setSource(repeat('a', 201));
+        request.setTags(repeat('a', 501));
+        request.setImageUrl(repeat('a', 501));
+
+        QuestionFormValidator.ValidationResult result = validator.validateUpdate(request);
+        assertFalse(result.isValid());
+        assertEquals(QuestionFormValidator.ERROR_TOO_LONG,
+                result.getFieldErrors().get(QuestionFormValidator.FIELD_SOURCE));
+        assertEquals(QuestionFormValidator.ERROR_TOO_LONG,
+                result.getFieldErrors().get(QuestionFormValidator.FIELD_TAGS));
+        assertEquals(QuestionFormValidator.ERROR_TOO_LONG,
+                result.getFieldErrors().get(QuestionFormValidator.FIELD_IMAGE_URL));
+    }
+
     private void assertFieldError(CreateQuestionRequest request, String field, String error) {
         QuestionFormValidator.ValidationResult result = validator.validateCreate(request);
         assertFalse(result.isValid());
@@ -263,6 +429,18 @@ public class QuestionFormValidatorTest {
 
     private void assertFormError(CreateQuestionRequest request, String error) {
         QuestionFormValidator.ValidationResult result = validator.validateCreate(request);
+        assertFalse(result.isValid());
+        assertEquals(error, result.getFormError());
+    }
+
+    private void assertUpdateFieldError(UpdateQuestionRequest request, String field, String error) {
+        QuestionFormValidator.ValidationResult result = validator.validateUpdate(request);
+        assertFalse(result.isValid());
+        assertEquals(error, result.getFieldErrors().get(field));
+    }
+
+    private void assertUpdateFormError(UpdateQuestionRequest request, String error) {
+        QuestionFormValidator.ValidationResult result = validator.validateUpdate(request);
         assertFalse(result.isValid());
         assertEquals(error, result.getFormError());
     }
@@ -299,6 +477,16 @@ public class QuestionFormValidatorTest {
         option.setIsCorrect(correct);
         option.setDisplayOrder(1);
         return option;
+    }
+
+    private static UpdateQuestionRequest validUpdate(
+            QuestionType type,
+            QuestionOptionInput... options
+    ) {
+        UpdateQuestionRequest request = new UpdateQuestionRequest();
+        request.setQuestionType(type);
+        request.setOptions(Arrays.asList(options));
+        return request;
     }
 
     private static String repeat(char value, int count) {

@@ -53,6 +53,9 @@
 
         <!-- ── Collaborator ── -->
         <activity
+            android:name=".ui.collaborator.CollaboratorQuestionDetailActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.collaborator.CollaboratorCreateQuestionActivity"
             android:exported="false" />
         <activity android:name=".ui.collaborator.CollaboratorWorkspaceActivity" android:exported="false" />
