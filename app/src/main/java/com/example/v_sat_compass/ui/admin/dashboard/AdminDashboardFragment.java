@@ -17,7 +17,7 @@ import com.example.v_sat_compass.data.model.ApiResponse;
 import com.example.v_sat_compass.databinding.FragmentAdminDashboardBinding;
 import com.example.v_sat_compass.ui.admin.exam.AdminCreateExamActivity;
 import com.example.v_sat_compass.ui.admin.questions.AdminQuestionBankFragment;
-import com.example.v_sat_compass.ui.collaborator.QuestionEditorActivity;
+import com.example.v_sat_compass.ui.collaborator.CollaboratorCreateQuestionActivity;
 import com.example.v_sat_compass.util.UserRoleHelper;
 
 import java.util.Calendar;
@@ -87,7 +87,7 @@ public class AdminDashboardFragment extends Fragment {
     private void setupQuickActions() {
         // Tạo câu hỏi: CTV trở lên
         binding.cardCreateQuestion.setOnClickListener(v -> {
-            startActivity(new Intent(requireContext(), QuestionEditorActivity.class));
+            startActivity(new Intent(requireContext(), CollaboratorCreateQuestionActivity.class));
         });
 
         // Tạo đề thi: chỉ CONTENT_ADMIN và SUPER_ADMIN
