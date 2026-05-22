@@ -1,6 +1,6 @@
 # V-SAT Compass — Task Tracker & Roadmap
 
-> Cập nhật: 2026-05-10 | Phiên bản hiện tại: **v0.9.4** (Phase C1.2c.1 Admin Exam DRAFT Discard live in production)
+> Cập nhật: 2026-05-22 | Phiên bản hiện tại: **v0.10.0** (Phase C1.5 Admin Question Picker live in production)
 
 Tài liệu này tổng hợp lộ trình hoàn thiện app dựa trên:
 - `VSAT/ui/tong_hop_du_an_vsat_android_web_v2.txt`
@@ -22,7 +22,7 @@ Mục tiêu cuối:
 |-----------|------------|------------|
 | A — Student MVP | ✅ XONG | 100% |
 | B — Backend Production | ✅ XONG | 100% (2026-04-25) |
-| C — Content Management | 🟡 IN PROGRESS | C1.0 + C1.1a + C1.1b + C1.2a + C1.2b-1 + C1.2b-2 + C1.2c-1 done in prod |
+| C — Content Management | 🟡 IN PROGRESS | C1.0 → C1.5 all closed; C1.6 (Student public exam) next |
 | D — Admin & Operations | 🔜 Tương lai | — |
 | E — Chất lượng sản phẩm | 🔜 Tương lai | — |
 
@@ -69,14 +69,20 @@ Mục tiêu cuối:
 - [x] Phase C1.2b-1 — Admin Exam CRUD foundation (metadata-only create/list/detail/update, DRAFT/HIDDEN edit only, FREE+price=0 only) live in production and tagged v0.9.2 (2026-05-05). Production smoke PASS: admin exams 10/10 + auth no-register 7/0/2 + subjects 4/4 + sessions 5/5 + questions 32/32 + exams 10/10.
 - [x] Phase C1.2b-2 — Exam composition + publish workflow (add/remove/reorder questions, submit-review, publish, hide, archive, reject-review, return-to-draft) live in production and tagged v0.9.3 (2026-05-06). Production smoke PASS: admin exam composition 17/0/0/0 + admin exams 10/10 + auth no-register 7/0/2 + subjects 4/4 + sessions 5/5 + questions 32/32 + exams 10/10.
 - [x] Phase C1.2c-1 — Admin Exam DRAFT Discard (`DELETE /admin/exams/{examId}`) live in production and tagged v0.9.4 (2026-05-06). Production smoke PASS: admin exams 12/12 including create-own-DRAFT -> discard -> GET 404; all 7 smoke scripts passed.
+- [x] Phase C1.2c-2 — Docs closeout after v0.9.4 (2026-05-06) — docs-only, no tag
+- [x] Phase C1.2d — Session hardening (unit + smoke + docs) — C1.2d-1a `69dc791`, C1.2d-1b `78f5759`, closeout (2026-05-10)
+- [x] Phase C1.3 — Collaborator Question Lifecycle Android UI (C1.3-A `315eca8`, C1.3-B `87d465b`, C1.3-C1 `1a2851e`, C1.3-C2 `c306a97`, closeout `c178bcf`) — Done (2026-05-22); backend frozen at v0.9.4
+- [x] Phase C1.4 — Admin Review Queue Android UI (C1.4-A `475c084`, closeout `6810c75`) — Done (2026-05-22); backend frozen at v0.9.4
+- [x] Phase C1.5 — Admin Question Picker (backend C1.5-A `78bb17e` tagged `v0.10.0`; Android C1.5-B `4219ca6`; closeout `84fc997`) — Done (2026-05-22); production smoke verified
 
 ### 2.2 Chưa hoàn chỉnh
 
 - [x] ~~Backend public production thực sự ổn định~~ — xong v0.8.0
 - [x] ~~Student history / analytics thật sự dùng được end-to-end~~ — xong v0.7.0/0.7.1
 - [x] ~~Review lời giải chi tiết sau bài thi~~ — xong v0.7.0
-- [ ] Quản trị câu hỏi / duyệt nội dung / tạo đề hoàn chỉnh (Phase C) — backend Question CRUD + review workflow đã xong ở C1.1b; backend exam composition/publication đã xong ở C1.2b-2; DRAFT discard backend đã xong ở C1.2c-1; Android/admin UI còn lại.
-- [ ] Cộng tác viên nhập và chỉnh sửa câu hỏi hoàn chỉnh (Phase C) — backend API đã xong ở C1.1b; Android/admin UI còn lại.
+- [x] ~~Quản trị câu hỏi / duyệt nội dung / tạo đề hoàn chỉnh (Phase C)~~ — backend + admin Android UI fully shipped through C1.5
+- [x] ~~Cộng tác viên nhập và chỉnh sửa câu hỏi hoàn chỉnh (Phase C)~~ — backend C1.1b + Android C1.3 shipped
+- [ ] Student Android consumes backend exam content — Phase C1.6 (next)
 - [ ] Ticket lỗi / phản hồi nội dung (Phase D)
 - [ ] User management / role management đủ dùng (Phase D)
 - [x] ~~Test plan, regression checklist, release checklist~~ — smoke checklist 25 TCs + unit tests done
@@ -324,10 +330,12 @@ Mục tiêu: Collaborator có thể soạn câu hỏi, Content Admin duyệt, t�
 | C1.3-B | Collaborator question list + filter | ✅ Done (2026-05-21) — merged to main at 87d465b |
 | C1.3-C1 | Collaborator create-question activity | ✅ Done (2026-05-21) — merged to main at 1a2851e |
 | C1.3-C2 | Collaborator question detail + inline edit + submit + review history | ✅ Done (2026-05-22) — merged to main at c306a97 |
-| C1.3 CLOSEOUT | Legacy collaborator editor cleanup + docs sync | In progress 🟡 |
+| C1.3 CLOSEOUT | Legacy collaborator editor cleanup + docs sync | ✅ Done (2026-05-22) — merged to main at c178bcf |
 | C1.4-A | Android admin review queue UI | ✅ Done (2026-05-22) — merged to main at 475c084 |
+| C1.4 CLOSEOUT | Legacy admin question API + editor removal | ✅ Done (2026-05-22) — merged to main at 6810c75 |
 | C1.5-A | Admin question picker endpoint | ✅ Done (2026-05-22) — merged to main at 78bb17e |
 | C1.5-B | Admin question picker Android UI | ✅ Done (2026-05-22) — merged to main at 4219ca6 |
+| C1.5 CLOSEOUT | Phase C1.5 docs closeout (CHANGELOG promote, task.md, README sync) | ✅ Done (2026-05-22) — merged to main at 84fc997 |
 
 - **C1.1a status:** Question Bank JPA layer (4 enums + 4 entities + 4 repositories) and read-only Subtopic API (`GET /subjects/{id}/topics/{topicId}/subtopics`) merged to `main` and tagged `v0.8.4`. Production smoke 18/18 PASS.
 - **C1.1b status:** Question CRUD + review workflow backend merged to `main`, production smoke PASS, and tagged `v0.9.0` at deployed code commit `752c15e`.
@@ -417,6 +425,27 @@ Audit logging for draft discard remains deferred because no reusable production 
 | **C1.2d-1b** | Session smoke + API docs follow-up: extend `smoke_sessions.sh` with 404 (`RESOURCE_NOT_FOUND`) and 400 (DTO validation) cases; reflect new TCs in `docs/SMOKE_CHECKLIST.md`; clarify the `BAD_REQUEST` row in `docs/API_ERROR_CODES.md` to include non-IN_PROGRESS state rejection. | ✅ Done (2026-05-09) — merged to main at 78f5759; smoke + docs only; no runtime, no tag, no deploy. |
 
 C1.2d batch is intentionally split: C1.2d-1a is unit-test-only and ships zero behavior risk; C1.2d-1b touches smoke scripts and API docs in a separate PR.
+
+### C1.6 — Student Public Exam Integration (📋 PLANNED)
+
+Mục tiêu: Student Android consume backend exam content thực sự, retire local `sample_*.json` packs.
+
+| Sub-batch | Scope | Trạng thái |
+|-----------|-------|------------|
+| C1.6-A | Backend public student exam endpoints: list, detail, per-question delivery via session | 📋 Planned |
+| C1.6-B | Android student integration: replace `LocalExamDataSource` with backend (local kept as offline fallback) | 📋 Planned |
+| C1.6-C | Closeout: smoke + docs + retire `sample_*.json` per C3.4 decision | 📋 Planned |
+
+Coordinator decisions (pre-batch):
+- Auth model: `hasRole('STUDENT')` for both list + detail; 404 for non-PUBLISHED (anti-enumeration).
+- Detail returns metadata only — NO question content. Questions delivered per-session per-question.
+- Answer key leak protection: `PublicQuestionForStudentResponse` strips `correctAnswer`, `isCorrect`, `explanation`, any review/audit fields.
+- Local `sample_*.json` retained as OFFLINE fallback; primary source = backend.
+
+Tiêu chí xong:
+- Student app fetches PUBLISHED exam list and detail from production backend.
+- Active session can fetch question content with answer keys stripped.
+- Local sample packs retired or repurposed as offline fallback only.
 
 - [x] Gửi duyệt câu hỏi (backend API C1.1b)
 - [x] Duyệt / từ chối / yêu cầu chỉnh sửa (backend API C1.1b)
@@ -651,3 +680,6 @@ Mỗi khi hoàn thành một task:
 
   **Quyết định cleanup chờ user.** KHÔNG được tự ý `stash pop` / `stash drop`.
   Cần xác định cùng user xem stash nào còn cần re-apply, stash nào có thể drop, trước khi đụng vào.
+
+- [ ] **Backup branch retention deadline approaching (2026-06-01)**
+  `backup-pre-batch-2b-20260430` (points at `1f88ee20cf943ed9ce1261cd0375a3d9b9e0188a`) — local + origin. Retention until 2026-06-01. Confirm with onii-chan before deleting after that date. Currently ~9 days remaining.
