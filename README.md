@@ -169,12 +169,12 @@ http://localhost:8080/api/v1/swagger-ui.html
 
 ## API Modules
 
-> **Trạng thái hiện tại (v0.10.0 / Phase C1.5 Closed):** Production-ready trên Render.com — Auth + Session sync đã hardened; Subject/Topic/Subtopic read APIs, Question Bank write/review workflow, public Exam read API, Admin Exam CRUD metadata API, Admin Exam Composition + Publish Workflow, Admin Exam DRAFT Discard, and Admin Question Picker endpoint đã live. C1.6-A adds student session question delivery and post-submit answer-key endpoints; production verification is pending merge/deploy/smoke.
+> **Trạng thái hiện tại (v0.10.1 / Phase C1.6-A Closed):** Production-ready trên Render.com — Auth + Session sync đã hardened; Subject/Topic/Subtopic read APIs, Question Bank write/review workflow, public Exam read API, Admin Exam CRUD metadata API, Admin Exam Composition + Publish Workflow, Admin Exam DRAFT Discard, Admin Question Picker endpoint, and C1.6-A student session question delivery + post-submit answer-key endpoints đã live.
 
 | Module | Base Path | Endpoints | Trạng thái |
 |--------|-----------|-----------|------------|
 | Auth | `/auth` | register, login, refresh, logout, getMe, updateProfile, changePassword | ✅ Verified prod |
-| Session Engine | `/sessions` | start, **client-submit**, **get-question**, **answer-keys** | Implemented; production verification pending merge/deploy |
+| Session Engine | `/sessions` | start, **client-submit**, **get-question**, **answer-keys** | ✅ Verified prod |
 | Subjects (Public) | `/subjects` | list subjects, topics, subtopics | ✅ Verified prod |
 | Questions (Collaborator) | `/collaborator/questions` | create, list own, detail, update, submit-for-review | ✅ Verified prod |
 | Questions (Admin) | `/admin/questions` | queue by status, picker, approve, request revision, reject | ✅ Verified prod (C1.5 / v0.10.0) |

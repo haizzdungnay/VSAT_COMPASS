@@ -2,12 +2,14 @@
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-05-22 — Phase C1.6-A
+
 ### Phase C1.6-A — Backend student exam content delivery (2026-05-22)
 
 - Added `GET /sessions/{sessionId}/questions/{questionId}` for authenticated student in-session question delivery with answer keys stripped.
 - Added `GET /sessions/{sessionId}/answer-keys` for post-submit answer key and explanation retrieval.
 - Extended session smoke coverage with TC-SESSION-8 through TC-SESSION-12.
-- Runtime release will be tagged `v0.10.1` after production smoke verification.
+- Released as `v0.10.1` after production smoke verification.
 
 ## [0.10.0] - 2026-05-22 — Phase C1.5
 
