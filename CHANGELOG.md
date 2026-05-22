@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Phase C1.4 CLOSEOUT — Legacy admin question API and editor removed (2026-05-22)
+
+- Removed 5 unused question methods (`getQuestions`, `getQuestionDetail`, `approveQuestion`, `rejectQuestion`, `requestRevision`) from `AdminApi.java`; admin question flow now exclusively uses `AdminQuestionApi`.
+- Removed legacy `QuestionBankAdapter.java` after fragment migration to `AdminReviewQueueAdapter`.
+- Removed legacy `QuestionEditorActivity.java` and its Manifest entry; admin entry points now route to `CollaboratorCreateQuestionActivity`.
+- No backend change; runtime release remains pinned at `v0.9.4`.
+
 ### Phase C1.4-A — Admin Review Queue Android UI (2026-05-23)
 
 - Added Android admin question review queue data layer with `AdminQuestionApi`, `AdminReviewActionRequest`, and `AdminQuestionRepository`.

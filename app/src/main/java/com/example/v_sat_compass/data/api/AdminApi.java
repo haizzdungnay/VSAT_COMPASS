@@ -3,7 +3,6 @@ package com.example.v_sat_compass.data.api;
 import com.example.v_sat_compass.data.model.AdminStats;
 import com.example.v_sat_compass.data.model.ApiResponse;
 import com.example.v_sat_compass.data.model.Exam;
-import com.example.v_sat_compass.data.model.QuestionItem;
 import com.example.v_sat_compass.data.model.UserItem;
 import com.example.v_sat_compass.data.model.admin.AdminExamAddQuestionRequest;
 import com.example.v_sat_compass.data.model.admin.AdminExamCreateRequest;
@@ -48,33 +47,6 @@ public interface AdminApi {
 
     @GET("admin/stats")
     Call<ApiResponse<AdminStats>> getDashboardStats();
-
-    @GET("admin/questions")
-    Call<ApiResponse<List<QuestionItem>>> getQuestions(
-            @Query("status") String status,
-            @Query("subject_id") Long subjectId,
-            @Query("keyword") String keyword,
-            @Query("page") int page,
-            @Query("size") int size
-    );
-
-    @GET("admin/questions/{id}")
-    Call<ApiResponse<QuestionItem>> getQuestionDetail(@Path("id") Long id);
-
-    @PATCH("admin/questions/{id}/approve")
-    Call<ApiResponse<Void>> approveQuestion(@Path("id") Long id);
-
-    @PATCH("admin/questions/{id}/reject")
-    Call<ApiResponse<Void>> rejectQuestion(
-            @Path("id") Long id,
-            @Body Map<String, String> body
-    );
-
-    @PATCH("admin/questions/{id}/request-revision")
-    Call<ApiResponse<Void>> requestRevision(
-            @Path("id") Long id,
-            @Body Map<String, String> body
-    );
 
     @GET("admin/exams")
     Call<ApiResponse<PageResponse<AdminExamSummaryResponse>>> listAdminExams(
