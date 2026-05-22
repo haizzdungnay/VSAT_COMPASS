@@ -2,20 +2,22 @@
 
 ## [Unreleased]
 
-### Phase C1.5-B — Admin question picker Android UI (2026-05-22)
+## [0.10.0] - 2026-05-22 — Phase C1.5
 
-- Added Android admin question picker data wiring for `GET /admin/questions/picker`.
-- Added picker Activity, ViewModel, adapter, and layouts for selecting approved questions.
-- Wired the admin exam detail screen to display exam questions and launch the picker for DRAFT exams.
-- Added JVM unit coverage for picker API contract, ViewModel state, and adapter binding helpers.
-
-### Phase C1.5-A — Admin question picker endpoint (2026-05-22)
+### Phase C1.5-A — Admin question picker backend endpoint (2026-05-22)
 
 - Added `GET /admin/questions/picker` with filters (`status`, `subjectId`, `topicId`, `questionType`, `q`) and pagination.
 - Default status filter is `APPROVED` for exam composition workflow.
 - Introduced `JpaSpecificationExecutor` and `QuestionSpecifications` builders for AND-composed question filters.
 - Added `QuestionPickerItemResponse` DTO with 200-character question text snippet.
 - Runtime release will be tagged `v0.10.0` after production deploy and smoke verification; no tag is created in this batch.
+
+### Phase C1.5-B — Admin question picker Android UI (2026-05-22)
+
+- Added Android admin question picker data wiring for `GET /admin/questions/picker`.
+- Added picker Activity, ViewModel, adapter, and layouts for selecting approved questions.
+- Wired the admin exam detail screen to display exam questions and launch the picker for DRAFT exams.
+- Added JVM unit coverage for picker API contract, ViewModel state, and adapter binding helpers.
 
 ### Phase C1.4 CLOSEOUT — Legacy admin question API and editor removed (2026-05-22)
 
