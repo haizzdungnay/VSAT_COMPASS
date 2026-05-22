@@ -4,6 +4,7 @@ import com.vsatcompass.api.dto.request.CreateQuestionRequest;
 import com.vsatcompass.api.dto.request.ReviewActionRequest;
 import com.vsatcompass.api.dto.request.UpdateQuestionRequest;
 import com.vsatcompass.api.dto.response.QuestionListItemResponse;
+import com.vsatcompass.api.dto.response.QuestionPickerItemResponse;
 import com.vsatcompass.api.dto.response.QuestionResponse;
 import com.vsatcompass.api.entity.Question;
 import com.vsatcompass.api.entity.QuestionOption;
@@ -23,6 +24,11 @@ import com.vsatcompass.api.repository.SubjectRepository;
 import com.vsatcompass.api.repository.SubtopicRepository;
 import com.vsatcompass.api.repository.TopicRepository;
 import com.vsatcompass.api.service.impl.QuestionServiceImpl;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -36,6 +42,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 
 import java.time.OffsetDateTime;
@@ -46,6 +53,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -898,6 +907,149 @@ class QuestionServiceTest {
                     });
 
             verify(questionRepository, never()).save(any());
+        }
+    }
+
+    // ============================================================
+    // GROUP 8 — PICKER (6 tests)
+    // ============================================================
+
+    @Nested
+    @DisplayName("findForPicker()")
+    class Picker {
+
+        @Test
+        @DisplayName("findForPicker: null status defaults to APPROVED")
+        void findForPicker_nullStatus_defaultsToApproved() {
+            Pageable pageable = PageRequest.of(0, 20);
+            when(questionRepository.findAll(any(Specification.class), eq(pageable)))
+                    .thenReturn(Page.empty(pageable));
+
+            questionService.findForPicker(null, null, null, null, null, pageable);
+
+            @SuppressWarnings("unchecked")
+            ArgumentCaptor<Specification<Question>> specCaptor =
+                    ArgumentCaptor.forClass(Specification.class);
+            verify(questionRepository).findAll(specCaptor.capture(), eq(pageable));
+
+            Root<Question> root = mock(Root.class);
+            CriteriaQuery<?> query = mock(CriteriaQuery.class);
+            CriteriaBuilder cb = mock(CriteriaBuilder.class);
+            Path<QuestionStatus> statusPath = path();
+            Predicate statusPredicate = mock(Predicate.class);
+            when(root.<QuestionStatus>get("status")).thenReturn(statusPath);
+            when(cb.equal(statusPath, QuestionStatus.APPROVED)).thenReturn(statusPredicate);
+
+            Predicate result = specCaptor.getValue().toPredicate(root, query, cb);
+
+            assertThat(result).isSameAs(statusPredicate);
+            verify(cb).equal(statusPath, QuestionStatus.APPROVED);
+        }
+
+        @Test
+        @DisplayName("findForPicker: delegates to repository findAll with specification and pageable")
+        void findForPicker_delegatesToRepositoryFindAll() {
+            Pageable pageable = PageRequest.of(1, 25);
+            when(questionRepository.findAll(any(Specification.class), eq(pageable)))
+                    .thenReturn(Page.empty(pageable));
+
+            questionService.findForPicker(
+                    QuestionStatus.PENDING_REVIEW,
+                    SUBJECT_MATH,
+                    TOPIC_ALGEBRA,
+                    QuestionType.MULTIPLE_CHOICE,
+                    "linear",
+                    pageable);
+
+            verify(questionRepository).findAll(any(Specification.class), eq(pageable));
+        }
+
+        @Test
+        @DisplayName("findForPicker: maps entity fields to picker DTO")
+        void findForPicker_mapsEntityToDto() {
+            OffsetDateTime updatedAt = OffsetDateTime.parse("2026-05-22T00:00:00Z");
+            Question q = existingQuestion(91L, QuestionStatus.APPROVED, OWNER_ID);
+            q.setQuestionCode("Q-T10-PICKER1");
+            q.setQuestionText("Picker question");
+            q.setDifficulty(Difficulty.HARD);
+            q.setQuestionType(QuestionType.TRUE_FALSE);
+            q.setVersion(3);
+            q.setUpdatedAt(updatedAt);
+            q.setImageUrl("https://example.test/question.png");
+            Pageable pageable = PageRequest.of(0, 20);
+            when(questionRepository.findAll(any(Specification.class), eq(pageable)))
+                    .thenReturn(new PageImpl<>(List.of(q), pageable, 1));
+
+            Page<QuestionPickerItemResponse> result = questionService.findForPicker(
+                    QuestionStatus.APPROVED, SUBJECT_MATH, TOPIC_ALGEBRA, QuestionType.TRUE_FALSE, null, pageable);
+
+            QuestionPickerItemResponse item = result.getContent().get(0);
+            assertThat(item.getId()).isEqualTo(91L);
+            assertThat(item.getQuestionCode()).isEqualTo("Q-T10-PICKER1");
+            assertThat(item.getQuestionTextSnippet()).isEqualTo("Picker question");
+            assertThat(item.getSubjectId()).isEqualTo(SUBJECT_MATH);
+            assertThat(item.getTopicId()).isEqualTo(TOPIC_ALGEBRA);
+            assertThat(item.getSubtopicId()).isEqualTo(SUBTOPIC_LINEAR);
+            assertThat(item.getQuestionType()).isEqualTo(QuestionType.TRUE_FALSE);
+            assertThat(item.getDifficulty()).isEqualTo(Difficulty.HARD);
+            assertThat(item.getStatus()).isEqualTo(QuestionStatus.APPROVED);
+            assertThat(item.getVersion()).isEqualTo(3);
+            assertThat(item.getUpdatedAt()).isEqualTo(updatedAt);
+            assertThat(item.getImageUrl()).isEqualTo("https://example.test/question.png");
+        }
+
+        @Test
+        @DisplayName("findForPicker: truncates 250-character questionText to 200 plus ellipsis")
+        void findForPicker_truncatesLongQuestionText() {
+            String longText = "a".repeat(250);
+            Question q = existingQuestion(92L, QuestionStatus.APPROVED, OWNER_ID);
+            q.setQuestionText(longText);
+            Pageable pageable = PageRequest.of(0, 20);
+            when(questionRepository.findAll(any(Specification.class), eq(pageable)))
+                    .thenReturn(new PageImpl<>(List.of(q), pageable, 1));
+
+            Page<QuestionPickerItemResponse> result = questionService.findForPicker(
+                    QuestionStatus.APPROVED, null, null, null, null, pageable);
+
+            String snippet = result.getContent().get(0).getQuestionTextSnippet();
+            assertThat(snippet).hasSize(201);
+            assertThat(snippet).isEqualTo("a".repeat(200) + "…");
+        }
+
+        @Test
+        @DisplayName("findForPicker: preserves questionText at 200 characters or less")
+        void findForPicker_preservesShortQuestionText() {
+            String text = "b".repeat(200);
+            Question q = existingQuestion(93L, QuestionStatus.APPROVED, OWNER_ID);
+            q.setQuestionText(text);
+            Pageable pageable = PageRequest.of(0, 20);
+            when(questionRepository.findAll(any(Specification.class), eq(pageable)))
+                    .thenReturn(new PageImpl<>(List.of(q), pageable, 1));
+
+            Page<QuestionPickerItemResponse> result = questionService.findForPicker(
+                    QuestionStatus.APPROVED, null, null, null, null, pageable);
+
+            assertThat(result.getContent().get(0).getQuestionTextSnippet()).isEqualTo(text);
+        }
+
+        @Test
+        @DisplayName("findForPicker: null questionText maps to null snippet")
+        void findForPicker_nullQuestionText_mapsToNullSnippet() {
+            Question q = existingQuestion(94L, QuestionStatus.APPROVED, OWNER_ID);
+            q.setQuestionText(null);
+            Pageable pageable = PageRequest.of(0, 20);
+            when(questionRepository.findAll(any(Specification.class), eq(pageable)))
+                    .thenReturn(new PageImpl<>(List.of(q), pageable, 1));
+
+            Page<QuestionPickerItemResponse> result = questionService.findForPicker(
+                    QuestionStatus.APPROVED, null, null, null, null, pageable);
+
+            assertThat(result.getContent().get(0).getQuestionTextSnippet()).isNull();
+        }
+
+        @SuppressWarnings("unchecked")
+        private <T> Path<T> path() {
+            return mock(Path.class);
         }
     }
 }

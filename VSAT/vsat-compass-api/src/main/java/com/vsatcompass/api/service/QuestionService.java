@@ -4,8 +4,10 @@ import com.vsatcompass.api.dto.request.CreateQuestionRequest;
 import com.vsatcompass.api.dto.request.ReviewActionRequest;
 import com.vsatcompass.api.dto.request.UpdateQuestionRequest;
 import com.vsatcompass.api.dto.response.QuestionListItemResponse;
+import com.vsatcompass.api.dto.response.QuestionPickerItemResponse;
 import com.vsatcompass.api.dto.response.QuestionResponse;
 import com.vsatcompass.api.entity.enums.QuestionStatus;
+import com.vsatcompass.api.entity.enums.QuestionType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -20,6 +22,15 @@ public interface QuestionService {
     Page<QuestionListItemResponse> listByCreator(Long currentUserId, QuestionStatus statusFilter, Pageable pageable);
 
     Page<QuestionListItemResponse> listByStatus(QuestionStatus status, Pageable pageable);
+
+    Page<QuestionPickerItemResponse> findForPicker(
+            QuestionStatus status,
+            Long subjectId,
+            Long topicId,
+            QuestionType questionType,
+            String q,
+            Pageable pageable
+    );
 
     QuestionResponse submitForReview(Long currentUserId, Long questionId);
 

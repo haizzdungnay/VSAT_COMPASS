@@ -5,6 +5,7 @@ import com.vsatcompass.api.dto.request.ReviewActionRequest;
 import com.vsatcompass.api.dto.request.UpdateQuestionRequest;
 import com.vsatcompass.api.dto.response.QuestionListItemResponse;
 import com.vsatcompass.api.dto.response.QuestionOptionResponse;
+import com.vsatcompass.api.dto.response.QuestionPickerItemResponse;
 import com.vsatcompass.api.dto.response.QuestionResponse;
 import com.vsatcompass.api.dto.response.QuestionReviewResponse;
 import com.vsatcompass.api.entity.Question;
@@ -24,10 +25,12 @@ import com.vsatcompass.api.repository.SubjectRepository;
 import com.vsatcompass.api.repository.SubtopicRepository;
 import com.vsatcompass.api.repository.TopicRepository;
 import com.vsatcompass.api.service.QuestionService;
+import com.vsatcompass.api.specification.QuestionSpecifications;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -184,6 +187,27 @@ public class QuestionServiceImpl implements QuestionService {
     public Page<QuestionListItemResponse> listByStatus(QuestionStatus status, Pageable pageable) {
         return questionRepository.findByStatusOrderByUpdatedAtDesc(status, pageable)
                 .map(this::toQuestionListItemResponse);
+    }
+
+    // ---------- PICKER ----------
+    @Override
+    public Page<QuestionPickerItemResponse> findForPicker(
+            QuestionStatus status,
+            Long subjectId,
+            Long topicId,
+            QuestionType questionType,
+            String q,
+            Pageable pageable) {
+        QuestionStatus effectiveStatus = status != null ? status : QuestionStatus.APPROVED;
+        Specification<Question> spec = Specification
+                .where(QuestionSpecifications.hasStatus(effectiveStatus))
+                .and(QuestionSpecifications.hasSubject(subjectId))
+                .and(QuestionSpecifications.hasTopic(topicId))
+                .and(QuestionSpecifications.hasQuestionType(questionType))
+                .and(QuestionSpecifications.textContains(q));
+
+        return questionRepository.findAll(spec, pageable)
+                .map(this::toQuestionPickerItemResponse);
     }
 
     // ---------- SUBMIT FOR REVIEW ----------
@@ -383,6 +407,30 @@ public class QuestionServiceImpl implements QuestionService {
                 .createdBy(q.getCreatedBy())
                 .updatedAt(q.getUpdatedAt())
                 .build();
+    }
+
+    private QuestionPickerItemResponse toQuestionPickerItemResponse(Question q) {
+        return QuestionPickerItemResponse.builder()
+                .id(q.getId())
+                .questionCode(q.getQuestionCode())
+                .questionTextSnippet(toQuestionTextSnippet(q.getQuestionText()))
+                .subjectId(q.getSubjectId())
+                .topicId(q.getTopicId())
+                .subtopicId(q.getSubtopicId())
+                .questionType(q.getQuestionType())
+                .difficulty(q.getDifficulty())
+                .status(q.getStatus())
+                .version(q.getVersion())
+                .updatedAt(q.getUpdatedAt())
+                .imageUrl(q.getImageUrl())
+                .build();
+    }
+
+    private String toQuestionTextSnippet(String questionText) {
+        if (questionText == null || questionText.length() <= 200) {
+            return questionText;
+        }
+        return questionText.substring(0, 200) + "…";
     }
 
     private QuestionOptionResponse toOptionResponse(QuestionOption o) {
