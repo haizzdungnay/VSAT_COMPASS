@@ -169,7 +169,7 @@ http://localhost:8080/api/v1/swagger-ui.html
 
 ## API Modules
 
-> **Trạng thái backend hiện tại (v0.9.4):** Production-ready trên Render.com — Auth + Session sync đã hardened; Subject/Topic/Subtopic read APIs, Question Bank write/review workflow, public Exam read API, Admin Exam CRUD metadata API, Admin Exam Composition + Publish Workflow, and Admin Exam DRAFT Discard đã live. v0.9.4 release smoke passed all 7 scripts: admin exam composition 17/0/0/0, admin exams 12/12 including DRAFT discard, exams 10/10, subjects 4/4, sessions 5/5, questions 32/32, and auth no-register 7/0/2. Android/admin UI cho content workflow còn deferred.
+> **Trạng thái hiện tại (v0.10.0 / Phase C1.5 Closed):** Production-ready trên Render.com — Auth + Session sync đã hardened; Subject/Topic/Subtopic read APIs, Question Bank write/review workflow, public Exam read API, Admin Exam CRUD metadata API, Admin Exam Composition + Publish Workflow, Admin Exam DRAFT Discard, and Admin Question Picker endpoint đã live. C1.5-B Android admin question picker UI đã merged to main at `4219ca6`.
 
 | Module | Base Path | Endpoints | Trạng thái |
 |--------|-----------|-----------|------------|
@@ -177,7 +177,7 @@ http://localhost:8080/api/v1/swagger-ui.html
 | Session Engine | `/sessions` | start, **client-submit** | ✅ Verified prod |
 | Subjects (Public) | `/subjects` | list subjects, topics, subtopics | ✅ Verified prod |
 | Questions (Collaborator) | `/collaborator/questions` | create, list own, detail, update, submit-for-review | ✅ Verified prod |
-| Questions (Admin) | `/admin/questions` | queue by status, approve, request revision, reject | ✅ Verified prod |
+| Questions (Admin) | `/admin/questions` | queue by status, picker, approve, request revision, reject | ✅ Verified prod (C1.5 / v0.10.0) |
 | Review Workflow | `/admin/questions/{id}/approve`, `/request-revision`, `/reject` | admin review actions + review history records | ✅ Verified prod |
 | Exams (Admin) | `/admin/exams` | metadata CRUD, composition add/remove/reorder, publish workflow, DRAFT discard | ✅ Verified prod (C1.2c-1 / v0.9.4) |
 | Exams (Public) | `/exams` | list `PUBLISHED` + `FREE`, detail with anti-leak 404 | ✅ Verified prod |
