@@ -8,7 +8,9 @@ import static org.junit.Assert.assertTrue;
 import com.example.v_sat_compass.data.model.ApiResponse;
 import com.example.v_sat_compass.data.model.admin.AdminReviewActionRequest;
 import com.example.v_sat_compass.data.model.admin.PageResponse;
+import com.example.v_sat_compass.data.model.admin.QuestionPickerItemResponse;
 import com.example.v_sat_compass.data.model.enums.QuestionStatus;
+import com.example.v_sat_compass.data.model.enums.QuestionType;
 import com.example.v_sat_compass.data.model.question.QuestionListItemResponse;
 import com.example.v_sat_compass.data.model.question.QuestionResponse;
 
@@ -26,6 +28,7 @@ import java.lang.reflect.Method;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.http.GET;
 import retrofit2.http.PATCH;
 import retrofit2.http.POST;
 
@@ -67,6 +70,29 @@ public class AdminQuestionApiContractTest {
                 request.getPath());
         assertEquals(0L, request.getBody().size());
         assertReturnTypeContains("getReviewQueue", "PageResponse");
+    }
+
+    @Test
+    public void getPickerQueue_usesGetAdminQuestionsPickerWithFilters() throws Exception {
+        enqueueData(pickerPageJson());
+
+        Response<ApiResponse<PageResponse<QuestionPickerItemResponse>>> response =
+                api.getPickerQueue(QuestionStatus.APPROVED, 1L, 2L,
+                        QuestionType.SINGLE_CHOICE, "linear", 2, 50).execute();
+        RecordedRequest request = server.takeRequest();
+
+        assertTrue(response.isSuccessful());
+        assertNotNull(response.body());
+        assertEquals("Q-T10-PICKER",
+                response.body().getData().getContent().get(0).getQuestionCode());
+        assertEquals("GET", request.getMethod());
+        assertEquals("/api/v1/admin/questions/picker?status=APPROVED&subjectId=1"
+                        + "&topicId=2&questionType=SINGLE_CHOICE&q=linear&page=2&size=50",
+                request.getPath());
+        assertEquals(0L, request.getBody().size());
+        assertReturnTypeContains("getPickerQueue", "PageResponse");
+        assertReturnTypeContains("getPickerQueue", "QuestionPickerItemResponse");
+        assertNotNull(method("getPickerQueue").getAnnotation(GET.class));
     }
 
     @Test
@@ -185,6 +211,33 @@ public class AdminQuestionApiContractTest {
                 + "\"version\":1,"
                 + "\"createdBy\":3,"
                 + "\"updatedAt\":\"2026-05-15T10:01:00Z\""
+                + "}";
+    }
+
+    private String pickerPageJson() {
+        return "{"
+                + "\"content\":[" + pickerItemJson() + "],"
+                + "\"totalElements\":1,"
+                + "\"totalPages\":1,"
+                + "\"number\":2,"
+                + "\"size\":50"
+                + "}";
+    }
+
+    private String pickerItemJson() {
+        return "{"
+                + "\"id\":10,"
+                + "\"questionCode\":\"Q-T10-PICKER\","
+                + "\"questionTextSnippet\":\"Linear equation snippet\","
+                + "\"subjectId\":1,"
+                + "\"topicId\":2,"
+                + "\"subtopicId\":3,"
+                + "\"difficulty\":\"MEDIUM\","
+                + "\"questionType\":\"SINGLE_CHOICE\","
+                + "\"status\":\"APPROVED\","
+                + "\"version\":1,"
+                + "\"updatedAt\":\"2026-05-22T10:01:00Z\","
+                + "\"imageUrl\":null"
                 + "}";
     }
 

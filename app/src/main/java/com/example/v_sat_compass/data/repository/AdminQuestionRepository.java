@@ -5,7 +5,9 @@ import com.example.v_sat_compass.data.api.ApiClient;
 import com.example.v_sat_compass.data.model.ApiResponse;
 import com.example.v_sat_compass.data.model.admin.AdminReviewActionRequest;
 import com.example.v_sat_compass.data.model.admin.PageResponse;
+import com.example.v_sat_compass.data.model.admin.QuestionPickerItemResponse;
 import com.example.v_sat_compass.data.model.enums.QuestionStatus;
+import com.example.v_sat_compass.data.model.enums.QuestionType;
 import com.example.v_sat_compass.data.model.question.QuestionListItemResponse;
 import com.example.v_sat_compass.data.model.question.QuestionResponse;
 import com.google.gson.Gson;
@@ -78,6 +80,20 @@ public class AdminQuestionRepository {
             RepositoryCallback<PageResponse<QuestionListItemResponse>> callback
     ) {
         enqueue(api.getReviewQueue(status, page, size), callback);
+    }
+
+    public void getPickerQueue(
+            QuestionStatus status,
+            Long subjectId,
+            Long topicId,
+            QuestionType questionType,
+            String q,
+            int page,
+            int size,
+            RepositoryCallback<PageResponse<QuestionPickerItemResponse>> callback
+    ) {
+        enqueue(api.getPickerQueue(status, subjectId, topicId, questionType, q, page, size),
+                callback);
     }
 
     public void getQuestionDetail(Long id, RepositoryCallback<QuestionResponse> callback) {

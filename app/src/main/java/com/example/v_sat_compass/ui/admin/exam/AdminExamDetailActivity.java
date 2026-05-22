@@ -1,6 +1,7 @@
 package com.example.v_sat_compass.ui.admin.exam;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -12,14 +13,21 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.v_sat_compass.R;
+import com.example.v_sat_compass.data.model.ExamStructureQuestion;
 import com.example.v_sat_compass.data.model.SubjectResponse;
+import com.example.v_sat_compass.data.model.admin.AdminExamAddQuestionRequest;
 import com.example.v_sat_compass.data.model.admin.AdminExamResponse;
 import com.example.v_sat_compass.data.model.admin.AdminExamUpdateRequest;
+import com.example.v_sat_compass.data.repository.AdminExamRepository;
 import com.example.v_sat_compass.data.repository.Resource;
 
 import java.util.List;
@@ -29,6 +37,9 @@ public class AdminExamDetailActivity extends AppCompatActivity {
     public static final String EXTRA_EXAM_ID = "exam_id";
 
     private AdminExamViewModel viewModel;
+    private final AdminExamRepository adminExamRepository = new AdminExamRepository();
+    private final ExamStructureAdapter examStructureAdapter = new ExamStructureAdapter();
+    private ActivityResultLauncher<Intent> questionPickerLauncher;
     private long examId = -1L;
 
     private TextView tvTitle;
@@ -47,8 +58,10 @@ public class AdminExamDetailActivity extends AppCompatActivity {
 
     private View readOnlyGroup;
     private View editGroup;
+    private RecyclerView rvExamQuestions;
 
     private Button btnEdit;
+    private Button btnAddQuestions;
     private Button btnSubmitReview;
     private Button btnDiscard;
     private Button btnPublish;
@@ -75,6 +88,7 @@ public class AdminExamDetailActivity extends AppCompatActivity {
         }
 
         viewModel = new ViewModelProvider(this).get(AdminExamViewModel.class);
+        setupQuestionPickerLauncher();
         bindViews();
         observeViewModel();
         viewModel.loadDetail(examId);
@@ -98,8 +112,10 @@ public class AdminExamDetailActivity extends AppCompatActivity {
 
         readOnlyGroup = findViewById(R.id.group_readonly);
         editGroup = findViewById(R.id.group_edit);
+        rvExamQuestions = findViewById(R.id.rvExamQuestions);
 
         btnEdit = findViewById(R.id.btn_edit);
+        btnAddQuestions = findViewById(R.id.btnAddQuestions);
         btnSubmitReview = findViewById(R.id.btn_submit_review);
         btnDiscard = findViewById(R.id.btn_discard);
         btnPublish = findViewById(R.id.btn_publish);
@@ -111,6 +127,7 @@ public class AdminExamDetailActivity extends AppCompatActivity {
         btnCancel = findViewById(R.id.btn_cancel_edit);
 
         btnEdit.setOnClickListener(v -> viewModel.enterEditMode());
+        btnAddQuestions.setOnClickListener(v -> launchQuestionPicker());
         btnSave.setOnClickListener(v -> saveEdits());
         btnCancel.setOnClickListener(v -> {
             viewModel.cancelEditMode();
@@ -124,6 +141,10 @@ public class AdminExamDetailActivity extends AppCompatActivity {
         btnReturnToDraft.setOnClickListener(v -> viewModel.returnToDraft(examId));
         btnHide.setOnClickListener(v -> viewModel.hideExam(examId));
         btnArchive.setOnClickListener(v -> confirmAndArchive());
+
+        rvExamQuestions.setLayoutManager(new LinearLayoutManager(this));
+        rvExamQuestions.setAdapter(examStructureAdapter);
+        examStructureAdapter.setOnRemoveListener(this::removeQuestionAt);
     }
 
     private void observeViewModel() {
@@ -135,6 +156,7 @@ public class AdminExamDetailActivity extends AppCompatActivity {
             if (resource.getStatus() == Resource.Status.SUCCESS && resource.getData() != null) {
                 tvError.setVisibility(View.GONE);
                 populateDetail(resource.getData());
+                syncExamQuestions(resource.getData().getQuestions());
                 applyActionButtons(resource.getData().getStatus());
             } else if (resource.getStatus() == Resource.Status.ERROR) {
                 tvError.setText(resource.getMessage());
@@ -170,6 +192,15 @@ public class AdminExamDetailActivity extends AppCompatActivity {
             if (resource.getStatus() == Resource.Status.SUCCESS && resource.getData() != null) {
                 subjects = resource.getData();
                 setupSubjectSpinner();
+            }
+        });
+
+        viewModel.getAddQuestionState().observe(this, resource -> {
+            if (resource == null) return;
+            if (resource.getStatus() == Resource.Status.SUCCESS) {
+                viewModel.loadDetail(examId);
+            } else if (resource.getStatus() == Resource.Status.ERROR) {
+                Toast.makeText(this, resource.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -242,6 +273,81 @@ public class AdminExamDetailActivity extends AppCompatActivity {
         btnReturnToDraft.setVisibility(actions.contains("RETURN_TO_DRAFT") ? View.VISIBLE : View.GONE);
         btnHide.setVisibility(actions.contains("HIDE") ? View.VISIBLE : View.GONE);
         btnArchive.setVisibility(actions.contains("ARCHIVE") ? View.VISIBLE : View.GONE);
+        btnAddQuestions.setVisibility("DRAFT".equals(status) ? View.VISIBLE : View.GONE);
+    }
+
+    private void setupQuestionPickerLauncher() {
+        questionPickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() != RESULT_OK || result.getData() == null) {
+                        return;
+                    }
+                    long[] selectedIds = result.getData()
+                            .getLongArrayExtra(AdminQuestionPickerActivity.EXTRA_SELECTED_IDS);
+                    if (selectedIds == null || selectedIds.length == 0) {
+                        return;
+                    }
+                    for (long selectedId : selectedIds) {
+                        viewModel.addQuestion(examId, new AdminExamAddQuestionRequest(selectedId));
+                    }
+                }
+        );
+    }
+
+    private void launchQuestionPicker() {
+        Intent intent = new Intent(this, AdminQuestionPickerActivity.class);
+        intent.putExtra(AdminQuestionPickerActivity.EXTRA_EXAM_ID, examId);
+        questionPickerLauncher.launch(intent);
+    }
+
+    private void syncExamQuestions(List<ExamStructureQuestion> questions) {
+        while (examStructureAdapter.getItemCount() > 0) {
+            examStructureAdapter.removeAt(examStructureAdapter.getItemCount() - 1);
+        }
+        if (questions == null) {
+            return;
+        }
+        for (ExamStructureQuestion question : questions) {
+            examStructureAdapter.addQuestion(question);
+        }
+    }
+
+    private void removeQuestionAt(int position) {
+        List<ExamStructureQuestion> questions = examStructureAdapter.getItems();
+        if (position < 0 || position >= questions.size()) {
+            return;
+        }
+        ExamStructureQuestion question = questions.get(position);
+        if (question == null || question.getQuestionId() == null) {
+            return;
+        }
+        adminExamRepository.removeQuestion(
+                examId,
+                question.getQuestionId(),
+                new AdminExamRepository.RepositoryCallback<AdminExamResponse>() {
+                    @Override
+                    public void onSuccess(AdminExamResponse data) {
+                        viewModel.loadDetail(examId);
+                    }
+
+                    @Override
+                    public void onError(AdminExamRepository.AdminExamError error) {
+                        Toast.makeText(AdminExamDetailActivity.this, examErrorMessage(error),
+                                Toast.LENGTH_LONG).show();
+                    }
+                }
+        );
+    }
+
+    private static String examErrorMessage(AdminExamRepository.AdminExamError error) {
+        if (error == null) {
+            return "Unknown error";
+        }
+        if (error.getMessage() != null) {
+            return error.getMessage();
+        }
+        return error.getType().name();
     }
 
     private void saveEdits() {

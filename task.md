@@ -327,6 +327,7 @@ Mục tiêu: Collaborator có thể soạn câu hỏi, Content Admin duyệt, t�
 | C1.3 CLOSEOUT | Legacy collaborator editor cleanup + docs sync | In progress 🟡 |
 | C1.4-A | Android admin review queue UI | ✅ Done (2026-05-22) — merged to main at 475c084 |
 | C1.5-A | Admin question picker endpoint | 🟡 In progress — branch phase-c/c1-5-a-backend-question-picker |
+| C1.5-B | Admin question picker Android UI | 🟡 In progress — branch phase-c/c1-5-b-android-question-picker |
 
 - **C1.1a status:** Question Bank JPA layer (4 enums + 4 entities + 4 repositories) and read-only Subtopic API (`GET /subjects/{id}/topics/{topicId}/subtopics`) merged to `main` and tagged `v0.8.4`. Production smoke 18/18 PASS.
 - **C1.1b status:** Question CRUD + review workflow backend merged to `main`, production smoke PASS, and tagged `v0.9.0` at deployed code commit `752c15e`.
