@@ -1,8 +1,10 @@
 package com.example.v_sat_compass.data.model.admin;
 
+import com.example.v_sat_compass.data.model.ExamStructureQuestion;
 import com.google.gson.annotations.SerializedName;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public class AdminExamResponse {
     @SerializedName("id")
@@ -25,6 +27,9 @@ public class AdminExamResponse {
 
     @SerializedName("questionCount")
     private Integer questionCount;
+
+    @SerializedName("questions")
+    private List<ExamStructureQuestion> questions;
 
     @SerializedName("durationMinutes")
     private Integer durationMinutes;
@@ -119,6 +124,10 @@ public class AdminExamResponse {
 
     public void setQuestionCount(Integer questionCount) {
         this.questionCount = questionCount;
+    }
+
+    public List<ExamStructureQuestion> getQuestions() {
+        return questions;
     }
 
     public Integer getDurationMinutes() {

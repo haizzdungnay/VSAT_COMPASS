@@ -3,7 +3,9 @@ package com.example.v_sat_compass.data.api;
 import com.example.v_sat_compass.data.model.ApiResponse;
 import com.example.v_sat_compass.data.model.admin.AdminReviewActionRequest;
 import com.example.v_sat_compass.data.model.admin.PageResponse;
+import com.example.v_sat_compass.data.model.admin.QuestionPickerItemResponse;
 import com.example.v_sat_compass.data.model.enums.QuestionStatus;
+import com.example.v_sat_compass.data.model.enums.QuestionType;
 import com.example.v_sat_compass.data.model.question.QuestionListItemResponse;
 import com.example.v_sat_compass.data.model.question.QuestionResponse;
 
@@ -19,6 +21,17 @@ public interface AdminQuestionApi {
     @GET("admin/questions")
     Call<ApiResponse<PageResponse<QuestionListItemResponse>>> getReviewQueue(
             @Query("status") QuestionStatus status,
+            @Query("page") int page,
+            @Query("size") int size
+    );
+
+    @GET("admin/questions/picker")
+    Call<ApiResponse<PageResponse<QuestionPickerItemResponse>>> getPickerQueue(
+            @Query("status") QuestionStatus status,
+            @Query("subjectId") Long subjectId,
+            @Query("topicId") Long topicId,
+            @Query("questionType") QuestionType questionType,
+            @Query("q") String q,
             @Query("page") int page,
             @Query("size") int size
     );
