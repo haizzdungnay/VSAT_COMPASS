@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================
 # V-SAT Compass — Session Smoke Tests
-# Runs 7 test cases against the Session endpoints.
+# Runs 12 test cases against the Session endpoints.
 # Usage: BASE_URL=https://your-api.com/api/v1 bash smoke_sessions.sh
 # Compatible with bash 3.2+ (macOS default)
 # ============================================================
@@ -10,6 +10,8 @@ BASE_URL="${BASE_URL:-https://vsat-compass-api.onrender.com/api/v1}"
 # EXAM_ID: ID of a published exam in the DB. Override via env if exam table has a different ID.
 # Run docs/seed/smoke_test_seed.sql in Neon Console once to seed exam SMOKE_001.
 EXAM_ID="${EXAM_ID:-1}"
+# QUESTION_ID: ID of a question that belongs to EXAM_ID through exam_questions.
+QUESTION_ID="${QUESTION_ID:-1}"
 PASS=0
 FAIL=0
 TOTAL=0
@@ -213,6 +215,136 @@ if [ -n "$TC7_SESSION_ID" ]; then
     fi
 else
     echo "  [SKIP] Could not start fresh session for TC-SESSION-7"
+    TOTAL=$((TOTAL + 1))
+    FAIL=$((FAIL + 1))
+fi
+
+# -----------------------------------------------------------
+# TC-SESSION-8: Get in-session question content (200, no answer-key leak)
+# -----------------------------------------------------------
+echo "--- TC-SESSION-8: GET /sessions/{id}/questions/$QUESTION_ID (IN_PROGRESS -> 200, no answer keys) ---"
+TC8_START=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/sessions/start" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $ACCESS_TOKEN" \
+    -d "{\"examId\":$EXAM_ID,\"mode\":\"PRACTICE\",\"totalQuestions\":10}")
+TC8_START_BODY=$(echo "$TC8_START" | sed '$d')
+TC8_SESSION_ID=$(echo "$TC8_START_BODY" | grep -o '"id":[0-9]*' | head -1 | cut -d':' -f2)
+
+if [ -n "$TC8_SESSION_ID" ]; then
+    TC8_RESPONSE=$(curl -s -w "\n%{http_code}" -X GET "$BASE_URL/sessions/$TC8_SESSION_ID/questions/$QUESTION_ID" \
+        -H "Authorization: Bearer $ACCESS_TOKEN")
+    TC8_BODY=$(echo "$TC8_RESPONSE" | sed '$d')
+    TC8_STATUS=$(echo "$TC8_RESPONSE" | tail -1)
+    check_status "GET question during IN_PROGRESS" "200" "$TC8_STATUS"
+
+    if echo "$TC8_BODY" | grep -q '"options":' && echo "$TC8_BODY" | grep -q '"content":"'; then
+        echo "    -> options[].content present âœ“"
+    else
+        echo "    -> options[].content missing âœ—"
+        FAIL=$((FAIL + 1))
+    fi
+
+    if echo "$TC8_BODY" | grep -q '"isCorrect"'; then
+        echo "    -> isCorrect leaked âœ—"
+        FAIL=$((FAIL + 1))
+    else
+        echo "    -> isCorrect absent âœ“"
+    fi
+else
+    echo "  [SKIP] Could not start fresh session for TC-SESSION-8"
+    TOTAL=$((TOTAL + 1))
+    FAIL=$((FAIL + 1))
+fi
+
+# -----------------------------------------------------------
+# TC-SESSION-9: Get in-session question with non-owner Bearer (403)
+# -----------------------------------------------------------
+echo "--- TC-SESSION-9: GET /sessions/$TC8_SESSION_ID/questions/$QUESTION_ID (wrong owner -> 403) ---"
+if [ -n "$ALT_TOKEN" ] && [ -n "$TC8_SESSION_ID" ]; then
+    STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$BASE_URL/sessions/$TC8_SESSION_ID/questions/$QUESTION_ID" \
+        -H "Authorization: Bearer $ALT_TOKEN")
+    check_status "GET question wrong owner" "403" "$STATUS"
+else
+    echo "  [SKIP] Missing alternate token or session for TC-SESSION-9"
+    TOTAL=$((TOTAL + 1))
+    FAIL=$((FAIL + 1))
+fi
+
+# -----------------------------------------------------------
+# TC-SESSION-10: Get answer keys for SUBMITTED session (200)
+# -----------------------------------------------------------
+echo "--- TC-SESSION-10: GET /sessions/{id}/answer-keys (SUBMITTED -> 200) ---"
+TC10_START=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/sessions/start" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $ACCESS_TOKEN" \
+    -d "{\"examId\":$EXAM_ID,\"mode\":\"PRACTICE\",\"totalQuestions\":10}")
+TC10_START_BODY=$(echo "$TC10_START" | sed '$d')
+TC10_SESSION_ID=$(echo "$TC10_START_BODY" | grep -o '"id":[0-9]*' | head -1 | cut -d':' -f2)
+
+if [ -n "$TC10_SESSION_ID" ]; then
+    curl -s -o /dev/null -X POST "$BASE_URL/sessions/$TC10_SESSION_ID/client-submit" \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $ACCESS_TOKEN" \
+        -d "{\"score\":80.0,\"correctCount\":8,\"totalQuestions\":10,\"timeSpentSeconds\":600}"
+    TC10_RESPONSE=$(curl -s -w "\n%{http_code}" -X GET "$BASE_URL/sessions/$TC10_SESSION_ID/answer-keys" \
+        -H "Authorization: Bearer $ACCESS_TOKEN")
+    TC10_BODY=$(echo "$TC10_RESPONSE" | sed '$d')
+    TC10_STATUS=$(echo "$TC10_RESPONSE" | tail -1)
+    check_status "GET answer keys for SUBMITTED session" "200" "$TC10_STATUS"
+
+    if echo "$TC10_BODY" | grep -q '"correctOptionIds"'; then
+        echo "    -> questions[].correctOptionIds present âœ“"
+    else
+        echo "    -> questions[].correctOptionIds missing âœ—"
+        FAIL=$((FAIL + 1))
+    fi
+else
+    echo "  [SKIP] Could not start fresh session for TC-SESSION-10"
+    TOTAL=$((TOTAL + 1))
+    FAIL=$((FAIL + 1))
+fi
+
+# -----------------------------------------------------------
+# TC-SESSION-11: Get answer keys for IN_PROGRESS session (400 BAD_REQUEST)
+# -----------------------------------------------------------
+echo "--- TC-SESSION-11: GET /sessions/{id}/answer-keys (IN_PROGRESS -> 400) ---"
+TC11_START=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/sessions/start" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $ACCESS_TOKEN" \
+    -d "{\"examId\":$EXAM_ID,\"mode\":\"PRACTICE\",\"totalQuestions\":10}")
+TC11_START_BODY=$(echo "$TC11_START" | sed '$d')
+TC11_SESSION_ID=$(echo "$TC11_START_BODY" | grep -o '"id":[0-9]*' | head -1 | cut -d':' -f2)
+
+if [ -n "$TC11_SESSION_ID" ]; then
+    TC11_RESPONSE=$(curl -s -w "\n%{http_code}" -X GET "$BASE_URL/sessions/$TC11_SESSION_ID/answer-keys" \
+        -H "Authorization: Bearer $ACCESS_TOKEN")
+    TC11_BODY=$(echo "$TC11_RESPONSE" | sed '$d')
+    TC11_STATUS=$(echo "$TC11_RESPONSE" | tail -1)
+    check_status "GET answer keys for IN_PROGRESS session" "400" "$TC11_STATUS"
+
+    TC11_CODE=$(echo "$TC11_BODY" | grep -o '"code":"[^"]*"' | head -1 | cut -d'"' -f4)
+    if [ "$TC11_CODE" = "BAD_REQUEST" ]; then
+        echo "    -> error.code=BAD_REQUEST âœ“"
+    else
+        echo "    -> error.code=$TC11_CODE (expected BAD_REQUEST) âœ—"
+        FAIL=$((FAIL + 1))
+    fi
+else
+    echo "  [SKIP] Could not start fresh session for TC-SESSION-11"
+    TOTAL=$((TOTAL + 1))
+    FAIL=$((FAIL + 1))
+fi
+
+# -----------------------------------------------------------
+# TC-SESSION-12: Get answer keys with non-owner Bearer (403)
+# -----------------------------------------------------------
+echo "--- TC-SESSION-12: GET /sessions/$TC10_SESSION_ID/answer-keys (wrong owner -> 403) ---"
+if [ -n "$ALT_TOKEN" ] && [ -n "$TC10_SESSION_ID" ]; then
+    STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$BASE_URL/sessions/$TC10_SESSION_ID/answer-keys" \
+        -H "Authorization: Bearer $ALT_TOKEN")
+    check_status "GET answer keys wrong owner" "403" "$STATUS"
+else
+    echo "  [SKIP] Missing alternate token or session for TC-SESSION-12"
     TOTAL=$((TOTAL + 1))
     FAIL=$((FAIL + 1))
 fi

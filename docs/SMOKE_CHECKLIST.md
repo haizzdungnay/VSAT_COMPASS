@@ -428,7 +428,7 @@
 
 | Tổng TC | Pass | Fail | Bỏ qua |
 |---------|------|------|--------|
-| 27      | 10 backend TCs (TC-016→TC-025) verified 2026-04-25; TC-026 và TC-027 added C1.2d-1b (not yet production-verified) | 0 | 0 |
+| 32      | 10 backend TCs (TC-016→TC-025) verified 2026-04-25; TC-026 và TC-027 added C1.2d-1b; TC-028→TC-032 added C1.6-A (not yet production-verified) | 0 | 0 |
 
 **Ghi chú lần chạy (Phase B — Backend TCs):**
 - Ngày: 2026-04-25
@@ -439,13 +439,81 @@
 
 ---
 
+## TC-028: TC-SESSION-8 — In-session question endpoint strips answer keys
+
+**Bước:**
+1. Login → lấy accessToken
+2. POST `/sessions/start` → lấy sessionId trạng thái IN_PROGRESS
+3. GET `/sessions/{sessionId}/questions/{questionId}`
+
+**Kỳ vọng:**
+- HTTP 200
+- Response có `options[].content`
+- Response không có `isCorrect`, `correctAnswer`, hoặc `explanation`
+
+**Pass/Fail:** [ ]
+
+---
+
+## TC-029: TC-SESSION-9 — In-session question endpoint rejects non-owner
+
+**Bước:**
+1. Tạo session bằng student account
+2. GET `/sessions/{sessionId}/questions/{questionId}` bằng Bearer của user khác
+
+**Kỳ vọng:** HTTP 403, không trả nội dung câu hỏi
+
+**Pass/Fail:** [ ]
+
+---
+
+## TC-030: TC-SESSION-10 — Answer keys endpoint works after SUBMITTED
+
+**Bước:**
+1. POST `/sessions/start`
+2. POST `/sessions/{sessionId}/client-submit`
+3. GET `/sessions/{sessionId}/answer-keys`
+
+**Kỳ vọng:**
+- HTTP 200
+- Response có `questions[].correctOptionIds`
+- Response có `questions[].explanation` nếu câu hỏi có lời giải
+
+**Pass/Fail:** [ ]
+
+---
+
+## TC-031: TC-SESSION-11 — Answer keys endpoint rejects IN_PROGRESS
+
+**Bước:**
+1. POST `/sessions/start`
+2. GET `/sessions/{sessionId}/answer-keys` trước khi client-submit
+
+**Kỳ vọng:** HTTP 400, `error.code` = `BAD_REQUEST`
+
+**Pass/Fail:** [ ]
+
+---
+
+## TC-032: TC-SESSION-12 — Answer keys endpoint rejects non-owner
+
+**Bước:**
+1. Tạo và submit session bằng student account
+2. GET `/sessions/{sessionId}/answer-keys` bằng Bearer của user khác
+
+**Kỳ vọng:** HTTP 403, không trả correctOptionIds
+
+**Pass/Fail:** [ ]
+
+---
+
 # Backend Smoke Scripts (v0.9.4)
 
 Run these production smoke scripts before release tagging:
 
 - `SMOKE_AUTH_SKIP_REGISTER=1 bash docs/scripts/smoke_auth.sh` — expected 7 pass / 0 fail / 2 skipped.
 - `bash docs/scripts/smoke_subjects.sh` — expected 4/4 PASS.
-- `bash docs/scripts/smoke_sessions.sh` — expected 7/7 PASS. _(From C1.2d-1b: script expanded from 5 to 7 cases. Historical production-verified: 5/5 PASS for v0.9.4 on 2026-05-06. TC-SESSION-6 and TC-SESSION-7 not yet production-verified.)_
+- `bash docs/scripts/smoke_sessions.sh` — expected 12/12 PASS. _(From C1.6-A: script expanded from 7 to 12 cases. Historical production-verified: 5/5 PASS for v0.9.4 on 2026-05-06. TC-SESSION-6 through TC-SESSION-12 not yet production-verified.)_
 - `SMOKE_ADMIN_PASSWORD=... bash docs/scripts/smoke_admin_exams.sh` — expected 12/12 PASS for admin exam metadata CRUD plus DRAFT discard.
 - `SMOKE_COLLAB1_PASSWORD=... SMOKE_COLLAB2_PASSWORD=... SMOKE_ADMIN_PASSWORD=... bash VSAT/vsat-compass-api/docs/scripts/smoke_questions.sh` — expected 32/32 PASS.
 - `EXAM_ID=2 bash VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh` — expected 10/10 PASS.

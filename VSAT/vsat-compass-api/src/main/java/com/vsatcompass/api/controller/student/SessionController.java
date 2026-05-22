@@ -2,6 +2,8 @@ package com.vsatcompass.api.controller.student;
 
 import com.vsatcompass.api.dto.common.ApiResponse;
 import com.vsatcompass.api.dto.request.SessionRequest;
+import com.vsatcompass.api.dto.response.SessionAnswerKeysResponse;
+import com.vsatcompass.api.dto.response.SessionQuestionContentResponse;
 import com.vsatcompass.api.dto.response.SessionResponse;
 import com.vsatcompass.api.service.SessionService;
 import com.vsatcompass.api.util.SecurityUtils;
@@ -11,6 +13,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -39,5 +42,28 @@ public class SessionController {
         Long userId = SecurityUtils.getCurrentUserId();
         SessionResponse.SessionInfo result = sessionService.clientSubmit(userId, sessionId, request);
         return ResponseEntity.ok(ApiResponse.success(result, "Nộp bài thành công"));
+    }
+
+    @GetMapping("/{sessionId}/questions/{questionId}")
+    @PreAuthorize("hasRole('STUDENT')")
+    @Operation(summary = "ES-03: Get in-session question content")
+    public ResponseEntity<ApiResponse<SessionQuestionContentResponse>> getQuestionForSession(
+            @PathVariable Long sessionId,
+            @PathVariable Long questionId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        SessionQuestionContentResponse result =
+                sessionService.getQuestionForSession(sessionId, questionId, userId);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    @GetMapping("/{sessionId}/answer-keys")
+    @PreAuthorize("hasRole('STUDENT')")
+    @Operation(summary = "ES-04: Get answer keys after session submission")
+    public ResponseEntity<ApiResponse<SessionAnswerKeysResponse>> getAnswerKeysForSession(
+            @PathVariable Long sessionId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        SessionAnswerKeysResponse result =
+                sessionService.getAnswerKeysForSession(sessionId, userId);
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 }
