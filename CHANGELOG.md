@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Phase C1.5-A — Admin question picker endpoint (2026-05-22)
+
+- Added `GET /admin/questions/picker` with filters (`status`, `subjectId`, `topicId`, `questionType`, `q`) and pagination.
+- Default status filter is `APPROVED` for exam composition workflow.
+- Introduced `JpaSpecificationExecutor` and `QuestionSpecifications` builders for AND-composed question filters.
+- Added `QuestionPickerItemResponse` DTO with 200-character question text snippet.
+- Runtime release will be tagged `v0.10.0` after production deploy and smoke verification; no tag is created in this batch.
+
 ### Phase C1.4 CLOSEOUT — Legacy admin question API and editor removed (2026-05-22)
 
 - Removed 5 unused question methods (`getQuestions`, `getQuestionDetail`, `approveQuestion`, `rejectQuestion`, `requestRevision`) from `AdminApi.java`; admin question flow now exclusively uses `AdminQuestionApi`.
