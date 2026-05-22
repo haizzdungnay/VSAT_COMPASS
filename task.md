@@ -325,6 +325,7 @@ Mục tiêu: Collaborator có thể soạn câu hỏi, Content Admin duyệt, t�
 | C1.3-C1 | Collaborator create-question activity | ✅ Done (2026-05-21) — merged to main at 1a2851e |
 | C1.3-C2 | Collaborator question detail + inline edit + submit + review history | ✅ Done (2026-05-22) — merged to main at c306a97 |
 | C1.3 CLOSEOUT | Legacy collaborator editor cleanup + docs sync | In progress 🟡 |
+| C1.4-A | Android admin review queue UI | 🟡 In progress — branch `phase-c/c1-4-a-admin-review-queue` |
 
 - **C1.1a status:** Question Bank JPA layer (4 enums + 4 entities + 4 repositories) and read-only Subtopic API (`GET /subjects/{id}/topics/{topicId}/subtopics`) merged to `main` and tagged `v0.8.4`. Production smoke 18/18 PASS.
 - **C1.1b status:** Question CRUD + review workflow backend merged to `main`, production smoke PASS, and tagged `v0.9.0` at deployed code commit `752c15e`.

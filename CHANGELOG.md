@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Phase C1.4-A — Admin Review Queue Android UI (2026-05-23)
+
+- Added Android admin question review queue data layer with `AdminQuestionApi`, `AdminReviewActionRequest`, and `AdminQuestionRepository`.
+- Added `AdminReviewViewModel` and `AdminReviewQueueAdapter` for real API-backed review queue state.
+- Implemented `AdminReviewQuestionActivity` detail/review screen with read-only question rendering, review history, approve, request revision, and reject actions.
+- Switched admin question bank screen from mock/legacy adapter flow to real review queue API.
+- Redirected admin create-question entry points to `CollaboratorCreateQuestionActivity`.
+- Added unit coverage for API contract, POJO serialization, repository behavior, ViewModel state transitions, and review queue adapter binding.
+
 ### Phase C1.3 — Collaborator Question Lifecycle Android UI (2026-05-22)
 
 - Closed the Android collaborator question lifecycle UI track across:
