@@ -174,7 +174,7 @@ http://localhost:8080/api/v1/swagger-ui.html
 | Module | Base Path | Endpoints | Trạng thái |
 |--------|-----------|-----------|------------|
 | Auth | `/auth` | register, login, refresh, logout, getMe, updateProfile, changePassword | ✅ Verified prod |
-| Session Engine | `/sessions` | start, **client-submit**, **get-question**, **answer-keys** | ✅ Verified prod |
+| Session Engine | `/sessions` | start (+ `orderedQuestionIds`), **client-submit**, **get-question**, **answer-keys** | ✅ Verified prod |
 | Subjects (Public) | `/subjects` | list subjects, topics, subtopics | ✅ Verified prod |
 | Questions (Collaborator) | `/collaborator/questions` | create, list own, detail, update, submit-for-review | ✅ Verified prod |
 | Questions (Admin) | `/admin/questions` | queue by status, picker, approve, request revision, reject | ✅ Verified prod (C1.5 / v0.10.0) |

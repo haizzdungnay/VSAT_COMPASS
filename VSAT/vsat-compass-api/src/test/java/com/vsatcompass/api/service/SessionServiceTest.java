@@ -102,16 +102,26 @@ class SessionServiceTest {
         return r;
     }
 
-    // ===== startSession =====
-
-    @Test
-    @DisplayName("startSession: happy path persists IN_PROGRESS session with given mode")
-    void startSession_happyPath_persistsSession() {
+    private void mockStartSessionSave() {
         when(examSessionRepository.save(any(ExamSession.class))).thenAnswer(inv -> {
             ExamSession s = inv.getArgument(0);
             s.setId(SESSION_ID);
             return s;
         });
+    }
+
+    private void mockOrderedExamQuestions(List<ExamQuestion> questions) {
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(EXAM_ID))
+                .thenReturn(questions);
+    }
+
+    // ===== startSession =====
+
+    @Test
+    @DisplayName("startSession: happy path persists IN_PROGRESS session with given mode")
+    void startSession_happyPath_persistsSession() {
+        mockStartSessionSave();
+        mockOrderedExamQuestions(Collections.emptyList());
 
         SessionResponse.SessionInfo info = sessionService.startSession(
                 USER_ID, startReq(EXAM_ID, "PRACTICE", 30));
@@ -132,6 +142,51 @@ class SessionServiceTest {
     }
 
     @Test
+    @DisplayName("startSession: response includes orderedQuestionIds")
+    void startSession_happyPath_returns_orderedQuestionIds() {
+        mockStartSessionSave();
+        mockOrderedExamQuestions(List.of(
+                examQuestion(QUESTION_ID, 1),
+                examQuestion(SECOND_QUESTION_ID, 2)
+        ));
+
+        SessionResponse.SessionInfo info = sessionService.startSession(
+                USER_ID, startReq(EXAM_ID, "MOCK_EXAM", 2));
+
+        assertThat(info.getOrderedQuestionIds())
+                .containsExactly(QUESTION_ID, SECOND_QUESTION_ID);
+    }
+
+    @Test
+    @DisplayName("startSession: empty exam returns empty orderedQuestionIds")
+    void startSession_examHasNoQuestions_returns_emptyOrderedQuestionIds() {
+        mockStartSessionSave();
+        mockOrderedExamQuestions(Collections.emptyList());
+
+        SessionResponse.SessionInfo info = sessionService.startSession(
+                USER_ID, startReq(EXAM_ID, "MOCK_EXAM", 30));
+
+        assertThat(info.getOrderedQuestionIds()).isNotNull();
+        assertThat(info.getOrderedQuestionIds()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("startSession: orderedQuestionIds follow repository question order")
+    void startSession_orderedQuestionIds_followQuestionOrder() {
+        mockStartSessionSave();
+        mockOrderedExamQuestions(List.of(
+                examQuestion(SECOND_QUESTION_ID, 1),
+                examQuestion(QUESTION_ID, 2)
+        ));
+
+        SessionResponse.SessionInfo info = sessionService.startSession(
+                USER_ID, startReq(EXAM_ID, "PRACTICE", 2));
+
+        assertThat(info.getOrderedQuestionIds())
+                .containsExactly(SECOND_QUESTION_ID, QUESTION_ID);
+    }
+
+    @Test
     @DisplayName("startSession: invalid mode string throws BAD_REQUEST and does not save")
     void startSession_invalidMode_throwsBadRequest() {
         assertThatThrownBy(() -> sessionService.startSession(
@@ -147,11 +202,8 @@ class SessionServiceTest {
     @Test
     @DisplayName("startSession: null mode defaults to MOCK_EXAM")
     void startSession_modeNull_defaultsToMockExam() {
-        when(examSessionRepository.save(any(ExamSession.class))).thenAnswer(inv -> {
-            ExamSession s = inv.getArgument(0);
-            s.setId(SESSION_ID);
-            return s;
-        });
+        mockStartSessionSave();
+        mockOrderedExamQuestions(Collections.emptyList());
 
         SessionResponse.SessionInfo info = sessionService.startSession(
                 USER_ID, startReq(EXAM_ID, null, 30));
@@ -166,11 +218,8 @@ class SessionServiceTest {
     @Test
     @DisplayName("startSession: null totalQuestions defaults to 0 (client populates via client-submit)")
     void startSession_totalQuestionsNull_defaultsToZero() {
-        when(examSessionRepository.save(any(ExamSession.class))).thenAnswer(inv -> {
-            ExamSession s = inv.getArgument(0);
-            s.setId(SESSION_ID);
-            return s;
-        });
+        mockStartSessionSave();
+        mockOrderedExamQuestions(Collections.emptyList());
 
         SessionResponse.SessionInfo info = sessionService.startSession(
                 USER_ID, startReq(EXAM_ID, "MOCK_EXAM", null));
@@ -198,6 +247,7 @@ class SessionServiceTest {
         assertThat(info.getCorrectCount()).isEqualTo(41);
         assertThat(info.getTotalQuestions()).isEqualTo(50);
         assertThat(info.getTimeSpentSeconds()).isEqualTo(1800);
+        assertThat(info.getOrderedQuestionIds()).isEmpty();
 
         // Verify the saved entity reflects the client payload — server does NOT recompute
         ArgumentCaptor<ExamSession> cap = ArgumentCaptor.forClass(ExamSession.class);

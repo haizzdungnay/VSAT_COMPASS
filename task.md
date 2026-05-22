@@ -434,6 +434,7 @@ Mục tiêu: Student Android consume backend exam content thực sự, retire lo
 | Sub-batch | Scope | Trạng thái |
 |-----------|-------|------------|
 | C1.6-A | Backend public student exam endpoints: list, detail, per-question delivery via session | ✅ Done (2026-05-22) — merged to main at 8a85b9f |
+| C1.6-A.5 | Session start response enhancement: orderedQuestionIds field — unblocks C1.6-B Android question delivery | 🟡 In progress |
 | C1.6-B | Android student integration: replace `LocalExamDataSource` with backend (local kept as offline fallback) | 📋 Planned |
 | C1.6-C | Closeout: smoke + docs + retire `sample_*.json` per C3.4 decision | 📋 Planned |
 
