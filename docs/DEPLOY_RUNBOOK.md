@@ -295,6 +295,10 @@ This typically happens when `curl -d '{"email":"..."}'` is run from CMD (which s
 
 These are smoke-runner issues only; production endpoint verification passed after using the documented fallbacks.
 
+**C1.6-A student content smoke note:**
+- For production smoke cases TC-SESSION-8, TC-SESSION-10, and TC-SESSION-12, run `smoke_sessions.sh` with `EXAM_ID=6 QUESTION_ID=4`.
+- Reason: production SMOKE_001 has exam metadata `questionCount`, but currently has zero `exam_question` rows, so it cannot validate the student question-content and answer-key paths.
+
 **Closed in Phase C1.2b-3 (2026-05-06):**
 - LF normalization is now enforced repo-wide via `.gitattributes` (`*.sh text eol=lf`). All current and future shell scripts under `docs/scripts/` and `VSAT/**/docs/scripts/` will be checked out LF on Windows. No re-normalization step is required for fresh clones.
 - The `smoke_exams.sh` `jq`/`EXAM_ID` fallback contract is documented below ("Smoke Script jq Fallback").
