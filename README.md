@@ -169,12 +169,12 @@ http://localhost:8080/api/v1/swagger-ui.html
 
 ## API Modules
 
-> **Trạng thái hiện tại (v0.10.0 / Phase C1.5 Closed):** Production-ready trên Render.com — Auth + Session sync đã hardened; Subject/Topic/Subtopic read APIs, Question Bank write/review workflow, public Exam read API, Admin Exam CRUD metadata API, Admin Exam Composition + Publish Workflow, Admin Exam DRAFT Discard, and Admin Question Picker endpoint đã live. C1.5-B Android admin question picker UI đã merged to main at `4219ca6`.
+> **Trạng thái hiện tại (v0.10.0 / Phase C1.5 Closed):** Production-ready trên Render.com — Auth + Session sync đã hardened; Subject/Topic/Subtopic read APIs, Question Bank write/review workflow, public Exam read API, Admin Exam CRUD metadata API, Admin Exam Composition + Publish Workflow, Admin Exam DRAFT Discard, and Admin Question Picker endpoint đã live. C1.6-A adds student session question delivery and post-submit answer-key endpoints; production verification is pending merge/deploy/smoke.
 
 | Module | Base Path | Endpoints | Trạng thái |
 |--------|-----------|-----------|------------|
 | Auth | `/auth` | register, login, refresh, logout, getMe, updateProfile, changePassword | ✅ Verified prod |
-| Session Engine | `/sessions` | start, **client-submit** | ✅ Verified prod |
+| Session Engine | `/sessions` | start, **client-submit**, **get-question**, **answer-keys** | Implemented; production verification pending merge/deploy |
 | Subjects (Public) | `/subjects` | list subjects, topics, subtopics | ✅ Verified prod |
 | Questions (Collaborator) | `/collaborator/questions` | create, list own, detail, update, submit-for-review | ✅ Verified prod |
 | Questions (Admin) | `/admin/questions` | queue by status, picker, approve, request revision, reject | ✅ Verified prod (C1.5 / v0.10.0) |
@@ -321,10 +321,11 @@ Các phần timer, chọn đáp án, bookmark, chấm điểm, hiển thị kế
 
 - **Tùy chọn backend (không chặn làm bài):**
 - Đồng bộ kết quả cuối: `POST /sessions/start` (bootstrap nền), `POST /sessions/{sessionId}/client-submit`
+- Nội dung câu hỏi theo phiên: `GET /sessions/{sessionId}/questions/{questionId}`
+- Đáp án sau khi nộp bài: `GET /sessions/{sessionId}/answer-keys`
 - Metadata đề online: `GET /exams`, `GET /exams/{id}` (app vẫn có fallback local)
 
 - **Không bắt buộc backend để làm bài trong chế độ client-side processing:**
-- `GET /sessions/{sessionId}/questions/{questionId}`
 - `POST /sessions/{sessionId}/answers`
 - `POST /sessions/{sessionId}/submit`
 

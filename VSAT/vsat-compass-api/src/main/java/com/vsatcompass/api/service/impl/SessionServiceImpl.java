@@ -1,12 +1,22 @@
 package com.vsatcompass.api.service.impl;
 
 import com.vsatcompass.api.dto.request.SessionRequest;
+import com.vsatcompass.api.dto.response.QuestionAnswerKeyResponse;
+import com.vsatcompass.api.dto.response.QuestionOptionContentResponse;
+import com.vsatcompass.api.dto.response.SessionAnswerKeysResponse;
+import com.vsatcompass.api.dto.response.SessionQuestionContentResponse;
 import com.vsatcompass.api.dto.response.SessionResponse;
+import com.vsatcompass.api.entity.ExamQuestion;
 import com.vsatcompass.api.entity.ExamSession;
+import com.vsatcompass.api.entity.Question;
+import com.vsatcompass.api.entity.QuestionOption;
 import com.vsatcompass.api.entity.enums.SessionMode;
 import com.vsatcompass.api.entity.enums.SessionStatus;
 import com.vsatcompass.api.exception.AppException;
+import com.vsatcompass.api.repository.ExamQuestionRepository;
 import com.vsatcompass.api.repository.ExamSessionRepository;
+import com.vsatcompass.api.repository.QuestionOptionRepository;
+import com.vsatcompass.api.repository.QuestionRepository;
 import com.vsatcompass.api.service.SessionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -22,6 +34,9 @@ import java.time.OffsetDateTime;
 public class SessionServiceImpl implements SessionService {
 
     private final ExamSessionRepository examSessionRepository;
+    private final ExamQuestionRepository examQuestionRepository;
+    private final QuestionRepository questionRepository;
+    private final QuestionOptionRepository questionOptionRepository;
 
     @Override
     @Transactional
@@ -54,6 +69,58 @@ public class SessionServiceImpl implements SessionService {
                 session.getId(), userId, request.getExamId(), mode);
 
         return toSessionInfo(session);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SessionQuestionContentResponse getQuestionForSession(
+            Long sessionId,
+            Long questionId,
+            Long currentUserId
+    ) {
+        ExamSession session = loadOwnedSession(sessionId, currentUserId);
+        requireStatus(session, SessionStatus.IN_PROGRESS);
+
+        ExamQuestion examQuestion = findExamQuestion(session.getExamId(), questionId);
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> AppException.notFound("Question", questionId));
+        List<QuestionOptionContentResponse> options = questionOptionRepository
+                .findByQuestionIdOrderByDisplayOrderAscIdAsc(questionId)
+                .stream()
+                .map(this::toOptionContent)
+                .toList();
+
+        return SessionQuestionContentResponse.builder()
+                .id(question.getId())
+                .questionCode(question.getQuestionCode())
+                .content(question.getQuestionText())
+                .questionType(question.getQuestionType())
+                .difficulty(question.getDifficulty())
+                .order(examQuestion.getQuestionOrder())
+                .options(options)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SessionAnswerKeysResponse getAnswerKeysForSession(
+            Long sessionId,
+            Long currentUserId
+    ) {
+        ExamSession session = loadOwnedSession(sessionId, currentUserId);
+        requireStatus(session, SessionStatus.SUBMITTED);
+
+        List<QuestionAnswerKeyResponse> questions = examQuestionRepository
+                .findByExamIdOrderByQuestionOrderAscIdAsc(session.getExamId())
+                .stream()
+                .map(this::toAnswerKey)
+                .toList();
+
+        return SessionAnswerKeysResponse.builder()
+                .sessionId(session.getId())
+                .examId(session.getExamId())
+                .questions(questions)
+                .build();
     }
 
     @Override
@@ -119,6 +186,56 @@ public class SessionServiceImpl implements SessionService {
                 .timeSpentSeconds(session.getTimeSpentSeconds())
                 .startedAt(session.getStartedAt())
                 .submittedAt(session.getSubmittedAt())
+                .build();
+    }
+
+    private ExamSession loadOwnedSession(Long sessionId, Long currentUserId) {
+        ExamSession session = examSessionRepository.findById(sessionId)
+                .orElseThrow(() -> AppException.notFound("ExamSession", sessionId));
+        if (!session.getUserId().equals(currentUserId)) {
+            throw AppException.sessionForbidden();
+        }
+        return session;
+    }
+
+    private void requireStatus(ExamSession session, SessionStatus requiredStatus) {
+        if (session.getStatus() != requiredStatus) {
+            throw AppException.badRequest(
+                    "Session must be " + requiredStatus + " (current: " + session.getStatus() + ")");
+        }
+    }
+
+    private ExamQuestion findExamQuestion(Long examId, Long questionId) {
+        return examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(examId)
+                .stream()
+                .filter(examQuestion -> Objects.equals(examQuestion.getQuestionId(), questionId))
+                .findFirst()
+                .orElseThrow(() -> AppException.notFound("ExamQuestion", questionId));
+    }
+
+    private QuestionOptionContentResponse toOptionContent(QuestionOption option) {
+        return QuestionOptionContentResponse.builder()
+                .id(option.getId())
+                .content(option.getOptionText())
+                .order(option.getDisplayOrder())
+                .build();
+    }
+
+    private QuestionAnswerKeyResponse toAnswerKey(ExamQuestion examQuestion) {
+        Long questionId = examQuestion.getQuestionId();
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> AppException.notFound("Question", questionId));
+        List<Long> correctOptionIds = questionOptionRepository
+                .findByQuestionIdOrderByDisplayOrderAscIdAsc(questionId)
+                .stream()
+                .filter(option -> Boolean.TRUE.equals(option.getIsCorrect()))
+                .map(QuestionOption::getId)
+                .toList();
+
+        return QuestionAnswerKeyResponse.builder()
+                .questionId(questionId)
+                .correctOptionIds(correctOptionIds)
+                .explanation(question.getExplanation())
                 .build();
     }
 }
