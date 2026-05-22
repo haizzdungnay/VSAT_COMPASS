@@ -428,7 +428,7 @@
 
 | Tổng TC | Pass | Fail | Bỏ qua |
 |---------|------|------|--------|
-| 32      | 10 backend TCs (TC-016→TC-025) verified 2026-04-25; TC-026 và TC-027 added C1.2d-1b; TC-028→TC-032 added C1.6-A (not yet production-verified) | 0 | 0 |
+| 33      | 10 backend TCs (TC-016→TC-025) verified 2026-04-25; TC-026 và TC-027 added C1.2d-1b; TC-028→TC-032 added C1.6-A; TC-033 added C1.6-A.5 (not yet production-verified) | 0 | 0 |
 
 **Ghi chú lần chạy (Phase B — Backend TCs):**
 - Ngày: 2026-04-25
@@ -507,13 +507,30 @@
 
 ---
 
+## TC-033: TC-SESSION-13 — Session start returns orderedQuestionIds for composed exam
+
+**Bước:**
+1. Login → lấy accessToken
+2. POST `/sessions/start` với `EXAM_ID=6`
+3. Kiểm tra `data.orderedQuestionIds`
+
+**Kỳ vọng:**
+- HTTP 201
+- `data.orderedQuestionIds` không null
+- `data.orderedQuestionIds` không rỗng
+- Ghi chú: `EXAM_ID=1` / SMOKE_001 có thể trả `orderedQuestionIds` rỗng vì exam metadata có `questionCount` nhưng hiện có zero `exam_question` rows.
+
+**Pass/Fail:** [ ]
+
+---
+
 # Backend Smoke Scripts (v0.9.4)
 
 Run these production smoke scripts before release tagging:
 
 - `SMOKE_AUTH_SKIP_REGISTER=1 bash docs/scripts/smoke_auth.sh` — expected 7 pass / 0 fail / 2 skipped.
 - `bash docs/scripts/smoke_subjects.sh` — expected 4/4 PASS.
-- `bash docs/scripts/smoke_sessions.sh` — expected 12/12 PASS. _(From C1.6-A: script expanded from 7 to 12 cases. Historical production-verified: 5/5 PASS for v0.9.4 on 2026-05-06. TC-SESSION-6 through TC-SESSION-12 not yet production-verified.)_
+- `bash docs/scripts/smoke_sessions.sh` — expected 13/13 PASS. _(From C1.6-A: script expanded from 7 to 12 cases; C1.6-A.5 adds TC-SESSION-13 for `orderedQuestionIds`. Historical production-verified: 5/5 PASS for v0.9.4 on 2026-05-06. TC-SESSION-6 through TC-SESSION-13 not yet production-verified.)_
 - `SMOKE_ADMIN_PASSWORD=... bash docs/scripts/smoke_admin_exams.sh` — expected 12/12 PASS for admin exam metadata CRUD plus DRAFT discard.
 - `SMOKE_COLLAB1_PASSWORD=... SMOKE_COLLAB2_PASSWORD=... SMOKE_ADMIN_PASSWORD=... bash VSAT/vsat-compass-api/docs/scripts/smoke_questions.sh` — expected 32/32 PASS.
 - `EXAM_ID=2 bash VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh` — expected 10/10 PASS.

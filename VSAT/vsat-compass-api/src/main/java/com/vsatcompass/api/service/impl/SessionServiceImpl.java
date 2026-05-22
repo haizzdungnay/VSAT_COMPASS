@@ -68,7 +68,7 @@ public class SessionServiceImpl implements SessionService {
         log.info("Session {} started by user {} for exam {} (mode={})",
                 session.getId(), userId, request.getExamId(), mode);
 
-        return toSessionInfo(session);
+        return toSessionInfo(session, orderedQuestionIdsForExam(session.getExamId()));
     }
 
     @Override
@@ -174,6 +174,13 @@ public class SessionServiceImpl implements SessionService {
     }
 
     private SessionResponse.SessionInfo toSessionInfo(ExamSession session) {
+        return toSessionInfo(session, List.of());
+    }
+
+    private SessionResponse.SessionInfo toSessionInfo(
+            ExamSession session,
+            List<Long> orderedQuestionIds
+    ) {
         return SessionResponse.SessionInfo.builder()
                 .id(session.getId())
                 .examId(session.getExamId())
@@ -186,7 +193,15 @@ public class SessionServiceImpl implements SessionService {
                 .timeSpentSeconds(session.getTimeSpentSeconds())
                 .startedAt(session.getStartedAt())
                 .submittedAt(session.getSubmittedAt())
+                .orderedQuestionIds(orderedQuestionIds != null ? orderedQuestionIds : List.of())
                 .build();
+    }
+
+    private List<Long> orderedQuestionIdsForExam(Long examId) {
+        return examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(examId)
+                .stream()
+                .map(ExamQuestion::getQuestionId)
+                .toList();
     }
 
     private ExamSession loadOwnedSession(Long sessionId, Long currentUserId) {

@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Phase C1.6-A.5 — Session start response includes ordered question IDs (2026-05-22)
+
+- Extended `SessionResponse.SessionInfo` with `orderedQuestionIds: List<Long>` populated from the `ExamQuestion` table at session start.
+- Empty exams return an empty list instead of null.
+- Added Mockito coverage for ordered question ID population.
+- Added TC-SESSION-13 to the session smoke script/checklist.
+- Runtime release will be tagged `v0.10.2` after merge, Render deploy, and production smoke pass.
+
 ## [0.10.1] - 2026-05-22 — Phase C1.6-A
 
 ### Phase C1.6-A — Backend student exam content delivery (2026-05-22)

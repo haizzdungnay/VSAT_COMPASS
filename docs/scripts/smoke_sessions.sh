@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================
 # V-SAT Compass — Session Smoke Tests
-# Runs 12 test cases against the Session endpoints.
+# Runs 13 test cases against the Session endpoints.
 # Usage: BASE_URL=https://your-api.com/api/v1 bash smoke_sessions.sh
 # Compatible with bash 3.2+ (macOS default)
 # ============================================================
@@ -12,6 +12,8 @@ BASE_URL="${BASE_URL:-https://vsat-compass-api.onrender.com/api/v1}"
 EXAM_ID="${EXAM_ID:-1}"
 # QUESTION_ID: ID of a question that belongs to EXAM_ID through exam_questions.
 QUESTION_ID="${QUESTION_ID:-1}"
+# TC13_EXAM_ID: published exam with real exam_question rows for orderedQuestionIds verification.
+TC13_EXAM_ID="${TC13_EXAM_ID:-6}"
 PASS=0
 FAIL=0
 TOTAL=0
@@ -346,6 +348,31 @@ if [ -n "$ALT_TOKEN" ] && [ -n "$TC10_SESSION_ID" ]; then
 else
     echo "  [SKIP] Missing alternate token or session for TC-SESSION-12"
     TOTAL=$((TOTAL + 1))
+    FAIL=$((FAIL + 1))
+fi
+
+# -----------------------------------------------------------
+# TC-SESSION-13: Start session returns orderedQuestionIds for composed exam
+# -----------------------------------------------------------
+echo "--- TC-SESSION-13: POST /sessions/start (orderedQuestionIds non-empty for EXAM_ID=$TC13_EXAM_ID) ---"
+TC13_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/sessions/start" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $ACCESS_TOKEN" \
+    -d "{\"examId\":$TC13_EXAM_ID,\"mode\":\"MOCK_EXAM\",\"totalQuestions\":10}")
+TC13_BODY=$(echo "$TC13_RESPONSE" | sed '$d')
+TC13_STATUS=$(echo "$TC13_RESPONSE" | tail -1)
+check_status "Start session includes orderedQuestionIds" "201" "$TC13_STATUS"
+
+if echo "$TC13_BODY" | grep -q '"orderedQuestionIds"[[:space:]]*:[[:space:]]*\['; then
+    TC13_IDS=$(echo "$TC13_BODY" | sed -n 's/.*"orderedQuestionIds"[[:space:]]*:[[:space:]]*\[\([^]]*\)\].*/\1/p' | head -1 | tr -d '[:space:]')
+    if [ -n "$TC13_IDS" ]; then
+        echo "    -> data.orderedQuestionIds non-empty: [$TC13_IDS]"
+    else
+        echo "    -> data.orderedQuestionIds empty (expected non-empty for EXAM_ID=$TC13_EXAM_ID)"
+        FAIL=$((FAIL + 1))
+    fi
+else
+    echo "    -> data.orderedQuestionIds missing or null"
     FAIL=$((FAIL + 1))
 fi
 

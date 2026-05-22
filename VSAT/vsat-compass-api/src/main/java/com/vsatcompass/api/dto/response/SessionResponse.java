@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 public class SessionResponse {
 
@@ -22,5 +23,6 @@ public class SessionResponse {
         private Integer timeSpentSeconds;
         private OffsetDateTime startedAt;
         private OffsetDateTime submittedAt;
+        private List<Long> orderedQuestionIds;
     }
 }
