@@ -12,6 +12,12 @@
 - Extended Android session-start response model with orderedQuestionIds from backend v0.10.2.
 - Added Android unit/contract coverage for the new session content API/repository paths.
 
+### Phase C1.6-B Closeout -- tracker sync after Android backend integration (2026-05-23)
+
+- Flipped C1.6-B status to Done in task.md; recorded merge commit ca4b6f2.
+- No runtime change; backend remains frozen at v0.10.2.
+- C1.6-C (retire sample_*.json) remains open as next planned batch.
+
 ## [0.10.2] - 2026-05-22 — Phase C1.6-A.5
 
 ### Phase C1.6-A.5 — Session start response includes ordered question IDs (2026-05-22)
