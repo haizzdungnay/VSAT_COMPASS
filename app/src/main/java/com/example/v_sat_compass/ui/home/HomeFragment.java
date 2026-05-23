@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -39,6 +40,7 @@ public class HomeFragment extends Fragment {
 
     private FragmentHomeBinding binding;
     private final boolean clientSideProcessing = ApiClient.isClientSideExamProcessingEnabled();
+    private final boolean backendExamContent = ApiClient.USE_BACKEND_EXAM_CONTENT;
 
     @Nullable
     @Override
@@ -180,7 +182,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void loadExams() {
-        if (clientSideProcessing) {
+        if (!backendExamContent && clientSideProcessing) {
             renderExams(LocalExamDataSource.getInstance().getPublishedExams(requireContext()));
             return;
         }
@@ -195,17 +197,22 @@ public class HomeFragment extends Fragment {
                         && response.body().isSuccess()) {
                     renderExams(response.body().getData());
                 } else {
-                    renderExams(LocalExamDataSource.getInstance()
-                            .getPublishedExams(requireContext()));
+                    renderOfflineExamFallback();
                 }
             }
 
             @Override
             public void onFailure(Call<ApiResponse<List<Exam>>> call, Throwable t) {
                 if (binding == null) return;
-                renderExams(LocalExamDataSource.getInstance().getPublishedExams(requireContext()));
+                renderOfflineExamFallback();
             }
         });
+    }
+
+    private void renderOfflineExamFallback() {
+        if (getContext() == null || binding == null) return;
+        Toast.makeText(requireContext(), "Dang offline -- dung de mau", Toast.LENGTH_SHORT).show();
+        renderExams(LocalExamDataSource.getInstance().getPublishedExams(requireContext()));
     }
 
     private void renderExams(List<Exam> exams) {

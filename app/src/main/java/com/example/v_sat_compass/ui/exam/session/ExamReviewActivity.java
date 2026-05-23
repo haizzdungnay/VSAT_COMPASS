@@ -1,6 +1,7 @@
 package com.example.v_sat_compass.ui.exam.session;
 
 import android.annotation.SuppressLint;
+import android.content.SharedPreferences;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -18,9 +19,15 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.v_sat_compass.R;
+import com.example.v_sat_compass.data.api.ApiClient;
 import com.example.v_sat_compass.data.local.LocalExamDataSource;
 import com.example.v_sat_compass.data.model.Exam;
 import com.example.v_sat_compass.data.model.Question;
+import com.example.v_sat_compass.data.model.session.QuestionAnswerKeyResponse;
+import com.example.v_sat_compass.data.model.session.QuestionOptionContentResponse;
+import com.example.v_sat_compass.data.model.session.SessionAnswerKeysResponse;
+import com.example.v_sat_compass.data.model.session.SessionQuestionContentResponse;
+import com.example.v_sat_compass.data.repository.SessionContentRepository;
 import com.example.v_sat_compass.databinding.ActivityExamReviewBinding;
 import com.google.android.material.card.MaterialCardView;
 import com.google.gson.Gson;
@@ -36,6 +43,10 @@ import java.util.Map;
 public class ExamReviewActivity extends AppCompatActivity {
 
     private static final String TAG = "ExamReviewActivity";
+    private static final String BACKEND_REVIEW_PREFS = "vsat_backend_review";
+    private static final String PREF_SESSION_PREFIX = "session_id_";
+    private static final String PREF_QUESTION_IDS_PREFIX = "question_ids_";
+    private static final String PREF_QUESTIONS_PREFIX = "questions_";
 
     public static final String EXTRA_EXAM_ID = "review_exam_id";
     public static final String EXTRA_SELECTED_ANSWERS_JSON = "review_selected_answers_json";
@@ -50,6 +61,11 @@ public class ExamReviewActivity extends AppCompatActivity {
 
     private List<Long> questionIds = new ArrayList<>();
     private int currentIndex = 0;
+    private long backendSessionId;
+    private boolean backendReviewMode;
+    private SessionContentRepository sessionContentRepository;
+    private Map<Long, SessionQuestionContentResponse> backendQuestionById = new HashMap<>();
+    private Map<Long, QuestionAnswerKeyResponse> backendAnswerKeyByQuestionId = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,7 +95,11 @@ public class ExamReviewActivity extends AppCompatActivity {
             }
         }
 
-        loadQuestionsFromLocal();
+        sessionContentRepository = new SessionContentRepository();
+        backendReviewMode = ApiClient.USE_BACKEND_EXAM_CONTENT && loadBackendReviewSnapshot();
+        if (!backendReviewMode) {
+            loadQuestionsFromLocal();
+        }
 
         // Phòng thủ: không có câu hỏi nào
         if (questionIds.isEmpty()) {
@@ -100,7 +120,74 @@ public class ExamReviewActivity extends AppCompatActivity {
         binding.btnNext.setOnClickListener(v -> navigate(1));
         binding.btnAllQuestions.setOnClickListener(v -> showQuestionGridDialog());
 
-        showQuestion(currentIndex);
+        if (backendReviewMode) {
+            loadBackendAnswerKeys();
+        } else {
+            showQuestion(currentIndex);
+        }
+    }
+
+    private boolean loadBackendReviewSnapshot() {
+        SharedPreferences prefs = getSharedPreferences(BACKEND_REVIEW_PREFS, MODE_PRIVATE);
+        backendSessionId = prefs.getLong(PREF_SESSION_PREFIX + examId, 0L);
+        String questionIdsJson = prefs.getString(PREF_QUESTION_IDS_PREFIX + examId, null);
+        String questionsJson = prefs.getString(PREF_QUESTIONS_PREFIX + examId, null);
+        if (backendSessionId == 0L) {
+            return false;
+        }
+
+        try {
+            questionIds.clear();
+            backendQuestionById.clear();
+
+            if (questionIdsJson != null && !questionIdsJson.isEmpty()) {
+                Type questionIdsType = new TypeToken<ArrayList<Long>>() {}.getType();
+                List<Long> parsedQuestionIds = new Gson().fromJson(questionIdsJson, questionIdsType);
+                if (parsedQuestionIds != null) {
+                    questionIds.addAll(parsedQuestionIds);
+                }
+            }
+
+            if (questionsJson != null && !questionsJson.isEmpty()) {
+                Type type = new TypeToken<ArrayList<SessionQuestionContentResponse>>() {}.getType();
+                List<SessionQuestionContentResponse> questions = new Gson().fromJson(questionsJson, type);
+                if (questions != null) {
+                    for (SessionQuestionContentResponse question : questions) {
+                        Long questionId = question.getId();
+                        if (!questionIds.contains(questionId)) {
+                            questionIds.add(questionId);
+                        }
+                        backendQuestionById.put(questionId, question);
+                    }
+                }
+            }
+            return !questionIds.isEmpty();
+        } catch (JsonSyntaxException e) {
+            Log.w(TAG, "loadBackendReviewSnapshot() failed to parse backend questions", e);
+            return false;
+        }
+    }
+
+    private void loadBackendAnswerKeys() {
+        sessionContentRepository.getAnswerKeys(backendSessionId,
+                new SessionContentRepository.RepositoryCallback<SessionAnswerKeysResponse>() {
+                    @Override
+                    public void onSuccess(SessionAnswerKeysResponse data) {
+                        backendAnswerKeyByQuestionId.clear();
+                        for (QuestionAnswerKeyResponse question : data.getQuestions()) {
+                            backendAnswerKeyByQuestionId.put(question.getQuestionId(), question);
+                        }
+                        showQuestion(currentIndex);
+                    }
+
+                    @Override
+                    public void onError(SessionContentRepository.SessionContentError error) {
+                        Toast.makeText(ExamReviewActivity.this,
+                                "Khong tai duoc dap an -- kiem tra mang",
+                                Toast.LENGTH_SHORT).show();
+                        showQuestion(currentIndex);
+                    }
+                });
     }
 
     private void loadQuestionsFromLocal() {
@@ -113,6 +200,11 @@ public class ExamReviewActivity extends AppCompatActivity {
     }
 
     private void showQuestion(int index) {
+        if (backendReviewMode) {
+            showBackendQuestion(index);
+            return;
+        }
+
         if (index < 0 || index >= questionIds.size()) return;
         currentIndex = index;
 
@@ -163,6 +255,181 @@ public class ExamReviewActivity extends AppCompatActivity {
     }
 
     /** Kiểm tra optionId có tồn tại trong danh sách options của question không. */
+    private void showBackendQuestion(int index) {
+        if (index < 0 || index >= questionIds.size()) return;
+        currentIndex = index;
+
+        Long questionId = questionIds.get(index);
+        SessionQuestionContentResponse question = backendQuestionById.get(questionId);
+
+        int total = questionIds.size();
+
+        binding.tvQuestionCounter.setText(getString(R.string.review_counter_format, index + 1, total));
+        binding.tvQuestionBadge.setText(getString(R.string.review_question_label, index + 1));
+        int progress = (int) (((index + 1) * 100.0) / total);
+        binding.progressReview.setProgress(progress);
+
+        binding.scrollContent.smoothScrollTo(0, 0);
+
+        binding.btnPrevious.setEnabled(index > 0);
+        binding.btnNext.setEnabled(index < total - 1);
+
+        if (question == null) {
+            loadMissingBackendQuestion(questionId, index);
+            return;
+        }
+
+        Long selectedOptionId = selectedAnswers.get(questionId);
+        boolean isAnswered = selectedOptionId != null;
+        if (isAnswered && !optionExistsInBackendQuestion(question, selectedOptionId)) {
+            Log.w(TAG, "showBackendQuestion() selectedOptionId=" + selectedOptionId
+                    + " not found in backend question content");
+            isAnswered = false;
+        }
+
+        binding.tvUnansweredBadge.setVisibility(isAnswered ? View.GONE : View.VISIBLE);
+        binding.tvQuestionText.setText(question.getContent());
+
+        buildBackendOptionViews(question, isAnswered ? selectedOptionId : null);
+
+        QuestionAnswerKeyResponse answerKey = backendAnswerKeyByQuestionId.get(questionId);
+        String explanation = answerKey != null ? answerKey.getExplanation() : null;
+        if (explanation == null || explanation.trim().isEmpty()) {
+            explanation = getString(R.string.review_explanation_placeholder);
+        }
+        binding.tvExplanation.setText(explanation);
+    }
+
+    private boolean optionExistsInBackendQuestion(
+            SessionQuestionContentResponse question,
+            Long optionId
+    ) {
+        if (question.getOptions() == null || optionId == null) return false;
+        for (QuestionOptionContentResponse opt : question.getOptions()) {
+            if (optionId.equals(opt.getId())) return true;
+        }
+        return false;
+    }
+
+    private void loadMissingBackendQuestion(Long questionId, int index) {
+        sessionContentRepository.getQuestion(backendSessionId, questionId,
+                new SessionContentRepository.RepositoryCallback<SessionQuestionContentResponse>() {
+                    @Override
+                    public void onSuccess(SessionQuestionContentResponse data) {
+                        backendQuestionById.put(questionId, data);
+                        showBackendQuestion(index);
+                    }
+
+                    @Override
+                    public void onError(SessionContentRepository.SessionContentError error) {
+                        Toast.makeText(ExamReviewActivity.this,
+                                "Khong tai duoc cau hoi -- kiem tra mang",
+                                Toast.LENGTH_SHORT).show();
+                        binding.tvQuestionText.setText(getString(R.string.review_question_unavailable));
+                        binding.tvUnansweredBadge.setVisibility(View.GONE);
+                        binding.llOptions.removeAllViews();
+                        binding.tvExplanation.setText(getString(R.string.review_explanation_placeholder));
+                    }
+                });
+    }
+
+    private void buildBackendOptionViews(
+            SessionQuestionContentResponse question,
+            Long selectedOptionId
+    ) {
+        binding.llOptions.removeAllViews();
+        List<QuestionOptionContentResponse> options = question.getOptions();
+        if (options == null) return;
+
+        QuestionAnswerKeyResponse answerKey = backendAnswerKeyByQuestionId.get(question.getId());
+        List<Long> correctOptionIds = answerKey != null
+                ? answerKey.getCorrectOptionIds()
+                : new ArrayList<>();
+
+        for (int i = 0; i < options.size(); i++) {
+            QuestionOptionContentResponse option = options.get(i);
+            Long optionId = option.getId();
+            boolean isThis = optionId.equals(selectedOptionId);
+            boolean isCorrect = correctOptionIds.contains(optionId);
+
+            MaterialCardView card = new MaterialCardView(this);
+            card.setRadius(dpToPx(10));
+            card.setCardElevation(dpToPx(1));
+            LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            cardLp.bottomMargin = dpToPx(10);
+            card.setLayoutParams(cardLp);
+
+            if (isCorrect && isThis) {
+                card.setCardBackgroundColor(Color.parseColor("#E8F5E9"));
+                card.setStrokeColor(ContextCompat.getColor(this, R.color.success));
+                card.setStrokeWidth(dpToPx(2));
+            } else if (isCorrect) {
+                card.setCardBackgroundColor(Color.parseColor("#F1F8E9"));
+                card.setStrokeColor(Color.parseColor("#AED581"));
+                card.setStrokeWidth(dpToPx(2));
+            } else if (isThis) {
+                card.setCardBackgroundColor(Color.parseColor("#FFEBEE"));
+                card.setStrokeColor(Color.parseColor("#EF9A9A"));
+                card.setStrokeWidth(dpToPx(2));
+            } else {
+                card.setCardBackgroundColor(Color.parseColor("#F5F5F5"));
+                card.setStrokeColor(Color.parseColor("#E0E0E0"));
+                card.setStrokeWidth(dpToPx(1));
+            }
+
+            LinearLayout inner = new LinearLayout(this);
+            inner.setOrientation(LinearLayout.HORIZONTAL);
+            inner.setGravity(Gravity.CENTER_VERTICAL);
+            inner.setPadding(dpToPx(14), dpToPx(12), dpToPx(14), dpToPx(12));
+
+            TextView tvLabel = new TextView(this);
+            tvLabel.setText(String.valueOf((char) ('A' + i)) + ".");
+            tvLabel.setTextSize(14);
+            tvLabel.setTypeface(null, android.graphics.Typeface.BOLD);
+            if (isCorrect) {
+                tvLabel.setTextColor(ContextCompat.getColor(this, R.color.success));
+            } else if (isThis) {
+                tvLabel.setTextColor(Color.parseColor("#E53935"));
+            } else {
+                tvLabel.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
+            }
+            LinearLayout.LayoutParams labelLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            labelLp.rightMargin = dpToPx(8);
+            tvLabel.setLayoutParams(labelLp);
+
+            TextView tvText = new TextView(this);
+            tvText.setText(option.getContent());
+            tvText.setTextSize(14);
+            tvText.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
+            LinearLayout.LayoutParams textLp = new LinearLayout.LayoutParams(
+                    0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+            tvText.setLayoutParams(textLp);
+
+            inner.addView(tvLabel);
+            inner.addView(tvText);
+
+            if (isCorrect && isThis) {
+                inner.addView(buildStatusIcon("OK", "#4CAF50"));
+            } else if (isCorrect) {
+                inner.addView(buildStatusLabel(getString(R.string.review_option_correct_label), "#4CAF50"));
+            } else if (isThis) {
+                LinearLayout statusCol = new LinearLayout(this);
+                statusCol.setOrientation(LinearLayout.VERTICAL);
+                statusCol.setGravity(Gravity.CENTER_HORIZONTAL);
+                statusCol.addView(buildStatusIcon("X", "#E53935"));
+                statusCol.addView(buildStatusLabel(getString(R.string.review_option_yours_label), "#E53935"));
+                inner.addView(statusCol);
+            }
+
+            card.addView(inner);
+            binding.llOptions.addView(card);
+        }
+    }
+
     private boolean optionExistsInQuestion(Question question, Long optionId) {
         if (question.getOptions() == null || optionId == null) return false;
         for (Question.Option opt : question.getOptions()) {
