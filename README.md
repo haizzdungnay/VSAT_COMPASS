@@ -169,7 +169,7 @@ http://localhost:8080/api/v1/swagger-ui.html
 
 ## API Modules
 
-> **Trạng thái hiện tại (v0.10.1 / Phase C1.6-A Closed):** Production-ready trên Render.com — Auth + Session sync đã hardened; Subject/Topic/Subtopic read APIs, Question Bank write/review workflow, public Exam read API, Admin Exam CRUD metadata API, Admin Exam Composition + Publish Workflow, Admin Exam DRAFT Discard, Admin Question Picker endpoint, and C1.6-A student session question delivery + post-submit answer-key endpoints đã live.
+> **Trạng thái hiện tại (v0.10.2 / Phase C1.6-A.5 Closed):** Production-ready trên Render.com — Auth + Session sync đã hardened; Subject/Topic/Subtopic read APIs, Question Bank write/review workflow, public Exam read API, Admin Exam CRUD metadata API, Admin Exam Composition + Publish Workflow, Admin Exam DRAFT Discard, Admin Question Picker endpoint, and C1.6-A student session question delivery + post-submit answer-key endpoints đã live.
 
 | Module | Base Path | Endpoints | Trạng thái |
 |--------|-----------|-----------|------------|
