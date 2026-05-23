@@ -304,6 +304,12 @@ For error codes and response envelope, see [`docs/API_ERROR_CODES.md`](docs/API_
 >
 > `LOCAL_LAN_HOST` vẫn được giữ lại trong `app/build.gradle.kts` chỉ để phục vụ dev local nếu sau này bạn chủ động bật lại `USE_LOCAL_BACKEND`.
 
+Student exam content mode:
+- `USE_BACKEND_EXAM_CONTENT = true` makes the Android student flow load exam list/detail/session content from the backend first.
+- The app uses `orderedQuestionIds` from `POST /sessions/start` to fetch per-question backend content.
+- Local `sample_*.json` packs are retained as offline fallback for list/detail failures and as local mode data when the flag is disabled.
+- `CLIENT_SIDE_EXAM_PROCESSING` remains independent and controls client-side scoring/session behavior.
+
 ### Backend tối thiểu nên giữ
 
 Để giảm chi phí vận hành nhưng vẫn an toàn với NeonDB, app này chỉ nên bắt buộc backend cho các nhóm API sau:

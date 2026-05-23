@@ -32,6 +32,15 @@ public class ApiClient {
     // false → Server xử lý toàn bộ (nhận từng đáp án, tự chấm điểm).
     private static final boolean CLIENT_SIDE_EXAM_PROCESSING = true;
 
+    /**
+     * Independent from CLIENT_SIDE_EXAM_PROCESSING. When true, the Android
+     * student flow loads exam list/detail/session content from backend first.
+     * LocalExamDataSource is only an offline fallback for list/detail, and
+     * active backend sessions must not silently fall back for question content
+     * or answer keys.
+     */
+    public static final boolean USE_BACKEND_EXAM_CONTENT = true;
+
     private static Retrofit retrofit;
 
     public static Retrofit getClient() {

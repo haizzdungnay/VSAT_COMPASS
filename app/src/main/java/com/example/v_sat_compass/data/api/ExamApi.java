@@ -4,6 +4,8 @@ import com.example.v_sat_compass.data.model.ApiResponse;
 import com.example.v_sat_compass.data.model.Exam;
 import com.example.v_sat_compass.data.model.ExamSession;
 import com.example.v_sat_compass.data.model.Question;
+import com.example.v_sat_compass.data.model.session.SessionAnswerKeysResponse;
+import com.example.v_sat_compass.data.model.session.SessionQuestionContentResponse;
 
 import java.util.List;
 import java.util.Map;
@@ -51,5 +53,16 @@ public interface ExamApi {
     Call<ApiResponse<Question>> getSessionQuestion(
             @Path("sessionId") Long sessionId,
             @Path("questionId") Long questionId
+    );
+
+    @GET("sessions/{sessionId}/questions/{questionId}")
+    Call<ApiResponse<SessionQuestionContentResponse>> getSessionQuestionContent(
+            @Path("sessionId") long sessionId,
+            @Path("questionId") long questionId
+    );
+
+    @GET("sessions/{sessionId}/answer-keys")
+    Call<ApiResponse<SessionAnswerKeysResponse>> getSessionAnswerKeys(
+            @Path("sessionId") long sessionId
     );
 }

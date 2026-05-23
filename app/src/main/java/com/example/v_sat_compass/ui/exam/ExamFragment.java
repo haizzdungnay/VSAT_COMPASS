@@ -40,6 +40,7 @@ public class ExamFragment extends Fragment {
     private String selectedSubject = null; // null = all
     private String searchQuery = "";
     private final boolean clientSideProcessing = ApiClient.isClientSideExamProcessingEnabled();
+    private final boolean backendExamContent = ApiClient.USE_BACKEND_EXAM_CONTENT;
 
     @Nullable
     @Override
@@ -144,7 +145,7 @@ public class ExamFragment extends Fragment {
         binding.progressBar.setVisibility(View.VISIBLE);
         binding.tvEmpty.setVisibility(View.GONE);
 
-        if (clientSideProcessing) {
+        if (!backendExamContent && clientSideProcessing) {
             binding.progressBar.setVisibility(View.GONE);
             binding.swipeRefresh.setRefreshing(false);
             allExams = LocalExamDataSource.getInstance().getPublishedExams(requireContext());
@@ -166,12 +167,11 @@ public class ExamFragment extends Fragment {
                         allExams = exams;
                         applyFilters();
                     } else {
-                        allExams = LocalExamDataSource.getInstance().getPublishedExams(requireContext());
+                        allExams = new ArrayList<>();
                         applyFilters();
                     }
                 } else {
-                    allExams = LocalExamDataSource.getInstance().getPublishedExams(requireContext());
-                    applyFilters();
+                    loadOfflineFallback();
                 }
             }
 
@@ -180,11 +180,16 @@ public class ExamFragment extends Fragment {
                 if (binding == null) return;
                 binding.progressBar.setVisibility(View.GONE);
                 binding.swipeRefresh.setRefreshing(false);
-                allExams = LocalExamDataSource.getInstance().getPublishedExams(requireContext());
-                applyFilters();
-                Toast.makeText(requireContext(), "Đang dùng dữ liệu đề thi cục bộ", Toast.LENGTH_SHORT).show();
+                loadOfflineFallback();
             }
         });
+    }
+
+    private void loadOfflineFallback() {
+        if (getContext() == null || binding == null) return;
+        allExams = LocalExamDataSource.getInstance().getPublishedExams(requireContext());
+        applyFilters();
+        Toast.makeText(requireContext(), "Dang offline -- dung de mau", Toast.LENGTH_SHORT).show();
     }
 
     private void navigateToDetail(Exam exam) {

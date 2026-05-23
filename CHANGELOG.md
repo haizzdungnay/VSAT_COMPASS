@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+### Phase C1.6-B -- Android student backend integration (2026-05-23)
+
+- Added Android session-content POJO mirrors for backend question content and answer-key responses.
+- Added backend content API methods getSessionQuestionContent and getSessionAnswerKeys while preserving the legacy getSessionQuestion path.
+- Added SessionContentRepository for C1.6-A student session content endpoints.
+- Added USE_BACKEND_EXAM_CONTENT flag to make student exam flow backend-first by default.
+- Wired Home, Exam list, Exam detail, Exam session, and Review flows toward backend-first content with local sample packs retained as offline fallback only.
+- Extended Android session-start response model with orderedQuestionIds from backend v0.10.2.
+- Added Android unit/contract coverage for the new session content API/repository paths.
+
 ## [0.10.2] - 2026-05-22 — Phase C1.6-A.5
 
 ### Phase C1.6-A.5 — Session start response includes ordered question IDs (2026-05-22)

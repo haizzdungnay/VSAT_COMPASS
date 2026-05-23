@@ -2,6 +2,7 @@ package com.example.v_sat_compass.data.model;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.Collections;
 import java.util.List;
 
 public class ExamSession {
@@ -29,6 +30,9 @@ public class ExamSession {
 
     private List<SessionAnswer> answers;
 
+    @SerializedName("orderedQuestionIds")
+    private List<Long> orderedQuestionIds;
+
     public Long getId() { return id; }
     public Long getExamId() { return examId; }
     public String getExamTitle() { return examTitle; }
@@ -38,6 +42,9 @@ public class ExamSession {
     public double getScorePercentage() { return scorePercentage; }
     public int getTimeSpentSeconds() { return timeSpentSeconds; }
     public List<SessionAnswer> getAnswers() { return answers; }
+    public List<Long> getOrderedQuestionIds() {
+        return orderedQuestionIds != null ? orderedQuestionIds : Collections.emptyList();
+    }
 
     public static class SessionAnswer {
         @SerializedName("question_id")

@@ -1,6 +1,7 @@
 package com.example.v_sat_compass.ui.exam.session;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -25,7 +26,10 @@ import com.example.v_sat_compass.data.model.Exam;
 import com.example.v_sat_compass.data.model.ExamHistoryEntry;
 import com.example.v_sat_compass.data.model.ExamSession;
 import com.example.v_sat_compass.data.model.Question;
+import com.example.v_sat_compass.data.model.session.QuestionOptionContentResponse;
+import com.example.v_sat_compass.data.model.session.SessionQuestionContentResponse;
 import com.example.v_sat_compass.data.repository.ExamHistoryRepository;
+import com.example.v_sat_compass.data.repository.SessionContentRepository;
 import com.example.v_sat_compass.databinding.ActivityExamSessionBinding;
 import com.google.android.material.card.MaterialCardView;
 import com.google.gson.Gson;
@@ -43,9 +47,14 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class ExamSessionActivity extends AppCompatActivity {
+    private static final String BACKEND_REVIEW_PREFS = "vsat_backend_review";
+    private static final String PREF_SESSION_PREFIX = "session_id_";
+    private static final String PREF_QUESTION_IDS_PREFIX = "question_ids_";
+    private static final String PREF_QUESTIONS_PREFIX = "questions_";
 
     private ActivityExamSessionBinding binding;
     private ExamApi examApi;
+    private SessionContentRepository sessionContentRepository;
 
     private Long sessionId;
     private long examId;
@@ -57,10 +66,12 @@ public class ExamSessionActivity extends AppCompatActivity {
     private List<Long> questionIds = new ArrayList<>();
     private int currentIndex = 0;
     private Question currentQuestion;
+    private SessionQuestionContentResponse currentBackendQuestion;
     private Map<Long, Long> selectedAnswers = new HashMap<>();
     private Set<Long> bookmarkedQuestions = new HashSet<>();
     // Cache questions fetched from API so we can score locally without extra requests
     private Map<Long, Question> questionCache = new HashMap<>();
+    private Map<Long, SessionQuestionContentResponse> backendQuestionCache = new HashMap<>();
 
     private CountDownTimer timer;
     private long sessionStartMillis;
@@ -71,6 +82,7 @@ public class ExamSessionActivity extends AppCompatActivity {
     private int strokeDefault;
     private int strokeSelected;
     private final boolean clientSideProcessing = ApiClient.isClientSideExamProcessingEnabled();
+    private final boolean backendExamContent = ApiClient.USE_BACKEND_EXAM_CONTENT;
     private boolean hasRemoteSession;
 
     @Override
@@ -80,6 +92,7 @@ public class ExamSessionActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         examApi = ApiClient.getClient().create(ExamApi.class);
+        sessionContentRepository = new SessionContentRepository();
 
         colorDefault = Color.WHITE;
         colorSelected = ContextCompat.getColor(this, R.color.answer_selected);
@@ -108,6 +121,11 @@ public class ExamSessionActivity extends AppCompatActivity {
     private void startSession() {
         sessionStartMillis = System.currentTimeMillis();
 
+        if (backendExamContent) {
+            startBackendContentSession();
+            return;
+        }
+
         if (clientSideProcessing) {
             startLocalSession();
             tryBootstrapRemoteSession();
@@ -120,7 +138,8 @@ public class ExamSessionActivity extends AppCompatActivity {
         examApi.startSession(body).enqueue(new Callback<ApiResponse<ExamSession>>() {
             @Override
             public void onResponse(Call<ApiResponse<ExamSession>> call, Response<ApiResponse<ExamSession>> response) {
-                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                if (response.isSuccessful() && response.body() != null
+                        && response.body().isSuccess() && response.body().getData() != null) {
                     ExamSession session = response.body().getData();
                     sessionId = session.getId();
                     hasRemoteSession = true;
@@ -135,6 +154,48 @@ public class ExamSessionActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<ApiResponse<ExamSession>> call, Throwable t) {
                 startLocalSession();
+            }
+        });
+    }
+
+    private void startBackendContentSession() {
+        Map<String, Long> body = new HashMap<>();
+        body.put("examId", examId);
+
+        examApi.startSession(body).enqueue(new Callback<ApiResponse<ExamSession>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<ExamSession>> call,
+                                   Response<ApiResponse<ExamSession>> response) {
+                if (response.isSuccessful() && response.body() != null
+                        && response.body().isSuccess() && response.body().getData() != null) {
+                    ExamSession session = response.body().getData();
+                    sessionId = session.getId();
+                    hasRemoteSession = true;
+                    updateSyncStatus(true);
+                    questionIds.clear();
+                    // Backend v0.10.2 returns orderedQuestionIds for content fetch order.
+                    questionIds.addAll(session.getOrderedQuestionIds());
+                    totalQuestions = questionIds.size();
+                    if (questionIds.isEmpty()) {
+                        Toast.makeText(ExamSessionActivity.this,
+                                "Khong co cau hoi tu backend", Toast.LENGTH_SHORT).show();
+                        finish();
+                        return;
+                    }
+                    loadQuestion(0);
+                    startTimer();
+                } else {
+                    Toast.makeText(ExamSessionActivity.this,
+                            "Khong the bat dau bai thi backend", Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<ExamSession>> call, Throwable t) {
+                Toast.makeText(ExamSessionActivity.this,
+                        "Khong the bat dau bai thi backend", Toast.LENGTH_SHORT).show();
+                finish();
             }
         });
     }
@@ -154,7 +215,8 @@ public class ExamSessionActivity extends AppCompatActivity {
         examApi.startSession(body).enqueue(new Callback<ApiResponse<ExamSession>>() {
             @Override
             public void onResponse(Call<ApiResponse<ExamSession>> call, Response<ApiResponse<ExamSession>> response) {
-                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                if (response.isSuccessful() && response.body() != null
+                        && response.body().isSuccess() && response.body().getData() != null) {
                     ExamSession remoteSession = response.body().getData();
                     if (remoteSession != null && remoteSession.getId() != null) {
                         sessionId = remoteSession.getId();
@@ -234,6 +296,11 @@ public class ExamSessionActivity extends AppCompatActivity {
         binding.btnPrevious.setEnabled(index > 0);
         binding.btnNext.setText(index == totalQuestions - 1 ? "Nộp bài" : "Tiếp theo");
 
+        if (backendExamContent && hasRemoteSession) {
+            loadBackendQuestion(questionId);
+            return;
+        }
+
         // Serve from cache first to avoid redundant network calls
         if (questionCache.containsKey(questionId)) {
             currentQuestion = questionCache.get(questionId);
@@ -279,6 +346,40 @@ public class ExamSessionActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    private void loadBackendQuestion(Long questionId) {
+        currentQuestion = null;
+        if (sessionId == null) {
+            Toast.makeText(this, "Khong co backend session", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (backendQuestionCache.containsKey(questionId)) {
+            currentBackendQuestion = backendQuestionCache.get(questionId);
+            displayBackendQuestion(currentBackendQuestion);
+            updateBookmarkIcon();
+            return;
+        }
+
+        sessionContentRepository.getQuestion(sessionId, questionId,
+                new SessionContentRepository.RepositoryCallback<SessionQuestionContentResponse>() {
+                    @Override
+                    public void onSuccess(SessionQuestionContentResponse data) {
+                        currentBackendQuestion = data;
+                        backendQuestionCache.put(questionId, data);
+                        displayBackendQuestion(data);
+                        updateBookmarkIcon();
+                    }
+
+                    @Override
+                    public void onError(SessionContentRepository.SessionContentError error) {
+                        String message = error != null && error.getMessage() != null
+                                ? error.getMessage()
+                                : "Loi tai cau hoi backend";
+                        Toast.makeText(ExamSessionActivity.this, message, Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     private void displayQuestion(Question question) {
@@ -400,12 +501,134 @@ public class ExamSessionActivity extends AppCompatActivity {
         return card;
     }
 
+    private void displayBackendQuestion(SessionQuestionContentResponse question) {
+        if (question == null) return;
+        binding.tvQuestionText.setText("Cau " + (currentIndex + 1) + ": " + question.getContent());
+        binding.llOptions.removeAllViews();
+
+        List<QuestionOptionContentResponse> opts = question.getOptions();
+        if (opts == null || opts.isEmpty()) return;
+
+        Long questionId = question.getId();
+        Long alreadySelected = selectedAnswers.get(questionId);
+
+        for (int i = 0; i < opts.size(); i += 2) {
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            rowLp.bottomMargin = dpToPx(10);
+            row.setLayoutParams(rowLp);
+
+            MaterialCardView card1 = buildBackendOptionCard(
+                    opts.get(i), questionId, alreadySelected, i);
+            LinearLayout.LayoutParams lp1 = new LinearLayout.LayoutParams(0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+            lp1.rightMargin = dpToPx(5);
+            card1.setLayoutParams(lp1);
+            row.addView(card1);
+
+            if (i + 1 < opts.size()) {
+                MaterialCardView card2 = buildBackendOptionCard(
+                        opts.get(i + 1), questionId, alreadySelected, i + 1);
+                LinearLayout.LayoutParams lp2 = new LinearLayout.LayoutParams(0,
+                        LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+                lp2.leftMargin = dpToPx(5);
+                card2.setLayoutParams(lp2);
+                row.addView(card2);
+            } else {
+                View placeholder = new View(this);
+                LinearLayout.LayoutParams lp2 = new LinearLayout.LayoutParams(0,
+                        LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+                lp2.leftMargin = dpToPx(5);
+                placeholder.setLayoutParams(lp2);
+                row.addView(placeholder);
+            }
+
+            binding.llOptions.addView(row);
+        }
+    }
+
+    private MaterialCardView buildBackendOptionCard(
+            QuestionOptionContentResponse option,
+            Long questionId,
+            Long alreadySelected,
+            int optionIndex
+    ) {
+        Long optionId = option.getId();
+        boolean isSelected = optionId != null && optionId.equals(alreadySelected);
+
+        MaterialCardView card = new MaterialCardView(this);
+        card.setRadius(dpToPx(10));
+        card.setCardElevation(isSelected ? dpToPx(3) : dpToPx(1));
+        card.setStrokeWidth(dpToPx(isSelected ? 2 : 1));
+        card.setStrokeColor(isSelected ? strokeSelected : 0xFFDDDDDD);
+        card.setCardBackgroundColor(isSelected ? colorSelected : colorDefault);
+        card.setTag(optionId);
+
+        LinearLayout inner = new LinearLayout(this);
+        inner.setOrientation(LinearLayout.HORIZONTAL);
+        inner.setGravity(Gravity.CENTER_VERTICAL);
+        inner.setPadding(dpToPx(12), dpToPx(14), dpToPx(12), dpToPx(14));
+
+        TextView tvLabel = new TextView(this);
+        tvLabel.setText(String.valueOf((char) ('A' + optionIndex)) + ".");
+        tvLabel.setTextSize(15);
+        tvLabel.setTextColor(isSelected
+                ? ContextCompat.getColor(this, R.color.primary)
+                : ContextCompat.getColor(this, R.color.text_secondary));
+        tvLabel.setTypeface(null, android.graphics.Typeface.BOLD);
+        LinearLayout.LayoutParams labelLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        labelLp.rightMargin = dpToPx(8);
+        tvLabel.setLayoutParams(labelLp);
+
+        TextView tvText = new TextView(this);
+        tvText.setText(option.getContent());
+        tvText.setTextSize(14);
+        tvText.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
+        LinearLayout.LayoutParams textLp = new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        tvText.setLayoutParams(textLp);
+
+        inner.addView(tvLabel);
+        inner.addView(tvText);
+
+        if (isSelected) {
+            TextView tvCheck = new TextView(this);
+            tvCheck.setText("OK");
+            tvCheck.setTextSize(12);
+            tvCheck.setTextColor(ContextCompat.getColor(this, R.color.primary));
+            tvCheck.setTypeface(null, android.graphics.Typeface.BOLD);
+            LinearLayout.LayoutParams checkLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            checkLp.leftMargin = dpToPx(6);
+            tvCheck.setLayoutParams(checkLp);
+            inner.addView(tvCheck);
+        }
+
+        card.addView(inner);
+        card.setOnClickListener(v -> {
+            selectedAnswers.put(questionId, optionId);
+            displayBackendQuestion(currentBackendQuestion);
+            submitAnswer(questionId, optionId);
+        });
+
+        return card;
+    }
+
     private int dpToPx(int dp) {
         return (int) (dp * getResources().getDisplayMetrics().density);
     }
 
     private void submitAnswer(Long questionId, Long optionId) {
-        if (clientSideProcessing) {
+        if (clientSideProcessing && !backendExamContent) {
+            return;
+        }
+        if (!hasRemoteSession || sessionId == null) {
             return;
         }
 
@@ -417,10 +640,22 @@ public class ExamSessionActivity extends AppCompatActivity {
 
         examApi.submitAnswer(sessionId, body).enqueue(new Callback<ApiResponse<Void>>() {
             @Override
-            public void onResponse(Call<ApiResponse<Void>> call, Response<ApiResponse<Void>> response) {}
+            public void onResponse(Call<ApiResponse<Void>> call, Response<ApiResponse<Void>> response) {
+                if (backendExamContent
+                        && (!response.isSuccessful() || response.body() == null
+                        || !response.body().isSuccess())) {
+                    Toast.makeText(ExamSessionActivity.this,
+                            "Khong luu duoc cau tra loi", Toast.LENGTH_SHORT).show();
+                }
+            }
 
             @Override
-            public void onFailure(Call<ApiResponse<Void>> call, Throwable t) {}
+            public void onFailure(Call<ApiResponse<Void>> call, Throwable t) {
+                if (backendExamContent) {
+                    Toast.makeText(ExamSessionActivity.this,
+                            "Khong luu duoc cau tra loi", Toast.LENGTH_SHORT).show();
+                }
+            }
         });
     }
 
@@ -451,6 +686,11 @@ public class ExamSessionActivity extends AppCompatActivity {
     private void submitExam() {
         if (timer != null) timer.cancel();
 
+        if (backendExamContent && hasRemoteSession) {
+            submitBackendExam();
+            return;
+        }
+
         if (clientSideProcessing) {
             submitExamLocally();
             return;
@@ -479,6 +719,67 @@ public class ExamSessionActivity extends AppCompatActivity {
                 submitExamLocally();
             }
         });
+    }
+
+    private void submitBackendExam() {
+        if (sessionId == null) {
+            Toast.makeText(this, "Khong co backend session", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        examApi.submitSession(sessionId).enqueue(new Callback<ApiResponse<ExamSession>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<ExamSession>> call, Response<ApiResponse<ExamSession>> response) {
+                if (response.isSuccessful() && response.body() != null
+                        && response.body().isSuccess() && response.body().getData() != null) {
+                    ExamSession result = response.body().getData();
+                    persistBackendReviewSnapshot();
+                    String answersJson = new Gson().toJson(selectedAnswers);
+
+                    Intent intent = new Intent(ExamSessionActivity.this, ExamResultActivity.class);
+                    intent.putExtra("session_id", result.getId());
+                    intent.putExtra("score", result.getScorePercentage());
+                    intent.putExtra("correct", result.getCorrectAnswers());
+                    intent.putExtra("total", result.getTotalQuestions());
+                    intent.putExtra("time_spent", result.getTimeSpentSeconds());
+                    intent.putExtra("exam_id", examId);
+                    intent.putExtra("exam_title", examTitle);
+                    intent.putExtra("exam_subject", examSubject != null ? examSubject : "");
+                    intent.putExtra("selected_answers_json", answersJson);
+                    intent.putExtra("history_save_failed", false);
+                    startActivity(intent);
+                    finish();
+                } else {
+                    Toast.makeText(ExamSessionActivity.this,
+                            "Loi nop bai backend. Vui long thu lai.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<ExamSession>> call, Throwable t) {
+                Toast.makeText(ExamSessionActivity.this,
+                        "Loi nop bai backend. Vui long thu lai.", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void persistBackendReviewSnapshot() {
+        if (sessionId == null) return;
+
+        List<SessionQuestionContentResponse> orderedQuestions = new ArrayList<>();
+        for (Long questionId : questionIds) {
+            SessionQuestionContentResponse question = backendQuestionCache.get(questionId);
+            if (question != null) {
+                orderedQuestions.add(question);
+            }
+        }
+
+        SharedPreferences prefs = getSharedPreferences(BACKEND_REVIEW_PREFS, MODE_PRIVATE);
+        prefs.edit()
+                .putLong(PREF_SESSION_PREFIX + examId, sessionId)
+                .putString(PREF_QUESTION_IDS_PREFIX + examId, new Gson().toJson(questionIds))
+                .putString(PREF_QUESTIONS_PREFIX + examId, new Gson().toJson(orderedQuestions))
+                .apply();
     }
 
     private void submitExamLocally() {
@@ -573,8 +874,10 @@ public class ExamSessionActivity extends AppCompatActivity {
     }
 
     private void toggleBookmark() {
-        if (currentQuestion == null) return;
-        Long qId = currentQuestion.getId();
+        Long qId = currentBackendQuestion != null && backendExamContent
+                ? currentBackendQuestion.getId()
+                : currentQuestion != null ? currentQuestion.getId() : null;
+        if (qId == null) return;
         if (bookmarkedQuestions.contains(qId)) {
             bookmarkedQuestions.remove(qId);
             binding.btnBookmark.setColorFilter(
@@ -587,7 +890,10 @@ public class ExamSessionActivity extends AppCompatActivity {
     }
 
     private void updateBookmarkIcon() {
-        if (currentQuestion != null && bookmarkedQuestions.contains(currentQuestion.getId())) {
+        Long qId = currentBackendQuestion != null && backendExamContent
+                ? currentBackendQuestion.getId()
+                : currentQuestion != null ? currentQuestion.getId() : null;
+        if (qId != null && bookmarkedQuestions.contains(qId)) {
             binding.btnBookmark.setColorFilter(
                     ContextCompat.getColor(this, R.color.warning));
         } else {
