@@ -76,6 +76,7 @@ Mục tiêu cuối:
 - [x] Phase C1.5 — Admin Question Picker (backend C1.5-A `78bb17e` tagged `v0.10.0`; Android C1.5-B `4219ca6`; closeout `84fc997`) — Done (2026-05-22); production smoke verified
 - [x] Phase C1.6-A — Student Exam Content backend: added in-session question delivery and post-submit answer-key endpoints for student sessions, merged to main at 8a85b9f and released as v0.10.1 after production smoke verification (2026-05-22).
 - [x] Phase C1.6-A.5 — Session start response enhancement: added orderedQuestionIds field, merged to main at 863a2e6 and released as v0.10.2 after production smoke 13/13 PASS (2026-05-22).
+- [x] C1.6-B — Android student backend integration: backend-first exam list/detail/session/review wired, USE_BACKEND_EXAM_CONTENT flag, orderedQuestionIds flow, SessionContentRepository — merged at ca4b6f2
 
 ### 2.2 Chưa hoàn chỉnh
 
@@ -436,7 +437,7 @@ Mục tiêu: Student Android consume backend exam content thực sự, retire lo
 |-----------|-------|------------|
 | C1.6-A | Backend public student exam endpoints: list, detail, per-question delivery via session | ✅ Done (2026-05-22) — merged to main at 8a85b9f |
 | C1.6-A.5 | Session start response enhancement: orderedQuestionIds field — unblocks C1.6-B Android question delivery | ✅ Done (2026-05-22) — merged to main at 863a2e6 |
-| C1.6-B | Android student integration: replace `LocalExamDataSource` with backend (local kept as offline fallback) | 🟡 In progress — branch phase-c/c1-6-b-android-student-backend-integration |
+| C1.6-B | Android student integration: replace `LocalExamDataSource` with backend (local kept as offline fallback) | ✅ Done (2026-05-23) — merged to main at ca4b6f2 |
 | C1.6-C | Closeout: smoke + docs + retire `sample_*.json` per C3.4 decision | 📋 Planned |
 
 Coordinator decisions (pre-batch):
