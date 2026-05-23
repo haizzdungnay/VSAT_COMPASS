@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.10.2] - 2026-05-22 — Phase C1.6-A.5
+
 ### Phase C1.6-A.5 — Session start response includes ordered question IDs (2026-05-22)
 
 - Extended `SessionResponse.SessionInfo` with `orderedQuestionIds: List<Long>` populated from the `ExamQuestion` table at session start.

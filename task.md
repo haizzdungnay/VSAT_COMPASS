@@ -1,6 +1,6 @@
 # V-SAT Compass — Task Tracker & Roadmap
 
-> Cập nhật: 2026-05-22 | Phiên bản hiện tại: **v0.10.1** (Phase C1.6-A Student Exam Content backend live in production)
+> Cập nhật: 2026-05-22 | Phiên bản hiện tại: **v0.10.2** (Phase C1.6-A.5 Session Start orderedQuestionIds live in production)
 
 Tài liệu này tổng hợp lộ trình hoàn thiện app dựa trên:
 - `VSAT/ui/tong_hop_du_an_vsat_android_web_v2.txt`
@@ -75,6 +75,7 @@ Mục tiêu cuối:
 - [x] Phase C1.4 — Admin Review Queue Android UI (C1.4-A `475c084`, closeout `6810c75`) — Done (2026-05-22); backend frozen at v0.9.4
 - [x] Phase C1.5 — Admin Question Picker (backend C1.5-A `78bb17e` tagged `v0.10.0`; Android C1.5-B `4219ca6`; closeout `84fc997`) — Done (2026-05-22); production smoke verified
 - [x] Phase C1.6-A — Student Exam Content backend: added in-session question delivery and post-submit answer-key endpoints for student sessions, merged to main at 8a85b9f and released as v0.10.1 after production smoke verification (2026-05-22).
+- [x] Phase C1.6-A.5 — Session start response enhancement: added orderedQuestionIds field, merged to main at 863a2e6 and released as v0.10.2 after production smoke 13/13 PASS (2026-05-22).
 
 ### 2.2 Chưa hoàn chỉnh
 
@@ -434,7 +435,7 @@ Mục tiêu: Student Android consume backend exam content thực sự, retire lo
 | Sub-batch | Scope | Trạng thái |
 |-----------|-------|------------|
 | C1.6-A | Backend public student exam endpoints: list, detail, per-question delivery via session | ✅ Done (2026-05-22) — merged to main at 8a85b9f |
-| C1.6-A.5 | Session start response enhancement: orderedQuestionIds field — unblocks C1.6-B Android question delivery | 🟡 In progress |
+| C1.6-A.5 | Session start response enhancement: orderedQuestionIds field — unblocks C1.6-B Android question delivery | ✅ Done (2026-05-22) — merged to main at 863a2e6 |
 | C1.6-B | Android student integration: replace `LocalExamDataSource` with backend (local kept as offline fallback) | 📋 Planned |
 | C1.6-C | Closeout: smoke + docs + retire `sample_*.json` per C3.4 decision | 📋 Planned |
 
