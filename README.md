@@ -373,6 +373,17 @@ Các phần timer, chọn đáp án, bookmark, chấm điểm, hiển thị kế
 | Practice (Topics) | Lộ trình cải thiện theo chủ đề với tiến độ |
 | Profile | Thông tin cá nhân + đăng xuất |
 
+### Android Release
+
+See [docs/ANDROID_RELEASE.md](docs/ANDROID_RELEASE.md) for the full release runbook.
+
+- Android APK tags use the scheme `android/vX.Y.Z` (e.g. `android/v0.1.0`).
+- Backend runtime tags `v0.10.x` are independent from Android APK tags.
+- First APK track starts at `android/v0.1.0`.
+- APK-1 (this branch) only prepares release config (signing, ProGuard/R8, versioning).
+  APK-2 handles actual release build verification and produces a sideloadable APK.
+- Play Store / Google Play Console setup is deferred until the app is feature-complete.
+
 ---
 
 ## Phân quyền

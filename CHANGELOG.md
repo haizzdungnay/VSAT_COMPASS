@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+### APK Release Track -- APK-1 release config foundation (2026-05-24)
+
+- Configured release signing via signingConfigs.release reading from keystore.properties (gitignored).
+- Set versionCode=1, versionName="0.1.0" for first APK release (android/v0.1.0).
+- Enabled minify + shrinkResources for release build type.
+- Augmented proguard-rules.pro with keep rules for Retrofit, Gson, Glide, OkHttp, and model classes.
+- Added keystore.properties.example template and .gitignore entries for keystore.properties and /app/release/.
+- Added docs/ANDROID_RELEASE.md release runbook covering keystore generation, build, sideload distribution.
+- Backend remains frozen at v0.10.2; no backend changes.
+- Actual release APK build + smoke verification deferred to APK-2.
+- Rebased Android APK release numbering from previous versionName="1.0" to versionName="0.1.0" for independent APK semver.
+
 ### Phase C1.6 Closeout -- finalize student backend integration (2026-05-24)
 
 - Phase C1.6 fully closed across C1.6-A (v0.10.1), C1.6-A.5 (v0.10.2),

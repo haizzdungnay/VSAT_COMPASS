@@ -690,3 +690,18 @@ Mỗi khi hoàn thành một task:
 
 - [ ] **Backup branch retention deadline approaching (2026-06-01)**
   `backup-pre-batch-2b-20260430` (points at `1f88ee20cf943ed9ce1261cd0375a3d9b9e0188a`) — local + origin. Retention until 2026-06-01. Confirm with onii-chan before deleting after that date. Currently ~9 days remaining.
+
+---
+
+## 8. APK Release Track
+
+> Android APK versioning is **independent** from backend runtime tags (v0.10.x).
+> Android APK tags use `android/vX.Y.Z`. First target: `android/v0.1.0`.
+
+| ID | Hang muc | Trang thai | Ghi chu |
+|----|----------|------------|---------|
+| APK-1 | Release Config Foundation | In progress | signing config, ProGuard/R8, versionCode=1/versionName=0.1.0, release runbook |
+| APK-2 | Release Build Verification | TODO | Actual assembleRelease + APK smoke -- deferred |
+
+- [x] APK-1 release config foundation prepared -- signing, ProGuard/R8, versionCode=1/versionName=0.1.0, release runbook. Merge pending.
+
