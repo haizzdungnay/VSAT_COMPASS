@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### APK Release Track -- APK-1.1 hotfix build.gradle.kts imports (2026-05-24)
+
+- Hotfix: added `import java.util.Properties` at the top of `app/build.gradle.kts`.
+- Replaced `java.util.Properties()` with `Properties()` and `java.io.FileInputStream(file)` with `file.inputStream()`.
+- Resolved Kotlin DSL "Unresolved reference 'util' / 'io'" errors introduced by APK-1.
+- Gradle sync + `./gradlew app:signingReport` now succeed.
+- No version bump; no dependency change; no source code change beyond the build script.
+
 ### APK Release Track -- APK-1 release config foundation (2026-05-24)
 
 - Configured release signing via signingConfigs.release reading from keystore.properties (gitignored).
