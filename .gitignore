@@ -41,3 +41,7 @@ local.properties
 # Android signing keystores (NEVER commit)
 *.keystore
 *.jks
+
+# Android release signing
+keystore.properties
+/app/release/

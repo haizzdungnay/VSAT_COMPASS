@@ -19,3 +19,38 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# ===========================================================================
+# Retrofit 2.11.0
+# ===========================================================================
+-keepattributes Signature
+-keepattributes Exceptions
+-keepattributes RuntimeVisibleAnnotations
+-keepattributes RuntimeVisibleParameterAnnotations
+-keep interface com.example.v_sat_compass.data.api.** { *; }
+
+# ===========================================================================
+# Gson 2.11.0
+# ===========================================================================
+-keepclassmembers,allowobfuscation class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
+-keep class com.example.v_sat_compass.data.model.** { *; }
+
+# ===========================================================================
+# Glide 4.16.0
+# ===========================================================================
+-keep public class * extends com.bumptech.glide.module.AppGlideModule
+
+# ===========================================================================
+# OkHttp 4.12.0
+# ===========================================================================
+-dontwarn okhttp3.internal.platform.**
+
+# ===========================================================================
+# AndroidX @Keep annotation
+# ===========================================================================
+-keep @androidx.annotation.Keep class * { *; }
+-keepclassmembers class * {
+    @androidx.annotation.Keep *;
+}
