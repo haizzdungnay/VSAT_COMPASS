@@ -294,8 +294,9 @@ For error codes and response envelope, see [`docs/API_ERROR_CODES.md`](docs/API_
 
 > **Chế độ mặc định (`CLIENT_SIDE_EXAM_PROCESSING = true` trong `ApiClient.java`):**
 > - Đăng nhập / hồ sơ cá nhân vẫn đi qua API
-> - Danh sách đề, chi tiết đề, câu hỏi, timer và chấm điểm chạy ưu tiên trên thiết bị bằng dữ liệu cục bộ `sample_*.json`
-> - Không còn phụ thuộc `sessions/start` hay `sessions/{id}/questions/{questionId}` để người dùng bắt đầu làm bài
+> - Từ C1.6-B, exam content là backend-first khi `USE_BACKEND_EXAM_CONTENT = true`: danh sách đề, chi tiết đề và nội dung câu hỏi ưu tiên backend production
+> - Local `sample_*.json` chỉ dùng làm fallback/offline continuity khi backend content lỗi hoặc khi tắt flag backend content
+> - Timer và chấm điểm vẫn chạy trên thiết bị; app không chặn luồng làm bài nếu backend content tạm thời không sẵn sàng
 > - Chỉ đồng bộ kết quả cuối lên server khi backend thực sự sẵn sàng (bootstrap session nền, không chặn luồng làm bài)
 
 > **Backend mặc định (mới):**
@@ -337,6 +338,8 @@ Các phần timer, chọn đáp án, bookmark, chấm điểm, hiển thị kế
 
 ### Quy ước mở rộng bộ đề local
 
+- Từ C1.6-B trở đi, `sample_*.json` là offline fallback only; khi `USE_BACKEND_EXAM_CONTENT = true`, backend là nguồn nội dung chính cho danh sách đề, chi tiết đề và phiên làm bài.
+- C1.6-C soft-retire giữ các pack local vì mạng Việt Nam có thể không ổn định, tổng dung lượng khoảng 50KB, và giá trị UX offline vẫn hữu ích; hard deletion hoãn đến quyết định ship APK.
 - Đặt nhiều file đề trong `app/src/main/assets/` theo pattern `sample_*.json`
 - App sẽ tự scan và nạp toàn bộ các file này vào danh sách đề local
 - Mỗi đề cần có field `explanation` cho từng câu hỏi để màn Review hiển thị lời giải

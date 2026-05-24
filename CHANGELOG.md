@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Phase C1.6 Closeout -- finalize student backend integration (2026-05-24)
+
+- Phase C1.6 fully closed across C1.6-A (v0.10.1), C1.6-A.5 (v0.10.2),
+  and C1.6-B (Android, 85c6762).
+- Local sample_*.json packs retained as offline fallback only (soft retire).
+- Hard deletion deferred until APK ship; USE_BACKEND_EXAM_CONTENT=true makes
+  backend the primary content source.
+- Backend frozen at v0.10.2; no new runtime tag for Android-only batch.
+
 ### Phase C1.6-B -- Android student backend integration (2026-05-23)
 
 - Added Android session-content POJO mirrors for backend question content and answer-key responses.
