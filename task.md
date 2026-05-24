@@ -22,7 +22,7 @@ Mục tiêu cuối:
 |-----------|------------|------------|
 | A — Student MVP | ✅ XONG | 100% |
 | B — Backend Production | ✅ XONG | 100% (2026-04-25) |
-| C — Content Management | 🟡 IN PROGRESS | C1.0 → C1.5 all closed; C1.6 (Student public exam) next |
+| C — Content Management | 🟡 IN PROGRESS | C1.0 → C1.6 closed; C2+ next |
 | D — Admin & Operations | 🔜 Tương lai | — |
 | E — Chất lượng sản phẩm | 🔜 Tương lai | — |
 
@@ -77,6 +77,9 @@ Mục tiêu cuối:
 - [x] Phase C1.6-A — Student Exam Content backend: added in-session question delivery and post-submit answer-key endpoints for student sessions, merged to main at 8a85b9f and released as v0.10.1 after production smoke verification (2026-05-22).
 - [x] Phase C1.6-A.5 — Session start response enhancement: added orderedQuestionIds field, merged to main at 863a2e6 and released as v0.10.2 after production smoke 13/13 PASS (2026-05-22).
 - [x] C1.6-B — Android student backend integration: backend-first exam list/detail/session/review wired, USE_BACKEND_EXAM_CONTENT flag, orderedQuestionIds flow, SessionContentRepository — merged at ca4b6f2
+- [x] Phase C1.6 closed — student backend integration complete.
+  C1.6-A (v0.10.1) + C1.6-A.5 (v0.10.2) + C1.6-B (85c6762).
+  sample_*.json retained as offline fallback (soft-retire).
 
 ### 2.2 Chưa hoàn chỉnh
 
@@ -438,7 +441,7 @@ Mục tiêu: Student Android consume backend exam content thực sự, retire lo
 | C1.6-A | Backend public student exam endpoints: list, detail, per-question delivery via session | ✅ Done (2026-05-22) — merged to main at 8a85b9f |
 | C1.6-A.5 | Session start response enhancement: orderedQuestionIds field — unblocks C1.6-B Android question delivery | ✅ Done (2026-05-22) — merged to main at 863a2e6 |
 | C1.6-B | Android student integration: replace `LocalExamDataSource` with backend (local kept as offline fallback) | ✅ Done (2026-05-23) — merged to main at ca4b6f2 |
-| C1.6-C | Closeout: smoke + docs + retire `sample_*.json` per C3.4 decision | 📋 Planned |
+| C1.6-C | Closeout: smoke + docs + retire `sample_*.json` per C3.4 decision | ✅ Done (2026-05-24) — Phase C1.6 closed; sample_*.json retained as offline fallback |
 
 Coordinator decisions (pre-batch):
 - Auth model: `hasRole('STUDENT')` for both list + detail; 404 for non-PUBLISHED (anti-enumeration).
