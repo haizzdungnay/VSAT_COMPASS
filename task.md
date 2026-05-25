@@ -81,6 +81,7 @@ Mục tiêu cuối:
   C1.6-A (v0.10.1) + C1.6-A.5 (v0.10.2) + C1.6-B (85c6762).
   sample_*.json retained as offline fallback (soft-retire).
 - [x] APK-1.1 hotfix — added Properties import to app/build.gradle.kts. Fixed Kotlin DSL unresolved reference. Gradle sync + signingReport restored.
+- [x] APK-2 first release build verified — app-release.apk produced and signed. android/v0.1.0 tag pending post-merge.
 
 ### 2.2 Chưa hoàn chỉnh
 
@@ -701,9 +702,8 @@ Mỗi khi hoàn thành một task:
 
 | ID | Hang muc | Trang thai | Ghi chu |
 |----|----------|------------|---------|
-| APK-1 | Release Config Foundation | In progress | signing config, ProGuard/R8, versionCode=1/versionName=0.1.0, release runbook |
-| APK-1.1 | Hotfix build.gradle.kts imports | 🟡 In progress | Fix Kotlin DSL unresolved java.util.Properties / java.io.FileInputStream. |
-| APK-2 | Release Build Verification | TODO | Actual assembleRelease + APK smoke -- deferred |
+| APK-1 | Release Config Foundation | ✅ Done — cf07da37 (APK-1 merge) + 02ef93be (APK-1.1 hotfix merge) | signing config, ProGuard/R8, versionCode=1/versionName=0.1.0, release runbook |
+| APK-1.1 | Hotfix build.gradle.kts imports | ✅ Done — 02ef93be | Fix Kotlin DSL unresolved java.util.Properties / java.io.FileInputStream. |
+| APK-2 | Release Build Verification + First APK | 🟡 In progress | assembleRelease verified, android/v0.1.0 pending tag after merge |
 
 - [x] APK-1 release config foundation prepared -- signing, ProGuard/R8, versionCode=1/versionName=0.1.0, release runbook. Merge pending.
-

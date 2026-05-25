@@ -377,12 +377,11 @@ Các phần timer, chọn đáp án, bookmark, chấm điểm, hiển thị kế
 
 See [docs/ANDROID_RELEASE.md](docs/ANDROID_RELEASE.md) for the full release runbook.
 
-- Android APK tags use the scheme `android/vX.Y.Z` (e.g. `android/v0.1.0`).
+- Android APK tags use the scheme `android/vX.Y.Z` (first release: `android/v0.1.0`).
 - Backend runtime tags `v0.10.x` are independent from Android APK tags.
-- First APK track starts at `android/v0.1.0`.
-- APK-1 (this branch) only prepares release config (signing, ProGuard/R8, versioning).
-  APK-2 handles actual release build verification and produces a sideloadable APK.
-- Play Store / Google Play Console setup is deferred until the app is feature-complete.
+- Release APK is distributed as a sideload file; Play Console setup is deferred.
+- APK-1 (signing config + ProGuard) and APK-1.1 (Kotlin DSL hotfix) are merged to main.
+- APK-2: first `assembleRelease` verified; `android/v0.1.0` tagged at merge commit.
 
 ---
 

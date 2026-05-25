@@ -15,20 +15,29 @@
 - JDK 17+
 - Android SDK 36
 - Gradle wrapper from repo (`./gradlew` or `gradlew.bat`)
-- Release keystore stored **outside** the repository
+- Release keystore available locally
+
+### PKCS12 Keystore Note (JDK 9+)
+
+Android Studio's bundled JBR uses JDK 17+ which defaults to PKCS12 keystore format.
+PKCS12 requires that `keyPassword` equals `storePassword` — the key-entry protection
+always derives from the store password. Use the **same password** for both
+`storePassword` and `keyPassword` in `keystore.properties`.
 
 ---
 
 ## One-Time Keystore Generation
 
-Run once to generate the release keystore. Store it **outside** the repo.
+Run once to generate the release keystore. The release keystore may be placed at the
+repo root (`vsat-release.keystore`). It is covered by `.gitignore` (`*.keystore`
+rule). Never run `git add -A` without checking that no keystore file appears in the
+staged set.
 
 ```
 keytool -genkey -v -keystore vsat-release.keystore -alias vsat -keyalg RSA -keysize 2048 -validity 10000
 ```
 
 > **WARNING:**
-> - Store the keystore file outside the repository directory.
 > - Do **not** commit the keystore to version control.
 > - Back up the keystore securely (e.g., password manager, encrypted storage).
 > - **Losing the keystore** means future APK updates signed with the same key are not possible.
@@ -71,6 +80,10 @@ cd <repo-root>
 ```bat
 gradlew.bat assembleRelease
 ```
+
+Release APK output: `app/build/outputs/apk/release/app-release.apk`.
+This file is gitignored and should NOT be committed to git.
+Distribute via direct file transfer (sideload) to test devices.
 
 If `keystore.properties` is missing, the release build type will not have a signing config wired.
 Gradle sync and debug builds will still work without `keystore.properties`.
