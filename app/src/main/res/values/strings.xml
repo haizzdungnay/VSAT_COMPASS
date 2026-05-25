@@ -46,6 +46,14 @@
     <string name="home_stats_time_hours">%1$dh%2$dm</string>
     <string name="home_stats_time_zero">0ph</string>
     <string name="home_stats_score_empty">--</string>
+    <string name="upcoming_exam_date_pattern">dd/MM/yyyy, HH:mm</string>
+    <string name="suggestion_duration_format">%1$d phút</string>
+    <string name="suggestion_questions_format">%1$d câu</string>
+    
+    <string name="menu_home">Trang chủ</string>
+    <string name="menu_practice">Luyện tập</string>
+    <string name="menu_stats">Thống kê</string>
+    <string name="menu_profile">Tài khoản</string>
 
     <!-- ── Relative time labels ── -->
     <string name="time_just_now">vừa xong</string>

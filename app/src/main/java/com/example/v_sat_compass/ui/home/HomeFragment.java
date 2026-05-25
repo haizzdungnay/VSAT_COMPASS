@@ -128,6 +128,10 @@ public class HomeFragment extends Fragment {
             if (binding == null) return;
 
             binding.tvTotalExams.setText(String.valueOf(stats.totalAttempts));
+            
+            // Set dynamic average score and progress bar value from repository data
+            binding.progressScore.setProgress(stats.avgScore);
+            binding.tvScoreValue.setText(String.valueOf(stats.avgScore));
 
             if (stats.totalAttempts > 0) {
                 binding.tvAvgScore.setText(String.valueOf(stats.avgScore));
@@ -141,9 +145,6 @@ public class HomeFragment extends Fragment {
                             getString(R.string.home_stats_time_hours,
                                     totalMins / 60, totalMins % 60));
                 }
-
-                binding.progressScore.setProgress(stats.avgScore);
-                binding.tvScoreValue.setText(String.valueOf(stats.avgScore));
             } else {
                 binding.tvAvgScore.setText(getString(R.string.home_stats_score_empty));
                 binding.tvTotalTime.setText(getString(R.string.home_stats_time_zero));
@@ -158,18 +159,27 @@ public class HomeFragment extends Fragment {
         ExamHistoryRepository.getInstance().getRecent(requireContext(), 1, recent -> {
             if (binding == null) return;
             if (!recent.isEmpty()) {
+                binding.tvPracticeHeader.setVisibility(View.VISIBLE);
+                binding.cardContinuePractice.setVisibility(View.VISIBLE);
+
                 ExamHistoryEntry last = recent.get(0);
                 binding.tvPracticeTitle.setText(last.getExamTitle());
                 int pct = last.getTotalQuestions() > 0
                         ? (int) (last.getCorrectCount() * 100.0 / last.getTotalQuestions()) : 0;
                 binding.progressPractice.setProgress(pct);
                 binding.tvPracticeProgress.setText(pct + "%");
-                binding.cardContinuePractice.setOnClickListener(v -> {
+                
+                View.OnClickListener clickListener = v -> {
                     if (getContext() == null) return;
                     Exam exam = LocalExamDataSource.getInstance()
                             .getExamDetail(requireContext(), last.getExamId());
                     if (exam != null) navigateToExamDetail(exam);
-                });
+                };
+                binding.cardContinuePractice.setOnClickListener(clickListener);
+                binding.btnContinuePractice.setOnClickListener(clickListener);
+            } else {
+                binding.tvPracticeHeader.setVisibility(View.GONE);
+                binding.cardContinuePractice.setVisibility(View.GONE);
             }
         });
     }

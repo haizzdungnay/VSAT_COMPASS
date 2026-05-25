@@ -114,6 +114,7 @@
                             android:textStyle="bold" />
 
                         <TextView
+                            android:id="@+id/tvSpaceGeometryPercent"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="45%"
@@ -123,6 +124,7 @@
                     </LinearLayout>
 
                     <ProgressBar
+                        android:id="@+id/pbSpaceGeometry"
                         style="@android:style/Widget.ProgressBar.Horizontal"
                         android:layout_width="match_parent"
                         android:layout_height="8dp"
@@ -132,6 +134,7 @@
                         android:progressDrawable="@drawable/progress_green" />
 
                     <TextView
+                        android:id="@+id/tvSpaceGeometryLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
@@ -140,6 +143,7 @@
                         android:textSize="12sp" />
 
                     <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSpaceGeometryPractice"
                         android:layout_width="match_parent"
                         android:layout_height="44dp"
                         android:layout_marginTop="10dp"
@@ -187,6 +191,7 @@
                             android:textStyle="bold" />
 
                         <TextView
+                            android:id="@+id/tvLogarithmPercent"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="60%"
@@ -196,6 +201,7 @@
                     </LinearLayout>
 
                     <ProgressBar
+                        android:id="@+id/pbLogarithm"
                         style="@android:style/Widget.ProgressBar.Horizontal"
                         android:layout_width="match_parent"
                         android:layout_height="8dp"
@@ -205,6 +211,7 @@
                         android:progressDrawable="@drawable/progress_orange" />
 
                     <TextView
+                        android:id="@+id/tvLogarithmLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
@@ -213,6 +220,7 @@
                         android:textSize="12sp" />
 
                     <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnLogarithmPractice"
                         android:layout_width="match_parent"
                         android:layout_height="44dp"
                         android:layout_marginTop="10dp"
@@ -277,6 +285,7 @@
                                 android:textStyle="bold" />
 
                             <TextView
+                                android:id="@+id/tvAlgebraPercent"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="80%"
@@ -285,6 +294,7 @@
                         </LinearLayout>
 
                         <ProgressBar
+                            android:id="@+id/pbAlgebra"
                             style="@android:style/Widget.ProgressBar.Horizontal"
                             android:layout_width="match_parent"
                             android:layout_height="6dp"
@@ -295,6 +305,7 @@
                     </LinearLayout>
 
                     <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnAlgebraPractice"
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                         android:layout_width="wrap_content"
                         android:layout_height="36dp"
@@ -351,6 +362,7 @@
                                 android:textStyle="bold" />
 
                             <TextView
+                                android:id="@+id/tvCalculusPercent"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="50%"
@@ -359,6 +371,7 @@
                         </LinearLayout>
 
                         <ProgressBar
+                            android:id="@+id/pbCalculus"
                             style="@android:style/Widget.ProgressBar.Horizontal"
                             android:layout_width="match_parent"
                             android:layout_height="6dp"
@@ -369,6 +382,7 @@
                     </LinearLayout>
 
                     <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnCalculusPractice"
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                         android:layout_width="wrap_content"
                         android:layout_height="36dp"
@@ -425,6 +439,7 @@
                                 android:textStyle="bold" />
 
                             <TextView
+                                android:id="@+id/tvProbabilityPercent"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="30%"
@@ -433,6 +448,7 @@
                         </LinearLayout>
 
                         <ProgressBar
+                            android:id="@+id/pbProbability"
                             style="@android:style/Widget.ProgressBar.Horizontal"
                             android:layout_width="match_parent"
                             android:layout_height="6dp"
@@ -443,6 +459,7 @@
                     </LinearLayout>
 
                     <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnProbabilityPractice"
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                         android:layout_width="wrap_content"
                         android:layout_height="36dp"
@@ -500,6 +517,7 @@
                                 android:textStyle="bold" />
 
                             <TextView
+                                android:id="@+id/tvPhysicsPercent"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="70%"
@@ -508,6 +526,7 @@
                         </LinearLayout>
 
                         <ProgressBar
+                            android:id="@+id/pbPhysics"
                             style="@android:style/Widget.ProgressBar.Horizontal"
                             android:layout_width="match_parent"
                             android:layout_height="6dp"
@@ -518,6 +537,7 @@
                     </LinearLayout>
 
                     <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnPhysicsPractice"
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                         android:layout_width="wrap_content"
                         android:layout_height="36dp"

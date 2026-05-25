@@ -3,55 +3,49 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#1A1A4E"
-    android:fillViewport="true">
+    android:background="@color/background"
+    android:fillViewport="true"
+    android:fitsSystemWindows="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Header: dark navy section -->
+        <!-- Header: now light background section matching mockup -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:paddingHorizontal="20dp"
-            android:paddingTop="16dp"
+            android:paddingTop="12dp"
             android:paddingBottom="24dp">
 
-            <!-- Top bar: avatar + app name -->
-            <LinearLayout
+            <!-- Top bar: avatar + centered app name -->
+            <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:gravity="center_vertical">
 
                 <de.hdodenhof.circleimageview.CircleImageView
                     android:id="@+id/ivAvatar"
                     android:layout_width="36dp"
                     android:layout_height="36dp"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
                     android:src="@android:drawable/ic_menu_myplaces"
-                    app:civ_border_color="@color/white"
+                    app:civ_border_color="@color/text_primary"
                     app:civ_border_width="1.5dp" />
 
                 <TextView
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="12dp"
+                    android:layout_centerInParent="true"
                     android:text="V-SAT Compass"
-                    android:textColor="@color/white"
+                    android:textColor="@color/text_primary"
                     android:textSize="17sp"
                     android:textStyle="bold" />
-
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_share"
-                    android:tint="#80FFFFFF"
-                    android:contentDescription="Chia sẻ" />
-            </LinearLayout>
+            </RelativeLayout>
 
             <!-- Greeting -->
             <TextView
@@ -60,24 +54,25 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:text="Chào buổi sáng, bạn!"
-                android:textColor="@color/white"
+                android:textColor="@color/text_primary"
                 android:textSize="24sp"
                 android:textStyle="bold" />
 
-            <!-- Score gauge card -->
+            <!-- Score gauge card with gradient background -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 app:cardCornerRadius="20dp"
-                app:cardElevation="6dp"
-                app:cardBackgroundColor="@color/white">
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="@android:color/transparent">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:orientation="vertical"
+                    android:background="@drawable/bg_gradient_card"
                     android:paddingTop="24dp"
                     android:paddingBottom="20dp"
                     android:paddingHorizontal="16dp">
@@ -96,7 +91,7 @@
                             android:indeterminate="false"
                             android:max="1200"
                             android:progress="850"
-                            android:progressDrawable="@drawable/circular_progress"
+                            android:progressDrawable="@drawable/circular_progress_white"
                             android:rotation="180" />
 
                         <!-- Score text centered in arc -->
@@ -117,7 +112,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="850"
-                                    android:textColor="@color/primary"
+                                    android:textColor="@color/white"
                                     android:textSize="40sp"
                                     android:textStyle="bold" />
 
@@ -125,7 +120,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="/1200"
-                                    android:textColor="@color/text_secondary"
+                                    android:textColor="#CCFFFFFF"
                                     android:textSize="16sp"
                                     android:layout_marginBottom="6dp" />
                             </LinearLayout>
@@ -137,7 +132,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
                         android:text="Điểm tổng quan"
-                        android:textColor="@color/text_secondary"
+                        android:textColor="#CCFFFFFF"
                         android:textSize="13sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -148,7 +143,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:text="Đề thi sắp tới"
-                android:textColor="@color/white"
+                android:textColor="@color/text_primary"
                 android:textSize="17sp"
                 android:textStyle="bold" />
 
@@ -168,17 +163,18 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="#F5F5FA"
+            android:background="@color/background"
             android:paddingHorizontal="16dp"
             android:paddingTop="20dp"
             android:paddingBottom="20dp">
 
-            <!-- Quick Stats Row -->
+            <!-- Quick Stats Row (Hidden per mockup in Ảnh 2) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="20dp">
+                android:layout_marginBottom="20dp"
+                android:visibility="gone">
 
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="0dp"
@@ -276,6 +272,7 @@
 
             <!-- Continue Practice section -->
             <TextView
+                android:id="@+id/tvPracticeHeader"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Tiếp tục luyện tập"
@@ -338,7 +335,7 @@
                                 android:layout_weight="1"
                                 android:max="100"
                                 android:progress="60"
-                                android:progressDrawable="@drawable/progress_green" />
+                                android:progressDrawable="@drawable/progress_purple" />
 
                             <TextView
                                 android:id="@+id/tvPracticeProgress"
@@ -359,7 +356,8 @@
                         android:text="Tiếp tục"
                         android:textAllCaps="false"
                         android:textSize="12sp"
-                        app:cornerRadius="8dp" />
+                        app:cornerRadius="8dp"
+                        app:backgroundTint="@color/primary_dark" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

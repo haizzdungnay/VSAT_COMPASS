@@ -39,8 +39,16 @@ public class UpcomingExamAdapter extends RecyclerView.Adapter<UpcomingExamAdapte
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Exam exam = exams.get(position);
-        holder.tvTitle.setText(exam.getTitle() != null ? exam.getTitle() : "Đề thi");
-        holder.tvInfo.setText(exam.getDurationMinutes() + " phút • " + exam.getTotalQuestions() + " câu");
+        holder.tvTitle.setText(exam.getTitle() != null ? exam.getTitle() : "");
+        
+        long baseTimestamp = 1715734800000L; // 15/05/2024, 08:00
+        long examId = exam.getId() != null ? exam.getId() : 1;
+        long timeOffset = (examId - 1) * 24L * 60 * 60 * 1000; // 1 day offset per exam to differentiate them
+        java.util.Date scheduledDate = new java.util.Date(baseTimestamp + timeOffset);
+        String pattern = holder.itemView.getContext().getString(R.string.upcoming_exam_date_pattern);
+        String formattedDate = android.text.format.DateFormat.format(pattern, scheduledDate).toString();
+        holder.tvInfo.setText(formattedDate);
+
         holder.tvSubject.setText(exam.getSubjectName() != null ? exam.getSubjectName() : "");
         holder.card.setOnClickListener(v -> {
             if (listener != null) listener.onExamClick(exam);

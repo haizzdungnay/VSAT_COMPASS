@@ -3,17 +3,17 @@
     <item
         android:id="@+id/nav_home"
         android:icon="@drawable/ic_home"
-        android:title="Trang chủ" />
+        android:title="@string/menu_home" />
     <item
         android:id="@+id/nav_exam"
-        android:icon="@drawable/ic_exam"
-        android:title="Kho đề" />
+        android:icon="@drawable/ic_practice"
+        android:title="@string/menu_practice" />
     <item
         android:id="@+id/nav_practice"
-        android:icon="@drawable/ic_practice"
-        android:title="Luyện tập" />
+        android:icon="@drawable/ic_grid"
+        android:title="@string/menu_stats" />
     <item
         android:id="@+id/nav_profile"
         android:icon="@drawable/ic_profile"
-        android:title="Tài khoản" />
+        android:title="@string/menu_profile" />
 </menu>
