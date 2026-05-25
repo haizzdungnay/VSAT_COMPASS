@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### APK Release Track -- APK-2 release build verification (2026-05-25)
+
+- First Android release APK produced via `./gradlew assembleRelease` at main `02ef93be`.
+- APK output: `app/build/outputs/apk/release/app-release.apk` (gitignored, sideload distribution).
+- Signing config: VSAT_COMPASS/vsat-release.keystore, alias vsat, SHA-256 CD:E9:27:B6:...
+- docs/ANDROID_RELEASE.md updated with PKCS12 single-password requirement and keystore location guidance.
+- Tag android/v0.1.0 to be applied to the merge commit after this batch closes.
+- No source code changes; no dependency changes; no backend changes.
+
 ### APK Release Track -- APK-1.1 hotfix build.gradle.kts imports (2026-05-24)
 
 - Hotfix: added `import java.util.Properties` at the top of `app/build.gradle.kts`.
