@@ -30,4 +30,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
             @Param("keyword") String keyword,
             Pageable pageable
     );
+
+    long countByRole(UserRole role);
 }

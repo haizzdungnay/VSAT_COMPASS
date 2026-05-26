@@ -84,6 +84,10 @@ public class AppException extends RuntimeException {
         return new AppException(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED", message);
     }
 
+    public static AppException invalidState(String message) {
+        return new AppException(HttpStatus.CONFLICT, "INVALID_STATE", message);
+    }
+
     // ---- Rate limiting ----
 
     public static AppException rateLimitExceeded() {

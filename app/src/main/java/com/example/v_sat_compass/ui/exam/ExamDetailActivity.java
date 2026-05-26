@@ -9,16 +9,11 @@ import androidx.core.content.ContextCompat;
 
 import com.example.v_sat_compass.R;
 import com.example.v_sat_compass.data.api.ApiClient;
-import com.example.v_sat_compass.data.api.ExamApi;
-import com.example.v_sat_compass.data.local.LocalExamDataSource;
-import com.example.v_sat_compass.data.model.ApiResponse;
 import com.example.v_sat_compass.data.model.Exam;
+import com.example.v_sat_compass.data.repository.ExamRepository;
+import com.example.v_sat_compass.util.NetworkUtils;
 import com.example.v_sat_compass.databinding.ActivityExamDetailBinding;
 import com.example.v_sat_compass.ui.exam.session.ExamSessionActivity;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 public class ExamDetailActivity extends AppCompatActivity {
 
@@ -70,32 +65,32 @@ public class ExamDetailActivity extends AppCompatActivity {
     }
 
     private void loadBackendDetail() {
-        ExamApi api = ApiClient.getClient().create(ExamApi.class);
-        api.getExamDetail(examId).enqueue(new Callback<ApiResponse<Exam>>() {
+        if (!NetworkUtils.isOnline(this)) {
+            loadLocalFallback(null);
+            return;
+        }
+        ExamRepository.getInstance().loadExamDetail(examId, new ExamRepository.ExamCallback() {
             @Override
-            public void onResponse(Call<ApiResponse<Exam>> call, Response<ApiResponse<Exam>> response) {
-                if (response.isSuccessful() && response.body() != null
-                        && response.body().isSuccess() && response.body().getData() != null) {
-                    applyExam(response.body().getData());
-                } else {
-                    loadLocalFallback();
-                }
+            public void onSuccess(Exam exam) {
+                applyExam(exam);
             }
 
             @Override
-            public void onFailure(Call<ApiResponse<Exam>> call, Throwable t) {
-                loadLocalFallback();
+            public void onError(String message) {
+                loadLocalFallback(message);
             }
         });
     }
 
-    private void loadLocalFallback() {
-        Toast.makeText(this, "Dang offline -- dung de mau", Toast.LENGTH_SHORT).show();
-        Exam exam = LocalExamDataSource.getInstance().getExamDetail(this, examId);
+    private void loadLocalFallback(String message) {
+        Toast.makeText(this,
+                message != null ? message : getString(R.string.exam_offline_fallback),
+                Toast.LENGTH_SHORT).show();
+        Exam exam = ExamRepository.getInstance().getLocalExamDetail(this, examId);
         if (exam != null) {
             applyExam(exam);
         } else {
-            Toast.makeText(this, "Khong tim thay de mau offline", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.exam_not_found_offline), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -113,8 +108,9 @@ public class ExamDetailActivity extends AppCompatActivity {
         binding.tvExamSubject.setText(subject != null ? subject : "");
         binding.tvDuration.setText("Thời gian: " + durationMinutes + " phút");
         binding.tvQuestionCount.setText("Số câu: " + totalQuestions);
-        binding.tvDescription.setText(description != null && !description.isEmpty() ? description :
-                "Đề thi mô phỏng bám sát cấu trúc kỳ thi V-SAT chính thức năm 2024. Nội dung bao gồm các phần kiến thức trọng tâm về Đại số, Giải tích, Hình học và Xác suất thống kê, được biên soạn bởi đội ngũ giáo viên giàu kinh nghiệm.");
+        binding.tvDescription.setText(description != null && !description.isEmpty()
+                ? description
+                : getString(R.string.exam_description_empty));
     }
 
     private void toggleSave() {

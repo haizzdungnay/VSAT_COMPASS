@@ -10,6 +10,7 @@ import com.vsatcompass.api.entity.ExamQuestion;
 import com.vsatcompass.api.entity.ExamSession;
 import com.vsatcompass.api.entity.Question;
 import com.vsatcompass.api.entity.QuestionOption;
+import com.vsatcompass.api.entity.SessionAnswer;
 import com.vsatcompass.api.entity.enums.SessionMode;
 import com.vsatcompass.api.entity.enums.SessionStatus;
 import com.vsatcompass.api.exception.AppException;
@@ -17,6 +18,7 @@ import com.vsatcompass.api.repository.ExamQuestionRepository;
 import com.vsatcompass.api.repository.ExamSessionRepository;
 import com.vsatcompass.api.repository.QuestionOptionRepository;
 import com.vsatcompass.api.repository.QuestionRepository;
+import com.vsatcompass.api.repository.SessionAnswerRepository;
 import com.vsatcompass.api.service.SessionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +27,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @Slf4j
@@ -37,6 +42,7 @@ public class SessionServiceImpl implements SessionService {
     private final ExamQuestionRepository examQuestionRepository;
     private final QuestionRepository questionRepository;
     private final QuestionOptionRepository questionOptionRepository;
+    private final SessionAnswerRepository sessionAnswerRepository;
 
     @Override
     @Transactional
@@ -165,12 +171,59 @@ public class SessionServiceImpl implements SessionService {
         session.setTimeSpentSeconds(request.getTimeSpentSeconds());
 
         session = examSessionRepository.save(session);
+        persistClientAnswers(session, request);
 
         log.info("Session {} submitted by user {}: score={}, correct={}/{}",
                 session.getId(), userId, request.getScore(),
                 request.getCorrectCount(), request.getTotalQuestions());
 
         return toSessionInfo(session);
+    }
+
+    private void persistClientAnswers(ExamSession session, SessionRequest.ClientSubmit request) {
+        if (request.getAnswers() == null || request.getAnswers().isEmpty()) {
+            return;
+        }
+
+        Map<Long, Integer> orderByQuestionId = new HashMap<>();
+        for (ExamQuestion examQuestion : examQuestionRepository
+                .findByExamIdOrderByQuestionOrderAscIdAsc(session.getExamId())) {
+            orderByQuestionId.put(examQuestion.getQuestionId(), examQuestion.getQuestionOrder());
+        }
+
+        sessionAnswerRepository.deleteBySessionId(session.getId());
+        OffsetDateTime answeredAt = OffsetDateTime.now();
+        List<SessionAnswer> rows = new ArrayList<>();
+
+        for (SessionRequest.ClientSubmit.ClientSubmitAnswer answer : request.getAnswers()) {
+            if (answer.getQuestionId() == null) {
+                continue;
+            }
+            Long selectedOptionId = answer.getSelectedOptionId();
+            Boolean isCorrect = null;
+            if (selectedOptionId != null) {
+                isCorrect = questionOptionRepository.findById(selectedOptionId)
+                        .map(option -> Boolean.TRUE.equals(option.getIsCorrect()))
+                        .orElse(false);
+            }
+            int questionOrder = answer.getQuestionOrder() != null
+                    ? answer.getQuestionOrder()
+                    : orderByQuestionId.getOrDefault(answer.getQuestionId(), rows.size() + 1);
+
+            rows.add(SessionAnswer.builder()
+                    .sessionId(session.getId())
+                    .questionId(answer.getQuestionId())
+                    .questionOrder(questionOrder)
+                    .selectedOptionId(selectedOptionId)
+                    .isCorrect(isCorrect)
+                    .isBookmarked(Boolean.TRUE.equals(answer.getBookmarked()))
+                    .answeredAt(answeredAt)
+                    .build());
+        }
+
+        if (!rows.isEmpty()) {
+            sessionAnswerRepository.saveAll(rows);
+        }
     }
 
     private SessionResponse.SessionInfo toSessionInfo(ExamSession session) {

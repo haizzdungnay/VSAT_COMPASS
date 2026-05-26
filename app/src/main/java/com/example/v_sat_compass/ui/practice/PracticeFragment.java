@@ -5,43 +5,53 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.example.v_sat_compass.R;
+import com.example.v_sat_compass.data.api.ApiClient;
 import com.example.v_sat_compass.data.local.LocalExamDataSource;
 import com.example.v_sat_compass.data.model.Exam;
 import com.example.v_sat_compass.data.model.ExamHistoryEntry;
 import com.example.v_sat_compass.data.model.Question;
+import com.example.v_sat_compass.data.model.TopicStatsResponse;
 import com.example.v_sat_compass.data.repository.ExamHistoryRepository;
+import com.example.v_sat_compass.data.repository.ExamRepository;
+import com.example.v_sat_compass.data.repository.StudentStatsRepository;
 import com.example.v_sat_compass.databinding.FragmentPracticeBinding;
 import com.example.v_sat_compass.ui.exam.ExamDetailActivity;
+import com.example.v_sat_compass.util.NetworkUtils;
+import com.example.v_sat_compass.util.OfflineDemoDataHelper;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public class PracticeFragment extends Fragment {
 
-    private FragmentPracticeBinding binding;
-
-    private static class TopicProgress {
-        int correct = 0;
-        int total = 0;
-        
-        int getPercentage() {
-            if (total == 0) return 0;
-            return (int) (correct * 100.0 / total);
-        }
+    public interface LabelProvider {
+        String labelFor(int percentage);
     }
+
+    private FragmentPracticeBinding binding;
+    private PracticeTopicAdapter adapter;
+    private final StudentStatsRepository statsRepository = new StudentStatsRepository();
+    private List<Exam> cachedExams = new ArrayList<>();
+    private final boolean backendExamContent = ApiClient.USE_BACKEND_EXAM_CONTENT;
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
         binding = FragmentPracticeBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
@@ -49,179 +59,192 @@ public class PracticeFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        loadPracticeStats();
-        setupPracticeClickListeners();
+        adapter = new PracticeTopicAdapter();
+        adapter.setLabelProvider(this::proficiencyLabel);
+        adapter.setListener(this::openPracticeForTopic);
+        binding.rvPracticeTopics.setLayoutManager(new LinearLayoutManager(requireContext()));
+        binding.rvPracticeTopics.setAdapter(adapter);
+        loadPracticeData();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        loadPracticeStats();
+        loadPracticeData();
     }
 
-    private void loadPracticeStats() {
+    private void loadPracticeData() {
         if (getContext() == null) return;
+        if (!NetworkUtils.isOnline(requireContext())) {
+            preloadExams(this::loadOfflinePracticeData);
+            return;
+        }
+        preloadExams(() -> statsRepository.loadTopicStats(new StudentStatsRepository.TopicStatsCallback() {
+            @Override
+            public void onSuccess(List<TopicStatsResponse> topics) {
+                if (binding == null) return;
+                if (topics.isEmpty()) {
+                    loadLocalTopicStats();
+                } else {
+                    renderTopics(topics);
+                }
+            }
 
-        ExamHistoryRepository.getInstance().getAll(requireContext(), historyList -> {
+            @Override
+            public void onError(String message) {
+                if (binding == null) return;
+                loadLocalTopicStats();
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+            }
+        }));
+    }
+
+    private void loadOfflinePracticeData() {
+        if (binding == null || getContext() == null) return;
+        loadLocalTopicStats(() -> {
             if (binding == null) return;
-
-            Map<String, TopicProgress> progressMap = calculateTopicProgress(historyList);
-            bindProgressData(progressMap);
+            Toast.makeText(requireContext(), R.string.offline_demo_mode, Toast.LENGTH_SHORT).show();
         });
     }
 
-    private Map<String, TopicProgress> calculateTopicProgress(List<ExamHistoryEntry> historyList) {
-        Map<String, TopicProgress> map = new HashMap<>();
-        map.put("Hình học không gian", new TopicProgress());
-        map.put("Logarit & Hàm số mũ", new TopicProgress());
-        map.put("Số học & Đại số", new TopicProgress());
-        map.put("Giải tích", new TopicProgress());
-        map.put("Xác suất & Thống kê", new TopicProgress());
-        map.put("Vật lí hạt nhân", new TopicProgress());
-
-        if (getContext() == null) return map;
-
-        for (ExamHistoryEntry entry : historyList) {
-            Exam examDetail = LocalExamDataSource.getInstance().getExamDetail(requireContext(), entry.getExamId());
-            if (examDetail == null || examDetail.getQuestions() == null) continue;
-
-            Map<Long, Long> selectedAnswers = new HashMap<>();
-            String answersJson = entry.getSelectedAnswersJson();
-            if (answersJson != null && !answersJson.isEmpty()) {
-                try {
-                    Type type = new TypeToken<HashMap<Long, Long>>() {}.getType();
-                    Map<Long, Long> parsed = new Gson().fromJson(answersJson, type);
-                    if (parsed != null) selectedAnswers = parsed;
-                } catch (Exception ignored) {}
+    private void preloadExams(Runnable onDone) {
+        if (!backendExamContent) {
+            cachedExams = ExamRepository.getInstance().getLocalPublishedExams(requireContext());
+            onDone.run();
+            return;
+        }
+        ExamRepository.getInstance().loadPublishedExams(null, new ExamRepository.ExamsCallback() {
+            @Override
+            public void onSuccess(List<Exam> exams) {
+                cachedExams = exams != null ? exams : new ArrayList<>();
+                onDone.run();
             }
 
-            for (Exam.ExamQuestion eq : examDetail.getQuestions()) {
-                Question q = LocalExamDataSource.getInstance().getQuestion(requireContext(), eq.getQuestionId());
-                if (q == null) continue;
-
-                String topicCategory = classifyTopic(q.getTopicName());
-                TopicProgress progress = map.get(topicCategory);
-                if (progress == null) {
-                    progress = new TopicProgress();
-                    map.put(topicCategory, progress);
-                }
-
-                Long selectedOpt = selectedAnswers.get(q.getId());
-                Long correctOpt = LocalExamDataSource.getInstance().getCorrectOptionId(requireContext(), q.getId());
-                boolean isCorrect = selectedOpt != null && selectedOpt.equals(correctOpt);
-
-                progress.total++;
-                if (isCorrect) progress.correct++;
+            @Override
+            public void onError(String message) {
+                cachedExams = ExamRepository.getInstance().getLocalPublishedExams(requireContext());
+                onDone.run();
             }
-        }
-        return map;
+        });
     }
 
-    private String classifyTopic(String topicName) {
-        if (topicName == null) return "Số học & Đại số";
-        String lower = topicName.toLowerCase();
-        if (lower.contains("logarithm") || lower.contains("hàm số mũ") || lower.contains("logarit")) {
-            return "Logarit & Hàm số mũ";
-        }
-        if (lower.contains("đạo hàm") || lower.contains("cực trị") || lower.contains("giới hạn") 
-                || lower.contains("tích phân") || lower.contains("tiệm cận") || lower.contains("diện tích") 
-                || lower.contains("thể tích") || lower.contains("giải tích")) {
-            return "Giải tích";
-        }
-        if (lower.contains("hoán vị") || lower.contains("tổ hợp") || lower.contains("xác suất") 
-                || lower.contains("chỉnh hợp")) {
-            return "Xác suất & Thống kê";
-        }
-        if (lower.contains("vectơ") || lower.contains("tọa độ") || lower.contains("đường thẳng") 
-                || lower.contains("đường tròn") || lower.contains("khoảng cách") || lower.contains("hình học") 
-                || lower.contains("hình cầu") || lower.contains("hình chóp") || lower.contains("elip") 
-                || lower.contains("hình trụ")) {
-            return "Hình học không gian";
-        }
-        if (lower.contains("hạt nhân") || lower.contains("vật lí") || lower.contains("vật lý")) {
-            return "Vật lí hạt nhân";
-        }
-        return "Số học & Đại số";
+    private void loadLocalTopicStats() {
+        loadLocalTopicStats(null);
     }
 
-    private void bindProgressData(Map<String, TopicProgress> progressMap) {
-        // Space Geometry
-        TopicProgress geo = progressMap.get("Hình học không gian");
-        int geoPct = geo != null ? geo.getPercentage() : 0;
-        binding.pbSpaceGeometry.setProgress(geoPct);
-        binding.tvSpaceGeometryPercent.setText(geoPct + "%");
-        binding.tvSpaceGeometryLabel.setText(getProficiencyLabel(geoPct));
-
-        // Logarithm
-        TopicProgress log = progressMap.get("Logarit & Hàm số mũ");
-        int logPct = log != null ? log.getPercentage() : 0;
-        binding.pbLogarithm.setProgress(logPct);
-        binding.tvLogarithmPercent.setText(logPct + "%");
-        binding.tvLogarithmLabel.setText(getProficiencyLabel(logPct));
-
-        // Algebra
-        TopicProgress alg = progressMap.get("Số học & Đại số");
-        int algPct = alg != null ? alg.getPercentage() : 0;
-        binding.pbAlgebra.setProgress(algPct);
-        binding.tvAlgebraPercent.setText(algPct + "%");
-
-        // Calculus
-        TopicProgress calc = progressMap.get("Giải tích");
-        int calcPct = calc != null ? calc.getPercentage() : 0;
-        binding.pbCalculus.setProgress(calcPct);
-        binding.tvCalculusPercent.setText(calcPct + "%");
-
-        // Probability
-        TopicProgress prob = progressMap.get("Xác suất & Thống kê");
-        int probPct = prob != null ? prob.getPercentage() : 0;
-        binding.pbProbability.setProgress(probPct);
-        binding.tvProbabilityPercent.setText(probPct + "%");
-
-        // Physics
-        TopicProgress phys = progressMap.get("Vật lí hạt nhân");
-        int physPct = phys != null ? phys.getPercentage() : 0;
-        binding.pbPhysics.setProgress(physPct);
-        binding.tvPhysicsPercent.setText(physPct + "%");
-    }
-
-    private String getProficiencyLabel(int pct) {
-        if (pct == 0) {
-            return "Mức độ thành thạo: 0% - Hãy bắt đầu luyện tập!";
-        } else if (pct < 50) {
-            return "Mức độ thành thạo: " + pct + "% - Cần cố gắng!";
-        } else if (pct < 80) {
-            return "Mức độ thành thạo: " + pct + "% - Tiến bộ tốt!";
-        } else {
-            return "Mức độ thành thạo: " + pct + "% - Rất xuất sắc!";
-        }
-    }
-
-    private void setupPracticeClickListeners() {
-        // Math exam ID = 1
-        View.OnClickListener startMathExam = v -> navigateToExamDetail(1L);
-        binding.btnSpaceGeometryPractice.setOnClickListener(startMathExam);
-        binding.btnLogarithmPractice.setOnClickListener(startMathExam);
-        binding.btnAlgebraPractice.setOnClickListener(startMathExam);
-        binding.btnCalculusPractice.setOnClickListener(startMathExam);
-        binding.btnProbabilityPractice.setOnClickListener(startMathExam);
-
-        // Physics exam ID = 3
-        binding.btnPhysicsPractice.setOnClickListener(v -> navigateToExamDetail(3L));
-    }
-
-    private void navigateToExamDetail(long examId) {
+    private void loadLocalTopicStats(@Nullable Runnable afterRender) {
         if (getContext() == null) return;
-        Exam exam = LocalExamDataSource.getInstance().getExamDetail(requireContext(), examId);
-        if (exam != null) {
-            Intent intent = new Intent(getContext(), ExamDetailActivity.class);
-            intent.putExtra("exam_id", exam.getId());
-            intent.putExtra("exam_title", exam.getTitle());
-            intent.putExtra("exam_description", exam.getDescription());
-            intent.putExtra("exam_subject", exam.getSubjectName());
-            intent.putExtra("total_questions", exam.getTotalQuestions());
-            intent.putExtra("duration_minutes", exam.getDurationMinutes());
-            startActivity(intent);
+        ExamHistoryRepository.getInstance().getAll(requireContext(), historyList -> {
+            if (binding == null) return;
+            Map<String, int[]> aggregates = new LinkedHashMap<>();
+            for (ExamHistoryEntry entry : historyList) {
+                Exam examDetail = LocalExamDataSource.getInstance()
+                        .getExamDetail(requireContext(), entry.getExamId());
+                if (examDetail == null || examDetail.getQuestions() == null) continue;
+
+                Map<Long, Long> selectedAnswers = parseAnswers(entry.getSelectedAnswersJson());
+                for (Exam.ExamQuestion eq : examDetail.getQuestions()) {
+                    Question q = LocalExamDataSource.getInstance()
+                            .getQuestion(requireContext(), eq.getQuestionId());
+                    if (q == null) continue;
+                    String topicName = q.getTopicName() != null ? q.getTopicName() : "Khác";
+                    int[] counts = aggregates.computeIfAbsent(topicName, k -> new int[]{0, 0});
+                    counts[1]++;
+                    Long selected = selectedAnswers.get(q.getId());
+                    Long correct = LocalExamDataSource.getInstance()
+                            .getCorrectOptionId(requireContext(), q.getId());
+                    if (selected != null && selected.equals(correct)) {
+                        counts[0]++;
+                    }
+                }
+            }
+            List<TopicStatsResponse> result = new ArrayList<>();
+            for (Map.Entry<String, int[]> entry : aggregates.entrySet()) {
+                int correct = entry.getValue()[0];
+                int total = entry.getValue()[1];
+                TopicStatsResponse row = new TopicStatsResponse();
+                row.setTopicName(entry.getKey());
+                row.setCorrect(correct);
+                row.setTotal(total);
+                row.setPercentage(total > 0 ? (int) Math.round(correct * 100.0 / total) : 0);
+                result.add(row);
+            }
+            if (result.isEmpty() && !NetworkUtils.isOnline(requireContext())) {
+                renderTopics(OfflineDemoDataHelper.getDemoTopicStats());
+            } else {
+                renderTopics(result);
+            }
+            if (afterRender != null) {
+                afterRender.run();
+            }
+        });
+    }
+
+    private void renderTopics(List<TopicStatsResponse> topics) {
+        if (binding == null) return;
+        if (topics.isEmpty()) {
+            binding.tvPracticeEmpty.setVisibility(View.VISIBLE);
+            binding.rvPracticeTopics.setVisibility(View.GONE);
+        } else {
+            binding.tvPracticeEmpty.setVisibility(View.GONE);
+            binding.rvPracticeTopics.setVisibility(View.VISIBLE);
+            adapter.setItems(topics);
         }
+    }
+
+    private Map<Long, Long> parseAnswers(String json) {
+        if (json == null || json.isEmpty()) return new HashMap<>();
+        try {
+            Type type = new TypeToken<HashMap<Long, Long>>() {}.getType();
+            Map<Long, Long> parsed = new Gson().fromJson(json, type);
+            return parsed != null ? parsed : new HashMap<>();
+        } catch (Exception ignored) {
+            return new HashMap<>();
+        }
+    }
+
+    private void openPracticeForTopic(TopicStatsResponse topic) {
+        if (getContext() == null) return;
+        String subjectHint = guessSubjectFromTopic(topic.getTopicName());
+        Exam exam = ExamRepository.getInstance().findExamBySubjectName(cachedExams, subjectHint);
+        if (exam == null && !cachedExams.isEmpty()) {
+            exam = cachedExams.get(0);
+        }
+        if (exam == null) {
+            Toast.makeText(requireContext(), R.string.exam_not_found_offline, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        navigateToExamDetail(exam);
+    }
+
+    private String guessSubjectFromTopic(String topicName) {
+        if (topicName == null) return "Toán";
+        String lower = topicName.toLowerCase();
+        if (lower.contains("english") || lower.contains("tiếng anh")) return "Tiếng Anh";
+        if (lower.contains("vật") || lower.contains("physics")) return "Vật";
+        return "Toán";
+    }
+
+    private void navigateToExamDetail(Exam exam) {
+        Intent intent = new Intent(requireContext(), ExamDetailActivity.class);
+        intent.putExtra("exam_id", exam.getId());
+        intent.putExtra("exam_title", exam.getTitle());
+        intent.putExtra("exam_description", exam.getDescription());
+        intent.putExtra("exam_subject", exam.getSubjectName());
+        intent.putExtra("total_questions", exam.getTotalQuestions());
+        intent.putExtra("duration_minutes", exam.getDurationMinutes());
+        startActivity(intent);
+    }
+
+    private String proficiencyLabel(int pct) {
+        if (pct == 0) {
+            return getString(R.string.practice_proficiency_start);
+        } else if (pct < 50) {
+            return getString(R.string.practice_proficiency_low, pct);
+        } else if (pct < 80) {
+            return getString(R.string.practice_proficiency_mid, pct);
+        }
+        return getString(R.string.practice_proficiency_high, pct);
     }
 
     @Override

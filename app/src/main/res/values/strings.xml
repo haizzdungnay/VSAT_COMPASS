@@ -203,4 +203,24 @@
     <string name="cqd_status_banner_published">Đã xuất bản</string>
     <string name="cqd_status_banner_hidden">Đã ẩn</string>
     <string name="cqd_status_banner_archived">Đã lưu trữ</string>
+
+    <!-- ── Exam list / detail ── -->
+    <string name="exam_offline_fallback">Đang offline — dùng đề mẫu cục bộ</string>
+    <string name="offline_demo_mode">Đang offline — hiển thị dữ liệu demo</string>
+    <string name="offline_demo_action">Chế độ demo (offline) — thay đổi chỉ trên máy này</string>
+    <string name="exam_not_found_offline">Không tìm thấy đề mẫu offline</string>
+    <string name="exam_description_empty">Chưa có mô tả cho đề thi này.</string>
+    <string name="exam_badge_free">Miễn phí</string>
+
+    <!-- ── Admin dashboard ── -->
+    <string name="admin_stats_unavailable">—</string>
+    <string name="admin_stats_load_error">Không tải được thống kê</string>
+
+    <!-- ── Practice ── -->
+    <string name="practice_empty_topics">Chưa có dữ liệu luyện tập. Hãy làm bài thi để cập nhật tiến độ.</string>
+    <string name="practice_start">Luyện ngay</string>
+    <string name="practice_proficiency_start">Mức độ thành thạo: 0%% — Hãy bắt đầu luyện tập!</string>
+    <string name="practice_proficiency_low">Mức độ thành thạo: %1$d%% — Cần cố gắng!</string>
+    <string name="practice_proficiency_mid">Mức độ thành thạo: %1$d%% — Tiến bộ tốt!</string>
+    <string name="practice_proficiency_high">Mức độ thành thạo: %1$d%% — Rất xuất sắc!</string>
 </resources>

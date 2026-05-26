@@ -72,18 +72,21 @@ public class ExamAdapter extends RecyclerView.Adapter<ExamAdapter.ExamViewHolder
             binding.tvQuestionCount.setText(exam.getTotalQuestions() + " câu");
             binding.tvDuration.setText(exam.getDurationMinutes() + " phút");
 
-            // Price display: passingScore == 0 means free
-            double passingScore = exam.getPassingScore();
-            if (passingScore <= 0) {
-                binding.tvSubjectName.setText("Đề miễn phí");
+            String subjectName = exam.getSubjectName() != null ? exam.getSubjectName() : "";
+            boolean isFree = isFreeExam(exam);
+            if (isFree) {
+                String label = subjectName.isEmpty()
+                        ? binding.getRoot().getContext().getString(R.string.exam_badge_free)
+                        : subjectName + " · " + binding.getRoot().getContext().getString(R.string.exam_badge_free);
+                binding.tvSubjectName.setText(label);
                 binding.tvSubjectName.setTextColor(
                         ContextCompat.getColor(binding.getRoot().getContext(), R.color.success));
                 binding.ivPriceIcon.setImageResource(R.drawable.ic_check_circle);
                 binding.ivPriceIcon.setColorFilter(
                         ContextCompat.getColor(binding.getRoot().getContext(), R.color.success));
             } else {
-                String subjectName = exam.getSubjectName() != null ? exam.getSubjectName() : "";
-                binding.tvSubjectName.setText(subjectName.isEmpty() ? "30.000đ" : subjectName);
+                binding.tvSubjectName.setText(subjectName.isEmpty()
+                        ? exam.getPricingType() : subjectName);
                 binding.tvSubjectName.setTextColor(
                         ContextCompat.getColor(binding.getRoot().getContext(), R.color.text_secondary));
                 binding.ivPriceIcon.setImageResource(R.drawable.ic_bookmark);
@@ -98,6 +101,14 @@ public class ExamAdapter extends RecyclerView.Adapter<ExamAdapter.ExamViewHolder
             binding.getRoot().setOnClickListener(v -> {
                 if (listener != null) listener.onStartExam(exam);
             });
+        }
+
+        private boolean isFreeExam(Exam exam) {
+            String pricingType = exam.getPricingType();
+            if (pricingType != null) {
+                return "FREE".equalsIgnoreCase(pricingType);
+            }
+            return exam.getPassingScore() <= 0;
         }
     }
 }

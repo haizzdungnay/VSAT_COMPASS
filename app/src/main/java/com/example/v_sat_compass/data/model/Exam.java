@@ -24,6 +24,12 @@ public class Exam {
     @SerializedName("passing_score")
     private double passingScore;
 
+    @SerializedName("pricing_type")
+    private String pricingType;
+
+    @SerializedName("subject_id")
+    private Long subjectId;
+
     private String status;
 
     private List<ExamQuestion> questions;
@@ -36,7 +42,12 @@ public class Exam {
     public int getTotalQuestions() { return totalQuestions; }
     public int getDurationMinutes() { return durationMinutes; }
     public double getPassingScore() { return passingScore; }
+    public String getPricingType() { return pricingType; }
+    public Long getSubjectId() { return subjectId; }
     public String getStatus() { return status; }
+
+    public void setSubjectName(String subjectName) { this.subjectName = subjectName; }
+    public void setPricingType(String pricingType) { this.pricingType = pricingType; }
     public List<ExamQuestion> getQuestions() { return questions; }
 
     public static class ExamQuestion {

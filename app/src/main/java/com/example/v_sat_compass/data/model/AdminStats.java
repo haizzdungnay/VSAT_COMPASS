@@ -22,10 +22,14 @@ public class AdminStats {
     @SerializedName("total_sessions_today")
     private int totalSessionsToday;
 
+    @SerializedName("sessions_last_7_days")
+    private int[] sessionsLast7Days;
+
     public int getPendingQuestions() { return pendingQuestions; }
     public long getRevenueToday()    { return revenueToday; }
     public int getErrorTickets()     { return errorTickets; }
     public int getTotalExams()       { return totalExams; }
     public int getTotalUsers()       { return totalUsers; }
     public int getTotalSessionsToday() { return totalSessionsToday; }
+    public int[] getSessionsLast7Days() { return sessionsLast7Days; }
 }

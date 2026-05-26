@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -14,36 +15,20 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.v_sat_compass.R;
-import com.example.v_sat_compass.data.api.AdminApi;
-import com.example.v_sat_compass.data.api.ApiClient;
-import com.example.v_sat_compass.data.model.ApiResponse;
 import com.example.v_sat_compass.data.model.UserItem;
+import com.example.v_sat_compass.data.repository.AdminUserRepository;
 import com.example.v_sat_compass.databinding.FragmentAdminUserManagementBinding;
-import com.example.v_sat_compass.util.MockDataHelper;
+import com.example.v_sat_compass.util.NetworkUtils;
+import com.example.v_sat_compass.util.OfflineDemoDataHelper;
 import com.example.v_sat_compass.util.UserRoleHelper;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-
-/**
- * Quản lý người dùng và phân quyền.
- * Quyền: chỉ SUPER_ADMIN
- *
- * Chức năng:
- *   - Xem danh sách người dùng (filter theo role)
- *   - Gán role: STUDENT → COLLABORATOR → CONTENT_ADMIN → SUPER_ADMIN
- *   - Khoá / mở khoá tài khoản
- */
 public class AdminUserManagementFragment extends Fragment {
 
     private FragmentAdminUserManagementBinding binding;
     private AdminUserAdapter adapter;
+    private AdminUserRepository userRepository;
     private String activeRoleFilter = null;
+    private boolean demoMode = false;
 
     @Nullable
     @Override
@@ -57,6 +42,7 @@ public class AdminUserManagementFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        userRepository = new AdminUserRepository();
         adapter = new AdminUserAdapter();
         binding.rvUsers.setLayoutManager(new LinearLayoutManager(requireContext()));
         binding.rvUsers.setAdapter(adapter);
@@ -77,32 +63,49 @@ public class AdminUserManagementFragment extends Fragment {
     }
 
     private void loadUsers() {
+        if (getContext() != null && !NetworkUtils.isOnline(requireContext())) {
+            showDemoUsers();
+            return;
+        }
+        demoMode = false;
         binding.swipeRefresh.setRefreshing(true);
-        AdminApi api = ApiClient.getClient().create(AdminApi.class);
-        api.getUsers(activeRoleFilter, null, null, 0, 50).enqueue(new Callback<ApiResponse<List<UserItem>>>() {
+        userRepository.loadUsers(activeRoleFilter, new AdminUserRepository.UsersCallback() {
             @Override
-            public void onResponse(Call<ApiResponse<List<UserItem>>> call,
-                                   Response<ApiResponse<List<UserItem>>> response) {
+            public void onSuccess(java.util.List<UserItem> users) {
                 if (binding == null) return;
                 binding.swipeRefresh.setRefreshing(false);
-                if (response.isSuccessful() && response.body() != null
-                        && response.body().isSuccess()) {
-                    adapter.setUsers(response.body().getData());
-                } else {
-                    adapter.setUsers(MockDataHelper.getMockUsers(activeRoleFilter));
+                adapter.setUsers(users);
+                boolean empty = users == null || users.isEmpty();
+                binding.tvEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
+                binding.rvUsers.setVisibility(empty ? View.GONE : View.VISIBLE);
+                if (empty) {
+                    binding.tvEmpty.setText("Không có người dùng");
                 }
             }
 
             @Override
-            public void onFailure(Call<ApiResponse<List<UserItem>>> call, Throwable t) {
+            public void onError(String message) {
                 if (binding == null) return;
                 binding.swipeRefresh.setRefreshing(false);
-                adapter.setUsers(MockDataHelper.getMockUsers(activeRoleFilter));
+                adapter.setUsers(java.util.Collections.emptyList());
+                binding.rvUsers.setVisibility(View.GONE);
+                binding.tvEmpty.setVisibility(View.VISIBLE);
+                binding.tvEmpty.setText(message != null ? message : "Không tải được danh sách");
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    /** Dialog gán quyền + khoá tài khoản theo thiết kế stitch */
+    private void showDemoUsers() {
+        demoMode = true;
+        binding.swipeRefresh.setRefreshing(false);
+        java.util.List<UserItem> users = OfflineDemoDataHelper.getDemoUsers(activeRoleFilter);
+        adapter.setUsers(users);
+        binding.rvUsers.setVisibility(View.VISIBLE);
+        binding.tvEmpty.setVisibility(View.GONE);
+        Toast.makeText(requireContext(), R.string.offline_demo_mode, Toast.LENGTH_SHORT).show();
+    }
+
     private void showUserOptionsDialog(UserItem user) {
         final String[] roles = {"Super Admin", "Admin", "Học viên", "CTV"};
         final String[] roleKeys = {
@@ -112,7 +115,7 @@ public class AdminUserManagementFragment extends Fragment {
                 UserRoleHelper.ROLE_COLLABORATOR
         };
 
-        int currentIndex = 2; // default STUDENT
+        int currentIndex = 2;
         for (int i = 0; i < roleKeys.length; i++) {
             if (roleKeys[i].equals(user.getRole())) { currentIndex = i; break; }
         }
@@ -132,29 +135,30 @@ public class AdminUserManagementFragment extends Fragment {
     }
 
     private void updateUserRole(UserItem user, String newRole) {
-        if (user.getId() == null) {
-            android.widget.Toast.makeText(requireContext(),
-                    "Đã cập nhật quyền: " + UserRoleHelper.getRoleDisplayName(newRole), android.widget.Toast.LENGTH_SHORT).show();
+        if (demoMode) {
+            user.setRole(newRole);
+            adapter.notifyDataSetChanged();
+            Toast.makeText(requireContext(), R.string.offline_demo_action, Toast.LENGTH_SHORT).show();
             return;
         }
-        AdminApi api = ApiClient.getClient().create(AdminApi.class);
-        Map<String, String> body = new HashMap<>();
-        body.put("role", newRole);
-        api.updateUserRole(user.getId(), body).enqueue(new Callback<ApiResponse<Void>>() {
+        if (user.getId() == null) {
+            Toast.makeText(requireContext(), "ID người dùng không hợp lệ", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        userRepository.updateRole(user.getId(), newRole, new AdminUserRepository.VoidCallback() {
             @Override
-            public void onResponse(Call<ApiResponse<Void>> call, Response<ApiResponse<Void>> response) {
+            public void onSuccess() {
                 if (binding == null) return;
-                android.widget.Toast.makeText(requireContext(),
+                Toast.makeText(requireContext(),
                         "Đã cập nhật quyền thành " + UserRoleHelper.getRoleDisplayName(newRole),
-                        android.widget.Toast.LENGTH_SHORT).show();
+                        Toast.LENGTH_SHORT).show();
                 loadUsers();
             }
+
             @Override
-            public void onFailure(Call<ApiResponse<Void>> call, Throwable t) {
+            public void onError(String message) {
                 if (binding == null) return;
-                android.widget.Toast.makeText(requireContext(),
-                        "Đã cập nhật quyền (demo).", android.widget.Toast.LENGTH_SHORT).show();
-                loadUsers();
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -165,32 +169,41 @@ public class AdminUserManagementFragment extends Fragment {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Cảnh báo")
                 .setMessage("Bạn có chắc chắn muốn " + action + " tài khoản của "
-                        + user.getFullName() + "? Hành động này không thể hoàn tác.")
-                .setPositiveButton("Khoá", (d, w) -> doLockUser(user, !isLocked))
+                        + user.getFullName() + "?")
+                .setPositiveButton(isLocked ? "Mở khoá" : "Khoá", (d, w) -> doLockUser(user, !isLocked))
                 .setNegativeButton("Huỷ", null)
                 .show();
     }
 
     private void doLockUser(UserItem user, boolean lock) {
-        AdminApi api = ApiClient.getClient().create(AdminApi.class);
-        Call<ApiResponse<Void>> call = lock
-                ? api.lockUser(user.getId())
-                : api.unlockUser(user.getId());
-        call.enqueue(new Callback<ApiResponse<Void>>() {
-            @Override public void onResponse(Call<ApiResponse<Void>> c, Response<ApiResponse<Void>> r) {
+        if (demoMode) {
+            user.setStatus(lock ? "LOCKED" : "ACTIVE");
+            adapter.notifyDataSetChanged();
+            Toast.makeText(requireContext(), R.string.offline_demo_action, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (user.getId() == null) return;
+        AdminUserRepository.VoidCallback callback = new AdminUserRepository.VoidCallback() {
+            @Override
+            public void onSuccess() {
                 if (binding == null) return;
-                android.widget.Toast.makeText(requireContext(),
+                Toast.makeText(requireContext(),
                         lock ? "Đã khoá tài khoản." : "Đã mở khoá tài khoản.",
-                        android.widget.Toast.LENGTH_SHORT).show();
+                        Toast.LENGTH_SHORT).show();
                 loadUsers();
             }
-            @Override public void onFailure(Call<ApiResponse<Void>> c, Throwable t) {
+
+            @Override
+            public void onError(String message) {
                 if (binding == null) return;
-                android.widget.Toast.makeText(requireContext(),
-                        "Thao tác thành công (demo).", android.widget.Toast.LENGTH_SHORT).show();
-                loadUsers();
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
             }
-        });
+        };
+        if (lock) {
+            userRepository.lockUser(user.getId(), callback);
+        } else {
+            userRepository.unlockUser(user.getId(), callback);
+        }
     }
 
     private void updateTabUI() {

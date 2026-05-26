@@ -3,6 +3,8 @@ package com.vsatcompass.api.dto.request;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
+import java.util.List;
+
 public class SessionRequest {
 
     @Data
@@ -35,5 +37,20 @@ public class SessionRequest {
         @Min(value = 0, message = "timeSpentSeconds phải ≥ 0")
         @Max(value = 86400, message = "timeSpentSeconds phải ≤ 86400")
         private Integer timeSpentSeconds;
+
+        /** Optional per-question answers for topic stats and review sync. */
+        private List<ClientSubmitAnswer> answers;
+
+        @Data
+        public static class ClientSubmitAnswer {
+            @NotNull(message = "questionId không được để trống")
+            private Long questionId;
+
+            private Long selectedOptionId;
+
+            private Integer questionOrder;
+
+            private Boolean bookmarked;
+        }
     }
 }

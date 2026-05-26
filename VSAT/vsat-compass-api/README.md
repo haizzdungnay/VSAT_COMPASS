@@ -73,15 +73,15 @@ psql $DATABASE_URL -f vsat_database_schema.sql
 | Module          | Base Path              | Status |
 |-----------------|------------------------|--------|
 | Auth            | `/auth`                | ✅ Done |
-| Subjects        | `/subjects`            | 🔲 TODO |
-| Questions       | `/questions`           | 🔲 TODO |
-| Reviews         | `/reviews`             | 🔲 TODO |
-| Exams           | `/exams`               | 🔲 TODO |
-| Exam Sessions   | `/sessions`            | 🔲 TODO |
-| Student Stats   | `/me/stats`            | 🔲 TODO |
-| Tickets         | `/tickets`             | 🔲 TODO |
-| Dashboard       | `/admin/dashboard`     | 🔲 TODO |
-| User Management | `/admin/users`         | 🔲 TODO |
+| Subjects        | `/subjects`            | ✅ Done |
+| Questions       | `/questions`           | ✅ Done |
+| Reviews         | `/reviews`             | ✅ Done |
+| Exams           | `/exams`               | ✅ Done (public list/detail) |
+| Exam Sessions   | `/sessions`            | ✅ Done (start, client-submit + answers) |
+| Student Stats   | `/my-stats/topics`     | ✅ Done |
+| Tickets         | `/tickets`             | 🔲 TODO (no entity yet) |
+| Dashboard       | `/admin/stats`         | ✅ Done (revenue/tickets return 0 until commerce) |
+| User Management | `/admin/users`         | ✅ Done |
 | Import Excel    | `/import`              | 🔲 Phase 2 |
 | Notifications   | `/me/notifications`    | 🔲 Phase 2 |
 | Commerce        | `/me/wallet`           | 🔲 Defer |

@@ -18,19 +18,14 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.v_sat_compass.R;
 import com.example.v_sat_compass.data.api.ApiClient;
-import com.example.v_sat_compass.data.api.ExamApi;
-import com.example.v_sat_compass.data.local.LocalExamDataSource;
-import com.example.v_sat_compass.data.model.ApiResponse;
 import com.example.v_sat_compass.data.model.Exam;
+import com.example.v_sat_compass.data.repository.ExamRepository;
+import com.example.v_sat_compass.util.NetworkUtils;
 import com.example.v_sat_compass.databinding.FragmentExamBinding;
 import com.example.v_sat_compass.ui.exam.adapter.ExamAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 public class ExamFragment extends Fragment {
 
@@ -148,48 +143,45 @@ public class ExamFragment extends Fragment {
         if (!backendExamContent && clientSideProcessing) {
             binding.progressBar.setVisibility(View.GONE);
             binding.swipeRefresh.setRefreshing(false);
-            allExams = LocalExamDataSource.getInstance().getPublishedExams(requireContext());
+            allExams = ExamRepository.getInstance().getLocalPublishedExams(requireContext());
             applyFilters();
             return;
         }
 
-        ExamApi api = ApiClient.getClient().create(ExamApi.class);
-        api.getPublishedExams(null).enqueue(new Callback<ApiResponse<List<Exam>>>() {
+        if (getContext() != null && !NetworkUtils.isOnline(requireContext())) {
+            binding.progressBar.setVisibility(View.GONE);
+            binding.swipeRefresh.setRefreshing(false);
+            loadOfflineFallback(null);
+            return;
+        }
+
+        ExamRepository.getInstance().loadPublishedExams(null, new ExamRepository.ExamsCallback() {
             @Override
-            public void onResponse(Call<ApiResponse<List<Exam>>> call, Response<ApiResponse<List<Exam>>> response) {
+            public void onSuccess(List<Exam> exams) {
                 if (binding == null) return;
                 binding.progressBar.setVisibility(View.GONE);
                 binding.swipeRefresh.setRefreshing(false);
-
-                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
-                    List<Exam> exams = response.body().getData();
-                    if (exams != null && !exams.isEmpty()) {
-                        allExams = exams;
-                        applyFilters();
-                    } else {
-                        allExams = new ArrayList<>();
-                        applyFilters();
-                    }
-                } else {
-                    loadOfflineFallback();
-                }
+                allExams = exams != null ? exams : new ArrayList<>();
+                applyFilters();
             }
 
             @Override
-            public void onFailure(Call<ApiResponse<List<Exam>>> call, Throwable t) {
+            public void onError(String message) {
                 if (binding == null) return;
                 binding.progressBar.setVisibility(View.GONE);
                 binding.swipeRefresh.setRefreshing(false);
-                loadOfflineFallback();
+                loadOfflineFallback(message);
             }
         });
     }
 
-    private void loadOfflineFallback() {
+    private void loadOfflineFallback(String message) {
         if (getContext() == null || binding == null) return;
-        allExams = LocalExamDataSource.getInstance().getPublishedExams(requireContext());
+        allExams = ExamRepository.getInstance().getLocalPublishedExams(requireContext());
         applyFilters();
-        Toast.makeText(requireContext(), "Dang offline -- dung de mau", Toast.LENGTH_SHORT).show();
+        Toast.makeText(requireContext(),
+                message != null ? message : getString(R.string.exam_offline_fallback),
+                Toast.LENGTH_SHORT).show();
     }
 
     private void navigateToDetail(Exam exam) {

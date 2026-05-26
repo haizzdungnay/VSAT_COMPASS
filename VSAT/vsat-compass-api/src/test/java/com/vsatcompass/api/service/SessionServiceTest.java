@@ -18,6 +18,8 @@ import com.vsatcompass.api.repository.ExamQuestionRepository;
 import com.vsatcompass.api.repository.ExamSessionRepository;
 import com.vsatcompass.api.repository.QuestionOptionRepository;
 import com.vsatcompass.api.repository.QuestionRepository;
+import com.vsatcompass.api.repository.SessionAnswerRepository;
+import com.vsatcompass.api.entity.SessionAnswer;
 import com.vsatcompass.api.service.impl.SessionServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -56,6 +58,7 @@ class SessionServiceTest {
     @Mock ExamQuestionRepository examQuestionRepository;
     @Mock QuestionRepository questionRepository;
     @Mock QuestionOptionRepository questionOptionRepository;
+    @Mock SessionAnswerRepository sessionAnswerRepository;
 
     @InjectMocks SessionServiceImpl sessionService;
 
@@ -261,6 +264,31 @@ class SessionServiceTest {
         assertThat(saved.getWrongCount()).isEqualTo(9);
         assertThat(saved.getAnsweredCount()).isEqualTo(50);
         assertThat(saved.getSkippedCount()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("clientSubmit: persists optional session answers for topic stats")
+    void clientSubmit_withAnswers_persistsSessionAnswers() {
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+        when(examSessionRepository.save(any(ExamSession.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(EXAM_ID))
+                .thenReturn(List.of(examQuestion(QUESTION_ID, 1)));
+        when(questionOptionRepository.findById(301L))
+                .thenReturn(Optional.of(QuestionOption.builder().id(301L).isCorrect(true).build()));
+
+        SessionRequest.ClientSubmit request = submitReq(80.0, 1, 1, 120);
+        SessionRequest.ClientSubmit.ClientSubmitAnswer answer = new SessionRequest.ClientSubmit.ClientSubmitAnswer();
+        answer.setQuestionId(QUESTION_ID);
+        answer.setSelectedOptionId(301L);
+        request.setAnswers(List.of(answer));
+
+        sessionService.clientSubmit(USER_ID, SESSION_ID, request);
+
+        verify(sessionAnswerRepository).deleteBySessionId(SESSION_ID);
+        ArgumentCaptor<List<SessionAnswer>> answersCaptor = ArgumentCaptor.forClass(List.class);
+        verify(sessionAnswerRepository).saveAll(answersCaptor.capture());
+        assertThat(answersCaptor.getValue()).hasSize(1);
+        assertThat(answersCaptor.getValue().get(0).getIsCorrect()).isTrue();
     }
 
     @Test

@@ -68,6 +68,10 @@ public class SubjectRepository {
         }
     }
 
+    public Response<ApiResponse<List<SubjectResponse>>> loadSubjectsSync() throws IOException {
+        return subjectApi.getSubjects().execute();
+    }
+
     public void getSubjects(SubjectCallback callback) {
         subjectApi.getSubjects().enqueue(new Callback<ApiResponse<List<SubjectResponse>>>() {
             @Override

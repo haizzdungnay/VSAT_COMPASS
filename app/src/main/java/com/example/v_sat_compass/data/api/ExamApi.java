@@ -1,9 +1,11 @@
 package com.example.v_sat_compass.data.api;
 
 import com.example.v_sat_compass.data.model.ApiResponse;
-import com.example.v_sat_compass.data.model.Exam;
 import com.example.v_sat_compass.data.model.ExamSession;
+import com.example.v_sat_compass.data.model.PublicExamDetailResponse;
+import com.example.v_sat_compass.data.model.PublicExamSummaryResponse;
 import com.example.v_sat_compass.data.model.Question;
+import com.example.v_sat_compass.data.model.admin.PageResponse;
 import com.example.v_sat_compass.data.model.session.SessionAnswerKeysResponse;
 import com.example.v_sat_compass.data.model.session.SessionQuestionContentResponse;
 
@@ -20,12 +22,14 @@ import retrofit2.http.Query;
 public interface ExamApi {
 
     @GET("exams")
-    Call<ApiResponse<List<Exam>>> getPublishedExams(
-            @Query("subjectId") Long subjectId
+    Call<ApiResponse<PageResponse<PublicExamSummaryResponse>>> getPublishedExams(
+            @Query("subjectId") Long subjectId,
+            @Query("page") int page,
+            @Query("size") int size
     );
 
     @GET("exams/{id}")
-    Call<ApiResponse<Exam>> getExamDetail(@Path("id") Long examId);
+    Call<ApiResponse<PublicExamDetailResponse>> getExamDetail(@Path("id") Long examId);
 
     @POST("sessions/start")
     Call<ApiResponse<ExamSession>> startSession(@Body Map<String, Long> body);
@@ -43,7 +47,7 @@ public interface ExamApi {
     @POST("sessions/{sessionId}/client-submit")
     Call<ApiResponse<ExamSession>> submitClientResult(
             @Path("sessionId") Long sessionId,
-            @Body Map<String, Object> body
+            @Body com.example.v_sat_compass.data.model.ClientSubmitRequest body
     );
 
     @GET("sessions/{sessionId}")

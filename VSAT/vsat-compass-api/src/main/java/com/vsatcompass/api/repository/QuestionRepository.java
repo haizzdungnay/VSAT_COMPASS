@@ -20,4 +20,6 @@ public interface QuestionRepository extends JpaRepository<Question, Long>,
     Page<Question> findByCreatedByAndStatusOrderByUpdatedAtDesc(Long createdBy, QuestionStatus status, Pageable pageable);
 
     Page<Question> findByStatusOrderByUpdatedAtDesc(QuestionStatus status, Pageable pageable);
+
+    long countByStatus(QuestionStatus status);
 }

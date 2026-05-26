@@ -22,6 +22,7 @@ import com.example.v_sat_compass.data.api.ApiClient;
 import com.example.v_sat_compass.data.api.ExamApi;
 import com.example.v_sat_compass.data.local.LocalExamDataSource;
 import com.example.v_sat_compass.data.model.ApiResponse;
+import com.example.v_sat_compass.data.model.ClientSubmitRequest;
 import com.example.v_sat_compass.data.model.Exam;
 import com.example.v_sat_compass.data.model.ExamHistoryEntry;
 import com.example.v_sat_compass.data.model.ExamSession;
@@ -143,7 +144,14 @@ public class ExamSessionActivity extends AppCompatActivity {
                     ExamSession session = response.body().getData();
                     sessionId = session.getId();
                     hasRemoteSession = true;
-                    loadExamDetail();
+                    questionIds.clear();
+                    questionIds.addAll(session.getOrderedQuestionIds());
+                    if (questionIds.isEmpty()) {
+                        loadExamDetailFromLocal();
+                        return;
+                    }
+                    totalQuestions = questionIds.size();
+                    loadQuestion(0);
                     startTimer();
                 } else {
                     Toast.makeText(ExamSessionActivity.this, "Không thể bắt đầu bài thi", Toast.LENGTH_SHORT).show();
@@ -242,29 +250,6 @@ public class ExamSessionActivity extends AppCompatActivity {
             binding.tvSyncStatus.setText("Sync: local-only");
             binding.tvSyncStatus.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
         }
-    }
-
-    private void loadExamDetail() {
-        examApi.getExamDetail(examId).enqueue(new Callback<ApiResponse<Exam>>() {
-            @Override
-            public void onResponse(Call<ApiResponse<Exam>> call, Response<ApiResponse<Exam>> response) {
-                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
-                    Exam exam = response.body().getData();
-                    if (exam.getQuestions() != null) {
-                        for (Exam.ExamQuestion q : exam.getQuestions()) {
-                            questionIds.add(q.getQuestionId());
-                        }
-                        totalQuestions = questionIds.size();
-                        loadQuestion(0);
-                    }
-                }
-            }
-
-            @Override
-            public void onFailure(Call<ApiResponse<Exam>> call, Throwable t) {
-                loadExamDetailFromLocal();
-            }
-        });
     }
 
     private void loadExamDetailFromLocal() {
@@ -812,11 +797,19 @@ public class ExamSessionActivity extends AppCompatActivity {
 
         // POST final result to backend (fire-and-forget; result is already shown to user)
         if (hasRemoteSession && sessionId != null) {
-            Map<String, Object> resultBody = new HashMap<>();
-            resultBody.put("correctAnswers", correct);
-            resultBody.put("totalQuestions", total);
-            resultBody.put("scorePercentage", score);
-            resultBody.put("timeSpentSeconds", timeSpentSeconds);
+            List<ClientSubmitRequest.AnswerItem> answerItems = new ArrayList<>();
+            for (int i = 0; i < questionIds.size(); i++) {
+                Long qId = questionIds.get(i);
+                Long selected = selectedAnswers.get(qId);
+                answerItems.add(new ClientSubmitRequest.AnswerItem(
+                        qId,
+                        selected,
+                        i + 1,
+                        bookmarkedQuestions.contains(qId)
+                ));
+            }
+            ClientSubmitRequest resultBody = new ClientSubmitRequest(
+                    score, correct, total, timeSpentSeconds, answerItems);
             examApi.submitClientResult(sessionId, resultBody).enqueue(new Callback<ApiResponse<ExamSession>>() {
                 @Override public void onResponse(Call<ApiResponse<ExamSession>> call, Response<ApiResponse<ExamSession>> response) {}
                 @Override public void onFailure(Call<ApiResponse<ExamSession>> call, Throwable t) {}

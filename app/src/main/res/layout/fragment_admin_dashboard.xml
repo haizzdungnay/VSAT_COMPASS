@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background">
@@ -91,7 +92,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="24"
+                        android:text="@string/admin_stats_unavailable"
+                        tools:text="0"
                         android:textColor="@color/text_primary"
                         android:textSize="28sp"
                         android:textStyle="bold" />
@@ -133,7 +135,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="2.5M"
+                        android:text="@string/admin_stats_unavailable"
+                        tools:text="0"
                         android:textColor="@color/text_primary"
                         android:textSize="22sp"
                         android:textStyle="bold" />
@@ -175,7 +178,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="5"
+                        android:text="@string/admin_stats_unavailable"
+                        tools:text="0"
                         android:textColor="@color/text_primary"
                         android:textSize="28sp"
                         android:textStyle="bold" />
@@ -334,6 +338,7 @@
 
         <!-- Biểu đồ lượt thi (placeholder) -->
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardChart"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
@@ -356,7 +361,6 @@
                     android:textSize="14sp"
                     android:textStyle="bold" />
 
-                <!-- Placeholder bars -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="120dp"
@@ -364,13 +368,13 @@
                     android:orientation="horizontal"
                     android:paddingTop="8dp">
 
-                    <View android:layout_width="0dp" android:layout_height="40dp" android:layout_weight="1" android:layout_marginHorizontal="4dp" android:background="@color/primary_light" />
-                    <View android:layout_width="0dp" android:layout_height="65dp" android:layout_weight="1" android:layout_marginHorizontal="4dp" android:background="@color/primary_light" />
-                    <View android:layout_width="0dp" android:layout_height="50dp" android:layout_weight="1" android:layout_marginHorizontal="4dp" android:background="@color/primary_light" />
-                    <View android:layout_width="0dp" android:layout_height="80dp" android:layout_weight="1" android:layout_marginHorizontal="4dp" android:background="@color/primary_light" />
-                    <View android:layout_width="0dp" android:layout_height="100dp" android:layout_weight="1" android:layout_marginHorizontal="4dp" android:background="@color/primary" />
-                    <View android:layout_width="0dp" android:layout_height="90dp" android:layout_weight="1" android:layout_marginHorizontal="4dp" android:background="@color/primary" />
-                    <View android:layout_width="0dp" android:layout_height="110dp" android:layout_weight="1" android:layout_marginHorizontal="4dp" android:background="@color/primary" />
+                    <View android:id="@+id/barDay0" android:layout_width="0dp" android:layout_height="8dp" android:layout_weight="1" android:layout_marginHorizontal="4dp" android:background="@color/primary_light" />
+                    <View android:id="@+id/barDay1" android:layout_width="0dp" android:layout_height="8dp" android:layout_weight="1" android:layout_marginHorizontal="4dp" android:background="@color/primary_light" />
+                    <View android:id="@+id/barDay2" android:layout_width="0dp" android:layout_height="8dp" android:layout_weight="1" android:layout_marginHorizontal="4dp" android:background="@color/primary_light" />
+                    <View android:id="@+id/barDay3" android:layout_width="0dp" android:layout_height="8dp" android:layout_weight="1" android:layout_marginHorizontal="4dp" android:background="@color/primary_light" />
+                    <View android:id="@+id/barDay4" android:layout_width="0dp" android:layout_height="8dp" android:layout_weight="1" android:layout_marginHorizontal="4dp" android:background="@color/primary" />
+                    <View android:id="@+id/barDay5" android:layout_width="0dp" android:layout_height="8dp" android:layout_weight="1" android:layout_marginHorizontal="4dp" android:background="@color/primary" />
+                    <View android:id="@+id/barDay6" android:layout_width="0dp" android:layout_height="8dp" android:layout_weight="1" android:layout_marginHorizontal="4dp" android:background="@color/primary" />
                 </LinearLayout>
 
                 <LinearLayout

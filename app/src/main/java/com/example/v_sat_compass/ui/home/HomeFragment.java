@@ -16,10 +16,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.example.v_sat_compass.R;
 import com.example.v_sat_compass.data.api.ApiClient;
 import com.example.v_sat_compass.data.api.AuthApi;
-import com.example.v_sat_compass.data.api.ExamApi;
-import com.example.v_sat_compass.data.local.LocalExamDataSource;
 import com.example.v_sat_compass.data.model.ApiResponse;
 import com.example.v_sat_compass.data.model.Exam;
+import com.example.v_sat_compass.data.model.UserProfile;
+import com.example.v_sat_compass.data.repository.ExamRepository;
+import com.example.v_sat_compass.util.NetworkUtils;
 import com.example.v_sat_compass.data.model.ExamHistoryEntry;
 import com.example.v_sat_compass.data.model.UserProfile;
 import com.example.v_sat_compass.data.repository.ExamHistoryRepository;
@@ -169,12 +170,7 @@ public class HomeFragment extends Fragment {
                 binding.progressPractice.setProgress(pct);
                 binding.tvPracticeProgress.setText(pct + "%");
                 
-                View.OnClickListener clickListener = v -> {
-                    if (getContext() == null) return;
-                    Exam exam = LocalExamDataSource.getInstance()
-                            .getExamDetail(requireContext(), last.getExamId());
-                    if (exam != null) navigateToExamDetail(exam);
-                };
+                View.OnClickListener clickListener = v -> openExamById(last.getExamId());
                 binding.cardContinuePractice.setOnClickListener(clickListener);
                 binding.btnContinuePractice.setOnClickListener(clickListener);
             } else {
@@ -193,36 +189,61 @@ public class HomeFragment extends Fragment {
 
     private void loadExams() {
         if (!backendExamContent && clientSideProcessing) {
-            renderExams(LocalExamDataSource.getInstance().getPublishedExams(requireContext()));
+            renderExams(ExamRepository.getInstance().getLocalPublishedExams(requireContext()));
             return;
         }
 
-        ExamApi examApi = ApiClient.getClient().create(ExamApi.class);
-        examApi.getPublishedExams(null).enqueue(new Callback<ApiResponse<List<Exam>>>() {
+        if (getContext() != null && !NetworkUtils.isOnline(requireContext())) {
+            Toast.makeText(requireContext(), R.string.exam_offline_fallback, Toast.LENGTH_SHORT).show();
+            renderExams(ExamRepository.getInstance().getLocalPublishedExams(requireContext()));
+            return;
+        }
+
+        ExamRepository.getInstance().loadPublishedExams(null, new ExamRepository.ExamsCallback() {
             @Override
-            public void onResponse(Call<ApiResponse<List<Exam>>> call,
-                                   Response<ApiResponse<List<Exam>>> response) {
+            public void onSuccess(List<Exam> exams) {
                 if (binding == null) return;
-                if (response.isSuccessful() && response.body() != null
-                        && response.body().isSuccess()) {
-                    renderExams(response.body().getData());
-                } else {
-                    renderOfflineExamFallback();
-                }
+                renderExams(exams);
             }
 
             @Override
-            public void onFailure(Call<ApiResponse<List<Exam>>> call, Throwable t) {
-                if (binding == null) return;
-                renderOfflineExamFallback();
+            public void onError(String message) {
+                if (getContext() == null || binding == null) return;
+                Toast.makeText(requireContext(),
+                        message != null ? message : getString(R.string.exam_offline_fallback),
+                        Toast.LENGTH_SHORT).show();
+                renderExams(ExamRepository.getInstance().getLocalPublishedExams(requireContext()));
             }
         });
     }
 
-    private void renderOfflineExamFallback() {
-        if (getContext() == null || binding == null) return;
-        Toast.makeText(requireContext(), "Dang offline -- dung de mau", Toast.LENGTH_SHORT).show();
-        renderExams(LocalExamDataSource.getInstance().getPublishedExams(requireContext()));
+    private void openExamById(long examId) {
+        if (getContext() == null) return;
+        if (!backendExamContent || !NetworkUtils.isOnline(requireContext())) {
+            Exam exam = ExamRepository.getInstance().getLocalExamDetail(requireContext(), examId);
+            if (exam != null) {
+                navigateToExamDetail(exam);
+            }
+            return;
+        }
+        ExamRepository.getInstance().loadExamDetail(examId, new ExamRepository.ExamCallback() {
+            @Override
+            public void onSuccess(Exam exam) {
+                if (getContext() == null) return;
+                navigateToExamDetail(exam);
+            }
+
+            @Override
+            public void onError(String message) {
+                if (getContext() == null) return;
+                Exam exam = ExamRepository.getInstance().getLocalExamDetail(requireContext(), examId);
+                if (exam != null) {
+                    navigateToExamDetail(exam);
+                } else {
+                    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 
     private void renderExams(List<Exam> exams) {

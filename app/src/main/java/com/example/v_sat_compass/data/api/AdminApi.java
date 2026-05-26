@@ -108,7 +108,7 @@ public interface AdminApi {
     Call<ApiResponse<AdminExamResponse>> returnExamToDraft(@Path("examId") Long examId);
 
     @GET("admin/users")
-    Call<ApiResponse<List<UserItem>>> getUsers(
+    Call<ApiResponse<PageResponse<UserItem>>> getUsers(
             @Query("role") String role,
             @Query("status") String status,
             @Query("keyword") String keyword,
