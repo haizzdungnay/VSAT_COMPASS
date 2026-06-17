@@ -1,7 +1,11 @@
 package com.example.v_sat_compass.ui.home;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,12 +26,12 @@ import com.example.v_sat_compass.data.model.UserProfile;
 import com.example.v_sat_compass.data.repository.ExamRepository;
 import com.example.v_sat_compass.util.NetworkUtils;
 import com.example.v_sat_compass.data.model.ExamHistoryEntry;
-import com.example.v_sat_compass.data.model.UserProfile;
 import com.example.v_sat_compass.data.repository.ExamHistoryRepository;
 import com.example.v_sat_compass.databinding.FragmentHomeBinding;
 import com.example.v_sat_compass.ui.exam.ExamDetailActivity;
 import com.example.v_sat_compass.ui.history.ExamHistoryActivity;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
@@ -38,10 +42,14 @@ import retrofit2.Response;
 public class HomeFragment extends Fragment {
 
     private static final String TAG = "HomeFragment";
+    private static final String PROFILE_PREFS = "profile_local_overrides";
+    private static final String KEY_AVATAR_URI = "avatar_uri";
 
     private FragmentHomeBinding binding;
     private final boolean clientSideProcessing = ApiClient.isClientSideExamProcessingEnabled();
     private final boolean backendExamContent = ApiClient.USE_BACKEND_EXAM_CONTENT;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private String localAvatarUri = "";
 
     @Nullable
     @Override
@@ -56,6 +64,7 @@ public class HomeFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         setupRecyclerViews();
+        loadLocalAvatar();
         loadUserProfile();
         loadExams();
         loadHistoryStats();
@@ -93,6 +102,10 @@ public class HomeFragment extends Fragment {
                     String timeGreeting = getTimeGreeting(false);
                     binding.tvGreeting.setText(
                             getString(R.string.home_greeting_format, timeGreeting, name));
+                    if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()
+                            && localAvatarUri.isEmpty()) {
+                        applyAvatarUri(user.getAvatarUrl());
+                    }
                 }
             }
 
@@ -249,13 +262,46 @@ public class HomeFragment extends Fragment {
     private void renderExams(List<Exam> exams) {
         if (binding == null || exams == null || exams.isEmpty()) return;
 
-        List<Exam> upcoming = exams.subList(0, Math.min(5, exams.size()));
+        List<Exam> displayable = new ArrayList<>();
+        for (Exam exam : exams) {
+            if (exam == null || exam.getTotalQuestions() <= 0) continue;
+            String title = exam.getTitle() != null ? exam.getTitle().toLowerCase() : "";
+            String code = exam.getExamCode() != null ? exam.getExamCode().toLowerCase() : "";
+            if (title.contains("smoke") || code.contains("smoke")) continue;
+            displayable.add(exam);
+        }
+        if (displayable.isEmpty()) displayable = exams;
+
+        List<Exam> upcoming = displayable.subList(0, Math.min(5, displayable.size()));
         binding.rvUpcomingExams.setAdapter(
                 new UpcomingExamAdapter(upcoming, this::navigateToExamDetail));
 
-        List<Exam> suggestions = exams.subList(0, Math.min(4, exams.size()));
+        List<Exam> suggestions = displayable.subList(0, Math.min(4, displayable.size()));
         binding.rvSuggestions.setAdapter(
                 new SuggestionAdapter(suggestions, this::navigateToExamDetail));
+    }
+
+    private void loadLocalAvatar() {
+        if (getContext() == null) return;
+        android.content.Context appContext = requireContext().getApplicationContext();
+        new Thread(() -> {
+            SharedPreferences prefs = appContext.getSharedPreferences(
+                    PROFILE_PREFS, android.content.Context.MODE_PRIVATE);
+            String avatarUri = prefs.getString(KEY_AVATAR_URI, "");
+            mainHandler.post(() -> {
+                localAvatarUri = avatarUri != null ? avatarUri : "";
+                if (!localAvatarUri.isEmpty()) applyAvatarUri(localAvatarUri);
+            });
+        }).start();
+    }
+
+    private void applyAvatarUri(String avatarUri) {
+        if (binding == null || avatarUri == null || avatarUri.isEmpty()) return;
+        try {
+            binding.ivAvatar.setImageURI(Uri.parse(avatarUri));
+        } catch (Exception ignored) {
+            binding.ivAvatar.setImageResource(android.R.drawable.ic_menu_myplaces);
+        }
     }
 
     private void navigateToExamDetail(Exam exam) {

@@ -606,6 +606,233 @@ class SessionServiceTest {
         assertThat(response.getQuestions()).isEmpty();
     }
 
+    // ===== submitAnswer (server-side scoring) =====
+
+    @Test
+    @DisplayName("submitAnswer: happy path persists a single answer row and updates answeredCount")
+    void submitAnswer_happyPath_persistsRow() {
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(EXAM_ID))
+                .thenReturn(List.of(examQuestion(QUESTION_ID, 1)));
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(QUESTION_ID))
+                .thenReturn(List.of(option(301L, QUESTION_ID, true, 1)));
+        when(questionOptionRepository.findById(301L))
+                .thenReturn(Optional.of(option(301L, QUESTION_ID, true, 1)));
+        when(sessionAnswerRepository.findBySessionIdAndQuestionId(SESSION_ID, QUESTION_ID))
+                .thenReturn(Optional.empty());
+        when(sessionAnswerRepository.countBySessionId(SESSION_ID)).thenReturn(1L);
+        when(examSessionRepository.save(any(ExamSession.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        SessionRequest.SubmitAnswer req = new SessionRequest.SubmitAnswer();
+        req.setQuestionId(QUESTION_ID);
+        req.setSelectedOptionId(301L);
+        req.setBookmarked(false);
+        req.setTimeSpentSeconds(12);
+
+        sessionService.submitAnswer(USER_ID, SESSION_ID, req);
+
+        ArgumentCaptor<SessionAnswer> cap = ArgumentCaptor.forClass(SessionAnswer.class);
+        verify(sessionAnswerRepository).save(cap.capture());
+        SessionAnswer saved = cap.getValue();
+        assertThat(saved.getSessionId()).isEqualTo(SESSION_ID);
+        assertThat(saved.getQuestionId()).isEqualTo(QUESTION_ID);
+        assertThat(saved.getQuestionOrder()).isEqualTo(1);
+        assertThat(saved.getSelectedOptionId()).isEqualTo(301L);
+        assertThat(saved.getIsCorrect()).isTrue();
+        assertThat(saved.getIsBookmarked()).isFalse();
+        assertThat(saved.getTimeSpentSeconds()).isEqualTo(12);
+        assertThat(saved.getAnsweredAt()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("submitAnswer: second submission for the same question replaces the previous row (idempotent)")
+    void submitAnswer_idempotent_replacesExistingRow() {
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(EXAM_ID))
+                .thenReturn(List.of(examQuestion(QUESTION_ID, 1)));
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(QUESTION_ID))
+                .thenReturn(List.of(
+                        option(301L, QUESTION_ID, true, 1),
+                        option(302L, QUESTION_ID, false, 2)
+                ));
+        when(questionOptionRepository.findById(302L))
+                .thenReturn(Optional.of(option(302L, QUESTION_ID, false, 2)));
+        SessionAnswer previous = SessionAnswer.builder()
+                .id(9001L)
+                .sessionId(SESSION_ID)
+                .questionId(QUESTION_ID)
+                .questionOrder(1)
+                .selectedOptionId(301L)
+                .isCorrect(true)
+                .isBookmarked(false)
+                .build();
+        when(sessionAnswerRepository.findBySessionIdAndQuestionId(SESSION_ID, QUESTION_ID))
+                .thenReturn(Optional.of(previous));
+        when(sessionAnswerRepository.countBySessionId(SESSION_ID)).thenReturn(1L);
+        when(examSessionRepository.save(any(ExamSession.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        SessionRequest.SubmitAnswer req = new SessionRequest.SubmitAnswer();
+        req.setQuestionId(QUESTION_ID);
+        req.setSelectedOptionId(302L);
+
+        sessionService.submitAnswer(USER_ID, SESSION_ID, req);
+
+        ArgumentCaptor<SessionAnswer> cap = ArgumentCaptor.forClass(SessionAnswer.class);
+        verify(sessionAnswerRepository).save(cap.capture());
+        assertThat(cap.getValue().getId()).isEqualTo(previous.getId());
+        assertThat(cap.getValue().getSelectedOptionId()).isEqualTo(302L);
+        assertThat(cap.getValue().getIsCorrect()).isFalse();
+    }
+
+    @Test
+    @DisplayName("submitAnswer: option not belonging to the question throws BAD_REQUEST")
+    void submitAnswer_optionOutOfScope_throwsBadRequest() {
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(EXAM_ID))
+                .thenReturn(List.of(examQuestion(QUESTION_ID, 1)));
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(QUESTION_ID))
+                .thenReturn(List.of(option(301L, QUESTION_ID, true, 1)));
+
+        SessionRequest.SubmitAnswer req = new SessionRequest.SubmitAnswer();
+        req.setQuestionId(QUESTION_ID);
+        req.setSelectedOptionId(999L);
+
+        assertThatThrownBy(() -> sessionService.submitAnswer(USER_ID, SESSION_ID, req))
+                .isInstanceOfSatisfying(AppException.class, ex -> {
+                    assertThat(ex.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(ex.getCode()).isEqualTo("BAD_REQUEST");
+                });
+
+        verify(sessionAnswerRepository, never()).save(any(SessionAnswer.class));
+    }
+
+    @Test
+    @DisplayName("submitAnswer: already SUBMITTED session throws SESSION_ALREADY_SUBMITTED (anti-replay)")
+    void submitAnswer_alreadySubmitted_throwsConflict() {
+        inProgressSession.setStatus(SessionStatus.SUBMITTED);
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+
+        SessionRequest.SubmitAnswer req = new SessionRequest.SubmitAnswer();
+        req.setQuestionId(QUESTION_ID);
+        req.setSelectedOptionId(301L);
+
+        assertThatThrownBy(() -> sessionService.submitAnswer(USER_ID, SESSION_ID, req))
+                .isInstanceOfSatisfying(AppException.class, ex -> {
+                    assertThat(ex.getStatus()).isEqualTo(HttpStatus.CONFLICT);
+                    assertThat(ex.getCode()).isEqualTo("SESSION_ALREADY_SUBMITTED");
+                });
+
+        verify(sessionAnswerRepository, never()).save(any(SessionAnswer.class));
+    }
+
+    // ===== serverSubmit (server-side scoring) =====
+
+    @Test
+    @DisplayName("serverSubmit: happy path marks SUBMITTED and computes score from stored answers")
+    void serverSubmit_happyPath_marksSubmittedAndScoresFromStored() {
+        SessionAnswer a1 = SessionAnswer.builder()
+                .id(1L).sessionId(SESSION_ID).questionId(QUESTION_ID).questionOrder(1)
+                .selectedOptionId(301L).isCorrect(true).isBookmarked(false).build();
+        SessionAnswer a2 = SessionAnswer.builder()
+                .id(2L).sessionId(SESSION_ID).questionId(SECOND_QUESTION_ID).questionOrder(2)
+                .selectedOptionId(402L).isCorrect(false).isBookmarked(false).build();
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+        when(sessionAnswerRepository.findBySessionId(SESSION_ID)).thenReturn(List.of(a1, a2));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(EXAM_ID))
+                .thenReturn(List.of(
+                        examQuestion(QUESTION_ID, 1),
+                        examQuestion(SECOND_QUESTION_ID, 2)
+                ));
+        when(examSessionRepository.save(any(ExamSession.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        SessionResponse.SessionInfo info = sessionService.serverSubmit(USER_ID, SESSION_ID);
+
+        assertThat(info.getStatus()).isEqualTo("SUBMITTED");
+        assertThat(info.getCorrectCount()).isEqualTo(1);
+        assertThat(info.getTotalQuestions()).isEqualTo(2);
+        assertThat(info.getScorePercentage()).isEqualByComparingTo(BigDecimal.valueOf(50.00));
+        assertThat(info.getSubmittedAt()).isNotNull();
+
+        ArgumentCaptor<ExamSession> cap = ArgumentCaptor.forClass(ExamSession.class);
+        verify(examSessionRepository).save(cap.capture());
+        ExamSession saved = cap.getValue();
+        assertThat(saved.getStatus()).isEqualTo(SessionStatus.SUBMITTED);
+        assertThat(saved.getAnsweredCount()).isEqualTo(2);
+        assertThat(saved.getCorrectCount()).isEqualTo(1);
+        assertThat(saved.getWrongCount()).isEqualTo(1);
+        assertThat(saved.getSkippedCount()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("serverSubmit: partially answered session sets skippedCount = total - answered")
+    void serverSubmit_partialAnswer_setsSkippedCount() {
+        SessionAnswer a1 = SessionAnswer.builder()
+                .id(1L).sessionId(SESSION_ID).questionId(QUESTION_ID).questionOrder(1)
+                .selectedOptionId(301L).isCorrect(true).isBookmarked(false).build();
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+        when(sessionAnswerRepository.findBySessionId(SESSION_ID)).thenReturn(List.of(a1));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(EXAM_ID))
+                .thenReturn(List.of(
+                        examQuestion(QUESTION_ID, 1),
+                        examQuestion(SECOND_QUESTION_ID, 2)
+                ));
+        when(examSessionRepository.save(any(ExamSession.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        SessionResponse.SessionInfo info = sessionService.serverSubmit(USER_ID, SESSION_ID);
+
+        assertThat(info.getTotalQuestions()).isEqualTo(2);
+        assertThat(info.getCorrectCount()).isEqualTo(1);
+        assertThat(info.getScorePercentage()).isEqualByComparingTo(BigDecimal.valueOf(50.00));
+
+        ArgumentCaptor<ExamSession> cap = ArgumentCaptor.forClass(ExamSession.class);
+        verify(examSessionRepository).save(cap.capture());
+        ExamSession saved = cap.getValue();
+        assertThat(saved.getAnsweredCount()).isEqualTo(1);
+        assertThat(saved.getSkippedCount()).isEqualTo(1);
+        assertThat(saved.getWrongCount()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("serverSubmit: exam with no questions throws BAD_REQUEST")
+    void serverSubmit_emptyExam_throwsBadRequest() {
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(EXAM_ID))
+                .thenReturn(Collections.emptyList());
+
+        assertThatThrownBy(() -> sessionService.serverSubmit(USER_ID, SESSION_ID))
+                .isInstanceOfSatisfying(AppException.class, ex -> {
+                    assertThat(ex.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(ex.getCode()).isEqualTo("BAD_REQUEST");
+                });
+
+        verify(examSessionRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("serverSubmit: different user throws SESSION_FORBIDDEN")
+    void serverSubmit_differentUser_throwsForbidden() {
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+
+        assertThatThrownBy(() -> sessionService.serverSubmit(OTHER_USER_ID, SESSION_ID))
+                .isInstanceOfSatisfying(AppException.class, ex -> {
+                    assertThat(ex.getStatus()).isEqualTo(HttpStatus.FORBIDDEN);
+                    assertThat(ex.getCode()).isEqualTo("SESSION_FORBIDDEN");
+                });
+    }
+
+    @Test
+    @DisplayName("serverSubmit: already submitted session throws SESSION_ALREADY_SUBMITTED (anti-replay)")
+    void serverSubmit_alreadySubmitted_throwsConflict() {
+        inProgressSession.setStatus(SessionStatus.SUBMITTED);
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+
+        assertThatThrownBy(() -> sessionService.serverSubmit(USER_ID, SESSION_ID))
+                .isInstanceOfSatisfying(AppException.class, ex -> {
+                    assertThat(ex.getStatus()).isEqualTo(HttpStatus.CONFLICT);
+                    assertThat(ex.getCode()).isEqualTo("SESSION_ALREADY_SUBMITTED");
+                });
+    }
+
     private void assertQuestionContentStatusRejected(SessionStatus status) {
         inProgressSession.setStatus(status);
         when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));

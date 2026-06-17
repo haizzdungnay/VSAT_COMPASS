@@ -169,7 +169,13 @@ http://localhost:8080/api/v1/swagger-ui.html
 
 ## API Modules
 
-> **Trạng thái hiện tại (v0.10.2 / Phase C1.6-A.5 Closed):** Production-ready trên Render.com — Auth + Session sync đã hardened; Subject/Topic/Subtopic read APIs, Question Bank write/review workflow, public Exam read API, Admin Exam CRUD metadata API, Admin Exam Composition + Publish Workflow, Admin Exam DRAFT Discard, Admin Question Picker endpoint, and C1.6-A student session question delivery + post-submit answer-key endpoints đã live.
+> Update 2026-06-18 (local demo working tree): server-submit persists local history for Home/History stats, Result renders dynamic subject/topic data, and Profile supports edit info/password/avatar. Verified with `./gradlew :app:assembleDebug` plus targeted backend tests.
+
+> **Trạng thái hiện tại (HEAD `be545ba`, untagged — tag prod gần nhất v0.10.2):** Production-ready trên Render.com — Auth + Session sync đã hardened; Subject/Topic/Subtopic read APIs, Question Bank write/review workflow, public Exam read API, Admin Exam CRUD metadata API, Admin Exam Composition + Publish Workflow, Admin Exam DRAFT Discard, Admin Question Picker endpoint, và C1.6-A student session question delivery + post-submit answer-key endpoints đã live (verify prod tới v0.10.2).
+>
+> ⚠️ **Batch "real data" (`be545ba`, 2026-05-26) — implemented, CHƯA prod smoke, CHƯA tag:** thêm `GET /admin/stats`, `GET /admin/users` + `PATCH /admin/users/{id}/role|lock|unlock`, `GET /my-stats/topics`, và `SessionAnswer` persistence; Android dùng đề thật + offline demo fallback. Mới verify trên DB local. Tag `v1.0.1` (`53111e6`) là **cha** của commit này nên chưa bao gồm các thay đổi đó.
+>
+> ✅ **Local demo smoke (2026-06-18):** debug APK + backend LAN local verified for student exam flow: list -> detail -> start session -> answer -> submit -> result -> review. Hotfixes in working tree: `/admin/users` Specification query, backend `isBookmarked` alias, Android `ExamSession` Gson camelCase aliases for result mapping.
 
 | Module | Base Path | Endpoints | Trạng thái |
 |--------|-----------|-----------|------------|
@@ -181,11 +187,13 @@ http://localhost:8080/api/v1/swagger-ui.html
 | Review Workflow | `/admin/questions/{id}/approve`, `/request-revision`, `/reject` | admin review actions + review history records | ✅ Verified prod |
 | Exams (Admin) | `/admin/exams` | metadata CRUD, composition add/remove/reorder, publish workflow, DRAFT discard | ✅ Verified prod (C1.2c-1 / v0.9.4) |
 | Exams (Public) | `/exams` | list `PUBLISHED` + `FREE`, detail with anti-leak 404 | ✅ Verified prod |
-| Student Stats | `/my-stats` | topic stats, weak topics, history | 📋 Phase C |
-| Tickets (Student) | `/tickets` | create, list, detail, comment | 📋 Phase C |
-| Tickets (Admin) | `/admin/tickets` | list, assign, resolve, status | 📋 Phase C |
-| Dashboard | `/admin/dashboard` | overview counts | 📋 Phase C |
-| User Management | `/admin/users` | list, detail, role, status | 📋 Phase C |
+| Student Stats | `/my-stats` | **topic stats** (`/topics`) ✅ impl; weak topics + history chưa có | 🟢 Impl (`be545ba`) — `/topics` chưa prod smoke; weak-topics 📋 TODO |
+| Tickets (Student) | `/tickets` | create, list, detail, comment | 📋 Phase D |
+| Tickets (Admin) | `/admin/tickets` | list, assign, resolve, status | 📋 Phase D |
+| Dashboard | `/admin/stats` | overview counts | 🟢 Impl (`be545ba`) — chưa prod smoke |
+| User Management | `/admin/users` | list, role (`PATCH .../role`), lock/unlock | 🟢 Impl (`be545ba`) — chưa prod smoke |
+
+Note 2026-06-18: `/my-stats/weak-topics` is implemented locally and used by the Android result screen; production smoke is still deferred until Neon is back.
 
 ### Question Bank API status
 

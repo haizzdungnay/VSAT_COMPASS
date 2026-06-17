@@ -44,6 +44,27 @@ public class SessionController {
         return ResponseEntity.ok(ApiResponse.success(result, "Nộp bài thành công"));
     }
 
+    @PostMapping("/{sessionId}/answers")
+    @PreAuthorize("hasRole('STUDENT')")
+    @Operation(summary = "ES-05: Lưu một câu trả lời trong phiên thi (server-side scoring)")
+    public ResponseEntity<ApiResponse<Void>> submitAnswer(
+            @PathVariable Long sessionId,
+            @Valid @RequestBody SessionRequest.SubmitAnswer request) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        sessionService.submitAnswer(userId, sessionId, request);
+        return ResponseEntity.ok(ApiResponse.success(null, "Đã lưu câu trả lời"));
+    }
+
+    @PostMapping("/{sessionId}/submit")
+    @PreAuthorize("hasRole('STUDENT')")
+    @Operation(summary = "ES-06: Nộp bài — backend tự chấm từ các câu trả lời đã lưu")
+    public ResponseEntity<ApiResponse<SessionResponse.SessionInfo>> submit(
+            @PathVariable Long sessionId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        SessionResponse.SessionInfo result = sessionService.serverSubmit(userId, sessionId);
+        return ResponseEntity.ok(ApiResponse.success(result, "Nộp bài thành công"));
+    }
+
     @GetMapping("/{sessionId}/questions/{questionId}")
     @PreAuthorize("hasRole('STUDENT')")
     @Operation(summary = "ES-03: Get in-session question content")

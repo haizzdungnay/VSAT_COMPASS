@@ -131,6 +131,133 @@ public class SessionServiceImpl implements SessionService {
 
     @Override
     @Transactional
+    public void submitAnswer(Long userId, Long sessionId, SessionRequest.SubmitAnswer request) {
+        ExamSession session = examSessionRepository.findById(sessionId)
+                .orElseThrow(() -> AppException.notFound("ExamSession", sessionId));
+        if (!session.getUserId().equals(userId)) {
+            throw AppException.sessionForbidden();
+        }
+        if (session.getStatus() == SessionStatus.SUBMITTED) {
+            throw AppException.sessionAlreadySubmitted();
+        }
+        if (session.getStatus() != SessionStatus.IN_PROGRESS) {
+            throw AppException.badRequest("Phiên thi không ở trạng thái IN_PROGRESS (hiện tại: " + session.getStatus() + ")");
+        }
+
+        Long questionId = request.getQuestionId();
+        Long selectedOptionId = request.getSelectedOptionId();
+        if (questionId == null || selectedOptionId == null) {
+            throw AppException.badRequest("questionId và selectedOptionId không được để trống");
+        }
+
+        // Confirm the question belongs to the session's exam
+        ExamQuestion examQuestion = findExamQuestion(session.getExamId(), questionId);
+
+        // Verify the option belongs to the question (defense against random ids)
+        boolean optionBelongs = questionOptionRepository
+                .findByQuestionIdOrderByDisplayOrderAscIdAsc(questionId)
+                .stream()
+                .anyMatch(option -> Objects.equals(option.getId(), selectedOptionId));
+        if (!optionBelongs) {
+            throw AppException.badRequest("Option " + selectedOptionId + " không thuộc câu hỏi " + questionId);
+        }
+
+        Boolean isCorrect = questionOptionRepository.findById(selectedOptionId)
+                .map(option -> Boolean.TRUE.equals(option.getIsCorrect()))
+                .orElse(false);
+
+        // Idempotent: if an answer for (session, question) already exists, replace it.
+        OffsetDateTime answeredAt = OffsetDateTime.now();
+
+        // Idempotent: if an answer for (session, question) already exists, update it in-place
+        // (delete+insert would violate the (session_id, question_id) unique constraint under
+        // JPA's deferred flush).
+        SessionAnswer row = sessionAnswerRepository
+                .findBySessionIdAndQuestionId(sessionId, questionId)
+                .orElseGet(() -> SessionAnswer.builder()
+                        .sessionId(sessionId)
+                        .questionId(questionId)
+                        .questionOrder(examQuestion.getQuestionOrder())
+                        .build());
+        row.setQuestionOrder(examQuestion.getQuestionOrder());
+        row.setSelectedOptionId(selectedOptionId);
+        row.setIsCorrect(isCorrect);
+        row.setIsBookmarked(Boolean.TRUE.equals(request.getBookmarked()));
+        row.setTimeSpentSeconds(request.getTimeSpentSeconds() != null ? request.getTimeSpentSeconds() : 0);
+        row.setAnsweredAt(answeredAt);
+        sessionAnswerRepository.save(row);
+
+        // Keep session.answeredCount fresh so clients can show a live progress bar.
+        long answeredCount = sessionAnswerRepository.countBySessionId(sessionId);
+        session.setAnsweredCount((int) answeredCount);
+        examSessionRepository.save(session);
+
+        log.debug("Session {} answer saved: question={} option={} correct={}",
+                sessionId, questionId, selectedOptionId, isCorrect);
+    }
+
+    @Override
+    @Transactional
+    public SessionResponse.SessionInfo serverSubmit(Long userId, Long sessionId) {
+        ExamSession session = examSessionRepository.findById(sessionId)
+                .orElseThrow(() -> AppException.notFound("ExamSession", sessionId));
+        if (!session.getUserId().equals(userId)) {
+            throw AppException.sessionForbidden();
+        }
+        if (session.getStatus() == SessionStatus.SUBMITTED) {
+            throw AppException.sessionAlreadySubmitted();
+        }
+        if (session.getStatus() != SessionStatus.IN_PROGRESS) {
+            throw AppException.badRequest("Phiên thi không ở trạng thái IN_PROGRESS (hiện tại: " + session.getStatus() + ")");
+        }
+
+        // Count stored answers + score
+        List<SessionAnswer> rows = sessionAnswerRepository.findBySessionId(sessionId);
+
+        int totalQuestions = examQuestionRepository
+                .findByExamIdOrderByQuestionOrderAscIdAsc(session.getExamId())
+                .size();
+        if (totalQuestions <= 0) {
+            throw AppException.badRequest("Đề thi không có câu hỏi nào, không thể nộp bài");
+        }
+
+        int correctCount = (int) rows.stream()
+                .filter(r -> Boolean.TRUE.equals(r.getIsCorrect()))
+                .count();
+        int answeredCount = rows.size();
+        int wrongCount = Math.max(0, answeredCount - correctCount);
+        int skippedCount = Math.max(0, totalQuestions - answeredCount);
+
+        BigDecimal scorePercentage = BigDecimal.valueOf(correctCount * 100.0 / totalQuestions)
+                .setScale(2, java.math.RoundingMode.HALF_UP);
+
+        Integer timeSpentSeconds = session.getTimeSpentSeconds();
+        if (timeSpentSeconds == null && session.getStartedAt() != null) {
+            long seconds = java.time.Duration.between(session.getStartedAt(), OffsetDateTime.now()).getSeconds();
+            timeSpentSeconds = (int) Math.max(0, seconds);
+        }
+
+        session.setStatus(SessionStatus.SUBMITTED);
+        session.setSubmittedAt(OffsetDateTime.now());
+        session.setTotalQuestions(totalQuestions);
+        session.setAnsweredCount(answeredCount);
+        session.setCorrectCount(correctCount);
+        session.setWrongCount(wrongCount);
+        session.setSkippedCount(skippedCount);
+        session.setScore(scorePercentage);
+        session.setScorePercentage(scorePercentage);
+        session.setTimeSpentSeconds(timeSpentSeconds != null ? timeSpentSeconds : 0);
+
+        session = examSessionRepository.save(session);
+
+        log.info("Session {} server-submitted by user {}: {}/{} correct ({}%)",
+                session.getId(), userId, correctCount, totalQuestions, scorePercentage);
+
+        return toSessionInfo(session);
+    }
+
+    @Override
+    @Transactional
     public SessionResponse.SessionInfo clientSubmit(Long userId, Long sessionId, SessionRequest.ClientSubmit request) {
         // Find session — must exist
         ExamSession session = examSessionRepository.findById(sessionId)

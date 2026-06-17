@@ -128,6 +128,19 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse.UserInfo updateProfile(Long userId, AuthRequest.UpdateProfile request) {
         User user = findUserById(userId);
 
+        if (request.getEmail() != null) {
+            String normalizedEmail = request.getEmail().toLowerCase().trim();
+            if (normalizedEmail.isBlank()) {
+                throw AppException.badRequest("Email khong duoc de trong");
+            }
+            if (!normalizedEmail.equals(user.getEmail())) {
+                if (userRepository.existsByEmail(normalizedEmail)) {
+                    throw AppException.authEmailTaken();
+                }
+                user.setEmail(normalizedEmail);
+                user.setEmailVerified(false);
+            }
+        }
         if (request.getFullName() != null) user.setFullName(request.getFullName().trim());
         if (request.getPhone() != null) user.setPhone(request.getPhone());
         if (request.getAvatarUrl() != null) user.setAvatarUrl(request.getAvatarUrl());

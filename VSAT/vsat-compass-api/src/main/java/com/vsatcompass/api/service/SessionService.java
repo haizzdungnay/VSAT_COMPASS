@@ -9,6 +9,18 @@ public interface SessionService {
 
     SessionResponse.SessionInfo startSession(Long userId, SessionRequest.StartSession request);
 
+    /**
+     * Persist a single answer for an in-progress session. Idempotent by (session, question):
+     * the previous row is replaced instead of duplicated.
+     */
+    void submitAnswer(Long userId, Long sessionId, SessionRequest.SubmitAnswer request);
+
+    /**
+     * Server-side scoring: aggregate the stored answers for this session, mark it SUBMITTED
+     * and return the resulting SessionInfo. Used when the app does NOT compute the score itself.
+     */
+    SessionResponse.SessionInfo serverSubmit(Long userId, Long sessionId);
+
     SessionResponse.SessionInfo clientSubmit(Long userId, Long sessionId, SessionRequest.ClientSubmit request);
 
     SessionQuestionContentResponse getQuestionForSession(

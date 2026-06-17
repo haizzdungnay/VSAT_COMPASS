@@ -12,4 +12,7 @@ public interface StudentStatsApi {
 
     @GET("my-stats/topics")
     Call<ApiResponse<List<TopicStatsResponse>>> getTopicStats();
+
+    @GET("my-stats/weak-topics")
+    Call<ApiResponse<List<TopicStatsResponse>>> getWeakTopicStats();
 }

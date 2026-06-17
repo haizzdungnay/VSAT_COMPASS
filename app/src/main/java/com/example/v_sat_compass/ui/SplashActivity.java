@@ -13,17 +13,25 @@ import com.example.v_sat_compass.ui.auth.LoginActivity;
 
 public class SplashActivity extends AppCompatActivity {
 
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            if (ApiClient.isLoggedIn()) {
-                startActivity(new Intent(this, MainActivity.class));
-            } else {
-                startActivity(new Intent(this, LoginActivity.class));
-            }
-            finish();
-        }, 1000);
+        mainHandler.postDelayed(() -> new Thread(() -> {
+            boolean loggedIn = ApiClient.isLoggedIn();
+            mainHandler.post(() -> navigate(loggedIn));
+        }).start(), 1000);
+    }
+
+    private void navigate(boolean loggedIn) {
+        if (isFinishing()) return;
+        if (loggedIn) {
+            startActivity(new Intent(this, MainActivity.class));
+        } else {
+            startActivity(new Intent(this, LoginActivity.class));
+        }
+        finish();
     }
 }

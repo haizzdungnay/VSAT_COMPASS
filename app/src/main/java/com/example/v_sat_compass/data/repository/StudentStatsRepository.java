@@ -53,6 +53,31 @@ public class StudentStatsRepository {
         });
     }
 
+    public void loadWeakTopicStats(TopicStatsCallback callback) {
+        api.getWeakTopicStats().enqueue(new retrofit2.Callback<ApiResponse<List<TopicStatsResponse>>>() {
+            @Override
+            public void onResponse(
+                    retrofit2.Call<ApiResponse<List<TopicStatsResponse>>> call,
+                    Response<ApiResponse<List<TopicStatsResponse>>> response
+            ) {
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    List<TopicStatsResponse> data = response.body().getData();
+                    callback.onSuccess(data != null ? data : Collections.emptyList());
+                } else {
+                    callback.onError("Khong tai duoc chu de yeu");
+                }
+            }
+
+            @Override
+            public void onFailure(
+                    retrofit2.Call<ApiResponse<List<TopicStatsResponse>>> call,
+                    Throwable t
+            ) {
+                callback.onError(t.getMessage() != null ? t.getMessage() : "Loi mang");
+            }
+        });
+    }
+
     public List<TopicStatsResponse> loadTopicStatsSync() throws IOException {
         Response<ApiResponse<List<TopicStatsResponse>>> response = api.getTopicStats().execute();
         if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {

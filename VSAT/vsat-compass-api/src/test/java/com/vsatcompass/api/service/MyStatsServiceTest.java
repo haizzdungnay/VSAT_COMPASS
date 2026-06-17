@@ -42,4 +42,30 @@ class MyStatsServiceTest {
         assertThat(stats.get(0).getTotal()).isEqualTo(4);
         assertThat(stats.get(0).getPercentage()).isEqualTo(75);
     }
+
+    @Test
+    @DisplayName("getWeakTopics returns lowest percentages first and respects limit")
+    void getWeakTopics_sortsWeakestFirst() {
+        when(sessionAnswerRepository.aggregateTopicStatsByUserId(5L)).thenReturn(List.of(
+                projection(1L, "Dai so", 10L, 9L),
+                projection(2L, "Hinh hoc", 10L, 3L),
+                projection(3L, "Xac suat", 10L, 5L)
+        ));
+
+        List<TopicStatsResponse> stats = myStatsService.getWeakTopics(5L, 2);
+
+        assertThat(stats).extracting(TopicStatsResponse::getTopicName)
+                .containsExactly("Hinh hoc", "Xac suat");
+        assertThat(stats).extracting(TopicStatsResponse::getPercentage)
+                .containsExactly(30, 50);
+    }
+
+    private TopicStatsProjection projection(Long id, String name, Long total, Long correct) {
+        return new TopicStatsProjection() {
+            @Override public Long getTopicId() { return id; }
+            @Override public String getTopicName() { return name; }
+            @Override public Long getTotalAttempts() { return total; }
+            @Override public Long getCorrectCount() { return correct; }
+        };
+    }
 }

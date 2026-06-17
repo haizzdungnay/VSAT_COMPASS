@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -27,6 +28,16 @@ public class MyStatsController {
     public ResponseEntity<ApiResponse<List<TopicStatsResponse>>> getTopicStats() {
         Long userId = SecurityUtils.getCurrentUserId();
         List<TopicStatsResponse> stats = myStatsService.getTopicStats(userId);
+        return ResponseEntity.ok(ApiResponse.success(stats));
+    }
+
+    @GetMapping("/weak-topics")
+    @Operation(summary = "Weakest topic stats for the current student")
+    public ResponseEntity<ApiResponse<List<TopicStatsResponse>>> getWeakTopics(
+            @RequestParam(defaultValue = "5") int limit
+    ) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        List<TopicStatsResponse> stats = myStatsService.getWeakTopics(userId, limit);
         return ResponseEntity.ok(ApiResponse.success(stats));
     }
 }

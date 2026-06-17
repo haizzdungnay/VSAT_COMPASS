@@ -1,6 +1,8 @@
 package com.example.v_sat_compass.data.repository;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 
 import com.example.v_sat_compass.data.api.ApiClient;
 import com.example.v_sat_compass.data.api.ExamApi;
@@ -19,6 +21,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import retrofit2.Response;
 
@@ -29,6 +33,8 @@ public class ExamRepository {
     private final ExamApi examApi;
     private final SubjectRepository subjectRepository;
     private final Gson gson = new Gson();
+    private final ExecutorService ioExecutor = Executors.newSingleThreadExecutor();
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private Map<Long, String> subjectNameCache;
 
     public ExamRepository() {
@@ -58,34 +64,54 @@ public class ExamRepository {
     }
 
     public void loadPublishedExams(Long subjectId, ExamsCallback callback) {
-        try {
-            Response<ApiResponse<PageResponse<PublicExamSummaryResponse>>> response =
-                    examApi.getPublishedExams(subjectId, 0, 100).execute();
-            if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
-                PageResponse<PublicExamSummaryResponse> page = response.body().getData();
-                List<Exam> exams = mapSummaries(page != null ? page.getContent() : null);
-                callback.onSuccess(exams);
-                return;
+        ioExecutor.execute(() -> {
+            try {
+                Response<ApiResponse<PageResponse<PublicExamSummaryResponse>>> response =
+                        examApi.getPublishedExams(subjectId, 0, 100).execute();
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    PageResponse<PublicExamSummaryResponse> page = response.body().getData();
+                    List<Exam> exams = mapSummaries(page != null ? page.getContent() : null);
+                    postSuccess(callback, exams);
+                    return;
+                }
+                postError(callback, "Khong tai duoc danh sach de thi");
+            } catch (IOException e) {
+                postError(callback, e.getMessage() != null ? e.getMessage() : "Loi mang");
             }
-            callback.onError("Không tải được danh sách đề thi");
-        } catch (IOException e) {
-            callback.onError(e.getMessage() != null ? e.getMessage() : "Lỗi mạng");
-        }
+        });
     }
 
     public void loadExamDetail(long examId, ExamCallback callback) {
-        try {
-            Response<ApiResponse<PublicExamDetailResponse>> response =
-                    examApi.getExamDetail(examId).execute();
-            if (response.isSuccessful() && response.body() != null && response.body().isSuccess()
-                    && response.body().getData() != null) {
-                callback.onSuccess(mapDetail(response.body().getData()));
-                return;
+        ioExecutor.execute(() -> {
+            try {
+                Response<ApiResponse<PublicExamDetailResponse>> response =
+                        examApi.getExamDetail(examId).execute();
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()
+                        && response.body().getData() != null) {
+                    postSuccess(callback, mapDetail(response.body().getData()));
+                    return;
+                }
+                postError(callback, "Khong tai duoc chi tiet de thi");
+            } catch (IOException e) {
+                postError(callback, e.getMessage() != null ? e.getMessage() : "Loi mang");
             }
-            callback.onError("Không tải được chi tiết đề thi");
-        } catch (IOException e) {
-            callback.onError(e.getMessage() != null ? e.getMessage() : "Lỗi mạng");
-        }
+        });
+    }
+
+    private void postSuccess(ExamsCallback callback, List<Exam> exams) {
+        mainHandler.post(() -> callback.onSuccess(exams));
+    }
+
+    private void postSuccess(ExamCallback callback, Exam exam) {
+        mainHandler.post(() -> callback.onSuccess(exam));
+    }
+
+    private void postError(ExamsCallback callback, String message) {
+        mainHandler.post(() -> callback.onError(message));
+    }
+
+    private void postError(ExamCallback callback, String message) {
+        mainHandler.post(() -> callback.onError(message));
     }
 
     public Exam getLocalExamDetail(Context context, long examId) {

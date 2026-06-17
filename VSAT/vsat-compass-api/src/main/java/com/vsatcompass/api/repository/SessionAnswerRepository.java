@@ -16,6 +16,27 @@ public interface SessionAnswerRepository extends JpaRepository<SessionAnswer, Lo
     @Modifying
     void deleteBySessionId(Long sessionId);
 
+    @org.springframework.data.jpa.repository.Query("""
+            SELECT sa FROM SessionAnswer sa
+            WHERE sa.sessionId = :sessionId
+            """)
+    List<SessionAnswer> findBySessionId(@Param("sessionId") Long sessionId);
+
+    @org.springframework.data.jpa.repository.Query("""
+            SELECT sa FROM SessionAnswer sa
+            WHERE sa.sessionId = :sessionId AND sa.questionId = :questionId
+            """)
+    java.util.Optional<SessionAnswer> findBySessionIdAndQuestionId(
+            @Param("sessionId") Long sessionId,
+            @Param("questionId") Long questionId
+    );
+
+    @org.springframework.data.jpa.repository.Query("""
+            SELECT COUNT(sa) FROM SessionAnswer sa
+            WHERE sa.sessionId = :sessionId
+            """)
+    long countBySessionId(@Param("sessionId") Long sessionId);
+
     @Query("""
             SELECT t.id AS topicId,
                    t.name AS topicName,

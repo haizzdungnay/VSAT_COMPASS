@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -21,6 +22,20 @@ public class MyStatsServiceImpl implements MyStatsService {
     public List<TopicStatsResponse> getTopicStats(Long userId) {
         return sessionAnswerRepository.aggregateTopicStatsByUserId(userId).stream()
                 .map(this::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TopicStatsResponse> getWeakTopics(Long userId, int limit) {
+        int boundedLimit = Math.max(1, Math.min(limit, 20));
+        return getTopicStats(userId).stream()
+                .filter(topic -> topic.getTotal() > 0)
+                .sorted(Comparator
+                        .comparingInt(TopicStatsResponse::getPercentage)
+                        .thenComparing(TopicStatsResponse::getTopicName,
+                                Comparator.nullsLast(String::compareToIgnoreCase)))
+                .limit(boundedLimit)
                 .toList();
     }
 

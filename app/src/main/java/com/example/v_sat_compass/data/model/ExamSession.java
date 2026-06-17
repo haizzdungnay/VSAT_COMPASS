@@ -8,24 +8,24 @@ import java.util.List;
 public class ExamSession {
     private Long id;
 
-    @SerializedName("exam_id")
+    @SerializedName(value = "exam_id", alternate = "examId")
     private Long examId;
 
-    @SerializedName("exam_title")
+    @SerializedName(value = "exam_title", alternate = "examTitle")
     private String examTitle;
 
     private String status;
 
-    @SerializedName("total_questions")
+    @SerializedName(value = "total_questions", alternate = "totalQuestions")
     private int totalQuestions;
 
-    @SerializedName("correct_answers")
+    @SerializedName(value = "correct_answers", alternate = "correctCount")
     private int correctAnswers;
 
-    @SerializedName("score_percentage")
+    @SerializedName(value = "score_percentage", alternate = "scorePercentage")
     private double scorePercentage;
 
-    @SerializedName("time_spent_seconds")
+    @SerializedName(value = "time_spent_seconds", alternate = "timeSpentSeconds")
     private int timeSpentSeconds;
 
     private List<SessionAnswer> answers;

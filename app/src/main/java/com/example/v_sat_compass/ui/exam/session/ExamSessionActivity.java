@@ -184,15 +184,20 @@ public class ExamSessionActivity extends AppCompatActivity {
                     // Backend v0.10.2 returns orderedQuestionIds for content fetch order.
                     questionIds.addAll(session.getOrderedQuestionIds());
                     totalQuestions = questionIds.size();
+                    android.util.Log.d("ExamSession",
+                            "startBackendContentSession OK sessionId=" + sessionId
+                                    + " questionIds=" + questionIds);
                     if (questionIds.isEmpty()) {
-                        Toast.makeText(ExamSessionActivity.this,
-                                "Khong co cau hoi tu backend", Toast.LENGTH_SHORT).show();
-                        finish();
+                        showEmptyExamAndExit("Đề thi này hiện chưa có câu hỏi nào.");
                         return;
                     }
                     loadQuestion(0);
                     startTimer();
                 } else {
+                    String bodyMsg = response.body() != null ? response.body().getMessage() : "null";
+                    android.util.Log.w("ExamSession",
+                            "startBackendContentSession failed code=" + response.code()
+                                    + " bodyMsg=" + bodyMsg);
                     Toast.makeText(ExamSessionActivity.this,
                             "Khong the bat dau bai thi backend", Toast.LENGTH_SHORT).show();
                     finish();
@@ -255,8 +260,7 @@ public class ExamSessionActivity extends AppCompatActivity {
     private void loadExamDetailFromLocal() {
         Exam exam = LocalExamDataSource.getInstance().getExamDetail(this, examId);
         if (exam == null || exam.getQuestions() == null || exam.getQuestions().isEmpty()) {
-            Toast.makeText(this, "Không có dữ liệu đề thi cục bộ", Toast.LENGTH_SHORT).show();
-            finish();
+            showEmptyExamAndExit("Không có dữ liệu đề thi cục bộ");
             return;
         }
 
@@ -264,11 +268,20 @@ public class ExamSessionActivity extends AppCompatActivity {
         for (Exam.ExamQuestion q : exam.getQuestions()) {
             questionIds.add(q.getQuestionId());
         }
+        if (questionIds.isEmpty()) {
+            showEmptyExamAndExit("Đề thi này hiện chưa có câu hỏi nào.");
+            return;
+        }
         totalQuestions = questionIds.size();
         loadQuestion(0);
     }
 
     private void loadQuestion(int index) {
+        // Defensive guard: never divide by zero or index out of an empty list.
+        if (questionIds == null || questionIds.isEmpty() || totalQuestions <= 0) {
+            showEmptyExamAndExit("Đề thi này hiện chưa có câu hỏi nào.");
+            return;
+        }
         if (index < 0 || index >= questionIds.size()) return;
 
         currentIndex = index;
@@ -333,10 +346,32 @@ public class ExamSessionActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Show a clear error dialog when the exam has no questions, then close the activity.
+     * Prevents the black-screen divide-by-zero crash and guides the user back to the
+     * previous screen.
+     */
+    private void showEmptyExamAndExit(String message) {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+        if (timer != null) {
+            timer.cancel();
+            timer = null;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("Không thể mở đề thi")
+                .setMessage(message != null ? message : "Đề thi này hiện chưa có câu hỏi nào.")
+                .setCancelable(false)
+                .setPositiveButton("Quay lại", (d, w) -> finish())
+                .show();
+    }
+
     private void loadBackendQuestion(Long questionId) {
         currentQuestion = null;
         if (sessionId == null) {
             Toast.makeText(this, "Khong co backend session", Toast.LENGTH_SHORT).show();
+            binding.tvQuestionText.setText("(Khong co backend session)");
             return;
         }
 
@@ -347,6 +382,8 @@ public class ExamSessionActivity extends AppCompatActivity {
             return;
         }
 
+        android.util.Log.d("ExamSession",
+                "loadBackendQuestion sessionId=" + sessionId + " questionId=" + questionId);
         sessionContentRepository.getQuestion(sessionId, questionId,
                 new SessionContentRepository.RepositoryCallback<SessionQuestionContentResponse>() {
                     @Override
@@ -362,13 +399,28 @@ public class ExamSessionActivity extends AppCompatActivity {
                         String message = error != null && error.getMessage() != null
                                 ? error.getMessage()
                                 : "Loi tai cau hoi backend";
+                        android.util.Log.w("ExamSession",
+                                "loadBackendQuestion failed q=" + questionId
+                                        + " status=" + (error != null ? error.getStatusCode() : -1)
+                                        + " code=" + (error != null ? error.getCode() : null)
+                                        + " msg=" + message);
                         Toast.makeText(ExamSessionActivity.this, message, Toast.LENGTH_SHORT).show();
+                        binding.tvQuestionText.setText("(Loi tai cau hoi: " + message + ")");
                     }
                 });
     }
 
     private void displayQuestion(Question question) {
-        binding.tvQuestionText.setText("Câu " + (currentIndex + 1) + ": " + question.getQuestionText());
+        if (question == null) {
+            binding.tvQuestionText.setText("(Khong the tai cau hoi)");
+            binding.llOptions.removeAllViews();
+            return;
+        }
+        String content = question.getQuestionText();
+        if (content == null || content.trim().isEmpty()) {
+            content = "(Cau hoi chua co noi dung)";
+        }
+        binding.tvQuestionText.setText("Cau " + (currentIndex + 1) + ": " + content);
         binding.llOptions.removeAllViews();
 
         if (question.getOptions() == null || question.getOptions().isEmpty()) return;
@@ -487,8 +539,16 @@ public class ExamSessionActivity extends AppCompatActivity {
     }
 
     private void displayBackendQuestion(SessionQuestionContentResponse question) {
-        if (question == null) return;
-        binding.tvQuestionText.setText("Cau " + (currentIndex + 1) + ": " + question.getContent());
+        if (question == null) {
+            binding.tvQuestionText.setText("(Khong the tai noi dung cau hoi tu backend)");
+            binding.llOptions.removeAllViews();
+            return;
+        }
+        String content = question.getContent();
+        if (content == null || content.trim().isEmpty()) {
+            content = "(Cau hoi chua co noi dung)";
+        }
+        binding.tvQuestionText.setText("Cau " + (currentIndex + 1) + ": " + content);
         binding.llOptions.removeAllViews();
 
         List<QuestionOptionContentResponse> opts = question.getOptions();
@@ -720,18 +780,34 @@ public class ExamSessionActivity extends AppCompatActivity {
                     ExamSession result = response.body().getData();
                     persistBackendReviewSnapshot();
                     String answersJson = new Gson().toJson(selectedAnswers);
+                    int resultTotal = result.getTotalQuestions() > 0 ? result.getTotalQuestions() : totalQuestions;
+                    int resultTime = result.getTimeSpentSeconds() > 0
+                            ? result.getTimeSpentSeconds()
+                            : getElapsedSeconds();
+                    final boolean[] historySaveFailed = {false};
+                    ExamHistoryEntry historyEntry = new ExamHistoryEntry(
+                            examId,
+                            examTitle != null ? examTitle : result.getExamTitle(),
+                            examSubject,
+                            resultTotal,
+                            result.getCorrectAnswers(),
+                            result.getScorePercentage(),
+                            resultTime,
+                            answersJson);
+                    ExamHistoryRepository.getInstance().saveEntry(ExamSessionActivity.this, historyEntry,
+                            () -> historySaveFailed[0] = true);
 
                     Intent intent = new Intent(ExamSessionActivity.this, ExamResultActivity.class);
                     intent.putExtra("session_id", result.getId());
                     intent.putExtra("score", result.getScorePercentage());
                     intent.putExtra("correct", result.getCorrectAnswers());
-                    intent.putExtra("total", result.getTotalQuestions());
-                    intent.putExtra("time_spent", result.getTimeSpentSeconds());
+                    intent.putExtra("total", resultTotal);
+                    intent.putExtra("time_spent", resultTime);
                     intent.putExtra("exam_id", examId);
                     intent.putExtra("exam_title", examTitle);
                     intent.putExtra("exam_subject", examSubject != null ? examSubject : "");
                     intent.putExtra("selected_answers_json", answersJson);
-                    intent.putExtra("history_save_failed", false);
+                    intent.putExtra("history_save_failed", historySaveFailed[0]);
                     startActivity(intent);
                     finish();
                 } else {
@@ -842,6 +918,12 @@ public class ExamSessionActivity extends AppCompatActivity {
         finish();
     }
 
+    private int getElapsedSeconds() {
+        if (sessionStartMillis <= 0) return 0;
+        int elapsed = (int) ((System.currentTimeMillis() - sessionStartMillis) / 1000);
+        return Math.max(elapsed, 0);
+    }
+
     private void startTimer() {
         long millis = durationMinutes * 60 * 1000L;
         timer = new CountDownTimer(millis, 1000) {
@@ -896,6 +978,10 @@ public class ExamSessionActivity extends AppCompatActivity {
     }
 
     private void showQuestionGrid() {
+        if (questionIds == null || questionIds.isEmpty() || totalQuestions <= 0) {
+            showEmptyExamAndExit("Đề thi này hiện chưa có câu hỏi nào.");
+            return;
+        }
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_question_grid, null);
 
         int answered = 0;

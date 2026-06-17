@@ -1,6 +1,14 @@
 # V-SAT Compass — Task Tracker & Roadmap
 
-> Cập nhật: 2026-05-22 | Phiên bản hiện tại: **v0.10.2** (Phase C1.6-A.5 Session Start orderedQuestionIds live in production)
+> Cập nhật: 2026-06-17 | HEAD: `be545ba` (untagged) — tag gần nhất là `v1.0.1` @ `53111e6` "update ui" (là **cha** của HEAD)
+>
+> ⚠️ **Lưu ý đồng bộ + mismatch tag (2026-06-17):**
+> - `be545ba` (real data: admin stats / user management / my-stats / offline demo, 2026-05-26) = **HEAD trên `main`/`origin/main`, KHÔNG có tag**. (Tag `v1.0.0` **không tồn tại** trong repo — tham chiếu "v1.0.0" trong các handoff trước là sai.)
+> - `53111e6` (UI polish) = tag `v1.0.1`, nhưng là **cha** của `be545ba` ⇒ tag `v1.0.1` **chưa bao gồm** commit real data. Tức tag mới nhất KHÔNG trỏ tới HEAD.
+> - Cả hai commit làm **ngoài quy trình phase** (có Cursor co-author, **chưa phase closeout, chưa production smoke**); `README.md` + `CHANGELOG.md` vẫn dừng ở v0.10.2.
+> - Quyết định tag (tạo tag mới cho `be545ba`, hay re-tag) **chờ onii-chan** — chưa động vào tag.
+>
+> ⚠️ **Bối cảnh hạ tầng (2026-06-17):** Neon (Free) vượt 100 CU-hrs → DB cloud treo. Đang chạy **toàn bộ local** để demo (Docker `vsat-pg` postgres:17 + `bootRun` profile dev + APK debug trỏ LAN). Đây là tình huống vận hành tạm thời, không phải hạng mục roadmap — xem handoff demo để biết cách bật lại và việc cần revert sau demo.
 
 Tài liệu này tổng hợp lộ trình hoàn thiện app dựa trên:
 - `VSAT/ui/tong_hop_du_an_vsat_android_web_v2.txt`
@@ -22,8 +30,8 @@ Mục tiêu cuối:
 |-----------|------------|------------|
 | A — Student MVP | ✅ XONG | 100% |
 | B — Backend Production | ✅ XONG | 100% (2026-04-25) |
-| C — Content Management | 🟡 IN PROGRESS | C1.0 → C1.6 closed; C2+ next |
-| D — Admin & Operations | 🔜 Tương lai | — |
+| C — Content Management | 🟡 IN PROGRESS | C1.0 → C1.6 closed; C3.1 + C4.1 shipped trong `be545ba` (untagged, chưa prod smoke) |
+| D — Admin & Operations | 🟡 IN PROGRESS | D1 (stats) + D2 (user mgmt list/role/lock) implemented backend+Android trong `be545ba` (untagged, chưa prod smoke); D3/D4/D5 còn lại |
 | E — Chất lượng sản phẩm | 🔜 Tương lai | — |
 
 ---
@@ -82,6 +90,9 @@ Mục tiêu cuối:
   sample_*.json retained as offline fallback (soft-retire).
 - [x] APK-1.1 hotfix — added Properties import to app/build.gradle.kts. Fixed Kotlin DSL unresolved reference. Gradle sync + signingReport restored.
 - [x] APK-2 first release build verified — app-release.apk produced and signed. android/v0.1.0 tag pending post-merge.
+- [x] **Real Data batch** (`be545ba`, untagged HEAD, 2026-05-26) + **UI polish** (`53111e6`, tag `v1.0.1`, là cha của HEAD) — ngoài quy trình phase, **chưa prod smoke**:
+  - Backend: `GET /admin/stats` (dashboard counts), `GET /admin/users` + `PATCH /admin/users/{id}/role|lock|unlock` (user management), `GET /my-stats/topics` (thống kê theo chủ đề), `SessionAnswer` entity + persistence cho client-submit. Kèm 4 service test mới (AdminDashboard/AdminUser/MyStats/Session).
+  - Android: `ExamRepository` (đề thật từ backend), `StudentStatsRepository`, `AdminUserRepository`; Admin Dashboard + User Management fragment bind live data; Practice screen (`PracticeFragment` + `PracticeTopicAdapter`) dùng dữ liệu thật; `OfflineDemoDataHelper` + `NetworkUtils` fallback offline; gỡ `MockDataHelper` + `QuestionItem`.
 
 ### 2.2 Chưa hoàn chỉnh
 
@@ -474,7 +485,7 @@ Tiêu chí xong:
 
 | ID | Hạng mục | Trạng thái |
 |----|----------|------------|
-| C3.1 | Android: load danh sách đề từ GET /exams (thay local fallback) | 🟡 PARTIAL — backend C1.2a live; Android integration deferred |
+| C3.1 | Android: load danh sách đề từ GET /exams (thay local fallback) | 🟢 IMPLEMENTED (`be545ba`, untagged HEAD) — `ExamRepository` load đề thật, offline fallback qua `OfflineDemoDataHelper`; chưa prod smoke |
 | C3.2 | Android: load câu hỏi từ GET /sessions/{id}/questions/{qId} | 📋 TODO |
 | C3.3 | Android: replace smoke seed exam bằng đề thật từ server | 📋 TODO |
 | C3.4 | Xóa smoke_test_seed.sql sau khi Phase C có đề thật | 📋 TODO |
@@ -497,8 +508,8 @@ Tiêu chí xong:
 
 | ID | Hạng mục | Trạng thái |
 |----|----------|------------|
-| C4.1 | GET /my-stats/topics (thống kê theo chủ đề) | 📋 TODO |
-| C4.2 | GET /my-stats/weak-topics | 📋 TODO |
+| C4.1 | GET /my-stats/topics (thống kê theo chủ đề) | 🟢 IMPLEMENTED (`be545ba`, untagged HEAD) — `MyStatsController` + Android `StudentStatsRepository`; chưa prod smoke |
+| C4.2 | GET /my-stats/weak-topics | 🟢 IMPLEMENTED local (2026-06-18) — chua prod smoke |
 
 ---
 
@@ -508,8 +519,8 @@ Mục tiêu: có đủ công cụ để app vận hành như một sản phẩm 
 
 | ID | Hạng mục | Trạng thái |
 |----|----------|------------|
-| D1 | Admin dashboard (overview counts) | 🔜 Future |
-| D2 | User management (list, role, status) | 🔜 Future |
+| D1 | Admin dashboard (overview counts) | 🟢 IMPLEMENTED (`be545ba`, untagged HEAD) — `GET /admin/stats` + `AdminDashboardFragment` live data; chưa prod smoke |
+| D2 | User management (list, role, status) | 🟢 IMPLEMENTED (`be545ba`, untagged HEAD) — `GET /admin/users` + `PATCH .../role\|lock\|unlock` + `AdminUserManagementFragment`; chưa prod smoke |
 | D3 | Ticket system (student feedback) | 🔜 Future |
 | D4 | Git history cleanup (bfg-repo-cleaner) | 🔜 Future |
 | D5 | Custom domain (nâng Render lên paid tier hoặc VPS) | 🔜 Future |
@@ -527,11 +538,12 @@ Tiêu chí xong:
 - Có vòng khép kín student report → admin xử lý → đóng ticket
 
 ### D2. User & role management
-- [ ] Danh sách user
-- [ ] Xem role/status
-- [ ] Khóa/mở user
-- [ ] Đổi role
-- [ ] Chuyển mode student/admin trong app đúng quyền
+> 🟢 Implemented trong batch real data (`be545ba`, untagged), chưa prod smoke.
+- [x] Danh sách user — `GET /admin/users` (paged) + `AdminUserManagementFragment`
+- [x] Xem role/status — `UserSummaryResponse`
+- [x] Khóa/mở user — `PATCH /admin/users/{id}/lock|unlock`
+- [x] Đổi role — `PATCH /admin/users/{id}/role`
+- [ ] Chuyển mode student/admin trong app đúng quyền — cần verify end-to-end
 
 Tham chiếu mockup:
 - `v_sat_qu_n_tr_ng_i_d_ng_quy_n`
@@ -543,9 +555,10 @@ Tiêu chí xong:
 - Role thay đổi có hiệu lực đúng ở UI và backend
 
 ### D3. Dashboard & audit cơ bản
-- [ ] Dashboard tổng quan admin
-- [ ] Nhật ký hoạt động cơ bản
-- [ ] Số lượng user, đề thi, câu hỏi, ticket
+> 🟢 Phần dashboard counts implemented trong batch real data (`be545ba`, untagged), chưa prod smoke. Audit log vẫn deferred.
+- [x] Dashboard tổng quan admin — `GET /admin/stats` + `AdminDashboardFragment`
+- [ ] Nhật ký hoạt động cơ bản — chưa có audit service
+- [x] Số lượng user, đề thi, câu hỏi (ticket chưa có) — `AdminStatsResponse`
 
 Tham chiếu mockup:
 - `v_sat_qu_n_tr_t_ng_quan_1`
@@ -589,6 +602,35 @@ Mục tiêu: từ bản chạy được sang bản có thể demo, bàn giao, ho
 
 ## 4. Danh sách ưu tiên thực hiện ngay
 
+### 🎯 Ưu tiên HIỆN TẠI (2026-06-17) — OFFLINE / LOCAL DEMO trước, ONLINE để sau
+
+> Quyết định: tập trung làm offline / local-demo chạy ngon cho buổi thuyết trình. Phần online (deploy Render, prod smoke, tag) **để dành** tới khi Neon DB sống lại — triển khai sau cũng không muộn.
+
+**Bản đồ offline coverage (tính đến `be545ba`):**
+
+| Màn | Offline khi MẤT backend? | Cơ chế |
+|-----|--------------------------|--------|
+| Exam list (kho đề) | ✅ Có | `NetworkUtils.isOnline` sai → `LocalExamDataSource` sample packs |
+| Admin Dashboard | ✅ Có | `OfflineDemoDataHelper.getDemoAdminStats()` |
+| User Management | ✅ Có | `OfflineDemoDataHelper.getDemoUsers()` |
+| Practice (topic stats) | ✅ Có | `OfflineDemoDataHelper.getDemoTopicStats()` |
+| **Làm bài (Exam session)** | ❌ **KHÔNG** | `USE_BACKEND_EXAM_CONTENT=true` → bắt buộc `startSession` backend; mất backend là `finish()`. Cần local backend (Docker) chạy. |
+| Review sau nộp bài | ⚠️ Một phần | snapshot backend lưu local sau nộp; cần backend lúc làm bài |
+
+- [x] **Demo chạy với LOCAL backend — ĐÃ VERIFY (2026-06-17).** Docker `vsat-pg` running; health `/api/v1/actuator/health` = UP; login student/admin OK; `/exams` 6 published (demo exams id `23-26`, mỗi đề 15 câu); `/sessions/start` + fetch câu đầu OK (15 orderedQuestionIds, 4 options); `/admin/stats` OK; `/my-stats/topics` 3 topics (seed qua demo session `88`, 10 `session_answers`).
+- [x] **Fix blocker local: `/admin/users` 500 → đã sửa (2026-06-17).** Nguyên nhân: JPQL nullable filter với enum trên Postgres. Đổi sang JPA `Specification` động. Sửa `UserRepository.java` + `AdminUserServiceImpl.java` + cập nhật `AdminUserServiceTest.java`. `./gradlew test --tests AdminUserServiceTest` PASS. Sau fix `/admin/users` trả 24 users, role filter OK. ⚠️ Fix này đang ở working tree, **chưa commit, chưa prod smoke** — phải gộp vào closeout batch real data khi đưa online.
+- [ ] **(tab khác đang xử lý)** Lỗi màn đen khi bấm "Làm bài" — không sửa trong session này. Lần smoke 2026-06-18 không còn reproduce sau khi backend local restart đúng LAN (`--server.address=0.0.0.0`), nhưng owner vẫn là tab kia.
+- [ ] Cân nhắc: có cần offline thuần cho luồng làm bài không (fallback `LocalExamDataSource` trong `ExamSessionActivity`)? Hiện chưa có; đụng file tab kia đang sửa nên chờ.
+- [x] **Student Android local flow smoke PASS (2026-06-18):** debug APK build/install OK; student home + exam list live data OK; exam detail OK; session start OK (`POST /sessions/start` 201 qua LAN); answer + submit OK (`POST /sessions/{id}/submit` 200); result mapping fixed (`correctCount/totalQuestions/timeSpentSeconds` hiển thị đúng, smoke đề 2 câu ra `0/2` thay vì `0/0`); review detail mở OK.
+- [x] **Student dashboard/history/profile completion (2026-06-18):** backend exam submit now writes local `ExamHistoryEntry`, so Home score/quick stats/continue-practice/history are populated after `/sessions/{id}/submit`; Result screen renders current subject + real `/my-stats/topics` weak-topic data instead of hardcoded cards; Profile supports full name/email/phone edit, password change, and local avatar picker/cache; Home filters zero-question/smoke exams from first-screen lists. Verification: `./gradlew :app:assembleDebug` PASS; backend targeted tests PASS (`AuthServiceTest`, `SessionServiceTest`, `AdminUserServiceTest`).
+- [x] **C4.2 weak topics endpoint (2026-06-18, local only):** added `GET /my-stats/weak-topics` (sorted lowest accuracy first, bounded limit) and wired Android result screen to use it. Production smoke deferred until Neon is back.
+- [x] **Role/mode/admin UI + rotate/background smoke PASS (2026-06-18, local only):** student profile hides admin center/mode; `SUPER_ADMIN` profile shows admin center + mode toggle; AdminActivity dashboard and user list load live local data without crash; session screen survives rotate + background/resume. Note: `SUPER_ADMIN` can open a session but backend denies question content fetch (`403`), so answer/submit smoke remains covered by the student flow above.
+
+### ⏸️ ONLINE — ĐỂ SAU (chờ Neon DB sống lại)
+- [ ] Prod smoke cho batch real data (`/admin/stats`, `/admin/users`, `/my-stats/topics`) — **bao gồm cả fix `/admin/users` Specification (2026-06-17)**.
+- [ ] Deploy Render + closeout batch `be545ba` + fix `/admin/users` + quyết định tag.
+- [ ] Revert config demo (xem mục Operational Debt: `application.yml` token, `.env` Neon, rotate secrets).
+
 ### Ưu tiên P0 — ✅ Hoàn thành toàn bộ
 - [x] Làm cho backend public chạy thật sự ổn định
 - [x] Hoàn thiện `Xem lời giải chi tiết`
@@ -597,11 +639,12 @@ Mục tiêu: từ bản chạy được sang bản có thể demo, bàn giao, ho
 - [x] Hoàn thiện bootstrap + sync kết quả cuối
 
 ### Ưu tiên P1
-- [ ] Question bank quản trị
-- [ ] Review workflow câu hỏi
-- [ ] Tạo đề thi quản trị
+- [x] Question bank quản trị
+- [x] Review workflow câu hỏi
+- [x] Tạo đề thi quản trị
 - [ ] Ticket nội dung
-- [ ] User / role management
+- [x] User / role management — implemented trong `be545ba` (untagged), cần prod smoke
+- [ ] **Đưa batch real data (`be545ba`) vào quy trình chuẩn:** prod smoke + closeout + đồng bộ `README.md` / `CHANGELOG.md` (hiện vẫn dừng ở v0.10.2) + quyết định tag
 
 ### Ưu tiên P2
 - [ ] Dashboard admin nâng cao
@@ -690,8 +733,22 @@ Mỗi khi hoàn thành một task:
   **Quyết định cleanup chờ user.** KHÔNG được tự ý `stash pop` / `stash drop`.
   Cần xác định cùng user xem stash nào còn cần re-apply, stash nào có thể drop, trước khi đụng vào.
 
-- [ ] **Backup branch retention deadline approaching (2026-06-01)**
-  `backup-pre-batch-2b-20260430` (points at `1f88ee20cf943ed9ce1261cd0375a3d9b9e0188a`) — local + origin. Retention until 2026-06-01. Confirm with onii-chan before deleting after that date. Currently ~9 days remaining.
+- [ ] **Backup branch retention deadline ĐÃ QUÁ HẠN (2026-06-01)**
+  `backup-pre-batch-2b-20260430` (points at `1f88ee20cf943ed9ce1261cd0375a3d9b9e0188a`) — local + origin. Retention hết hạn 2026-06-01; tính đến 2026-06-17 đã **quá hạn 16 ngày**. Cần quyết định xóa hay giữ tiếp.
+
+- [ ] **Đồng bộ docs cho batch real data (`be545ba`) + UI (`53111e6`)**
+  Code đã lên `main`/`origin/main`. `53111e6` có tag `v1.0.1`; `be545ba` (HEAD, real data) **chưa có tag**. `README.md` (vẫn ghi "Trạng thái hiện tại v0.10.2") và `CHANGELOG.md` (mục [Unreleased] vẫn dừng ở APK-2) **chưa cập nhật**. task.md đã sync 2026-06-17. Cần: viết CHANGELOG entry, cập nhật README trạng thái + bảng endpoint (thêm `/admin/stats`, `/admin/users`, `/my-stats/topics`), prod smoke khi DB cloud sống lại.
+
+- [ ] **Mismatch tag + tagging scheme không nhất quán** (chờ onii-chan quyết định, CHƯA động vào tag)
+  - Tag mới nhất `v1.0.1` trỏ `53111e6` = **cha** của HEAD `be545ba` ⇒ tag không trỏ HEAD; commit real data chưa được tag. Tag `v1.0.0` **không tồn tại** (handoff trước ghi sai).
+  - Quy ước cũ: runtime backend `vX.Y.Z` (v0.10.x), APK Android `android/vX.Y.Z`. `v1.0.x` lại trộn backend+Android. Cần thống nhất scheme hoặc ghi chú ngoại lệ; cân nhắc tạo tag cho `be545ba` sau khi prod smoke + docs xong.
+
+- [ ] **Post-demo revert (sau khi demo xong / Neon hoạt động lại)** — từ handoff demo local
+  - Revert `application.yml`: `access-token-expiration-ms` `86400000` → `900000` (15 phút).
+  - Revert `.env`: bỏ comment 3 dòng Neon, comment lại 3 dòng local.
+  - Rotate `JWT_SECRET` và mật khẩu DB Neon (đã lộ trong quá trình thao tác local).
+  - Reset/nâng quota Neon hoặc chờ sang chu kỳ mới.
+  - (App debug đang dùng `USE_LOCAL_BACKEND=true` + `LOCAL_LAN_HOST` — chỉ dành cho bản debug demo, không đưa vào release.)
 
 ---
 

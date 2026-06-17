@@ -2,6 +2,42 @@
 
 ## [Unreleased]
 
+### Real Data batch -- admin/exam/practice live data + offline demo (2026-05-26, `be545ba`)
+
+> ⚠️ Batch này làm **ngoài quy trình phase** chuẩn (Cursor co-author). **CHƯA chạy production smoke** và **chưa gắn tag** (`be545ba` là HEAD, untagged). Tag gần nhất `v1.0.1` (`53111e6` "update ui") là **cha** của commit này nên chưa bao gồm các thay đổi dưới đây. Các endpoint mới mới chỉ verify trên DB local.
+
+**Backend (Spring Boot):**
+- Thêm `GET /admin/stats` — admin dashboard overview counts (`AdminDashboardController` / `AdminStatsResponse`).
+- Thêm User Management: `GET /admin/users` (paged) + `PATCH /admin/users/{id}/role` + `PATCH /admin/users/{id}/lock` + `PATCH /admin/users/{id}/unlock` (`AdminUserController` / `UserSummaryResponse` / `UpdateUserRoleRequest`).
+- Thêm `GET /my-stats/topics` — thống kê theo chủ đề cho student (`MyStatsController` / `TopicStatsResponse` / `TopicStatsProjection`).
+- Thêm `SessionAnswer` entity + `SessionAnswerRepository` để persist đáp án từ client-submit.
+- Tests mới: `AdminDashboardServiceTest`, `AdminUserServiceTest`, `MyStatsServiceTest`, `SessionServiceTest`.
+
+**Android:**
+- Thêm `ExamRepository` (đề thật từ backend), `StudentStatsRepository`, `AdminUserRepository`.
+- Admin Dashboard + User Management fragment bind dữ liệu live; Practice screen (`PracticeFragment` + `PracticeTopicAdapter`) dùng dữ liệu thật.
+- Thêm `OfflineDemoDataHelper` + `NetworkUtils` cho fallback offline khi backend không sẵn sàng.
+- Gỡ `MockDataHelper` và `QuestionItem` (mock data cũ).
+
+**Hotfix (2026-06-17, working tree — chưa commit, chưa prod smoke):**
+- Sửa `GET /admin/users` trả `500`: JPQL nullable filter với enum trên Postgres không an toàn. Refactor sang JPA `Specification` động (`UserRepository` + `AdminUserServiceImpl`), cập nhật `AdminUserServiceTest`. `./gradlew test --tests AdminUserServiceTest` PASS; verify local: 24 users, role/status/keyword filter OK. Cần gộp vào closeout + prod smoke khi đưa online.
+- Sửa Android result mapping cho backend session submit: `ExamSession` model chấp nhận cả snake_case cũ và camelCase mới (`examId`, `correctCount`, `totalQuestions`, `scorePercentage`, `timeSpentSeconds`) để `ExamResultActivity` không còn hiển thị `0/0` sau khi backend trả kết quả thật.
+- Thêm `@JsonAlias("isBookmarked")` cho `SessionRequest.SubmitAnswer.bookmarked` để backend nhận đúng payload hiện tại của Android khi lưu từng câu trả lời.
+- Local demo smoke: build/install debug APK, student flow list -> detail -> session -> submit -> result -> review PASS trên emulator với backend LAN local; `POST /sessions/{id}/submit` trả 200, result hiển thị đúng tổng câu (`0/2` trong smoke đề 2 câu), review mở không crash.
+
+**Student/Profile completion hotfix (2026-06-18, working tree -- chua commit, chua prod smoke):**
+- Android backend exam submit now also persists `ExamHistoryEntry` locally, so Home score, quick stats, continue-practice, and ExamHistoryActivity are populated after server-side `/sessions/{id}/submit`.
+- `ExamResultActivity` no longer renders hardcoded subject/topic cards; subject result is built from the submitted exam result, weak topics are loaded from `/my-stats/topics`, and an empty state is shown when no topic data exists.
+- Profile screen now supports editing full name, email, phone, changing password, and choosing a local avatar image. Avatar URI is cached locally and synced to `avatarUrl` when possible; Home/Profile both render the local avatar.
+- Backend `PUT /auth/me` now accepts email updates with duplicate-email validation and resets `emailVerified=false` when email changes.
+- Added `GET /my-stats/weak-topics` for weakest topic ordering; Android result screen uses it for the improvement list.
+- Home filters out zero-question/smoke exams from the first-screen upcoming/suggestion lists when normal demo exams are available.
+- Verification: `./gradlew :app:assembleDebug` PASS; backend targeted tests PASS for `AuthServiceTest`, `SessionServiceTest`, and `AdminUserServiceTest`.
+
+### UI polish (2026-05-26, `53111e6`, tag `v1.0.1`)
+
+- Cập nhật Home, Practice, Suggestion/Upcoming adapters, layout/màu/string. (UI-only; là commit cha của batch real data ở trên.)
+
 ### APK Release Track -- APK-2 release build verification (2026-05-25)
 
 - First Android release APK produced via `./gradlew assembleRelease` at main `02ef93be`.

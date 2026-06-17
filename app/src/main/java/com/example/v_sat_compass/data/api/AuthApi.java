@@ -10,6 +10,7 @@ import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
+import retrofit2.http.PUT;
 
 public interface AuthApi {
 
@@ -27,4 +28,10 @@ public interface AuthApi {
 
     @GET("auth/me")
     Call<ApiResponse<UserProfile>> getMe();
+
+    @PUT("auth/me")
+    Call<ApiResponse<UserProfile>> updateProfile(@Body java.util.Map<String, String> body);
+
+    @PUT("auth/me/password")
+    Call<ApiResponse<Void>> changePassword(@Body java.util.Map<String, String> body);
 }

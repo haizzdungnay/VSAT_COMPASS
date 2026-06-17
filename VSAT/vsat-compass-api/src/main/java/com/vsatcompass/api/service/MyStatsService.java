@@ -7,4 +7,6 @@ import java.util.List;
 public interface MyStatsService {
 
     List<TopicStatsResponse> getTopicStats(Long userId);
+
+    List<TopicStatsResponse> getWeakTopics(Long userId, int limit);
 }

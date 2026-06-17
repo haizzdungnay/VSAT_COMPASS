@@ -86,6 +86,10 @@ public class AuthRequest {
 
     @Data
     public static class UpdateProfile {
+        @Email(message = "Email khong hop le")
+        @Size(max = 255, message = "Email toi da 255 ky tu")
+        private String email;
+
         @Size(min = 2, max = 100, message = "Họ tên phải từ 2-100 ký tự")
         private String fullName;
 

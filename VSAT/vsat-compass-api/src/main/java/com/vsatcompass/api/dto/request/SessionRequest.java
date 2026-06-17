@@ -1,5 +1,6 @@
 package com.vsatcompass.api.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
@@ -16,6 +17,21 @@ public class SessionRequest {
 
         @Min(value = 1, message = "totalQuestions phải ≥ 1")
         private Integer totalQuestions;
+    }
+
+    @Data
+    public static class SubmitAnswer {
+        @NotNull(message = "questionId không được để trống")
+        private Long questionId;
+
+        @NotNull(message = "selectedOptionId không được để trống")
+        private Long selectedOptionId;
+
+        @JsonAlias("isBookmarked")
+        private Boolean bookmarked = false;
+
+        @Min(value = 0, message = "timeSpentSeconds phải ≥ 0")
+        private Integer timeSpentSeconds = 0;
     }
 
     @Data
