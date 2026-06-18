@@ -2,9 +2,9 @@
 
 ## [Unreleased]
 
-### Real Data batch -- admin/exam/practice live data + offline demo (2026-05-26, `be545ba`)
+### Real Data batch -- admin/exam/practice live data + offline demo (2026-05-26, `be545ba`, cha của HEAD `40cec10`)
 
-> ⚠️ Batch này làm **ngoài quy trình phase** chuẩn (Cursor co-author). **CHƯA chạy production smoke** và **chưa gắn tag** (`be545ba` là HEAD, untagged). Tag gần nhất `v1.0.1` (`53111e6` "update ui") là **cha** của commit này nên chưa bao gồm các thay đổi dưới đây. Các endpoint mới mới chỉ verify trên DB local.
+> ⚠️ Batch này làm **ngoài quy trình phase** chuẩn (Cursor co-author). **CHƯA chạy production smoke** và **chưa gắn tag** (`be545ba` là **cha của HEAD `40cec10`**, untagged). Tag gần nhất `v1.0.1` (`53111e6` "update ui") là **ông** của HEAD nên chưa bao gồm các thay đổi dưới đây. Các endpoint mới mới chỉ verify trên DB local.
 
 **Backend (Spring Boot):**
 - Thêm `GET /admin/stats` — admin dashboard overview counts (`AdminDashboardController` / `AdminStatsResponse`).
@@ -19,24 +19,22 @@
 - Thêm `OfflineDemoDataHelper` + `NetworkUtils` cho fallback offline khi backend không sẵn sàng.
 - Gỡ `MockDataHelper` và `QuestionItem` (mock data cũ).
 
-**Hotfix (2026-06-17, working tree — chưa commit, chưa prod smoke):**
-- Sửa `GET /admin/users` trả `500`: JPQL nullable filter với enum trên Postgres không an toàn. Refactor sang JPA `Specification` động (`UserRepository` + `AdminUserServiceImpl`), cập nhật `AdminUserServiceTest`. `./gradlew test --tests AdminUserServiceTest` PASS; verify local: 24 users, role/status/keyword filter OK. Cần gộp vào closeout + prod smoke khi đưa online.
-- Sửa Android result mapping cho backend session submit: `ExamSession` model chấp nhận cả snake_case cũ và camelCase mới (`examId`, `correctCount`, `totalQuestions`, `scorePercentage`, `timeSpentSeconds`) để `ExamResultActivity` không còn hiển thị `0/0` sau khi backend trả kết quả thật.
-- Thêm `@JsonAlias("isBookmarked")` cho `SessionRequest.SubmitAnswer.bookmarked` để backend nhận đúng payload hiện tại của Android khi lưu từng câu trả lời.
-- Local demo smoke: build/install debug APK, student flow list -> detail -> session -> submit -> result -> review PASS trên emulator với backend LAN local; `POST /sessions/{id}/submit` trả 200, result hiển thị đúng tổng câu (`0/2` trong smoke đề 2 câu), review mở không crash.
-
-**Student/Profile completion hotfix (2026-06-18, working tree -- chua commit, chua prod smoke):**
-- Android backend exam submit now also persists `ExamHistoryEntry` locally, so Home score, quick stats, continue-practice, and ExamHistoryActivity are populated after server-side `/sessions/{id}/submit`.
-- `ExamResultActivity` no longer renders hardcoded subject/topic cards; subject result is built from the submitted exam result, weak topics are loaded from `/my-stats/topics`, and an empty state is shown when no topic data exists.
-- Profile screen now supports editing full name, email, phone, changing password, and choosing a local avatar image. Avatar URI is cached locally and synced to `avatarUrl` when possible; Home/Profile both render the local avatar.
-- Backend `PUT /auth/me` now accepts email updates with duplicate-email validation and resets `emailVerified=false` when email changes.
-- Added `GET /my-stats/weak-topics` for weakest topic ordering; Android result screen uses it for the improvement list.
-- Home filters out zero-question/smoke exams from the first-screen upcoming/suggestion lists when normal demo exams are available.
-- Verification: `./gradlew :app:assembleDebug` PASS; backend targeted tests PASS for `AuthServiceTest`, `SessionServiceTest`, and `AdminUserServiceTest`.
+**Local demo smoke + `/admin/users` Specification fix (2026-06-18, committed in `40cec10`, HEAD, untagged):**
+- Sửa `GET /admin/users` trả `500`: JPQL nullable filter với enum trên Postgres không an toàn. Refactor sang JPA `Specification` động — `UserRepository extends ... JpaSpecificationExecutor<User>` và `AdminUserServiceImpl` buildUserFilter bằng `Specification<User>`. Cập nhật `AdminUserServiceTest`. `./gradlew test --tests AdminUserServiceTest` PASS; verify local: 24 users, role/status/keyword filter OK. Đã **committed trong `40cec10`**; **chưa prod smoke**.
+- Sửa Android result mapping cho backend session submit: `ExamSession` model chấp nhận cả snake_case cũ và camelCase mới (`examId`, `correctCount`, `totalQuestions`, `scorePercentage`, `timeSpentSeconds`) để `ExamResultActivity` không còn hiển thị `0/0` sau khi backend trả kết quả thật. Đã **committed trong `40cec10`**.
+- Thêm `@JsonAlias("isBookmarked")` cho `SessionRequest.SubmitAnswer.bookmarked` để backend nhận đúng payload hiện tại của Android khi lưu từng câu trả lời. Đã **committed trong `40cec10`**.
+- Thêm `GET /my-stats/weak-topics` (sort accuracy tăng dần, bounded limit 1-20) — `MyStatsController.getWeakTopics` + `MyStatsService.getWeakTopics` + `MyStatsServiceImpl`. Android `ExamResultActivity` dùng cho improvement list. Đã **committed trong `40cec10`**.
+- Android backend exam submit giờ cũng persist `ExamHistoryEntry` local, nên Home score/quick stats/continue-practice/ExamHistoryActivity được populate sau server-side `/sessions/{id}/submit`. Đã **committed trong `40cec10`**.
+- `ExamResultActivity` không còn render hardcoded subject/topic cards; subject result build từ submitted exam result, weak topics load từ `/my-stats/topics` + `/my-stats/weak-topics`, có empty state khi không có topic data. Đã **committed trong `40cec10`**.
+- Profile screen giờ hỗ trợ edit full name, email, phone, đổi mật khẩu, chọn avatar local. Avatar URI cache local, sync `avatarUrl` khi có thể; Home/Profile đều render local avatar. Đã **committed trong `40cec10`**.
+- Backend `PUT /auth/me` chấp nhận email updates với duplicate-email validation và reset `emailVerified=false` khi email thay đổi. Đã **committed trong `40cec10`**.
+- Home filter zero-question/smoke exams khỏi first-screen upcoming/suggestion lists khi có demo exams thật. Đã **committed trong `40cec10`**.
+- `SplashActivity` route theo role (student vs SUPER_ADMIN thấy admin center/mode toggle); `ProfileFragment` admin access qua `UserRoleHelper.canAccessAdminMode()`. Đã **committed trong `40cec10`**.
+- Local demo smoke (verified 2026-06-18): build/install debug APK, student flow list -> detail -> session start (`POST /sessions/start` 201 qua LAN) -> answer -> submit (`POST /sessions/{id}/submit` 200, result đúng `0/2` cho smoke đề 2 câu thay vì `0/0`) -> review mở OK; AdminActivity dashboard + user list load live local data; session screen sống qua rotate + background/resume. Verification: `./gradlew :app:assembleDebug` PASS; backend targeted tests PASS cho `AuthServiceTest`, `SessionServiceTest`, `AdminUserServiceTest`.
 
 ### UI polish (2026-05-26, `53111e6`, tag `v1.0.1`)
 
-- Cập nhật Home, Practice, Suggestion/Upcoming adapters, layout/màu/string. (UI-only; là commit cha của batch real data ở trên.)
+- Cập nhật Home, Practice, Suggestion/Upcoming adapters, layout/màu/string. (UI-only; là commit ông của HEAD `40cec10`: cha của `be545ba`, ông của `40cec10`.)
 
 ### APK Release Track -- APK-2 release build verification (2026-05-25)
 
