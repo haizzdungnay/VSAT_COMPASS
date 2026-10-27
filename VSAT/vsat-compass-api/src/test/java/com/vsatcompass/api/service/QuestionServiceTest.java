@@ -846,6 +846,39 @@ class QuestionServiceTest {
             verify(questionRepository, never())
                     .findByCreatedByOrderByUpdatedAtDesc(any(), any());
         }
+
+        @Test
+        @DisplayName("listByStatus: null status returns all questions sorted by updatedAt")
+        void listByStatus_nullStatus_callsAllQuery() {
+            Pageable pageable = PageRequest.of(0, 20);
+            Question q = existingQuestion(91L, QuestionStatus.APPROVED, OWNER_ID);
+            Page<Question> page = new PageImpl<>(List.of(q), pageable, 1);
+            when(questionRepository.findAllByOrderByUpdatedAtDesc(pageable)).thenReturn(page);
+
+            Page<QuestionListItemResponse> result = questionService.listByStatus(null, pageable);
+
+            assertThat(result.getTotalElements()).isEqualTo(1);
+            assertThat(result.getContent().get(0).getStatus()).isEqualTo(QuestionStatus.APPROVED);
+            verify(questionRepository).findAllByOrderByUpdatedAtDesc(pageable);
+            verify(questionRepository, never()).findByStatusOrderByUpdatedAtDesc(any(), any());
+        }
+
+        @Test
+        @DisplayName("listByStatus: explicit status keeps status filter")
+        void listByStatus_explicitStatus_callsFilteredQuery() {
+            Pageable pageable = PageRequest.of(0, 20);
+            Page<Question> page = new PageImpl<>(Collections.emptyList(), pageable, 0);
+            when(questionRepository.findByStatusOrderByUpdatedAtDesc(
+                    QuestionStatus.PENDING_REVIEW, pageable)).thenReturn(page);
+
+            Page<QuestionListItemResponse> result = questionService.listByStatus(
+                    QuestionStatus.PENDING_REVIEW, pageable);
+
+            assertThat(result.getTotalElements()).isZero();
+            verify(questionRepository).findByStatusOrderByUpdatedAtDesc(
+                    QuestionStatus.PENDING_REVIEW, pageable);
+            verify(questionRepository, never()).findAllByOrderByUpdatedAtDesc(any());
+        }
     }
 
     // ============================================================

@@ -13,6 +13,9 @@ public class Question {
     @SerializedName("question_text")
     private String questionText;
 
+    @SerializedName("question_type")
+    private String questionType;
+
     @SerializedName("explanation")
     private String explanation;
 
@@ -27,6 +30,8 @@ public class Question {
     public Long getId() { return id; }
     public String getQuestionCode() { return questionCode; }
     public String getQuestionText() { return questionText; }
+    public String getQuestionType() { return questionType; }
+    public void setQuestionType(String questionType) { this.questionType = questionType; }
     public String getExplanation() { return explanation; }
     public String getSubjectName() { return subjectName; }
     public String getTopicName() { return topicName; }

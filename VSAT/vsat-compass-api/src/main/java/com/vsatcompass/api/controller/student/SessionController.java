@@ -13,7 +13,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -45,7 +44,6 @@ public class SessionController {
     }
 
     @PostMapping("/{sessionId}/answers")
-    @PreAuthorize("hasRole('STUDENT')")
     @Operation(summary = "ES-05: Lưu một câu trả lời trong phiên thi (server-side scoring)")
     public ResponseEntity<ApiResponse<Void>> submitAnswer(
             @PathVariable Long sessionId,
@@ -56,7 +54,6 @@ public class SessionController {
     }
 
     @PostMapping("/{sessionId}/submit")
-    @PreAuthorize("hasRole('STUDENT')")
     @Operation(summary = "ES-06: Nộp bài — backend tự chấm từ các câu trả lời đã lưu")
     public ResponseEntity<ApiResponse<SessionResponse.SessionInfo>> submit(
             @PathVariable Long sessionId) {
@@ -66,7 +63,6 @@ public class SessionController {
     }
 
     @GetMapping("/{sessionId}/questions/{questionId}")
-    @PreAuthorize("hasRole('STUDENT')")
     @Operation(summary = "ES-03: Get in-session question content")
     public ResponseEntity<ApiResponse<SessionQuestionContentResponse>> getQuestionForSession(
             @PathVariable Long sessionId,
@@ -78,7 +74,6 @@ public class SessionController {
     }
 
     @GetMapping("/{sessionId}/answer-keys")
-    @PreAuthorize("hasRole('STUDENT')")
     @Operation(summary = "ES-04: Get answer keys after session submission")
     public ResponseEntity<ApiResponse<SessionAnswerKeysResponse>> getAnswerKeysForSession(
             @PathVariable Long sessionId) {

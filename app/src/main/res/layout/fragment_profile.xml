@@ -242,6 +242,14 @@
                         <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Thông báo" android:textColor="@color/text_primary" android:textSize="14sp" />
                         <ImageView android:layout_width="18dp" android:layout_height="18dp" android:src="@android:drawable/ic_media_next" android:tint="@color/text_secondary" />
                     </LinearLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/background" android:layout_marginHorizontal="12dp" />
+
+                    <LinearLayout android:id="@+id/itemLeaderboard" android:layout_width="match_parent" android:layout_height="48dp" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="12dp">
+                        <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@android:drawable/ic_menu_sort_by_size" android:tint="@color/text_secondary" android:layout_marginEnd="12dp" />
+                        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Bảng xếp hạng" android:textColor="@color/text_primary" android:textSize="14sp" />
+                        <ImageView android:layout_width="18dp" android:layout_height="18dp" android:src="@android:drawable/ic_media_next" android:tint="@color/text_secondary" />
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

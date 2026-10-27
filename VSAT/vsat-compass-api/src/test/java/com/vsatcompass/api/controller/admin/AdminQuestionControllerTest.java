@@ -1,6 +1,7 @@
 package com.vsatcompass.api.controller.admin;
 
 import com.vsatcompass.api.dto.response.QuestionPickerItemResponse;
+import com.vsatcompass.api.dto.response.QuestionListItemResponse;
 import com.vsatcompass.api.entity.enums.Difficulty;
 import com.vsatcompass.api.entity.enums.QuestionStatus;
 import com.vsatcompass.api.entity.enums.QuestionType;
@@ -51,6 +52,37 @@ class AdminQuestionControllerTest {
 
     @MockBean
     CustomUserDetailsService customUserDetailsService;
+
+    @Test
+    @DisplayName("GET /admin/questions with no status delegates null for all questions")
+    @WithMockUser(roles = "CONTENT_ADMIN")
+    void queue_noStatus_delegatesNullForAllQuestions() throws Exception {
+        stubQuestionQueuePage();
+
+        mockMvc.perform(get("/admin/questions"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Success"))
+                .andExpect(jsonPath("$.data.content[0].id").value(7))
+                .andExpect(jsonPath("$.data.content[0].status").value("APPROVED"));
+
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(questionService).listByStatus(eq(null), pageableCaptor.capture());
+        assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(20);
+        assertThat(pageableCaptor.getValue().getSort().getOrderFor("updatedAt").isDescending()).isTrue();
+    }
+
+    @Test
+    @DisplayName("GET /admin/questions with status keeps status filter")
+    @WithMockUser(roles = "CONTENT_ADMIN")
+    void queue_statusParam_delegatesStatusFilter() throws Exception {
+        stubQuestionQueuePage();
+
+        mockMvc.perform(get("/admin/questions")
+                        .param("status", "PENDING_REVIEW"))
+                .andExpect(status().isOk());
+
+        verify(questionService).listByStatus(eq(QuestionStatus.PENDING_REVIEW), any(Pageable.class));
+    }
 
     @Test
     @DisplayName("GET /admin/questions/picker with no filters delegates APPROVED default")
@@ -237,6 +269,26 @@ class AdminQuestionControllerTest {
                 .andExpect(status().isUnauthorized());
 
         verify(questionService, never()).findForPicker(any(), any(), any(), any(), any(), any(Pageable.class));
+    }
+
+    private void stubQuestionQueuePage() {
+        when(questionService.listByStatus(any(), any(Pageable.class)))
+                .thenAnswer(inv -> questionQueuePage(inv.getArgument(1)));
+    }
+
+    private Page<QuestionListItemResponse> questionQueuePage(Pageable pageable) {
+        QuestionListItemResponse item = QuestionListItemResponse.builder()
+                .id(7L)
+                .questionCode("Q-T10-QUEUE1")
+                .subjectId(1L)
+                .topicId(10L)
+                .questionType(QuestionType.SINGLE_CHOICE)
+                .difficulty(Difficulty.EASY)
+                .status(QuestionStatus.APPROVED)
+                .version(2)
+                .updatedAt(OffsetDateTime.parse("2026-05-22T00:00:00Z"))
+                .build();
+        return new PageImpl<>(List.of(item), pageable, 1);
     }
 
     private void stubPickerPage() {

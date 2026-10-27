@@ -20,6 +20,7 @@ import com.example.v_sat_compass.data.model.ApiResponse;
 import com.example.v_sat_compass.databinding.FragmentAdminDashboardBinding;
 import com.example.v_sat_compass.ui.admin.exam.AdminCreateExamActivity;
 import com.example.v_sat_compass.ui.admin.questions.AdminQuestionBankFragment;
+import com.example.v_sat_compass.ui.admin.tickets.AdminTicketActivity;
 import com.example.v_sat_compass.ui.collaborator.CollaboratorCreateQuestionActivity;
 import com.example.v_sat_compass.util.NetworkUtils;
 import com.example.v_sat_compass.util.OfflineDemoDataHelper;
@@ -163,6 +164,9 @@ public class AdminDashboardFragment extends Fragment {
                         .commit();
             }
         });
+
+        binding.tvTickets.setOnClickListener(v ->
+                startActivity(new Intent(requireContext(), AdminTicketActivity.class)));
 
         if (UserRoleHelper.isCollaborator()) {
             binding.cardCreateExam.setVisibility(View.GONE);

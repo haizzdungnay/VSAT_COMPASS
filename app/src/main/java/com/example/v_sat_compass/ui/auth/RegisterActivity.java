@@ -40,7 +40,7 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
         if (!password.equals(confirmPassword)) {
-            Toast.makeText(this, "Mat khau khong khop", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Mật khẩu không khớp", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -52,7 +52,7 @@ public class RegisterActivity extends AppCompatActivity {
                     break;
                 case SUCCESS:
                     binding.progressBar.setVisibility(View.GONE);
-                    Toast.makeText(this, "Dang ky thanh cong!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Đăng ký thành công!", Toast.LENGTH_SHORT).show();
                     startActivity(new Intent(this, MainActivity.class));
                     finishAffinity();
                     break;

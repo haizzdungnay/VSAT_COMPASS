@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ── F8 settings screen (programmatic UI) ── -->
+    <item name="rowSwitch" type="id" />
+    <item name="tvTimeValue" type="id" />
+</resources>

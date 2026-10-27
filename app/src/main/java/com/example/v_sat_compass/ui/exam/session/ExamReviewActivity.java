@@ -5,9 +5,11 @@ import android.content.SharedPreferences;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.InputType;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -21,14 +23,20 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.v_sat_compass.R;
 import com.example.v_sat_compass.data.api.ApiClient;
 import com.example.v_sat_compass.data.local.LocalExamDataSource;
+import com.example.v_sat_compass.data.model.AiExplainResponse;
 import com.example.v_sat_compass.data.model.Exam;
 import com.example.v_sat_compass.data.model.Question;
 import com.example.v_sat_compass.data.model.session.QuestionAnswerKeyResponse;
 import com.example.v_sat_compass.data.model.session.QuestionOptionContentResponse;
 import com.example.v_sat_compass.data.model.session.SessionAnswerKeysResponse;
 import com.example.v_sat_compass.data.model.session.SessionQuestionContentResponse;
+import com.example.v_sat_compass.data.repository.AiExplanationRepository;
+import com.example.v_sat_compass.data.repository.OfflineExamRepository;
 import com.example.v_sat_compass.data.repository.SessionContentRepository;
+import com.example.v_sat_compass.data.repository.TicketRepository;
 import com.example.v_sat_compass.databinding.ActivityExamReviewBinding;
+import com.example.v_sat_compass.util.NetworkUtils;
+import com.example.v_sat_compass.util.UserRoleHelper;
 import com.google.android.material.card.MaterialCardView;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -48,6 +56,15 @@ public class ExamReviewActivity extends AppCompatActivity {
     private static final String PREF_QUESTION_IDS_PREFIX = "question_ids_";
     private static final String PREF_QUESTIONS_PREFIX = "questions_";
 
+    /**
+     * Per-user key so cached backend review snapshots (created by another
+     * account on the same device) never leak into the current user and
+     * trigger 403 SESSION_FORBIDDEN on the answer-keys endpoint.
+     */
+    private String perUserKey(String prefix, long examId) {
+        return prefix + UserRoleHelper.getUserId() + "_" + examId;
+    }
+
     public static final String EXTRA_EXAM_ID = "review_exam_id";
     public static final String EXTRA_SELECTED_ANSWERS_JSON = "review_selected_answers_json";
 
@@ -64,6 +81,9 @@ public class ExamReviewActivity extends AppCompatActivity {
     private long backendSessionId;
     private boolean backendReviewMode;
     private SessionContentRepository sessionContentRepository;
+    private OfflineExamRepository offlineExamRepository;
+    private TicketRepository ticketRepository;
+    private AiExplanationRepository aiExplanationRepository;
     private Map<Long, SessionQuestionContentResponse> backendQuestionById = new HashMap<>();
     private Map<Long, QuestionAnswerKeyResponse> backendAnswerKeyByQuestionId = new HashMap<>();
 
@@ -96,6 +116,9 @@ public class ExamReviewActivity extends AppCompatActivity {
         }
 
         sessionContentRepository = new SessionContentRepository();
+        offlineExamRepository = OfflineExamRepository.getInstance();
+        ticketRepository = new TicketRepository();
+        aiExplanationRepository = new AiExplanationRepository();
         backendReviewMode = ApiClient.USE_BACKEND_EXAM_CONTENT && loadBackendReviewSnapshot();
         if (!backendReviewMode) {
             loadQuestionsFromLocal();
@@ -119,6 +142,8 @@ public class ExamReviewActivity extends AppCompatActivity {
         binding.btnPrevious.setOnClickListener(v -> navigate(-1));
         binding.btnNext.setOnClickListener(v -> navigate(1));
         binding.btnAllQuestions.setOnClickListener(v -> showQuestionGridDialog());
+        binding.btnReportQuestion.setOnClickListener(v -> showReportDialog());
+        binding.btnAiExplain.setOnClickListener(v -> requestAiExplanation());
 
         if (backendReviewMode) {
             loadBackendAnswerKeys();
@@ -129,9 +154,9 @@ public class ExamReviewActivity extends AppCompatActivity {
 
     private boolean loadBackendReviewSnapshot() {
         SharedPreferences prefs = getSharedPreferences(BACKEND_REVIEW_PREFS, MODE_PRIVATE);
-        backendSessionId = prefs.getLong(PREF_SESSION_PREFIX + examId, 0L);
-        String questionIdsJson = prefs.getString(PREF_QUESTION_IDS_PREFIX + examId, null);
-        String questionsJson = prefs.getString(PREF_QUESTIONS_PREFIX + examId, null);
+        backendSessionId = prefs.getLong(perUserKey(PREF_SESSION_PREFIX, examId), 0L);
+        String questionIdsJson = prefs.getString(perUserKey(PREF_QUESTION_IDS_PREFIX, examId), null);
+        String questionsJson = prefs.getString(perUserKey(PREF_QUESTIONS_PREFIX, examId), null);
         if (backendSessionId == 0L) {
             return false;
         }
@@ -182,6 +207,23 @@ public class ExamReviewActivity extends AppCompatActivity {
 
                     @Override
                     public void onError(SessionContentRepository.SessionContentError error) {
+                        // 403 SESSION_FORBIDDEN = the cached sessionId belongs to
+                        // another user (e.g. account switch on the same device, or
+                        // a student submitted then admin reviewed). Wipe the stale
+                        // snapshot and fall back to local review so the screen
+                        // remains usable instead of a misleading "check network" toast.
+                        if ("SESSION_FORBIDDEN".equals(error.getCode())
+                                || error.getStatusCode() == 403) {
+                            Log.w(TAG, "loadBackendAnswerKeys() cached session "
+                                    + backendSessionId + " not owned by current user, "
+                                    + "dropping snapshot and falling back to local review");
+                            clearBackendReviewSnapshot();
+                            backendSessionId = 0L;
+                            backendReviewMode = false;
+                            loadQuestionsFromLocal();
+                            showQuestion(currentIndex);
+                            return;
+                        }
                         Toast.makeText(ExamReviewActivity.this,
                                 "Khong tai duoc dap an -- kiem tra mang",
                                 Toast.LENGTH_SHORT).show();
@@ -190,7 +232,21 @@ public class ExamReviewActivity extends AppCompatActivity {
                 });
     }
 
+    private void clearBackendReviewSnapshot() {
+        SharedPreferences prefs = getSharedPreferences(BACKEND_REVIEW_PREFS, MODE_PRIVATE);
+        prefs.edit()
+                .remove(perUserKey(PREF_SESSION_PREFIX, examId))
+                .remove(perUserKey(PREF_QUESTION_IDS_PREFIX, examId))
+                .remove(perUserKey(PREF_QUESTIONS_PREFIX, examId))
+                .apply();
+    }
+
     private void loadQuestionsFromLocal() {
+        List<Long> downloadedIds = offlineExamRepository.loadQuestionIds(this, examId);
+        if (!downloadedIds.isEmpty()) {
+            questionIds.addAll(downloadedIds);
+            return;
+        }
         Exam exam = LocalExamDataSource.getInstance().getExamDetail(this, examId);
         if (exam != null && exam.getQuestions() != null) {
             for (Exam.ExamQuestion eq : exam.getQuestions()) {
@@ -209,7 +265,10 @@ public class ExamReviewActivity extends AppCompatActivity {
         currentIndex = index;
 
         Long questionId = questionIds.get(index);
-        Question question = LocalExamDataSource.getInstance().getQuestion(this, questionId);
+        resetAiExplanationState();
+        Question question = offlineExamRepository.isDownloaded(this, examId)
+                ? offlineExamRepository.loadQuestion(this, examId, questionId)
+                : LocalExamDataSource.getInstance().getQuestion(this, questionId);
 
         int total = questionIds.size();
 
@@ -260,6 +319,7 @@ public class ExamReviewActivity extends AppCompatActivity {
         currentIndex = index;
 
         Long questionId = questionIds.get(index);
+        resetAiExplanationState();
         SessionQuestionContentResponse question = backendQuestionById.get(questionId);
 
         int total = questionIds.size();
@@ -333,6 +393,42 @@ public class ExamReviewActivity extends AppCompatActivity {
                 });
     }
 
+    private String resolveQuestionType(Question q, SessionQuestionContentResponse bq) {
+        if (q != null && q.getQuestionType() != null && !q.getQuestionType().isEmpty()) {
+            return q.getQuestionType().toUpperCase(java.util.Locale.ROOT);
+        }
+        if (bq != null && bq.getQuestionType() != null && !bq.getQuestionType().isEmpty()) {
+            return bq.getQuestionType().toUpperCase(java.util.Locale.ROOT);
+        }
+        String code = q != null ? q.getQuestionCode() : (bq != null ? bq.getQuestionCode() : "");
+        if (code != null) {
+            String upper = code.toUpperCase(java.util.Locale.ROOT);
+            if (upper.contains("TF") || upper.contains("TRUE_FALSE")) return "TRUE_FALSE";
+            if (upper.contains("MATCH")) return "MATCHING";
+            if (upper.contains("SA") || upper.contains("SHORT")) return "SHORT_ANSWER";
+        }
+        return "SINGLE_CHOICE";
+    }
+
+    private View createFormatBadge(String title, int textColor, int bgColor) {
+        TextView tv = new TextView(this);
+        tv.setText(title);
+        tv.setTextSize(12);
+        tv.setTypeface(null, android.graphics.Typeface.BOLD);
+        tv.setTextColor(textColor);
+        android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
+        gd.setColor(bgColor);
+        gd.setCornerRadius(dpToPx(6));
+        tv.setBackground(gd);
+        tv.setPadding(dpToPx(10), dpToPx(5), dpToPx(10), dpToPx(5));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.bottomMargin = dpToPx(12);
+        tv.setLayoutParams(lp);
+        return tv;
+    }
+
     private void buildBackendOptionViews(
             SessionQuestionContentResponse question,
             Long selectedOptionId
@@ -340,6 +436,17 @@ public class ExamReviewActivity extends AppCompatActivity {
         binding.llOptions.removeAllViews();
         List<QuestionOptionContentResponse> options = question.getOptions();
         if (options == null) return;
+
+        String bqType = resolveQuestionType(null, question);
+        if ("TRUE_FALSE".equalsIgnoreCase(bqType)) {
+            binding.llOptions.addView(createFormatBadge("PHẦN 1: CÂU HỎI ĐÚNG / SAI (4 Ý)", 0xFF006064, 0xFFE0F7FA));
+        } else if ("MATCHING".equalsIgnoreCase(bqType)) {
+            binding.llOptions.addView(createFormatBadge("PHẦN 3: GHÉP HỢP (NỐI CẶP)", 0xFFE65100, 0xFFFFF3E0));
+        } else if ("SHORT_ANSWER".equalsIgnoreCase(bqType) || "FILL_IN_BLANK".equalsIgnoreCase(bqType)) {
+            binding.llOptions.addView(createFormatBadge("PHẦN 4: ĐIỀN SỐ / TRẢ LỜI NGẮN", 0xFF1B5E20, 0xFFE8F5E9));
+        } else {
+            binding.llOptions.addView(createFormatBadge("PHẦN 2: TRẮC NGHIỆM 4 LỰA CHỌN", 0xFF283593, 0xFFE8EAF6));
+        }
 
         QuestionAnswerKeyResponse answerKey = backendAnswerKeyByQuestionId.get(question.getId());
         List<Long> correctOptionIds = answerKey != null
@@ -441,6 +548,17 @@ public class ExamReviewActivity extends AppCompatActivity {
     private void buildOptionViews(Question question, Long selectedOptionId) {
         binding.llOptions.removeAllViews();
         if (question.getOptions() == null) return;
+
+        String qType = resolveQuestionType(question, null);
+        if ("TRUE_FALSE".equalsIgnoreCase(qType)) {
+            binding.llOptions.addView(createFormatBadge("PHẦN 1: CÂU HỎI ĐÚNG / SAI (4 Ý)", 0xFF006064, 0xFFE0F7FA));
+        } else if ("MATCHING".equalsIgnoreCase(qType)) {
+            binding.llOptions.addView(createFormatBadge("PHẦN 3: GHÉP HỢP (NỐI CẶP)", 0xFFE65100, 0xFFFFF3E0));
+        } else if ("SHORT_ANSWER".equalsIgnoreCase(qType) || "FILL_IN_BLANK".equalsIgnoreCase(qType)) {
+            binding.llOptions.addView(createFormatBadge("PHẦN 4: ĐIỀN SỐ / TRẢ LỜI NGẮN", 0xFF1B5E20, 0xFFE8F5E9));
+        } else {
+            binding.llOptions.addView(createFormatBadge("PHẦN 2: TRẮC NGHIỆM 4 LỰA CHỌN", 0xFF283593, 0xFFE8EAF6));
+        }
 
         for (Question.Option option : question.getOptions()) {
             boolean isThis = option.getId() != null && option.getId().equals(selectedOptionId);
@@ -557,6 +675,97 @@ public class ExamReviewActivity extends AppCompatActivity {
         if (next >= 0 && next < questionIds.size()) {
             showQuestion(next);
         }
+    }
+
+    private void resetAiExplanationState() {
+        binding.cardAiExplanation.setVisibility(View.GONE);
+        binding.tvAiExplanation.setText("");
+        binding.btnAiExplain.setEnabled(true);
+        binding.btnAiExplain.setText("Giai thich them");
+    }
+
+    private void requestAiExplanation() {
+        if (currentIndex < 0 || currentIndex >= questionIds.size()) return;
+        if (!NetworkUtils.isOnline(this)) {
+            binding.cardAiExplanation.setVisibility(View.VISIBLE);
+            binding.tvAiExplanation.setText("Can co mang de dung AI giai thich");
+            return;
+        }
+        Long questionId = questionIds.get(currentIndex);
+        Long selectedOptionId = selectedAnswers.get(questionId);
+        binding.cardAiExplanation.setVisibility(View.VISIBLE);
+        binding.tvAiExplanation.setText("Dang goi AI...");
+        binding.btnAiExplain.setEnabled(false);
+        binding.btnAiExplain.setText("Dang giai thich...");
+        aiExplanationRepository.explain(questionId, selectedOptionId, new AiExplanationRepository.ExplainCallback() {
+            @Override
+            public void onSuccess(AiExplainResponse response) {
+                if (binding == null) return;
+                if (currentIndex < 0 || currentIndex >= questionIds.size()
+                        || !questionId.equals(questionIds.get(currentIndex))) return;
+                binding.tvAiExplanation.setText(response.getExplanation() != null && !response.getExplanation().trim().isEmpty()
+                        ? response.getExplanation()
+                        : "AI chua co noi dung giai thich");
+                binding.btnAiExplain.setEnabled(true);
+                binding.btnAiExplain.setText(response.isCached() ? "Giai thich da cache" : "Giai thich them");
+            }
+
+            @Override
+            public void onError(String message) {
+                if (binding == null) return;
+                if (currentIndex < 0 || currentIndex >= questionIds.size()
+                        || !questionId.equals(questionIds.get(currentIndex))) return;
+                binding.tvAiExplanation.setText(message);
+                binding.btnAiExplain.setEnabled(true);
+                binding.btnAiExplain.setText("Thu lai AI");
+            }
+        });
+    }
+
+    private void showReportDialog() {
+        if (currentIndex < 0 || currentIndex >= questionIds.size()) return;
+        Long questionId = questionIds.get(currentIndex);
+        EditText input = new EditText(this);
+        input.setHint("Mo ta loi dap an/noi dung");
+        input.setMinLines(3);
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+        int pad = dpToPx(16);
+        input.setPadding(pad, dpToPx(8), pad, 0);
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Bao loi cau hoi")
+                .setView(input)
+                .setPositiveButton("Gui", null)
+                .setNegativeButton("Hủy", null)
+                .create();
+        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String message = input.getText().toString().trim();
+            if (message.isEmpty()) {
+                input.setError("Nhap mo ta loi");
+                return;
+            }
+            submitReport(questionId, message, dialog);
+        }));
+        dialog.show();
+    }
+
+    private void submitReport(Long questionId, String message, AlertDialog dialog) {
+        binding.btnReportQuestion.setEnabled(false);
+        ticketRepository.createTicket(questionId, message, new TicketRepository.TicketCallback() {
+            @Override
+            public void onSuccess(com.example.v_sat_compass.data.model.Ticket ticket) {
+                if (binding == null) return;
+                binding.btnReportQuestion.setEnabled(true);
+                dialog.dismiss();
+                Toast.makeText(ExamReviewActivity.this, "Da gui bao loi", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onError(String message) {
+                if (binding == null) return;
+                binding.btnReportQuestion.setEnabled(true);
+                Toast.makeText(ExamReviewActivity.this, message, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @SuppressLint("SetTextI18n")

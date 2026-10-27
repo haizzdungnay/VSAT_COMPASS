@@ -1,6 +1,7 @@
 package com.example.v_sat_compass.ui.exam.adapter;
 
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
@@ -12,15 +13,24 @@ import com.example.v_sat_compass.data.model.Exam;
 import com.example.v_sat_compass.databinding.ItemExamBinding;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ExamAdapter extends RecyclerView.Adapter<ExamAdapter.ExamViewHolder> {
 
     private final List<Exam> exams = new ArrayList<>();
     private OnExamClickListener listener;
+    private OnExamDownloadClickListener downloadListener;
+    private final Set<Long> downloadedExamIds = new HashSet<>();
+    private final Set<Long> downloadingExamIds = new HashSet<>();
 
     public interface OnExamClickListener {
         void onStartExam(Exam exam);
+    }
+
+    public interface OnExamDownloadClickListener {
+        void onDownloadExam(Exam exam);
     }
 
     public ExamAdapter() {
@@ -33,6 +43,25 @@ public class ExamAdapter extends RecyclerView.Adapter<ExamAdapter.ExamViewHolder
 
     public void setOnExamClickListener(OnExamClickListener listener) {
         this.listener = listener;
+    }
+
+    public void setOnExamDownloadClickListener(OnExamDownloadClickListener listener) {
+        this.downloadListener = listener;
+    }
+
+    public void setDownloadedExamIds(Set<Long> ids) {
+        downloadedExamIds.clear();
+        if (ids != null) downloadedExamIds.addAll(ids);
+        notifyDataSetChanged();
+    }
+
+    public void setDownloading(long examId, boolean downloading) {
+        if (downloading) {
+            downloadingExamIds.add(examId);
+        } else {
+            downloadingExamIds.remove(examId);
+        }
+        notifyDataSetChanged();
     }
 
     public void setExams(List<Exam> newExams) {
@@ -93,6 +122,22 @@ public class ExamAdapter extends RecyclerView.Adapter<ExamAdapter.ExamViewHolder
                 binding.ivPriceIcon.setColorFilter(
                         ContextCompat.getColor(binding.getRoot().getContext(), R.color.text_secondary));
             }
+
+            Long examId = exam.getId();
+            boolean isDownloaded = examId != null && downloadedExamIds.contains(examId);
+            boolean isDownloading = examId != null && downloadingExamIds.contains(examId);
+            binding.btnDownloadExam.setVisibility(isFree ? View.VISIBLE : View.GONE);
+            binding.btnDownloadExam.setEnabled(!isDownloaded && !isDownloading);
+            if (isDownloading) {
+                binding.btnDownloadExam.setText("Đang tải");
+            } else if (isDownloaded) {
+                binding.btnDownloadExam.setText("Đã tải");
+            } else {
+                binding.btnDownloadExam.setText("Tải xuống");
+            }
+            binding.btnDownloadExam.setOnClickListener(v -> {
+                if (downloadListener != null) downloadListener.onDownloadExam(exam);
+            });
 
             binding.btnStartExam.setOnClickListener(v -> {
                 if (listener != null) listener.onStartExam(exam);

@@ -12,6 +12,7 @@ import com.example.v_sat_compass.data.model.admin.AdminExamResponse;
 import com.example.v_sat_compass.data.model.admin.AdminExamUpdateRequest;
 import com.example.v_sat_compass.data.repository.AdminExamRepository;
 import com.example.v_sat_compass.data.repository.Resource;
+import com.example.v_sat_compass.data.repository.SubjectRepository;
 import com.example.v_sat_compass.ui.admin.exam.AdminExamViewModel;
 
 import org.junit.Rule;
@@ -30,7 +31,7 @@ public class AdminExamDetailViewModelTest {
     @Test
     public void loadDetail_emitsLoadingThenSuccess() {
         FakeDetailRepo repo = new FakeDetailRepo();
-        AdminExamViewModel vm = new AdminExamViewModel(repo);
+        AdminExamViewModel vm = newViewModel(repo);
         List<Resource<AdminExamResponse>> values = observe(vm.getExamDetailState());
 
         vm.loadDetail(1L);
@@ -44,7 +45,7 @@ public class AdminExamDetailViewModelTest {
     public void loadDetail_emitsLoadingThenError() {
         FakeDetailRepo repo = new FakeDetailRepo();
         repo.failGetExam = true;
-        AdminExamViewModel vm = new AdminExamViewModel(repo);
+        AdminExamViewModel vm = newViewModel(repo);
         List<Resource<AdminExamResponse>> values = observe(vm.getExamDetailState());
 
         vm.loadDetail(1L);
@@ -59,7 +60,7 @@ public class AdminExamDetailViewModelTest {
     @Test
     public void enterEditMode_setsEditModeTrue() {
         FakeDetailRepo repo = new FakeDetailRepo();
-        AdminExamViewModel vm = new AdminExamViewModel(repo);
+        AdminExamViewModel vm = newViewModel(repo);
         List<Boolean> values = observe(vm.getEditModeState());
 
         vm.enterEditMode();
@@ -70,7 +71,7 @@ public class AdminExamDetailViewModelTest {
     @Test
     public void cancelEditMode_setsEditModeFalse() {
         FakeDetailRepo repo = new FakeDetailRepo();
-        AdminExamViewModel vm = new AdminExamViewModel(repo);
+        AdminExamViewModel vm = newViewModel(repo);
         List<Boolean> values = observe(vm.getEditModeState());
 
         vm.enterEditMode();
@@ -82,7 +83,7 @@ public class AdminExamDetailViewModelTest {
     @Test
     public void saveEdit_success_exitsEditModeAndUpdatesDetail() {
         FakeDetailRepo repo = new FakeDetailRepo();
-        AdminExamViewModel vm = new AdminExamViewModel(repo);
+        AdminExamViewModel vm = newViewModel(repo);
         List<Boolean> editValues = observe(vm.getEditModeState());
         List<Resource<AdminExamResponse>> detailValues = observe(vm.getExamDetailState());
 
@@ -98,7 +99,7 @@ public class AdminExamDetailViewModelTest {
     public void saveEdit_error_keepsErrorState() {
         FakeDetailRepo repo = new FakeDetailRepo();
         repo.failUpdate = true;
-        AdminExamViewModel vm = new AdminExamViewModel(repo);
+        AdminExamViewModel vm = newViewModel(repo);
         List<Resource<AdminExamResponse>> detailValues = observe(vm.getExamDetailState());
 
         vm.saveEdit(1L, new AdminExamUpdateRequest());
@@ -113,7 +114,7 @@ public class AdminExamDetailViewModelTest {
     @Test
     public void submitForReview_success_updatesActionAndDetailState() {
         FakeDetailRepo repo = new FakeDetailRepo();
-        AdminExamViewModel vm = new AdminExamViewModel(repo);
+        AdminExamViewModel vm = newViewModel(repo);
         List<Resource<AdminExamResponse>> actionValues = observe(vm.getActionResultState());
 
         vm.submitForReview(1L);
@@ -125,7 +126,7 @@ public class AdminExamDetailViewModelTest {
     public void submitForReview_error_setsActionErrorState() {
         FakeDetailRepo repo = new FakeDetailRepo();
         repo.failAction = true;
-        AdminExamViewModel vm = new AdminExamViewModel(repo);
+        AdminExamViewModel vm = newViewModel(repo);
         List<Resource<AdminExamResponse>> actionValues = observe(vm.getActionResultState());
 
         vm.submitForReview(1L);
@@ -194,6 +195,10 @@ public class AdminExamDetailViewModelTest {
         List<T> values = new ArrayList<>();
         liveData.observeForever(values::add);
         return values;
+    }
+
+    private static AdminExamViewModel newViewModel(FakeDetailRepo repo) {
+        return new AdminExamViewModel(repo, new SubjectRepository(null));
     }
 
     private static class FakeDetailRepo extends AdminExamRepository {

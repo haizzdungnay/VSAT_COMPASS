@@ -74,6 +74,14 @@ public class AuthRepository {
                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                     AuthResponse auth = response.body().getData();
                     ApiClient.saveTokens(auth.getAccessToken(), auth.getRefreshToken());
+                    if (auth.getUser() != null) {
+                        UserRoleHelper.saveUserInfo(
+                                auth.getUser().getId(),
+                                auth.getUser().getFullName(),
+                                auth.getUser().getEmail(),
+                                auth.getUser().getRole()
+                        );
+                    }
                     result.setValue(Resource.success(auth));
                 } else {
                     AuthResponse offlineAuth = createOfflineAuth(email);

@@ -79,7 +79,7 @@ public class PracticeFragment extends Fragment {
             preloadExams(this::loadOfflinePracticeData);
             return;
         }
-        preloadExams(() -> statsRepository.loadTopicStats(new StudentStatsRepository.TopicStatsCallback() {
+        preloadExams(() -> statsRepository.loadWeakTopicStats(new StudentStatsRepository.TopicStatsCallback() {
             @Override
             public void onSuccess(List<TopicStatsResponse> topics) {
                 if (binding == null) return;
@@ -205,16 +205,17 @@ public class PracticeFragment extends Fragment {
 
     private void openPracticeForTopic(TopicStatsResponse topic) {
         if (getContext() == null) return;
-        String subjectHint = guessSubjectFromTopic(topic.getTopicName());
-        Exam exam = ExamRepository.getInstance().findExamBySubjectName(cachedExams, subjectHint);
-        if (exam == null && !cachedExams.isEmpty()) {
-            exam = cachedExams.get(0);
-        }
-        if (exam == null) {
-            Toast.makeText(requireContext(), R.string.exam_not_found_offline, Toast.LENGTH_SHORT).show();
+        if (!NetworkUtils.isOnline(requireContext())) {
+            Toast.makeText(requireContext(), "Can co mang de luyen thong minh", Toast.LENGTH_SHORT).show();
             return;
         }
-        navigateToExamDetail(exam);
+        Intent intent = new Intent(requireContext(), PracticeSessionActivity.class);
+        if (topic.getTopicId() != null) {
+            intent.putExtra(PracticeSessionActivity.EXTRA_TOPIC_ID, topic.getTopicId());
+        }
+        intent.putExtra(PracticeSessionActivity.EXTRA_TOPIC_NAME,
+                topic.getTopicName() != null ? topic.getTopicName() : "Luyen thong minh");
+        startActivity(intent);
     }
 
     private String guessSubjectFromTopic(String topicName) {

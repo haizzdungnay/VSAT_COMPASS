@@ -2,6 +2,7 @@ package com.example.v_sat_compass.data.api;
 
 import com.example.v_sat_compass.data.model.ApiResponse;
 import com.example.v_sat_compass.data.model.ExamSession;
+import com.example.v_sat_compass.data.model.OfflineExamBundle;
 import com.example.v_sat_compass.data.model.PublicExamDetailResponse;
 import com.example.v_sat_compass.data.model.PublicExamSummaryResponse;
 import com.example.v_sat_compass.data.model.Question;
@@ -30,6 +31,9 @@ public interface ExamApi {
 
     @GET("exams/{id}")
     Call<ApiResponse<PublicExamDetailResponse>> getExamDetail(@Path("id") Long examId);
+
+    @GET("exams/{id}/download-bundle")
+    Call<ApiResponse<OfflineExamBundle>> downloadExamBundle(@Path("id") Long examId);
 
     @POST("sessions/start")
     Call<ApiResponse<ExamSession>> startSession(@Body Map<String, Long> body);

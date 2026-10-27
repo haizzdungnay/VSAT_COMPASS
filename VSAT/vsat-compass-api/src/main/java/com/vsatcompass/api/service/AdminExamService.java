@@ -2,8 +2,13 @@ package com.vsatcompass.api.service;
 
 import com.vsatcompass.api.dto.request.AdminExamCreateRequest;
 import com.vsatcompass.api.dto.request.AdminExamUpdateRequest;
+import com.vsatcompass.api.dto.request.GenerateByMatrixRequest;
+import com.vsatcompass.api.dto.request.GenerateVariantsRequest;
 import com.vsatcompass.api.dto.response.AdminExamResponse;
 import com.vsatcompass.api.dto.response.AdminExamSummaryResponse;
+import com.vsatcompass.api.dto.response.ExamQuestionDetailResponse;
+import com.vsatcompass.api.dto.response.ExamVariantResponse;
+import com.vsatcompass.api.dto.response.MatrixGenerateResponse;
 import com.vsatcompass.api.entity.enums.ExamStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -42,4 +47,14 @@ public interface AdminExamService {
     AdminExamResponse rejectReview(Long examId);
 
     AdminExamResponse returnToDraft(Long examId);
+
+    List<ExamQuestionDetailResponse> getExamQuestions(Long examId);
+
+    List<ExamVariantResponse> getExamVariants(Long examId);
+
+    List<ExamVariantResponse> generateVariants(Long examId, GenerateVariantsRequest request);
+
+    MatrixGenerateResponse generateByMatrix(GenerateByMatrixRequest request);
+
+    MatrixGenerateResponse generateByMatrixForExam(Long examId, GenerateByMatrixRequest request);
 }

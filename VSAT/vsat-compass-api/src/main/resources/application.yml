@@ -32,7 +32,7 @@ server:
 app:
   jwt:
     secret: ${JWT_SECRET}
-    access-token-expiration-ms: 900000       # 15 minutes
+    access-token-expiration-ms: 86400000     # 24h (TANG TAM cho demo local; goc 900000 = 15 phut)
     refresh-token-expiration-ms: 2592000000  # 30 days
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}

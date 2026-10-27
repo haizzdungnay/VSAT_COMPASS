@@ -87,7 +87,7 @@ public class ApiClient {
         }
 
         String host = isProbablyRunningOnEmulator() ? EMULATOR_LOCAL_HOST : BuildConfig.LOCAL_LAN_HOST;
-        return "http://" + host + ":8080/api/v1/";
+        return "http://" + host + ":" + BuildConfig.LOCAL_BACKEND_PORT + "/api/v1/";
     }
 
     private static boolean isProbablyRunningOnEmulator() {
@@ -97,8 +97,15 @@ public class ApiClient {
                 || Build.MODEL.contains("Emulator")
                 || Build.MODEL.contains("Android SDK built for x86")
                 || Build.MANUFACTURER.contains("Genymotion")
+                || Build.HARDWARE.contains("goldfish")
+                || Build.HARDWARE.contains("ranchu")
+                || Build.PRODUCT.contains("sdk")
+                || Build.PRODUCT.contains("emulator")
+                || Build.PRODUCT.contains("emu64")
                 || Build.BRAND.startsWith("generic")
                 || Build.DEVICE.startsWith("generic")
+                || Build.DEVICE.contains("emulator")
+                || Build.DEVICE.contains("emu64")
                 || "google_sdk".equals(Build.PRODUCT);
     }
 

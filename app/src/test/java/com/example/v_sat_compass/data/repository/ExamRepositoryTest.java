@@ -47,7 +47,7 @@ public class ExamRepositoryTest {
                 .build();
         ExamApi examApi = retrofit.create(ExamApi.class);
         SubjectApi subjectApi = retrofit.create(SubjectApi.class);
-        repository = new ExamRepository(examApi, new SubjectRepository(subjectApi));
+        repository = new ExamRepository(examApi, new SubjectRepository(subjectApi), Runnable::run);
     }
 
     @After

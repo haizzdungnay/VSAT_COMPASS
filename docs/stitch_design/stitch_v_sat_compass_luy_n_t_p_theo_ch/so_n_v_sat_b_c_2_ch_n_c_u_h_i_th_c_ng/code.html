@@ -1,0 +1,578 @@
+<!DOCTYPE html><html lang="vi" style=""><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_dashboard" name="shell-type"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"tertiary-fixed-dim":"#c6c0ff","surface":"#fcf8ff","tertiary-container":"#4b42a1","on-primary-container":"#c2bbff","secondary-fixed":"#e4dfff","inverse-surface":"#2f2e43","tertiary-fixed":"#e4dfff","surface-variant":"#e2e0fc","primary-fixed-dim":"#c6bfff","surface-container-highest":"#e2e0fc","primary":"#321ba3","background":"#fcf8ff","surface-dim":"#dad7f3","inverse-primary":"#c6bfff","secondary":"#5644d0","secondary-container":"#6f5fea","on-tertiary-container":"#c1bbff","on-secondary-fixed-variant":"#4029ba","primary-container":"#4a3aba","surface-tint":"#594ac9","surface-container-high":"#e8e5ff","on-tertiary-fixed-variant":"#423897","on-primary-fixed":"#160066","on-primary":"#ffffff","on-secondary-fixed":"#160066","on-surface":"#1a1a2e","on-secondary":"#ffffff","error":"#ba1a1a","secondary-fixed-dim":"#c6bfff","on-background":"#1a1a2e","surface-bright":"#fcf8ff","outline":"#787585","on-error":"#ffffff","on-tertiary-fixed":"#150066","on-error-container":"#93000a","surface-container-lowest":"#ffffff","error-container":"#ffdad6","on-surface-variant":"#474553","primary-fixed":"#e4dfff","tertiary":"#342989","on-secondary-container":"#fffbff","surface-container":"#efecff","on-tertiary":"#ffffff","inverse-on-surface":"#f2efff","on-primary-fixed-variant":"#402eb0","outline-variant":"#c8c4d6","surface-container-low":"#f5f2ff"},borderRadius:{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},spacing:{"space-sm":"0.5rem","space-xl":"2rem","margin":"1.5rem","margin-mobile":"1rem","gutter":"1rem","space-md":"0.75rem","gutter-compact":"0.5rem","space-lg":"1.25rem","space-xs":"0.25rem"},fontFamily:{"label-md":["Be Vietnam Pro"],"headline-lg":["Be Vietnam Pro"],"headline-sm":["Be Vietnam Pro"],"headline-lg-mobile":["Be Vietnam Pro"],"label-sm":["Be Vietnam Pro"],"label-lg":["Be Vietnam Pro"],"body-lg":["Be Vietnam Pro"],"body-sm":["Be Vietnam Pro"],"body-md":["Be Vietnam Pro"],"headline-md":["Be Vietnam Pro"]},fontSize:{"label-md":["12px",{lineHeight:"16px",letterSpacing:"0.02em",fontWeight:"600"}],"headline-lg":["30px",{lineHeight:"38px",letterSpacing:"-0.02em",fontWeight:"700"}],"headline-sm":["18px",{lineHeight:"24px",fontWeight:"600"}],"headline-lg-mobile":["24px",{lineHeight:"32px",letterSpacing:"-0.01em",fontWeight:"700"}],"label-sm":["11px",{lineHeight:"14px",letterSpacing:"0.04em",fontWeight:"700"}],"label-lg":["14px",{lineHeight:"20px",letterSpacing:"0.01em",fontWeight:"600"}],"body-lg":["16px",{lineHeight:"24px",fontWeight:"400"}],"body-sm":["12px",{lineHeight:"16px",fontWeight:"400"}],"body-md":["14px",{lineHeight:"20px",fontWeight:"400"}],"headline-md":["22px",{lineHeight:"28px",letterSpacing:"-0.01em",fontWeight:"600"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-[260px] bg-surface-container-lowest z-50 flex flex-col justify-between border-r border-outline-variant/30 select-none"><div class="flex flex-col flex-1 min-h-0"><div class="h-16 px-space-lg flex items-center gap-space-md border-b border-outline-variant/20 flex-shrink-0"><div class="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-sm flex-shrink-0"><span class="material-symbols-outlined text-[20px]">explore</span></div><div class="flex flex-col min-w-0"><span class="font-headline-sm text-[15px] font-bold text-primary tracking-tight leading-snug truncate">V-SAT COMPASS</span><span class="font-label-sm text-[10px] text-on-surface-variant font-medium tracking-normal truncate">Hệ thống Quản trị Học thuật</span></div></div><div class="flex-1 overflow-y-auto px-space-md py-space-md space-y-space-md"><div class="space-y-space-xs"><div class="px-space-sm font-label-sm text-[10px] uppercase text-outline font-bold tracking-wider">Tổng quan</div><nav class="space-y-0.5" data-active-classes="bg-primary-container text-on-primary font-medium rounded-lg shadow-sm"><a class="flex items-center gap-space-md px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-label-md" data-path="dashboard" href="#"><span class="material-symbols-outlined text-[18px]">dashboard</span><span class="">Dashboard</span></a></nav></div><div class="space-y-space-xs"><div class="px-space-sm font-label-sm text-[10px] uppercase text-outline font-bold tracking-wider">Nội dung</div><nav class="space-y-0.5" data-active-classes="bg-primary-container text-on-primary font-medium rounded-lg shadow-sm"><a class="flex items-center gap-space-md px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-label-md" data-path="ngan-hang-cau-hoi" href="#"><span class="material-symbols-outlined text-[18px]">database</span><span class="">Ngân hàng câu hỏi</span></a><a class="flex items-center gap-space-md px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-label-md" data-path="nhom-cau-hoi-ngu-lieu" href="#"><span class="material-symbols-outlined text-[18px]">description</span><span class="">Nhóm câu hỏi / Ngữ liệu</span></a><a class="flex items-center gap-space-md px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-label-md" data-path="import-cau-hoi" href="#"><span class="material-symbols-outlined text-[18px]">cloud_upload</span><span class="">Import câu hỏi</span></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-label-md" data-path="duyet-noi-dung" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-[18px]">check_circle</span><span class="">Duyệt nội dung</span></div><span class="px-1.5 py-0.5 rounded-full font-label-sm text-[10px] bg-secondary-fixed text-on-secondary-fixed-variant font-bold leading-none">12</span></a></nav></div><div class="space-y-space-xs"><div class="px-space-sm font-label-sm text-[10px] uppercase text-outline font-bold tracking-wider">Đề thi</div><nav class="space-y-0.5" data-active-classes="bg-primary-container text-on-primary font-medium rounded-lg shadow-sm"><a aria-current="page" class="flex items-center gap-space-md px-space-sm py-2 transition-colors bg-primary-container text-on-primary font-medium rounded-lg shadow-sm" data-path="danh-sach-de-thi" href="#"><span class="material-symbols-outlined text-[18px]">menu_book</span><span class="">Danh sách đề thi</span></a><a class="flex items-center gap-space-md px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-label-md" data-path="ma-tran-de-thi" href="#"><span class="material-symbols-outlined text-[18px]">grid_view</span><span class="">Ma trận đề thi</span></a><a class="flex items-center gap-space-md px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-label-md" data-path="ca-thi-va-lich-thi" href="#"><span class="material-symbols-outlined text-[18px]">pending_actions</span><span class="">Ca thi &amp; Lịch thi</span></a></nav></div><div class="space-y-space-xs"><div class="px-space-sm font-label-sm text-[10px] uppercase text-outline font-bold tracking-wider">Quản trị hệ thống</div><nav class="space-y-0.5" data-active-classes="bg-primary-container text-on-primary font-medium rounded-lg shadow-sm"><a class="flex items-center gap-space-md px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-label-md" data-path="nguoi-dung-va-quyen" href="#"><span class="material-symbols-outlined text-[18px]">group</span><span class="">Người dùng &amp; Quyền</span></a><a class="flex items-center gap-space-md px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-label-md" data-path="phan-cong-ctv" href="#"><span class="material-symbols-outlined text-[18px]">assignment_ind</span><span class="">Phân công CTV</span></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-label-md" data-path="bao-loi-ticket" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-[18px]">error</span><span class="">Báo lỗi / Ticket</span></div><span class="px-1.5 py-0.5 rounded-full font-label-sm text-[10px] bg-error-container text-on-error-container font-bold leading-none">5</span></a><a class="flex items-center gap-space-md px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-label-md" data-path="nhat-ky-he-thong" href="#"><span class="material-symbols-outlined text-[18px]">shield</span><span class="">Nhật ký hệ thống</span></a><a class="flex items-center gap-space-md px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-label-md" data-path="cau-hinh" href="#"><span class="material-symbols-outlined text-[18px]">settings</span><span class="">Cấu hình</span></a></nav></div></div></div><div class="p-space-md border-t border-outline-variant/30 bg-surface-container-low/50"><div class="bg-surface-container-lowest p-space-sm rounded-lg border border-outline-variant/40 space-y-1"><div class="flex items-center justify-between"><span class="font-label-sm text-[10px] text-on-surface-variant font-bold uppercase tracking-wider">Quyền hạn</span><span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-primary-fixed text-on-primary-fixed font-bold leading-none">CONTENT_ADMIN</span></div><div class="flex items-center gap-1.5 pt-0.5 text-outline text-[11px] font-body-sm"><span class="w-1.5 h-1.5 rounded-full bg-emerald-600 flex-shrink-0"></span><span class="truncate font-mono text-[10px]">Hệ thống hoạt động • Spring Boot REST</span></div></div></div></aside><div class="pl-[260px]"><header class="fixed top-0 left-[260px] right-0 h-16 bg-surface-container-lowest/90 backdrop-blur-md z-40 border-b border-outline-variant/30 flex items-center justify-between px-margin"><div class="flex items-center gap-space-lg min-w-0"><div class="flex items-center gap-1.5 text-on-surface-variant font-label-md text-body-sm whitespace-nowrap"><span class="hover:text-primary cursor-pointer transition-colors">Đề thi</span><span class="material-symbols-outlined text-[14px] text-outline">chevron_right</span><span class="text-on-surface font-semibold">Quản lý đề thi</span></div><div class="relative hidden xl:block w-72"><span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span><input class="w-full h-9 pl-9 pr-3 text-body-sm bg-surface-container-low rounded-lg border border-outline-variant/40 text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all" placeholder="Tìm kiếm đề thi, mã câu hỏi..." type="text"></div></div><div class="flex items-center gap-space-md flex-shrink-0"><div class="hidden lg:flex items-center gap-2 px-space-sm py-1 rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface-variant font-label-sm"><span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse flex-shrink-0"></span><span class="truncate font-medium">Hệ thống Quản trị V-SAT 2026</span><span class="text-outline">|</span><span class="text-[10px] text-outline font-normal font-mono">Backend: Online</span></div><div class="flex items-center gap-1 bg-secondary-fixed/50 px-2 py-1 rounded-lg"><span class="material-symbols-outlined text-on-secondary-fixed-variant text-[16px]">admin_panel_settings</span><span class="font-label-sm text-[10px] font-bold text-on-secondary-fixed-variant uppercase tracking-wider">CONTENT_ADMIN</span></div><button class="relative w-9 h-9 flex items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-error ring-2 ring-surface-container-lowest"></span></button><div class="h-6 w-px bg-outline-variant/40 mx-0.5"></div><div class="flex items-center gap-space-sm pl-1 cursor-pointer group"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="hidden md:flex flex-col text-left"><span class="font-label-md text-on-surface leading-tight truncate group-hover:text-primary transition-colors">Ths. Nguyễn Văn An</span><span class="font-body-sm text-[11px] text-on-surface-variant leading-tight truncate">Quản trị viên nội dung</span></div><span class="material-symbols-outlined text-outline text-[16px] group-hover:text-on-surface transition-colors">expand_more</span></div></div></header><main class="relative pt-16 w-full min-h-screen bg-background"><div class="flex flex-col w-full">
+<!-- Sub-Header / Stepper & Mode Switcher -->
+<section class="bg-surface-container-low px-margin py-space-md shadow-sm">
+<div class="max-w-[1720px] mx-auto flex flex-col gap-space-md">
+<!-- Wizard Stepper -->
+<div class="flex items-center justify-between overflow-x-auto pb-1">
+<div class="flex items-center gap-space-sm min-w-max">
+<!-- Step 1 Done -->
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-sm">
+<span class="material-symbols-outlined text-[15px]">check</span>
+</span>
+<span class="font-label-md text-on-surface">1. Thông tin chung</span>
+</div>
+<div class="w-10 h-0.5 bg-primary-container mx-1"></div>
+<!-- Step 2 Active -->
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-sm font-bold">2</span>
+<span class="font-label-md text-primary font-bold">2. Cấu trúc &amp; Soạn đề</span>
+<span class="font-label-sm px-1.5 py-0.5 rounded bg-secondary-fixed text-on-secondary-fixed-variant uppercase">Đang thực hiện</span>
+</div>
+<div class="w-10 h-0.5 bg-surface-container-high mx-1"></div>
+<!-- Step 3 Inactive -->
+<div class="flex items-center gap-2 opacity-60">
+<span class="w-6 h-6 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center font-label-sm">3</span>
+<span class="font-label-md text-on-surface-variant">3. Xem trước &amp; Kiểm định</span>
+</div>
+<div class="w-10 h-0.5 bg-surface-container-high mx-1"></div>
+<!-- Step 4 Inactive -->
+<div class="flex items-center gap-2 opacity-60">
+<span class="w-6 h-6 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center font-label-sm">4</span>
+<span class="font-label-md text-on-surface-variant">4. Xuất bản &amp; Cấp phép</span>
+</div>
+</div>
+<!-- Exam Global Metadata Chip -->
+<div class="hidden xl:flex items-center gap-space-sm bg-surface-container px-space-md py-1 rounded-lg">
+<span class="material-symbols-outlined text-[18px] text-primary">menu_book</span>
+<span class="font-label-md text-on-surface font-semibold">Đề Toán V-SAT Đợt 1 - 2026 (Mã: MAT_26_A01)</span>
+<span class="text-outline text-label-sm">• 90 phút • 4 phần</span>
+</div>
+</div>
+<!-- Mode Selector Bar & Quick Alert -->
+<div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-space-md">
+<!-- Segmented Mode Controls -->
+<div class="inline-flex p-1 bg-surface-container-high rounded-lg gap-1 self-start">
+<button class="flex items-center gap-1.5 px-space-md py-1.5 rounded-lg bg-primary-container text-on-primary font-label-md shadow-sm transition-all" type="button">
+<span class="material-symbols-outlined text-[16px]">draw</span>
+<span class="">★ Chọn thủ công (Manual)</span>
+</button>
+<button class="flex items-center gap-1.5 px-space-md py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface font-label-md transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">grid_4x4</span>
+<span class="">Sinh theo ma trận (Matrix)</span>
+</button>
+<button class="flex items-center gap-1.5 px-space-md py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface font-label-md transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">file_upload</span>
+<span class="">Import file (Word/Excel/JSON)</span>
+</button>
+</div>
+<!-- Context Advisory Banner -->
+<div class="flex-1 lg:max-w-2xl flex items-center gap-2 bg-surface-container px-space-md py-1.5 rounded-lg">
+<span class="material-symbols-outlined text-[18px] text-secondary flex-shrink-0">info</span>
+<p class="font-body-sm text-on-surface-variant truncate">
+            Chế độ soạn thủ công cho phép kéo thả câu hỏi từ Ngân hàng vào 4 Phần đề thi chuẩn V-SAT 2026. Đã kiểm tra tính tương thích dữ liệu.
+          </p>
+</div>
+</div>
+</div>
+</section>
+<!-- High-Density 3-Column Administrative Workspace -->
+<div class="px-margin py-space-md max-w-[1720px] mx-auto w-full">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-md items-start">
+<!-- ================= COLUMN 1: CANDIDATE POOL (3 cols on desktop) ================= -->
+<section class="lg:col-span-3 flex flex-col gap-space-sm bg-surface-container-lowest p-space-md rounded-xl shadow-sm">
+<!-- Candidate Pool Title -->
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-lg text-on-surface font-bold">Ngân hàng câu hỏi</span>
+<span class="font-body-sm text-[11px] text-outline">842 câu Toán khả dụng</span>
+</div>
+<button class="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">tune</span>
+</button>
+</div>
+<!-- Search Candidate -->
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-[16px]">search</span>
+<input class="w-full h-8 pl-8 pr-2.5 text-body-sm bg-surface-container-low rounded-lg text-on-surface placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest transition-all" placeholder="Tìm mã câu, nội dung..." type="text">
+</div>
+<!-- Filter Chips Row -->
+<div class="flex flex-wrap gap-1">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm">
+<span class="">Đã duyệt</span>
+<span class="material-symbols-outlined text-[12px]">check</span>
+</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface font-label-sm">Toán 12</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface font-label-sm">Hàm số</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-surface-container text-outline font-label-sm">Tất cả dạng</span>
+</div>
+<!-- Quick Filter Selectors -->
+<div class="grid grid-cols-3 gap-1 pt-1">
+<button class="px-1 py-1 rounded bg-surface-container text-on-surface-variant font-label-sm text-[10px] truncate flex items-center justify-center gap-0.5" type="button">
+<span class="">Dạng</span>
+<span class="material-symbols-outlined text-[12px]">arrow_drop_down</span>
+</button>
+<button class="px-1 py-1 rounded bg-surface-container text-on-surface-variant font-label-sm text-[10px] truncate flex items-center justify-center gap-0.5" type="button">
+<span class="">Mức độ</span>
+<span class="material-symbols-outlined text-[12px]">arrow_drop_down</span>
+</button>
+<button class="px-1 py-1 rounded bg-surface-container text-on-surface-variant font-label-sm text-[10px] truncate flex items-center justify-center gap-0.5" type="button">
+<span class="">Độ khó</span>
+<span class="material-symbols-outlined text-[12px]">arrow_drop_down</span>
+</button>
+</div>
+<!-- Candidate Cards Container (Scrollable) -->
+<div class="flex flex-col gap-space-sm max-h-[700px] overflow-y-auto pr-1">
+<!-- Candidate 1 -->
+<article class="bg-surface-container-low p-space-sm rounded-lg hover:shadow-md transition-all flex flex-col gap-1.5 cursor-grab group">
+<div class="flex items-center justify-between">
+<span class="font-mono text-label-sm text-primary font-bold">MATH_TF_102</span>
+<span class="font-label-sm px-1.5 py-0.2 rounded bg-secondary-fixed/50 text-on-secondary-fixed-variant">Đúng / Sai</span>
+</div>
+<div class="flex items-center gap-1.5 text-[10px] font-label-sm text-outline">
+<span class="text-on-surface-variant font-medium">Vận dụng</span>
+<span class="">•</span>
+<span class="text-error font-medium">Độ khó: Khó</span>
+</div>
+<p class="font-body-sm text-[12px] text-on-surface line-clamp-2 leading-snug">
+              Cho hàm số y = f(x) liên tục trên ℝ có bảng xét dấu đạo hàm f'(x). Xác định tính đơn điệu của hàm g(x) = f(2 - x) + 2026.
+            </p>
+<div class="flex items-center gap-2 text-[10px] text-outline font-label-sm">
+<span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-[12px]">functions</span>LaTeX</span>
+<span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-[12px]">image</span>2 hình ảnh</span>
+</div>
+<button class="mt-0.5 w-full py-1 rounded bg-primary-container text-on-primary font-label-sm flex items-center justify-center gap-1 hover:bg-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-[14px]">add</span>
+<span class="">Thêm vào Phần I</span>
+</button>
+</article>
+<!-- Candidate 2 -->
+<article class="bg-surface-container-low p-space-sm rounded-lg hover:shadow-md transition-all flex flex-col gap-1.5 cursor-grab group">
+<div class="flex items-center justify-between">
+<span class="font-mono text-label-sm text-primary font-bold">MATH_MC_045</span>
+<span class="font-label-sm px-1.5 py-0.2 rounded bg-tertiary-fixed text-on-tertiary-fixed-variant">Trắc nghiệm</span>
+</div>
+<div class="flex items-center gap-1.5 text-[10px] font-label-sm text-outline">
+<span class="text-on-surface-variant font-medium">Thông hiểu</span>
+<span class="">•</span>
+<span class="text-secondary font-medium">Trung bình</span>
+</div>
+<p class="font-body-sm text-[12px] text-on-surface line-clamp-2 leading-snug">
+              Tập nghiệm S của bất phương trình log₂(x - 1) &gt; 3 là khoảng (a; +∞). Giá trị a thuộc tập hợp nào dưới đây?
+            </p>
+<div class="flex items-center gap-2 text-[10px] text-outline font-label-sm">
+<span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-[12px]">functions</span>LaTeX</span>
+</div>
+<button class="mt-0.5 w-full py-1 rounded bg-surface-container-high text-on-surface font-label-sm flex items-center justify-center gap-1 hover:bg-primary-container hover:text-on-primary transition-all" type="button">
+<span class="material-symbols-outlined text-[14px]">add</span>
+<span class="">Thêm vào Phần II</span>
+</button>
+</article>
+<!-- Candidate 3 -->
+<article class="bg-surface-container-low p-space-sm rounded-lg hover:shadow-md transition-all flex flex-col gap-1.5 cursor-grab group">
+<div class="flex items-center justify-between">
+<span class="font-mono text-label-sm text-primary font-bold">MATH_MA_019</span>
+<span class="font-label-sm px-1.5 py-0.2 rounded bg-secondary-fixed text-on-secondary-fixed-variant">Ghép đôi</span>
+</div>
+<div class="flex items-center gap-1.5 text-[10px] font-label-sm text-outline">
+<span class="text-on-surface-variant font-medium">Vận dụng</span>
+<span class="">•</span>
+<span class="text-error font-medium">Khó</span>
+</div>
+<p class="font-body-sm text-[12px] text-on-surface line-clamp-2 leading-snug">
+              Trong không gian Oxyz, cho các điểm A(1;0;2), B(-1;1;3) và mặt phẳng (P): 2x - y + 2z - 5 = 0. Ghép toạ độ hình chiếu tương ứng.
+            </p>
+<div class="flex items-center gap-2 text-[10px] text-outline font-label-sm">
+<span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-[12px]">polyline</span>Không gian Oxyz</span>
+</div>
+<button class="mt-0.5 w-full py-1 rounded bg-surface-container-high text-on-surface font-label-sm flex items-center justify-center gap-1 hover:bg-primary-container hover:text-on-primary transition-all" type="button">
+<span class="material-symbols-outlined text-[14px]">add</span>
+<span class="">Thêm vào Phần III</span>
+</button>
+</article>
+<!-- Candidate 4 -->
+<article class="bg-surface-container-low p-space-sm rounded-lg hover:shadow-md transition-all flex flex-col gap-1.5 cursor-grab group">
+<div class="flex items-center justify-between">
+<span class="font-mono text-label-sm text-primary font-bold">MATH_SA_021</span>
+<span class="font-label-sm px-1.5 py-0.2 rounded bg-surface-variant text-on-surface-variant font-bold">Trả lời ngắn</span>
+</div>
+<div class="flex items-center gap-1.5 text-[10px] font-label-sm text-outline">
+<span class="text-on-surface-variant font-medium">Vận dụng cao</span>
+<span class="">•</span>
+<span class="text-error font-medium">Rất khó</span>
+</div>
+<p class="font-body-sm text-[12px] text-on-surface line-clamp-2 leading-snug">
+              Tính giá trị của tích phân I = ∫₀¹ (2x + 1)/(x² + x + 1) dx. Kết quả được biểu diễn dưới dạng ln(k), tính giá trị số nguyên k.
+            </p>
+<div class="flex items-center gap-2 text-[10px] text-outline font-label-sm">
+<span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-[12px]">functions</span>Tích phân hữu tỉ</span>
+</div>
+<button class="mt-0.5 w-full py-1 rounded bg-surface-container-high text-on-surface font-label-sm flex items-center justify-center gap-1 hover:bg-primary-container hover:text-on-primary transition-all" type="button">
+<span class="material-symbols-outlined text-[14px]">add</span>
+<span class="">Thêm vào Phần IV</span>
+</button>
+</article>
+<!-- Candidate 5 -->
+<article class="bg-surface-container-low p-space-sm rounded-lg hover:shadow-md transition-all flex flex-col gap-1.5 cursor-grab group">
+<div class="flex items-center justify-between">
+<span class="font-mono text-label-sm text-primary font-bold">MATH_MC_099</span>
+<span class="font-label-sm px-1.5 py-0.2 rounded bg-tertiary-fixed text-on-tertiary-fixed-variant">Trắc nghiệm</span>
+</div>
+<div class="flex items-center gap-1.5 text-[10px] font-label-sm text-outline">
+<span class="text-on-surface-variant font-medium">Nhận biết</span>
+<span class="">•</span>
+<span class="text-secondary font-medium">Dễ</span>
+</div>
+<p class="font-body-sm text-[12px] text-on-surface line-clamp-2 leading-snug">
+              Cho cấp số nhân (uₙ) có u₁ = 2 và công bội q = 3. Số hạng thứ tư u₄ bằng bao nhiêu?
+            </p>
+<button class="mt-0.5 w-full py-1 rounded bg-surface-container-high text-on-surface font-label-sm flex items-center justify-center gap-1 hover:bg-primary-container hover:text-on-primary transition-all" type="button">
+<span class="material-symbols-outlined text-[14px]">add</span>
+<span class="">Thêm vào Phần II</span>
+</button>
+</article>
+</div>
+</section>
+<!-- ================= COLUMN 2: EXAM SECTIONS CANVAS (6 cols on desktop) ================= -->
+<section class="lg:col-span-6 flex flex-col gap-space-md">
+<!-- SECTION I: TRUE/FALSE (9 Items) -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col gap-space-sm">
+<!-- Section Bar -->
+<div class="flex items-center justify-between pb-2 bg-surface-container-low/40 p-space-sm rounded-lg">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-secondary"></span>
+<div class="flex flex-col">
+<span class="font-headline-sm text-[15px] font-bold text-on-surface">PHẦN I: ĐÚNG / SAI</span>
+<span class="font-body-sm text-[11px] text-on-surface-variant">Quy chuẩn V-SAT: 9 câu • 6.0 điểm/câu • 54 điểm</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-sm px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span class="">9 / 9 Đủ câu</span>
+</span>
+</div>
+</div>
+<!-- Section I Items -->
+<div class="flex flex-col gap-1.5">
+<!-- Row 1 -->
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors group">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-outline cursor-grab text-[18px]">drag_indicator</span>
+<span class="font-label-md text-primary font-bold w-12 flex-shrink-0">Câu 1</span>
+<span class="font-mono text-label-sm bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant flex-shrink-0">MATH_TF_001</span>
+<span class="font-body-sm text-on-surface truncate">Hàm số &amp; Khảo sát đồ thị hàm đa thức bậc ba</span>
+</div>
+<div class="flex items-center gap-2 flex-shrink-0">
+<span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Nhận biết</span>
+<span class="font-mono text-label-sm font-semibold text-primary">6.0 đ</span>
+<button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-primary transition-colors" title="Xem trước" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+</button>
+<button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-error transition-colors" title="Xóa khỏi đề" type="button">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors group">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-outline cursor-grab text-[18px]">drag_indicator</span>
+<span class="font-label-md text-primary font-bold w-12 flex-shrink-0">Câu 2</span>
+<span class="font-mono text-label-sm bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant flex-shrink-0">MATH_TF_008</span>
+<span class="font-body-sm text-on-surface truncate">Phương trình &amp; Bất phương trình Mũ - Logarit nâng cao</span>
+</div>
+<div class="flex items-center gap-2 flex-shrink-0">
+<span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Thông hiểu</span>
+<span class="font-mono text-label-sm font-semibold text-primary">6.0 đ</span>
+<button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+</button>
+<button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-error transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+</div>
+<!-- Row 3 -->
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors group">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-outline cursor-grab text-[18px]">drag_indicator</span>
+<span class="font-label-md text-primary font-bold w-12 flex-shrink-0">Câu 3</span>
+<span class="font-mono text-label-sm bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant flex-shrink-0">MATH_TF_014</span>
+<span class="font-body-sm text-on-surface truncate">Cực trị hàm số chứa dấu giá trị tuyệt đối</span>
+</div>
+<div class="flex items-center gap-2 flex-shrink-0">
+<span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Vận dụng</span>
+<span class="font-mono text-label-sm font-semibold text-primary">6.0 đ</span>
+<button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+</button>
+<button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-error transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+</div>
+<!-- Dense Collapsed Indicator for 4-9 -->
+<details class="group/collapsible rounded-lg border border-outline-variant/30 bg-surface-container-low overflow-hidden transition-all" open=""><summary class="flex items-center justify-between px-3 py-2 cursor-pointer bg-surface-container-low hover:bg-surface-container transition-colors select-none"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px] text-primary transition-transform group-open/collapsible:rotate-90">arrow_right</span><span class="font-label-md text-primary font-bold">Câu 4 → Câu 9</span><span class="text-outline text-label-sm">•</span><span class="font-body-sm text-[12px] text-on-surface-variant font-medium">6 câu đã liên kết (MATH_TF_021 → MATH_TF_035)</span><span class="text-[10px] text-outline italic hidden sm:inline">(Nhấn để mở rộng/thu gọn)</span></div><div class="flex items-center gap-2 flex-shrink-0"><span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-primary-fixed text-on-primary-fixed font-bold">6 câu</span><span class="font-mono text-label-sm font-semibold text-primary">36.0 đ</span></div></summary><div class="flex flex-col gap-1 p-2 pt-1 border-t border-outline-variant/20 bg-surface-container-lowest/50"><div class="flex items-center justify-between p-1.5 rounded bg-surface-container-low hover:bg-surface-container transition-colors group"><div class="flex items-center gap-2 min-w-0"><span class="material-symbols-outlined text-outline cursor-grab text-[16px]">drag_indicator</span><span class="font-label-md text-primary font-bold w-12 flex-shrink-0">Câu 4</span><span class="font-mono text-[11px] bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant flex-shrink-0">MATH_TF_021</span><span class="font-body-sm text-on-surface text-[12px] truncate">Khảo sát đồ thị hàm hữu tỉ bậc nhất/bậc nhất</span></div><div class="flex items-center gap-1.5 flex-shrink-0"><span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Nhận biết</span><span class="font-mono text-label-sm font-semibold text-primary">6.0 đ</span><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-primary transition-colors" title="Xem trước" type="button"><span class="material-symbols-outlined text-[15px]">visibility</span></button><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-error transition-colors" title="Xóa khỏi đề" type="button"><span class="material-symbols-outlined text-[15px]">close</span></button></div></div><div class="flex items-center justify-between p-1.5 rounded bg-surface-container-low hover:bg-surface-container transition-colors group"><div class="flex items-center gap-2 min-w-0"><span class="material-symbols-outlined text-outline cursor-grab text-[16px]">drag_indicator</span><span class="font-label-md text-primary font-bold w-12 flex-shrink-0">Câu 5</span><span class="font-mono text-[11px] bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant flex-shrink-0">MATH_TF_023</span><span class="font-body-sm text-on-surface text-[12px] truncate">Đạo hàm cấp hai và điểm uốn của đồ thị</span></div><div class="flex items-center gap-1.5 flex-shrink-0"><span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Thông hiểu</span><span class="font-mono text-label-sm font-semibold text-primary">6.0 đ</span><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-primary transition-colors" title="Xem trước" type="button"><span class="material-symbols-outlined text-[15px]">visibility</span></button><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-error transition-colors" title="Xóa khỏi đề" type="button"><span class="material-symbols-outlined text-[15px]">close</span></button></div></div><div class="flex items-center justify-between p-1.5 rounded bg-surface-container-low hover:bg-surface-container transition-colors group"><div class="flex items-center gap-2 min-w-0"><span class="material-symbols-outlined text-outline cursor-grab text-[16px]">drag_indicator</span><span class="font-label-md text-primary font-bold w-12 flex-shrink-0">Câu 6</span><span class="font-mono text-[11px] bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant flex-shrink-0">MATH_TF_027</span><span class="font-body-sm text-on-surface text-[12px] truncate">Bài toán thực tế tối ưu hóa thể tích khối hộp</span></div><div class="flex items-center gap-1.5 flex-shrink-0"><span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Vận dụng</span><span class="font-mono text-label-sm font-semibold text-primary">6.0 đ</span><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-primary transition-colors" title="Xem trước" type="button"><span class="material-symbols-outlined text-[15px]">visibility</span></button><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-error transition-colors" title="Xóa khỏi đề" type="button"><span class="material-symbols-outlined text-[15px]">close</span></button></div></div><div class="flex items-center justify-between p-1.5 rounded bg-surface-container-low hover:bg-surface-container transition-colors group"><div class="flex items-center gap-2 min-w-0"><span class="material-symbols-outlined text-outline cursor-grab text-[16px]">drag_indicator</span><span class="font-label-md text-primary font-bold w-12 flex-shrink-0">Câu 7</span><span class="font-mono text-[11px] bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant flex-shrink-0">MATH_TF_029</span><span class="font-body-sm text-on-surface text-[12px] truncate">Tương giao đồ thị và số nghiệm phương trình mũ</span></div><div class="flex items-center gap-1.5 flex-shrink-0"><span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Thông hiểu</span><span class="font-mono text-label-sm font-semibold text-primary">6.0 đ</span><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-primary transition-colors" title="Xem trước" type="button"><span class="material-symbols-outlined text-[15px]">visibility</span></button><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-error transition-colors" title="Xóa khỏi đề" type="button"><span class="material-symbols-outlined text-[15px]">close</span></button></div></div><div class="flex items-center justify-between p-1.5 rounded bg-surface-container-low hover:bg-surface-container transition-colors group"><div class="flex items-center gap-2 min-w-0"><span class="material-symbols-outlined text-outline cursor-grab text-[16px]">drag_indicator</span><span class="font-label-md text-primary font-bold w-12 flex-shrink-0">Câu 8</span><span class="font-mono text-[11px] bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant flex-shrink-0">MATH_TF_032</span><span class="font-body-sm text-on-surface text-[12px] truncate">Biện luận tham số m để hàm số đồng biến trên khoảng</span></div><div class="flex items-center gap-1.5 flex-shrink-0"><span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Vận dụng</span><span class="font-mono text-label-sm font-semibold text-primary">6.0 đ</span><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-primary transition-colors" title="Xem trước" type="button"><span class="material-symbols-outlined text-[15px]">visibility</span></button><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-error transition-colors" title="Xóa khỏi đề" type="button"><span class="material-symbols-outlined text-[15px]">close</span></button></div></div><div class="flex items-center justify-between p-1.5 rounded bg-surface-container-low hover:bg-surface-container transition-colors group"><div class="flex items-center gap-2 min-w-0"><span class="material-symbols-outlined text-outline cursor-grab text-[16px]">drag_indicator</span><span class="font-label-md text-primary font-bold w-12 flex-shrink-0">Câu 9</span><span class="font-mono text-[11px] bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant flex-shrink-0">MATH_TF_035</span><span class="font-body-sm text-on-surface text-[12px] truncate">Bất đẳng thức tích phân và bài toán cực trị phức hợp</span></div><div class="flex items-center gap-1.5 flex-shrink-0"><span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-variant text-on-surface-variant font-bold">Vận dụng cao</span><span class="font-mono text-label-sm font-semibold text-primary">6.0 đ</span><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-primary transition-colors" title="Xem trước" type="button"><span class="material-symbols-outlined text-[15px]">visibility</span></button><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-error transition-colors" title="Xóa khỏi đề" type="button"><span class="material-symbols-outlined text-[15px]">close</span></button></div></div></div></details>
+</div>
+</div>
+<!-- SECTION II: SINGLE CHOICE (6 Items) -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between pb-2 bg-surface-container-low/40 p-space-sm rounded-lg">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-primary-container"></span>
+<div class="flex flex-col">
+<span class="font-headline-sm text-[15px] font-bold text-on-surface">PHẦN II: TRẮC NGHIỆM 4 LỰA CHỌN</span>
+<span class="font-body-sm text-[11px] text-on-surface-variant">Quy chuẩn V-SAT: 6 câu • 6.0 điểm/câu • 36 điểm</span>
+</div>
+</div>
+<span class="font-label-sm px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span class="">6 / 6 Đủ câu</span>
+</span>
+</div>
+<div class="flex flex-col gap-1.5">
+<!-- Row 10 -->
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors group">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-outline cursor-grab text-[18px]">drag_indicator</span>
+<span class="font-label-md text-primary font-bold w-12 flex-shrink-0">Câu 10</span>
+<span class="font-mono text-label-sm bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant flex-shrink-0">MATH_MC_012</span>
+<span class="font-body-sm text-on-surface truncate">Nguyên hàm &amp; Tích phân từng phần hàm lượng giác</span>
+</div>
+<div class="flex items-center gap-2 flex-shrink-0">
+<span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Thông hiểu</span>
+<span class="font-mono text-label-sm font-semibold text-primary">6.0 đ</span>
+<button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+</button>
+<button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-error transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+</div>
+<!-- Row 11 -->
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors group">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-outline cursor-grab text-[18px]">drag_indicator</span>
+<span class="font-label-md text-primary font-bold w-12 flex-shrink-0">Câu 11</span>
+<span class="font-mono text-label-sm bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant flex-shrink-0">MATH_MC_024</span>
+<span class="font-body-sm text-on-surface truncate">Số phức: Tập hợp điểm biểu diễn và môđun cực đại</span>
+</div>
+<div class="flex items-center gap-2 flex-shrink-0">
+<span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Vận dụng</span>
+<span class="font-mono text-label-sm font-semibold text-primary">6.0 đ</span>
+<button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+</button>
+<button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-error transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+</div>
+<!-- Dense Collapsed 12-15 -->
+<details class="group/collapsible rounded-lg border border-outline-variant/30 bg-surface-container-low overflow-hidden transition-all"><summary class="flex items-center justify-between px-3 py-2 cursor-pointer bg-surface-container-low hover:bg-surface-container transition-colors select-none"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px] text-primary transition-transform group-open/collapsible:rotate-90">arrow_right</span><span class="font-label-md text-primary font-bold">Câu 12 → Câu 15</span><span class="text-outline text-label-sm">•</span><span class="font-body-sm text-[12px] text-on-surface-variant font-medium">4 câu đã liên kết (Hình không gian, Thể tích, Xác suất)</span><span class="text-[10px] text-outline italic hidden sm:inline">(Nhấn để mở rộng/thu gọn)</span></div><div class="flex items-center gap-2 flex-shrink-0"><span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-primary-fixed text-on-primary-fixed font-bold">4 câu</span><span class="font-mono text-label-sm font-semibold text-primary">24.0 đ</span></div></summary><div class="flex flex-col gap-1 p-2 pt-1 border-t border-outline-variant/20 bg-surface-container-lowest/50"><div class="flex items-center justify-between p-1.5 rounded bg-surface-container-low hover:bg-surface-container transition-colors group"><div class="flex items-center gap-2 min-w-0"><span class="material-symbols-outlined text-outline cursor-grab text-[16px]">drag_indicator</span><span class="font-label-md text-primary font-bold w-12 flex-shrink-0">Câu 12</span><span class="font-mono text-[11px] bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant flex-shrink-0">MATH_MC_031</span><span class="font-body-sm text-on-surface text-[12px] truncate">Khối lăng trụ đứng và thể tích hình chóp tam giác giác đều</span></div><div class="flex items-center gap-1.5 flex-shrink-0"><span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Nhận biết</span><span class="font-mono text-label-sm font-semibold text-primary">6.0 đ</span><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-primary transition-colors" title="Xem trước" type="button"><span class="material-symbols-outlined text-[15px]">visibility</span></button><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-error transition-colors" title="Xóa khỏi đề" type="button"><span class="material-symbols-outlined text-[15px]">close</span></button></div></div><div class="flex items-center justify-between p-1.5 rounded bg-surface-container-low hover:bg-surface-container transition-colors group"><div class="flex items-center gap-2 min-w-0"><span class="material-symbols-outlined text-outline cursor-grab text-[16px]">drag_indicator</span><span class="font-label-md text-primary font-bold w-12 flex-shrink-0">Câu 13</span><span class="font-mono text-[11px] bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant flex-shrink-0">MATH_MC_034</span><span class="font-body-sm text-on-surface text-[12px] truncate">Góc giữa đường thẳng và mặt phẳng trong không gian Oxyz</span></div><div class="flex items-center gap-1.5 flex-shrink-0"><span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Thông hiểu</span><span class="font-mono text-label-sm font-semibold text-primary">6.0 đ</span><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-primary transition-colors" title="Xem trước" type="button"><span class="material-symbols-outlined text-[15px]">visibility</span></button><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-error transition-colors" title="Xóa khỏi đề" type="button"><span class="material-symbols-outlined text-[15px]">close</span></button></div></div><div class="flex items-center justify-between p-1.5 rounded bg-surface-container-low hover:bg-surface-container transition-colors group"><div class="flex items-center gap-2 min-w-0"><span class="material-symbols-outlined text-outline cursor-grab text-[16px]">drag_indicator</span><span class="font-label-md text-primary font-bold w-12 flex-shrink-0">Câu 14</span><span class="font-mono text-[11px] bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant flex-shrink-0">MATH_MC_039</span><span class="font-body-sm text-on-surface text-[12px] truncate">Xác suất có điều kiện và bài toán chọn mẫu ngẫu nhiên</span></div><div class="flex items-center gap-1.5 flex-shrink-0"><span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Vận dụng</span><span class="font-mono text-label-sm font-semibold text-primary">6.0 đ</span><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-primary transition-colors" title="Xem trước" type="button"><span class="material-symbols-outlined text-[15px]">visibility</span></button><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-error transition-colors" title="Xóa khỏi đề" type="button"><span class="material-symbols-outlined text-[15px]">close</span></button></div></div><div class="flex items-center justify-between p-1.5 rounded bg-surface-container-low hover:bg-surface-container transition-colors group"><div class="flex items-center gap-2 min-w-0"><span class="material-symbols-outlined text-outline cursor-grab text-[16px]">drag_indicator</span><span class="font-label-md text-primary font-bold w-12 flex-shrink-0">Câu 15</span><span class="font-mono text-[11px] bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant flex-shrink-0">MATH_MC_042</span><span class="font-body-sm text-on-surface text-[12px] truncate">Khoảng cách từ điểm đến mặt phẳng nghiêng trong chóp tứ giác</span></div><div class="flex items-center gap-1.5 flex-shrink-0"><span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Thông hiểu</span><span class="font-mono text-label-sm font-semibold text-primary">6.0 đ</span><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-primary transition-colors" title="Xem trước" type="button"><span class="material-symbols-outlined text-[15px]">visibility</span></button><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-error transition-colors" title="Xóa khỏi đề" type="button"><span class="material-symbols-outlined text-[15px]">close</span></button></div></div></div></details>
+</div>
+</div>
+<!-- SECTION III: MATCHING (5 Items) -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between pb-2 bg-surface-container-low/40 p-space-sm rounded-lg">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary-container"></span>
+<div class="flex flex-col">
+<span class="font-headline-sm text-[15px] font-bold text-on-surface">PHẦN III: GHÉP HỢP (MATCHING)</span>
+<span class="font-body-sm text-[11px] text-on-surface-variant">Quy chuẩn V-SAT: 5 câu • 6.0 điểm/câu (1.5đ x 4 ý) • 30 điểm</span>
+</div>
+</div>
+<span class="font-label-sm px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span class="">5 / 5 Đủ câu</span>
+</span>
+</div>
+<div class="flex flex-col gap-1.5">
+<!-- Row 16 -->
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors group">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-outline cursor-grab text-[18px]">drag_indicator</span>
+<span class="font-label-md text-primary font-bold w-12 flex-shrink-0">Câu 16</span>
+<span class="font-mono text-label-sm bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant flex-shrink-0">MATH_MA_003</span>
+<span class="font-body-sm text-on-surface truncate">Hình học không gian Oxyz: Phương trình đường thẳng và vị trí tương đối</span>
+</div>
+<div class="flex items-center gap-2 flex-shrink-0">
+<span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Vận dụng</span>
+<span class="font-mono text-label-sm font-semibold text-primary">6.0 đ (1.5x4)</span>
+<button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+</button>
+<button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-error transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+</div>
+<!-- Dense Collapsed 17-20 -->
+<details class="group/collapsible rounded-lg border border-outline-variant/30 bg-surface-container-low overflow-hidden transition-all"><summary class="flex items-center justify-between px-3 py-2 cursor-pointer bg-surface-container-low hover:bg-surface-container transition-colors select-none"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px] text-primary transition-transform group-open/collapsible:rotate-90">arrow_right</span><span class="font-label-md text-primary font-bold">Câu 17 → Câu 20</span><span class="text-outline text-label-sm">•</span><span class="font-body-sm text-[12px] text-on-surface-variant font-medium">4 câu đã liên kết (Tiệm cận, Cực trị tham số, Mặt cầu Oxyz)</span><span class="text-[10px] text-outline italic hidden sm:inline">(Nhấn để mở rộng/thu gọn)</span></div><div class="flex items-center gap-2 flex-shrink-0"><span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-primary-fixed text-on-primary-fixed font-bold">4 câu</span><span class="font-mono text-label-sm font-semibold text-primary">24.0 đ</span></div></summary><div class="flex flex-col gap-1 p-2 pt-1 border-t border-outline-variant/20 bg-surface-container-lowest/50"><div class="flex items-center justify-between p-1.5 rounded bg-surface-container-low hover:bg-surface-container transition-colors group"><div class="flex items-center gap-2 min-w-0"><span class="material-symbols-outlined text-outline cursor-grab text-[16px]">drag_indicator</span><span class="font-label-md text-primary font-bold w-12 flex-shrink-0">Câu 17</span><span class="font-mono text-[11px] bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant flex-shrink-0">MATH_MA_005</span><span class="font-body-sm text-on-surface text-[12px] truncate">Ghép đường tiệm cận đứng, tiệm cận ngang với hàm số tương ứng</span></div><div class="flex items-center gap-1.5 flex-shrink-0"><span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Nhận biết</span><span class="font-mono text-label-sm font-semibold text-primary">6.0 đ</span><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-primary transition-colors" title="Xem trước" type="button"><span class="material-symbols-outlined text-[15px]">visibility</span></button><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-error transition-colors" title="Xóa khỏi đề" type="button"><span class="material-symbols-outlined text-[15px]">close</span></button></div></div><div class="flex items-center justify-between p-1.5 rounded bg-surface-container-low hover:bg-surface-container transition-colors group"><div class="flex items-center gap-2 min-w-0"><span class="material-symbols-outlined text-outline cursor-grab text-[16px]">drag_indicator</span><span class="font-label-md text-primary font-bold w-12 flex-shrink-0">Câu 18</span><span class="font-mono text-[11px] bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant flex-shrink-0">MATH_MA_008</span><span class="font-body-sm text-on-surface text-[12px] truncate">Ghép toạ độ tâm I và bán kính R của mặt cầu Oxyz dạng tổng quát</span></div><div class="flex items-center gap-1.5 flex-shrink-0"><span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Thông hiểu</span><span class="font-mono text-label-sm font-semibold text-primary">6.0 đ</span><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-primary transition-colors" title="Xem trước" type="button"><span class="material-symbols-outlined text-[15px]">visibility</span></button><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-error transition-colors" title="Xóa khỏi đề" type="button"><span class="material-symbols-outlined text-[15px]">close</span></button></div></div><div class="flex items-center justify-between p-1.5 rounded bg-surface-container-low hover:bg-surface-container transition-colors group"><div class="flex items-center gap-2 min-w-0"><span class="material-symbols-outlined text-outline cursor-grab text-[16px]">drag_indicator</span><span class="font-label-md text-primary font-bold w-12 flex-shrink-0">Câu 19</span><span class="font-mono text-[11px] bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant flex-shrink-0">MATH_MA_011</span><span class="font-body-sm text-on-surface text-[12px] truncate">Ghép điều kiện tham số m với số lượng điểm cực trị hàm đa thức bậc bốn</span></div><div class="flex items-center gap-1.5 flex-shrink-0"><span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Vận dụng</span><span class="font-mono text-label-sm font-semibold text-primary">6.0 đ</span><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-primary transition-colors" title="Xem trước" type="button"><span class="material-symbols-outlined text-[15px]">visibility</span></button><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-error transition-colors" title="Xóa khỏi đề" type="button"><span class="material-symbols-outlined text-[15px]">close</span></button></div></div><div class="flex items-center justify-between p-1.5 rounded bg-surface-container-low hover:bg-surface-container transition-colors group"><div class="flex items-center gap-2 min-w-0"><span class="material-symbols-outlined text-outline cursor-grab text-[16px]">drag_indicator</span><span class="font-label-md text-primary font-bold w-12 flex-shrink-0">Câu 20</span><span class="font-mono text-[11px] bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant flex-shrink-0">MATH_MA_014</span><span class="font-body-sm text-on-surface text-[12px] truncate">Ghép vị trí tương đối giữa mặt cầu (S) và đường thẳng Δ theo tham số</span></div><div class="flex items-center gap-1.5 flex-shrink-0"><span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Thông hiểu</span><span class="font-mono text-label-sm font-semibold text-primary">6.0 đ</span><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-primary transition-colors" title="Xem trước" type="button"><span class="material-symbols-outlined text-[15px]">visibility</span></button><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-error transition-colors" title="Xóa khỏi đề" type="button"><span class="material-symbols-outlined text-[15px]">close</span></button></div></div></div></details>
+</div>
+</div>
+<!-- SECTION IV: SHORT ANSWER (5 Items) -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between pb-2 bg-surface-container-low/40 p-space-sm rounded-lg">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+<div class="flex flex-col">
+<span class="font-headline-sm text-[15px] font-bold text-on-surface">PHẦN IV: TRẢ LỜI NGẮN</span>
+<span class="font-body-sm text-[11px] text-on-surface-variant">Quy chuẩn V-SAT: 5 câu • 6.0 điểm/câu • 30 điểm</span>
+</div>
+</div>
+<span class="font-label-sm px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span class="">5 / 5 Đủ câu</span>
+</span>
+</div>
+<div class="flex flex-col gap-1.5">
+<!-- Row 21 -->
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors group">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-outline cursor-grab text-[18px]">drag_indicator</span>
+<span class="font-label-md text-primary font-bold w-12 flex-shrink-0">Câu 21</span>
+<span class="font-mono text-label-sm bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant flex-shrink-0">MATH_SA_015</span>
+<span class="font-body-sm text-on-surface truncate">Tích phân ứng dụng tính diện tích hình phẳng giới hạn bởi parabol và tiếp tuyến</span>
+</div>
+<div class="flex items-center gap-2 flex-shrink-0">
+<span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-variant text-on-surface-variant font-bold">Vận dụng cao</span>
+<span class="font-mono text-label-sm font-semibold text-primary">6.0 đ</span>
+<button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+</button>
+<button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-error transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+</div>
+<!-- Dense Collapsed 22-25 -->
+<details class="group/collapsible rounded-lg border border-outline-variant/30 bg-surface-container-low overflow-hidden transition-all"><summary class="flex items-center justify-between px-3 py-2 cursor-pointer bg-surface-container-low hover:bg-surface-container transition-colors select-none"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px] text-primary transition-transform group-open/collapsible:rotate-90">arrow_right</span><span class="font-label-md text-primary font-bold">Câu 22 → Câu 25</span><span class="text-outline text-label-sm">•</span><span class="font-body-sm text-[12px] text-on-surface-variant font-medium">4 câu đã liên kết (Bài toán thực tế, Xác suất Bayes, Cực trị tổ hợp)</span><span class="text-[10px] text-outline italic hidden sm:inline">(Nhấn để mở rộng/thu gọn)</span></div><div class="flex items-center gap-2 flex-shrink-0"><span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-primary-fixed text-on-primary-fixed font-bold">4 câu</span><span class="font-mono text-label-sm font-semibold text-primary">24.0 đ</span></div></summary><div class="flex flex-col gap-1 p-2 pt-1 border-t border-outline-variant/20 bg-surface-container-lowest/50"><div class="flex items-center justify-between p-1.5 rounded bg-surface-container-low hover:bg-surface-container transition-colors group"><div class="flex items-center gap-2 min-w-0"><span class="material-symbols-outlined text-outline cursor-grab text-[16px]">drag_indicator</span><span class="font-label-md text-primary font-bold w-12 flex-shrink-0">Câu 22</span><span class="font-mono text-[11px] bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant flex-shrink-0">MATH_SA_017</span><span class="font-body-sm text-on-surface text-[12px] truncate">Bài toán tăng trưởng dân số mô hình logistic: Tính thời gian đạt ngưỡng</span></div><div class="flex items-center gap-1.5 flex-shrink-0"><span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Thông hiểu</span><span class="font-mono text-label-sm font-semibold text-primary">6.0 đ</span><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-primary transition-colors" title="Xem trước" type="button"><span class="material-symbols-outlined text-[15px]">visibility</span></button><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-error transition-colors" title="Xóa khỏi đề" type="button"><span class="material-symbols-outlined text-[15px]">close</span></button></div></div><div class="flex items-center justify-between p-1.5 rounded bg-surface-container-low hover:bg-surface-container transition-colors group"><div class="flex items-center gap-2 min-w-0"><span class="material-symbols-outlined text-outline cursor-grab text-[16px]">drag_indicator</span><span class="font-label-md text-primary font-bold w-12 flex-shrink-0">Câu 23</span><span class="font-mono text-[11px] bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant flex-shrink-0">MATH_SA_019</span><span class="font-body-sm text-on-surface text-[12px] truncate">Xác suất toàn phần và công thức Bayes trong chẩn đoán y khoa</span></div><div class="flex items-center gap-1.5 flex-shrink-0"><span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Vận dụng</span><span class="font-mono text-label-sm font-semibold text-primary">6.0 đ</span><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-primary transition-colors" title="Xem trước" type="button"><span class="material-symbols-outlined text-[15px]">visibility</span></button><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-error transition-colors" title="Xóa khỏi đề" type="button"><span class="material-symbols-outlined text-[15px]">close</span></button></div></div><div class="flex items-center justify-between p-1.5 rounded bg-surface-container-low hover:bg-surface-container transition-colors group"><div class="flex items-center gap-2 min-w-0"><span class="material-symbols-outlined text-outline cursor-grab text-[16px]">drag_indicator</span><span class="font-label-md text-primary font-bold w-12 flex-shrink-0">Câu 24</span><span class="font-mono text-[11px] bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant flex-shrink-0">MATH_SA_022</span><span class="font-body-sm text-on-surface text-[12px] truncate">Cực trị tổ hợp và nguyên lý Dirichlet trong hình học rời rạc</span></div><div class="flex items-center gap-1.5 flex-shrink-0"><span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-variant text-on-surface-variant font-bold">Vận dụng cao</span><span class="font-mono text-label-sm font-semibold text-primary">6.0 đ</span><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-primary transition-colors" title="Xem trước" type="button"><span class="material-symbols-outlined text-[15px]">visibility</span></button><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-error transition-colors" title="Xóa khỏi đề" type="button"><span class="material-symbols-outlined text-[15px]">close</span></button></div></div><div class="flex items-center justify-between p-1.5 rounded bg-surface-container-low hover:bg-surface-container transition-colors group"><div class="flex items-center gap-2 min-w-0"><span class="material-symbols-outlined text-outline cursor-grab text-[16px]">drag_indicator</span><span class="font-label-md text-primary font-bold w-12 flex-shrink-0">Câu 25</span><span class="font-mono text-[11px] bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant flex-shrink-0">MATH_SA_025</span><span class="font-body-sm text-on-surface text-[12px] truncate">Tối ưu hóa chi phí sản xuất bể chứa hình nón cụt có nắp</span></div><div class="flex items-center gap-1.5 flex-shrink-0"><span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Vận dụng</span><span class="font-mono text-label-sm font-semibold text-primary">6.0 đ</span><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-primary transition-colors" title="Xem trước" type="button"><span class="material-symbols-outlined text-[15px]">visibility</span></button><button class="w-6 h-6 flex items-center justify-center rounded text-outline hover:text-error transition-colors" title="Xóa khỏi đề" type="button"><span class="material-symbols-outlined text-[15px]">close</span></button></div></div></div></details>
+</div>
+</div>
+</section>
+<!-- ================= COLUMN 3: EXAM INSPECTOR & TELEMETRY (3 cols on desktop) ================= -->
+<section class="lg:col-span-3 flex flex-col gap-space-md sticky top-20">
+<!-- Structure Balance Token Card -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-lg text-on-surface font-bold">Thước đo cấu trúc đề</span>
+<span class="font-label-sm px-1.5 py-0.5 rounded bg-secondary-fixed text-on-secondary-fixed-variant font-bold">CHUẨN 100%</span>
+</div>
+<!-- Total Questions Bar -->
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between font-label-md">
+<span class="text-on-surface-variant">Tổng số câu hỏi</span>
+<span class="font-mono font-bold text-primary">25 / 25 câu</span>
+</div>
+<div class="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full w-full"></div>
+</div>
+</div>
+<!-- Total Raw Score -->
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between font-label-md">
+<span class="text-on-surface-variant">Tổng điểm thô</span>
+<span class="font-mono font-bold text-secondary">150 / 150 điểm</span>
+</div>
+<div class="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary rounded-full w-full"></div>
+</div>
+</div>
+<!-- Detailed Score Matrix Breakdown -->
+<div class="p-space-sm bg-surface-container-low rounded-lg flex flex-col gap-1.5 mt-1 font-label-sm">
+<div class="flex justify-between items-center text-on-surface">
+<span class="">Phần I: Đúng / Sai</span>
+<span class="font-mono font-semibold">9 câu • 54 đ</span>
+</div>
+<div class="flex justify-between items-center text-on-surface">
+<span class="">Phần II: Trắc nghiệm</span>
+<span class="font-mono font-semibold">6 câu • 36 đ</span>
+</div>
+<div class="flex justify-between items-center text-on-surface">
+<span class="">Phần III: Ghép hợp</span>
+<span class="font-mono font-semibold">5 câu • 30 đ</span>
+</div>
+<div class="flex justify-between items-center text-on-surface">
+<span class="">Phần IV: Trả lời ngắn</span>
+<span class="font-mono font-semibold">5 câu • 30 đ</span>
+</div>
+</div>
+</div>
+<!-- Cognitive Level Distribution Card (Rich Data Viz) -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between"><div class="flex flex-col"><span class="font-label-lg text-on-surface font-bold">Ma trận nhận thức dự kiến của đề</span><span class="text-[11px] text-outline">Dựa trên blueprint phân bổ câu hỏi</span></div></div>
+<!-- Visual Bar Chart -->
+<div class="flex h-3 w-full rounded-full overflow-hidden gap-0.5 bg-surface-container">
+<div class="bg-primary-container h-full w-[24%]" title="Nhận biết: 24%"></div>
+<div class="bg-secondary h-full w-[32%]" title="Thông hiểu: 32%"></div>
+<div class="bg-primary h-full w-[28%]" title="Vận dụng: 28%"></div>
+<div class="bg-error h-full w-[16%]" title="Vận dụng cao: 16%"></div>
+</div>
+<div class="grid grid-cols-2 gap-2 text-label-sm font-label-sm pt-1">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+<span class="text-on-surface-variant">Nhận biết:</span>
+<span class="font-mono font-bold text-on-surface">6 câu (24%)</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="text-on-surface-variant">Thông hiểu:</span>
+<span class="font-mono font-bold text-on-surface">8 câu (32%)</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="text-on-surface-variant">Vận dụng:</span>
+<span class="font-mono font-bold text-on-surface">7 câu (28%)</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<span class="text-on-surface-variant">V.dụng cao:</span>
+<span class="font-mono font-bold text-on-surface">4 câu (16%)</span>
+</div>
+</div>
+</div>
+<!-- Validation Checklist Card -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-lg text-on-surface font-bold">Kiểm tra nghiệp vụ</span>
+<span class="material-symbols-outlined text-[18px] text-primary">verified</span>
+</div>
+<div class="flex flex-col gap-2 font-body-sm text-[12px]">
+<div class="flex items-center gap-2 text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-primary">check_circle</span>
+<span class="">Tất cả 25 câu đã phê duyệt (APPROVED)</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-primary">check_circle</span>
+<span class="">Không có câu hỏi trùng lặp trong đề</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-primary">check_circle</span>
+<span class="">Đúng môn học (Toán học 100%)</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-primary">check_circle</span>
+<span class="">Cú pháp LaTeX hiển thị chuẩn KaTeX</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-primary">check_circle</span>
+<span class="">Đầy đủ đáp án và thang chấm điểm</span>
+</div>
+<!-- Soft Warning -->
+<div class="flex items-start gap-2 p-2 rounded bg-surface-container text-on-surface-variant text-[11px] leading-tight mt-1">
+<span class="material-symbols-outlined text-[16px] text-outline flex-shrink-0">warning</span>
+<span class="">Câu 21 có độ dài &gt; 300 từ. Cảnh báo không chặn xuất bản.</span>
+</div>
+</div>
+</div>
+<!-- Next Action Button (Proceed to Step 3) -->
+<div class="flex flex-col gap-2 pt-1">
+<button class="w-full h-11 px-space-md bg-primary-container text-on-primary rounded-lg font-label-md shadow-md hover:bg-primary transition-all flex items-center justify-center gap-2 group" type="button">
+<span class="font-bold">Tiếp tục: Xem trước &amp; Kiểm định</span>
+<span class="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+<div class="flex items-center justify-between px-1 text-label-sm text-outline">
+<span class="">Tự động lưu: 12 giây trước</span>
+<span class="font-mono">Draft #MAT26-094</span>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div></main></div>
+
+</body></html>

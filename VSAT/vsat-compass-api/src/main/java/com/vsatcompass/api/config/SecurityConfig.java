@@ -78,15 +78,22 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints — only truly unauthenticated endpoints; /auth/me and /auth/me/password require Bearer
+                .requestMatchers(HttpMethod.GET, "/").permitAll()
                 .requestMatchers("/auth/login", "/auth/register", "/auth/refresh", "/auth/logout").permitAll()
                 .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers(HttpMethod.GET, "/subjects/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/exams/*/download-bundle").hasRole("STUDENT")
                 .requestMatchers(HttpMethod.GET, "/exams", "/exams/**").permitAll()
+                .requestMatchers("/practice/**").hasRole("STUDENT")
+                .requestMatchers("/ai/**").hasAnyRole("STUDENT", "CONTENT_ADMIN", "SUPER_ADMIN")
+                .requestMatchers(HttpMethod.POST, "/tickets").hasRole("STUDENT")
+                .requestMatchers("/leaderboard/**").hasRole("STUDENT")
 
                 // Actuator — health only (restricted by management.endpoints config)
                 .requestMatchers("/actuator/health").permitAll()
 
                 // Admin endpoints
+                .requestMatchers("/admin/tickets/**").hasAnyRole("CONTENT_ADMIN", "SUPER_ADMIN")
                 .requestMatchers("/admin/users/**").hasRole("SUPER_ADMIN")
                 .requestMatchers("/admin/audit-logs/**").hasRole("SUPER_ADMIN")
                 .requestMatchers("/admin/configs/**").hasRole("SUPER_ADMIN")

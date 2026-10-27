@@ -2,8 +2,11 @@ package com.vsatcompass.api.controller.auth;
 
 import com.vsatcompass.api.dto.common.ApiResponse;
 import com.vsatcompass.api.dto.request.AuthRequest;
+import com.vsatcompass.api.dto.request.LeaderboardOptInRequest;
 import com.vsatcompass.api.dto.response.AuthResponse;
+import com.vsatcompass.api.dto.response.LeaderboardMeResponse;
 import com.vsatcompass.api.service.AuthService;
+import com.vsatcompass.api.service.LeaderboardService;
 import com.vsatcompass.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final LeaderboardService leaderboardService;
 
     @PostMapping("/register")
     @Operation(summary = "AU-01: Đăng ký tài khoản mới")
@@ -77,5 +81,24 @@ public class AuthController {
         Long userId = SecurityUtils.getCurrentUserId();
         authService.changePassword(userId, request);
         return ResponseEntity.ok(ApiResponse.success(null, "Đổi mật khẩu thành công"));
+    }
+
+    // ── F9 — leaderboard opt-in ───────────────────────────────────────────
+
+    @GetMapping("/me/leaderboard")
+    @Operation(summary = "F9.1: Lấy trạng thái opt-in leaderboard của user hiện tại")
+    public ResponseEntity<ApiResponse<LeaderboardMeResponse>> getMyLeaderboard() {
+        Long userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(ApiResponse.success(leaderboardService.getMe(userId)));
+    }
+
+    @PatchMapping("/me/leaderboard")
+    @Operation(summary = "F9.1: Bật/tắt opt-in leaderboard")
+    public ResponseEntity<ApiResponse<LeaderboardMeResponse>> setMyLeaderboardOptIn(
+            @Valid @RequestBody LeaderboardOptInRequest request) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        LeaderboardMeResponse result = leaderboardService.setOptIn(userId, request.getOptIn());
+        return ResponseEntity.ok(ApiResponse.success(result,
+                request.getOptIn() ? "Đã tham gia bảng xếp hạng" : "Đã ẩn khỏi bảng xếp hạng"));
     }
 }

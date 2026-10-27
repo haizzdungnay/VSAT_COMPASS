@@ -88,6 +88,10 @@ public class AppException extends RuntimeException {
         return new AppException(HttpStatus.CONFLICT, "INVALID_STATE", message);
     }
 
+    public static AppException serviceUnavailable(String message) {
+        return new AppException(HttpStatus.SERVICE_UNAVAILABLE, "SERVICE_UNAVAILABLE", message);
+    }
+
     // ---- Rate limiting ----
 
     public static AppException rateLimitExceeded() {

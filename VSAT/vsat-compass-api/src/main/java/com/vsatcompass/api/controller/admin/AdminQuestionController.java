@@ -40,9 +40,9 @@ public class AdminQuestionController {
     @PreAuthorize("hasAnyRole('CONTENT_ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Q-ADM-01: Hàng đợi duyệt (filter by status)")
     public ResponseEntity<ApiResponse<Page<QuestionListItemResponse>>> queue(
-            @RequestParam(defaultValue = "PENDING_REVIEW") QuestionStatus status,
-            Pageable pageable) {
-        Page<QuestionListItemResponse> result = questionService.listByStatus(status, pageable);
+            @RequestParam(required = false) QuestionStatus status,
+            @PageableDefault(size = 20, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<QuestionListItemResponse> result = questionService.listByStatus(status, capPageSize(pageable));
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 

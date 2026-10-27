@@ -24,11 +24,7 @@ android {
     }
 
     namespace = "com.example.v_sat_compass"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.v_sat_compass"
@@ -43,14 +39,16 @@ android {
     buildTypes {
         debug {
             buildConfigField("String", "BASE_URL_CLOUD", "\"https://vsat-compass-api.onrender.com/api/v1/\"")
-            buildConfigField("String", "LOCAL_LAN_HOST", "\"192.168.1.240\"")
-            buildConfigField("boolean", "USE_LOCAL_BACKEND", "false")
+            buildConfigField("String", "LOCAL_LAN_HOST", "\"127.0.0.1\"")
+            buildConfigField("String", "LOCAL_BACKEND_PORT", "\"18080\"")
+            buildConfigField("boolean", "USE_LOCAL_BACKEND", "true")
         }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             buildConfigField("String", "BASE_URL_CLOUD", "\"https://vsat-compass-api.onrender.com/api/v1/\"")
             buildConfigField("String", "LOCAL_LAN_HOST", "\"192.168.1.240\"")
+            buildConfigField("String", "LOCAL_BACKEND_PORT", "\"8080\"")
             buildConfigField("boolean", "USE_LOCAL_BACKEND", "false")
             if (keystorePropertiesFile.exists()) {
                 signingConfig = signingConfigs.getByName("release")
@@ -102,6 +100,8 @@ dependencies {
     implementation(libs.navigation.ui)
     // CircleImageView
     implementation(libs.circleimageview)
+    // WorkManager — F8 local reminder
+    implementation(libs.work.runtime)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockitoCore)

@@ -45,3 +45,10 @@ local.properties
 # Android release signing
 keystore.properties
 /app/release/
+
+# Temporary files, test artifacts, and logs
+temp/
+*.log
+log*.txt
+login*.json
+~$*

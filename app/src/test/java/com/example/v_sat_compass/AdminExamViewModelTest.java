@@ -15,6 +15,7 @@ import com.example.v_sat_compass.data.model.admin.AdminExamUpdateRequest;
 import com.example.v_sat_compass.data.model.admin.PageResponse;
 import com.example.v_sat_compass.data.repository.AdminExamRepository;
 import com.example.v_sat_compass.data.repository.Resource;
+import com.example.v_sat_compass.data.repository.SubjectRepository;
 import com.example.v_sat_compass.ui.admin.exam.AdminExamViewModel;
 
 import org.junit.Rule;
@@ -34,7 +35,7 @@ public class AdminExamViewModelTest {
     @Test
     public void loadExams_emitsLoadingThenSuccess() {
         FakeRepository repository = new FakeRepository();
-        AdminExamViewModel viewModel = new AdminExamViewModel(repository);
+        AdminExamViewModel viewModel = newViewModel(repository);
         List<Resource<PageResponse<AdminExamSummaryResponse>>> values =
                 observe(viewModel.getListState());
 
@@ -49,7 +50,7 @@ public class AdminExamViewModelTest {
     public void createExam_emitsLoadingThenError() {
         FakeRepository repository = new FakeRepository();
         repository.failCreate = true;
-        AdminExamViewModel viewModel = new AdminExamViewModel(repository);
+        AdminExamViewModel viewModel = newViewModel(repository);
         List<Resource<AdminExamResponse>> values = observe(viewModel.getCreateState());
 
         viewModel.createExam(new AdminExamCreateRequest());
@@ -62,7 +63,7 @@ public class AdminExamViewModelTest {
     @Test
     public void detailUpdateAddQuestionAndReorder_emitSuccessStates() {
         FakeRepository repository = new FakeRepository();
-        AdminExamViewModel viewModel = new AdminExamViewModel(repository);
+        AdminExamViewModel viewModel = newViewModel(repository);
         List<Resource<AdminExamResponse>> detailValues = observe(viewModel.getDetailState());
         List<Resource<AdminExamResponse>> updateValues = observe(viewModel.getUpdateState());
         List<Resource<AdminExamResponse>> addQuestionValues = observe(viewModel.getAddQuestionState());
@@ -90,6 +91,10 @@ public class AdminExamViewModelTest {
         List<Resource<T>> values = new ArrayList<>();
         liveData.observeForever(values::add);
         return values;
+    }
+
+    private static AdminExamViewModel newViewModel(FakeRepository repository) {
+        return new AdminExamViewModel(repository, new SubjectRepository(null));
     }
 
     private static class FakeRepository extends AdminExamRepository {

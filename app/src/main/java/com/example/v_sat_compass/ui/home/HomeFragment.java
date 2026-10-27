@@ -1,7 +1,6 @@
 package com.example.v_sat_compass.ui.home;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -11,6 +10,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -27,9 +29,16 @@ import com.example.v_sat_compass.data.repository.ExamRepository;
 import com.example.v_sat_compass.util.NetworkUtils;
 import com.example.v_sat_compass.data.model.ExamHistoryEntry;
 import com.example.v_sat_compass.data.repository.ExamHistoryRepository;
+import com.example.v_sat_compass.data.model.GamificationState;
+import com.example.v_sat_compass.data.repository.FlashcardRepository;
+import com.example.v_sat_compass.data.repository.GamificationRepository;
 import com.example.v_sat_compass.databinding.FragmentHomeBinding;
 import com.example.v_sat_compass.ui.exam.ExamDetailActivity;
+import com.example.v_sat_compass.ui.flashcards.FlashcardReviewActivity;
 import com.example.v_sat_compass.ui.history.ExamHistoryActivity;
+import com.example.v_sat_compass.ui.progress.ProgressActivity;
+import com.example.v_sat_compass.util.AvatarPreferences;
+import com.google.android.material.card.MaterialCardView;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -42,14 +51,17 @@ import retrofit2.Response;
 public class HomeFragment extends Fragment {
 
     private static final String TAG = "HomeFragment";
-    private static final String PROFILE_PREFS = "profile_local_overrides";
-    private static final String KEY_AVATAR_URI = "avatar_uri";
-
     private FragmentHomeBinding binding;
     private final boolean clientSideProcessing = ApiClient.isClientSideExamProcessingEnabled();
     private final boolean backendExamContent = ApiClient.USE_BACKEND_EXAM_CONTENT;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private String localAvatarUri = "";
+    private TextView tvStreakValue;
+    private TextView tvLevelValue;
+    private TextView tvXpValue;
+    private TextView tvChallengeValue;
+    private TextView tvFlashcardDueValue;
+    private ProgressBar progressChallenge;
 
     @Nullable
     @Override
@@ -64,10 +76,14 @@ public class HomeFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         setupRecyclerViews();
+        setupGamificationCard();
+        setupFeatureCards();
         loadLocalAvatar();
         loadUserProfile();
         loadExams();
         loadHistoryStats();
+        loadGamification();
+        loadFlashcardDueCount();
         setupHistoryButton();
     }
 
@@ -75,6 +91,155 @@ public class HomeFragment extends Fragment {
     public void onResume() {
         super.onResume();
         loadHistoryStats();
+        loadGamification();
+        loadFlashcardDueCount();
+    }
+
+    private void setupGamificationCard() {
+        if (binding == null || tvStreakValue != null) return;
+        LinearLayout root = (LinearLayout) binding.getRoot().getChildAt(0);
+        MaterialCardView card = new MaterialCardView(requireContext());
+        card.setRadius(dp(12));
+        card.setCardElevation(dp(2));
+        card.setCardBackgroundColor(getResources().getColor(R.color.white, null));
+        LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        cardLp.setMargins(dp(16), 0, dp(16), dp(12));
+        card.setLayoutParams(cardLp);
+
+        LinearLayout content = new LinearLayout(requireContext());
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(dp(16), dp(14), dp(16), dp(14));
+        card.addView(content);
+
+        TextView title = text("Dong luc hom nay", 16, true, R.color.text_primary);
+        content.addView(title);
+
+        LinearLayout row = new LinearLayout(requireContext());
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setPadding(0, dp(10), 0, dp(8));
+        content.addView(row);
+
+        tvStreakValue = metric(row, "Streak");
+        tvLevelValue = metric(row, "Level");
+        tvXpValue = metric(row, "XP");
+
+        tvChallengeValue = text("Daily challenge: 0/10 cau", 13, false, R.color.text_secondary);
+        content.addView(tvChallengeValue);
+        progressChallenge = new ProgressBar(requireContext(), null, android.R.attr.progressBarStyleHorizontal);
+        progressChallenge.setMax(GamificationRepository.DAILY_CHALLENGE_TARGET);
+        LinearLayout.LayoutParams barLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(6));
+        barLp.topMargin = dp(6);
+        progressChallenge.setLayoutParams(barLp);
+        content.addView(progressChallenge);
+
+        root.addView(card, 1);
+    }
+
+    private void setupFeatureCards() {
+        if (binding == null || tvFlashcardDueValue != null) return;
+        LinearLayout root = (LinearLayout) binding.getRoot().getChildAt(0);
+        LinearLayout row = new LinearLayout(requireContext());
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        rowLp.setMargins(dp(16), 0, dp(16), dp(12));
+        row.setLayoutParams(rowLp);
+
+        MaterialCardView flashcards = shortcutCard("Flashcards", "Due today", true);
+        flashcards.setOnClickListener(v -> startActivity(new Intent(requireContext(), FlashcardReviewActivity.class)));
+        MaterialCardView progress = shortcutCard("Progress", "Score trend", false);
+        progress.setOnClickListener(v -> startActivity(new Intent(requireContext(), ProgressActivity.class)));
+
+        row.addView(flashcards);
+        row.addView(progress);
+        root.addView(row, 2);
+    }
+
+    private MaterialCardView shortcutCard(String titleText, String captionText, boolean flashcardCard) {
+        MaterialCardView card = new MaterialCardView(requireContext());
+        card.setRadius(dp(12));
+        card.setCardElevation(dp(2));
+        card.setClickable(true);
+        card.setFocusable(true);
+        card.setCardBackgroundColor(getResources().getColor(R.color.white, null));
+        LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        cardLp.setMargins(flashcardCard ? 0 : dp(6), 0, flashcardCard ? dp(6) : 0, 0);
+        card.setLayoutParams(cardLp);
+
+        LinearLayout content = new LinearLayout(requireContext());
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(dp(14), dp(12), dp(14), dp(12));
+        card.addView(content);
+
+        TextView title = text(titleText, 15, true, R.color.text_primary);
+        content.addView(title);
+
+        TextView caption = text(captionText, 12, false, R.color.text_secondary);
+        caption.setPadding(0, dp(2), 0, 0);
+        content.addView(caption);
+
+        TextView value = text(flashcardCard ? "0 cards" : "Open", 18, true,
+                flashcardCard ? R.color.primary : R.color.info);
+        value.setPadding(0, dp(8), 0, 0);
+        content.addView(value);
+        if (flashcardCard) tvFlashcardDueValue = value;
+        return card;
+    }
+
+    private TextView metric(LinearLayout row, String label) {
+        LinearLayout col = new LinearLayout(requireContext());
+        col.setOrientation(LinearLayout.VERTICAL);
+        col.setGravity(android.view.Gravity.CENTER);
+        col.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        TextView value = text("0", 20, true, R.color.primary);
+        TextView caption = text(label, 11, false, R.color.text_secondary);
+        col.addView(value);
+        col.addView(caption);
+        row.addView(col);
+        return value;
+    }
+
+    private TextView text(String value, int sp, boolean bold, int color) {
+        TextView tv = new TextView(requireContext());
+        tv.setText(value);
+        tv.setTextSize(sp);
+        tv.setTextColor(getResources().getColor(color, null));
+        if (bold) tv.setTypeface(null, android.graphics.Typeface.BOLD);
+        return tv;
+    }
+
+    private void loadGamification() {
+        if (getContext() == null) return;
+        GamificationRepository.getInstance().getState(requireContext(), this::renderGamification);
+    }
+
+    private void renderGamification(GamificationState state) {
+        if (binding == null || state == null || tvStreakValue == null) return;
+        tvStreakValue.setText(String.valueOf(state.getCurrentStreak()));
+        tvLevelValue.setText(String.valueOf(state.getLevel()));
+        tvXpValue.setText(String.valueOf(state.getTotalXp()));
+        int progress = Math.max(0, Math.min(GamificationRepository.DAILY_CHALLENGE_TARGET, state.getChallengeProgress()));
+        tvChallengeValue.setText(state.isChallengeCompleted()
+                ? "Daily challenge: da hoan thanh"
+                : "Thử thách hằng ngày: " + progress + "/" + GamificationRepository.DAILY_CHALLENGE_TARGET + " câu");
+        progressChallenge.setProgress(progress);
+    }
+
+    private void loadFlashcardDueCount() {
+        if (getContext() == null) return;
+        FlashcardRepository.getInstance().getDueCards(requireContext(), cards -> {
+            if (binding == null || tvFlashcardDueValue == null) return;
+            int count = cards != null ? cards.size() : 0;
+            tvFlashcardDueValue.setText(count + (count == 1 ? " card" : " cards"));
+        });
+    }
+
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
     private void setupRecyclerViews() {
@@ -285,9 +450,7 @@ public class HomeFragment extends Fragment {
         if (getContext() == null) return;
         android.content.Context appContext = requireContext().getApplicationContext();
         new Thread(() -> {
-            SharedPreferences prefs = appContext.getSharedPreferences(
-                    PROFILE_PREFS, android.content.Context.MODE_PRIVATE);
-            String avatarUri = prefs.getString(KEY_AVATAR_URI, "");
+            String avatarUri = AvatarPreferences.getCurrentUserAvatar(appContext);
             mainHandler.post(() -> {
                 localAvatarUri = avatarUri != null ? avatarUri : "";
                 if (!localAvatarUri.isEmpty()) applyAvatarUri(localAvatarUri);

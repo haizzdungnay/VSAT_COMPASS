@@ -21,6 +21,7 @@ public class UserMapper {
                 .emailVerified(user.getEmailVerified())
                 .lastLoginAt(user.getLastLoginAt())
                 .createdAt(user.getCreatedAt())
+                .leaderboardOptIn(Boolean.TRUE.equals(user.getLeaderboardOptIn()))
                 .build();
     }
 }

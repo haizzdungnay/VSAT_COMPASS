@@ -4,14 +4,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.vsatcompass.api.dto.response.ExamDetailResponse;
+import com.vsatcompass.api.dto.response.ExamDownloadBundleResponse;
 import com.vsatcompass.api.dto.response.ExamSummaryResponse;
 import com.vsatcompass.api.entity.Exam;
+import com.vsatcompass.api.entity.ExamQuestion;
+import com.vsatcompass.api.entity.Question;
+import com.vsatcompass.api.entity.QuestionOption;
 import com.vsatcompass.api.entity.enums.Difficulty;
 import com.vsatcompass.api.entity.enums.ExamPricingType;
 import com.vsatcompass.api.entity.enums.ExamStatus;
+import com.vsatcompass.api.entity.enums.QuestionStatus;
+import com.vsatcompass.api.entity.enums.QuestionType;
 import com.vsatcompass.api.exception.AppException;
 import com.vsatcompass.api.repository.ExamQuestionRepository;
 import com.vsatcompass.api.repository.ExamRepository;
+import com.vsatcompass.api.repository.QuestionOptionRepository;
+import com.vsatcompass.api.repository.QuestionRepository;
 import com.vsatcompass.api.service.impl.ExamServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -46,6 +54,8 @@ class ExamServiceTest {
 
     @Mock ExamRepository examRepository;
     @Mock ExamQuestionRepository examQuestionRepository;
+    @Mock QuestionRepository questionRepository;
+    @Mock QuestionOptionRepository questionOptionRepository;
 
     @InjectMocks ExamServiceImpl examService;
 
@@ -158,6 +168,98 @@ class ExamServiceTest {
                     assertThat(ae.getCode()).isEqualTo("RESOURCE_NOT_FOUND");
                     assertThat(ae.getMessage()).contains("Exam").contains("404");
                 });
+    }
+
+    @Test
+    @DisplayName("getDownloadBundle: published free zero-price exam returns full answer bundle")
+    void getDownloadBundle_publishedFreeZeroPrice_returnsFullBundle() {
+        Question question = question(501L);
+        List<QuestionOption> options = List.of(
+                option(9001L, 501L, "A", false, 1),
+                option(9002L, 501L, "B", true, 2));
+        when(examRepository.findByIdAndStatusAndPricingType(
+                1L, ExamStatus.PUBLISHED, ExamPricingType.FREE))
+                .thenReturn(Optional.of(algebraExam));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(1L))
+                .thenReturn(List.of(ExamQuestion.builder()
+                        .examId(1L)
+                        .questionId(501L)
+                        .questionOrder(1)
+                        .build()));
+        when(questionRepository.findById(501L)).thenReturn(Optional.of(question));
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(501L))
+                .thenReturn(options);
+
+        ExamDownloadBundleResponse result = examService.getDownloadBundle(1L);
+
+        assertThat(result.getId()).isEqualTo(1L);
+        assertThat(result.getExamVersion()).isEqualTo(3);
+        assertThat(result.getUpdatedAt()).isEqualTo(algebraExam.getUpdatedAt());
+        assertThat(result.getQuestionCount()).isEqualTo(1);
+        assertThat(result.getQuestions()).hasSize(1);
+        ExamDownloadBundleResponse.QuestionBundleItem bundledQuestion = result.getQuestions().get(0);
+        assertThat(bundledQuestion.getId()).isEqualTo(501L);
+        assertThat(bundledQuestion.getQuestionOrder()).isEqualTo(1);
+        assertThat(bundledQuestion.getExplanation()).isEqualTo("Because B is correct");
+        assertThat(bundledQuestion.getCorrectAnswer()).isEqualTo("B");
+        assertThat(bundledQuestion.getCorrectOptionIds()).containsExactly(9002L);
+        assertThat(bundledQuestion.getOptions()).extracting("isCorrect")
+                .containsExactly(false, true);
+    }
+
+    @Test
+    @DisplayName("getDownloadBundle: non-free exam is invisible and returns RESOURCE_NOT_FOUND")
+    void getDownloadBundle_nonFree_returns404() {
+        when(examRepository.findByIdAndStatusAndPricingType(
+                100L, ExamStatus.PUBLISHED, ExamPricingType.FREE))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> examService.getDownloadBundle(100L))
+                .isInstanceOf(AppException.class)
+                .satisfies(ex -> {
+                    AppException ae = (AppException) ex;
+                    assertThat(ae.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    assertThat(ae.getCode()).isEqualTo("RESOURCE_NOT_FOUND");
+                });
+        verify(examQuestionRepository, never()).findByExamIdOrderByQuestionOrderAscIdAsc(anyLong());
+    }
+
+    @Test
+    @DisplayName("getDownloadBundle: non-published exam is invisible and returns RESOURCE_NOT_FOUND")
+    void getDownloadBundle_nonPublished_returns404() {
+        when(examRepository.findByIdAndStatusAndPricingType(
+                201L, ExamStatus.PUBLISHED, ExamPricingType.FREE))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> examService.getDownloadBundle(201L))
+                .isInstanceOf(AppException.class)
+                .satisfies(ex -> {
+                    AppException ae = (AppException) ex;
+                    assertThat(ae.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    assertThat(ae.getCode()).isEqualTo("RESOURCE_NOT_FOUND");
+                });
+        verify(examQuestionRepository, never()).findByExamIdOrderByQuestionOrderAscIdAsc(anyLong());
+    }
+
+    @Test
+    @DisplayName("getDownloadBundle: FREE exam with non-zero price is invisible")
+    void getDownloadBundle_nonZeroPrice_returns404() {
+        Exam pricedFree = exam(301L, "SMOKE_PRICE_001", "Priced Free Exam",
+                Difficulty.MEDIUM, ExamStatus.PUBLISHED, ExamPricingType.FREE,
+                "priced", OffsetDateTime.parse("2026-05-05T00:00:00Z"));
+        pricedFree.setPrice(new BigDecimal("10.00"));
+        when(examRepository.findByIdAndStatusAndPricingType(
+                301L, ExamStatus.PUBLISHED, ExamPricingType.FREE))
+                .thenReturn(Optional.of(pricedFree));
+
+        assertThatThrownBy(() -> examService.getDownloadBundle(301L))
+                .isInstanceOf(AppException.class)
+                .satisfies(ex -> {
+                    AppException ae = (AppException) ex;
+                    assertThat(ae.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    assertThat(ae.getCode()).isEqualTo("RESOURCE_NOT_FOUND");
+                });
+        verify(examQuestionRepository, never()).findByExamIdOrderByQuestionOrderAscIdAsc(anyLong());
     }
 
     @Test
@@ -424,6 +526,38 @@ class ExamServiceTest {
                 .avgScore(new BigDecimal("81.25"))
                 .createdAt(now.minusDays(1))
                 .updatedAt(now)
+                .build();
+    }
+
+    private Question question(Long id) {
+        OffsetDateTime now = OffsetDateTime.parse("2026-05-05T00:00:00Z");
+        return Question.builder()
+                .id(id)
+                .questionCode("Q" + id)
+                .subjectId(10L)
+                .topicId(20L)
+                .subtopicId(30L)
+                .difficulty(Difficulty.MEDIUM)
+                .questionType(QuestionType.SINGLE_CHOICE)
+                .questionText("Question text")
+                .explanation("Because B is correct")
+                .status(QuestionStatus.PUBLISHED)
+                .version(1)
+                .createdBy(901L)
+                .publishedAt(now)
+                .createdAt(now.minusDays(1))
+                .updatedAt(now)
+                .build();
+    }
+
+    private QuestionOption option(Long id, Long questionId, String label, boolean correct, int order) {
+        return QuestionOption.builder()
+                .id(id)
+                .questionId(questionId)
+                .optionLabel(label)
+                .optionText("Option " + label)
+                .isCorrect(correct)
+                .displayOrder(order)
                 .build();
     }
 }

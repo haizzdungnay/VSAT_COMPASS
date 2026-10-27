@@ -185,7 +185,10 @@ public class QuestionServiceImpl implements QuestionService {
     // ---------- LIST BY STATUS ----------
     @Override
     public Page<QuestionListItemResponse> listByStatus(QuestionStatus status, Pageable pageable) {
-        return questionRepository.findByStatusOrderByUpdatedAtDesc(status, pageable)
+        Page<Question> page = status == null
+                ? questionRepository.findAllByOrderByUpdatedAtDesc(pageable)
+                : questionRepository.findByStatusOrderByUpdatedAtDesc(status, pageable);
+        return page
                 .map(this::toQuestionListItemResponse);
     }
 

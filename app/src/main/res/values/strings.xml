@@ -223,4 +223,39 @@
     <string name="practice_proficiency_low">Mức độ thành thạo: %1$d%% — Cần cố gắng!</string>
     <string name="practice_proficiency_mid">Mức độ thành thạo: %1$d%% — Tiến bộ tốt!</string>
     <string name="practice_proficiency_high">Mức độ thành thạo: %1$d%% — Rất xuất sắc!</string>
+
+    <!-- ── F8 — local study reminder (NOT FCM) ── -->
+    <string name="notif_channel_reminder_name">Nhắc học hằng ngày</string>
+    <string name="notif_channel_reminder_desc">Thông báo nhắc bạn luyện tập mỗi ngày để giữ streak.</string>
+    <string name="notif_reminder_title_default">Đã đến giờ luyện tập</string>
+    <string name="notif_reminder_body_default">Vào V-SAT Compass làm một bài ngắn để duy trì phong độ nhé.</string>
+    <string name="notif_reminder_title_streak">Giữ chuỗi %1$d ngày của bạn</string>
+    <string name="notif_reminder_body_streak">Bạn đã học liên tiếp %1$d ngày — hôm nay hãy luyện thêm %2$d câu để giữ nhịp.</string>
+    <string name="notif_reminder_body_challenge">Hoàn thành nốt hôm nay: còn khoảng %1$d câu nữa.</string>
+    <string name="settings_title">Cài đặt thông báo</string>
+    <string name="settings_section_reminder">Nhắc học hằng ngày</string>
+    <string name="settings_reminder_enabled">Bật nhắc học</string>
+    <string name="settings_reminder_time_label">Giờ nhắc</string>
+    <string name="settings_reminder_time_hint">Chạm để chọn giờ</string>
+    <string name="settings_streak_reminder">Hiện thông báo giữ chuỗi học tập</string>
+    <string name="settings_save">Lưu cài đặt</string>
+    <string name="settings_saved">Đã lưu cài đặt</string>
+    <string name="settings_permission_rationale">Để nhắc học, V-SAT Compass cần quyền gửi thông báo. Bạn có thể bật lại trong Cài đặt &gt; Ứng dụng.</string>
+    <string name="settings_permission_denied">Bạn đã từ chối quyền thông báo. Tính năng nhắc học sẽ không hoạt động cho tới khi bạn bật lại.</string>
+
+    <!-- ── F9 — leaderboard ── -->
+    <string name="leaderboard_title">Bảng xếp hạng</string>
+    <string name="leaderboard_opt_in_label">Tham gia bảng xếp hạng</string>
+    <string name="leaderboard_opt_in_hint">Hiện tên và thứ hạng của bạn trên bảng. Tắt là ẩn hoàn toàn.</string>
+    <string name="leaderboard_score_label">Điểm</string>
+    <string name="leaderboard_exams_label">Bài thi</string>
+    <string name="leaderboard_you">Bạn</string>
+    <string name="leaderboard_empty_title">Chưa có ai tham gia</string>
+    <string name="leaderboard_empty_subtitle">Khi có người bật tham gia, bảng xếp hạng sẽ hiện ở đây.</string>
+    <string name="leaderboard_you_hidden">Bạn đang ẩn khỏi bảng. Bật tham gia để xuất hiện.</string>
+    <string name="leaderboard_rank_format">#%1$d</string>
+    <string name="leaderboard_score_format">%1$d điểm</string>
+    <string name="leaderboard_exams_format">%1$d bài</string>
+    <string name="leaderboard_load_error">Không tải được bảng xếp hạng.</string>
+    <string name="leaderboard_opt_in_updated">Đã cập nhật.</string>
 </resources>

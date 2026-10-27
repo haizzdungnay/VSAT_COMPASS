@@ -20,7 +20,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Tao tai khoan"
+            android:text="Tạo tài khoản"
             android:textColor="@color/primary"
             android:textSize="28sp"
             android:textStyle="bold" />
@@ -29,7 +29,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Dang ky de bat dau luyen thi"
+            android:text="Đăng ký để bắt đầu luyện thi"
             android:textColor="@color/text_secondary"
             android:textSize="14sp" />
 
@@ -37,7 +37,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"
-            android:hint="Ho va ten"
+                android:hint="Họ và tên"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -65,7 +65,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:hint="Mat khau"
+            android:hint="Mật khẩu"
             app:passwordToggleEnabled="true"
             xmlns:app="http://schemas.android.com/apk/res-auto"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
@@ -81,7 +81,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:hint="Xac nhan mat khau"
+            android:hint="Xác nhận mật khẩu"
             app:passwordToggleEnabled="true"
             xmlns:app="http://schemas.android.com/apk/res-auto"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
@@ -105,7 +105,7 @@
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="16dp"
-            android:text="Dang ky"
+            android:text="Đăng ký"
             android:textAllCaps="false"
             android:textSize="16sp" />
 
@@ -121,7 +121,7 @@
             android:layout_marginTop="16dp"
             android:layout_marginBottom="16dp"
             android:padding="8dp"
-            android:text="Da co tai khoan? Dang nhap"
+            android:text="Đã có tài khoản? Đăng nhập"
             android:textColor="@color/primary"
             android:textSize="14sp" />
 

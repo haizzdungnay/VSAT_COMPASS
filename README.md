@@ -17,7 +17,7 @@
 - **Android App** (Java + XML) — giao diện người dùng, làm bài thi, xem kết quả
 - **Backend API** (Spring Boot) — quản lý đề thi, câu hỏi, phiên thi, thống kê
 
----
+--- 
 
 ## Tech Stack
 

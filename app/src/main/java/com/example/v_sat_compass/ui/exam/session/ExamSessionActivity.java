@@ -30,8 +30,12 @@ import com.example.v_sat_compass.data.model.Question;
 import com.example.v_sat_compass.data.model.session.QuestionOptionContentResponse;
 import com.example.v_sat_compass.data.model.session.SessionQuestionContentResponse;
 import com.example.v_sat_compass.data.repository.ExamHistoryRepository;
+import com.example.v_sat_compass.data.repository.GamificationRepository;
+import com.example.v_sat_compass.data.repository.OfflineExamRepository;
+import com.example.v_sat_compass.data.repository.OfflineExamSyncRepository;
 import com.example.v_sat_compass.data.repository.SessionContentRepository;
 import com.example.v_sat_compass.databinding.ActivityExamSessionBinding;
+import com.example.v_sat_compass.util.UserRoleHelper;
 import com.google.android.material.card.MaterialCardView;
 import com.google.gson.Gson;
 
@@ -53,9 +57,19 @@ public class ExamSessionActivity extends AppCompatActivity {
     private static final String PREF_QUESTION_IDS_PREFIX = "question_ids_";
     private static final String PREF_QUESTIONS_PREFIX = "questions_";
 
+    /**
+     * Build a per-user pref key so cached backend session/question snapshots
+     * never leak across accounts on the same device (admin vs student).
+     */
+    private static String perUserKey(String prefix, long examId) {
+        long userId = UserRoleHelper.getUserId();
+        return prefix + userId + "_" + examId;
+    }
+
     private ActivityExamSessionBinding binding;
     private ExamApi examApi;
     private SessionContentRepository sessionContentRepository;
+    private OfflineExamRepository offlineExamRepository;
 
     private Long sessionId;
     private long examId;
@@ -69,10 +83,15 @@ public class ExamSessionActivity extends AppCompatActivity {
     private Question currentQuestion;
     private SessionQuestionContentResponse currentBackendQuestion;
     private Map<Long, Long> selectedAnswers = new HashMap<>();
+    private final Map<Long, String> shortAnswers = new HashMap<>();
+    private final Map<Long, Map<String, Boolean>> trueFalseAnswers = new HashMap<>();
+    private final Map<Long, Map<String, String>> matchingAnswers = new HashMap<>();
     private Set<Long> bookmarkedQuestions = new HashSet<>();
     // Cache questions fetched from API so we can score locally without extra requests
     private Map<Long, Question> questionCache = new HashMap<>();
     private Map<Long, SessionQuestionContentResponse> backendQuestionCache = new HashMap<>();
+    private boolean offlineDownloadedSession;
+    private int offlineQuestionLoadGeneration;
 
     private CountDownTimer timer;
     private long sessionStartMillis;
@@ -94,6 +113,7 @@ public class ExamSessionActivity extends AppCompatActivity {
 
         examApi = ApiClient.getClient().create(ExamApi.class);
         sessionContentRepository = new SessionContentRepository();
+        offlineExamRepository = OfflineExamRepository.getInstance();
 
         colorDefault = Color.WHITE;
         colorSelected = ContextCompat.getColor(this, R.color.answer_selected);
@@ -121,6 +141,11 @@ public class ExamSessionActivity extends AppCompatActivity {
 
     private void startSession() {
         sessionStartMillis = System.currentTimeMillis();
+
+        if (offlineExamRepository.isDownloaded(this, examId)) {
+            startOfflineDownloadedSession();
+            return;
+        }
 
         if (backendExamContent) {
             startBackendContentSession();
@@ -221,6 +246,14 @@ public class ExamSessionActivity extends AppCompatActivity {
         startTimer();
     }
 
+    private void startOfflineDownloadedSession() {
+        offlineDownloadedSession = true;
+        hasRemoteSession = false;
+        sessionId = System.currentTimeMillis();
+        updateSyncStatus(false);
+        loadExamDetailFromDownloadedAsync(true);
+    }
+
     private void tryBootstrapRemoteSession() {
         Map<String, Long> body = new HashMap<>();
         body.put("examId", examId);
@@ -258,6 +291,10 @@ public class ExamSessionActivity extends AppCompatActivity {
     }
 
     private void loadExamDetailFromLocal() {
+        if (offlineDownloadedSession) {
+            loadExamDetailFromDownloadedAsync(false);
+            return;
+        }
         Exam exam = LocalExamDataSource.getInstance().getExamDetail(this, examId);
         if (exam == null || exam.getQuestions() == null || exam.getQuestions().isEmpty()) {
             showEmptyExamAndExit("Không có dữ liệu đề thi cục bộ");
@@ -274,6 +311,25 @@ public class ExamSessionActivity extends AppCompatActivity {
         }
         totalQuestions = questionIds.size();
         loadQuestion(0);
+    }
+
+    private void loadExamDetailFromDownloadedAsync(boolean startTimerAfterLoad) {
+        binding.tvQuestionText.setText("Dang tai de offline...");
+        binding.llOptions.removeAllViews();
+        offlineExamRepository.loadQuestionIds(this, examId, downloadedQuestionIds -> {
+            if (binding == null || isFinishing() || isDestroyed()) return;
+            if (downloadedQuestionIds == null || downloadedQuestionIds.isEmpty()) {
+                showEmptyExamAndExit("De offline khong co cau hoi nao.");
+                return;
+            }
+            questionIds.clear();
+            questionIds.addAll(downloadedQuestionIds);
+            totalQuestions = questionIds.size();
+            loadQuestion(0);
+            if (startTimerAfterLoad) {
+                startTimer();
+            }
+        });
     }
 
     private void loadQuestion(int index) {
@@ -308,6 +364,10 @@ public class ExamSessionActivity extends AppCompatActivity {
         }
 
         if (clientSideProcessing || !hasRemoteSession) {
+            if (offlineDownloadedSession) {
+                loadDownloadedQuestionAsync(index, questionId);
+                return;
+            }
             Question localQuestion = LocalExamDataSource.getInstance().getQuestion(this, questionId);
             if (localQuestion != null) {
                 currentQuestion = localQuestion;
@@ -342,6 +402,29 @@ public class ExamSessionActivity extends AppCompatActivity {
                 } else {
                     Toast.makeText(ExamSessionActivity.this, "Lỗi tải câu hỏi", Toast.LENGTH_SHORT).show();
                 }
+            }
+        });
+    }
+
+    private void loadDownloadedQuestionAsync(int requestedIndex, Long questionId) {
+        int generation = ++offlineQuestionLoadGeneration;
+        currentQuestion = null;
+        binding.tvQuestionText.setText("Dang tai cau hoi offline...");
+        binding.llOptions.removeAllViews();
+        offlineExamRepository.loadQuestion(this, examId, questionId, localQuestion -> {
+            if (binding == null || generation != offlineQuestionLoadGeneration
+                    || requestedIndex != currentIndex || questionIds == null
+                    || currentIndex < 0 || currentIndex >= questionIds.size()
+                    || !questionId.equals(questionIds.get(currentIndex))) {
+                return;
+            }
+            if (localQuestion != null) {
+                currentQuestion = localQuestion;
+                questionCache.put(questionId, localQuestion);
+                displayQuestion(currentQuestion);
+                updateBookmarkIcon();
+            } else {
+                Toast.makeText(this, "Khong tim thay cau hoi offline", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -410,6 +493,539 @@ public class ExamSessionActivity extends AppCompatActivity {
                 });
     }
 
+    private String resolveQuestionType(Question q, SessionQuestionContentResponse bq) {
+        if (q != null && q.getQuestionType() != null && !q.getQuestionType().isEmpty()) {
+            return q.getQuestionType().toUpperCase(Locale.ROOT);
+        }
+        if (bq != null && bq.getQuestionType() != null && !bq.getQuestionType().isEmpty()) {
+            return bq.getQuestionType().toUpperCase(Locale.ROOT);
+        }
+        String code = q != null ? q.getQuestionCode() : (bq != null ? bq.getQuestionCode() : "");
+        if (code != null) {
+            String upper = code.toUpperCase(Locale.ROOT);
+            if (upper.contains("TF") || upper.contains("TRUE_FALSE")) return "TRUE_FALSE";
+            if (upper.contains("MATCH")) return "MATCHING";
+            if (upper.contains("SA") || upper.contains("SHORT")) return "SHORT_ANSWER";
+        }
+        return "SINGLE_CHOICE";
+    }
+
+    private View createFormatBadge(String title, int textColor, int bgColor) {
+        TextView tv = new TextView(this);
+        tv.setText(title);
+        tv.setTextSize(12);
+        tv.setTypeface(null, android.graphics.Typeface.BOLD);
+        tv.setTextColor(textColor);
+        android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
+        gd.setColor(bgColor);
+        gd.setCornerRadius(dpToPx(6));
+        tv.setBackground(gd);
+        tv.setPadding(dpToPx(10), dpToPx(5), dpToPx(10), dpToPx(5));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.bottomMargin = dpToPx(12);
+        tv.setLayoutParams(lp);
+        return tv;
+    }
+
+    private void renderTrueFalseWidget(Long questionId, List<Question.Option> opts) {
+        binding.llOptions.addView(createFormatBadge(
+                "PHẦN 1: CÂU HỎI ĐÚNG / SAI (4 Ý)", 0xFF006064, 0xFFE0F7FA));
+
+        Map<String, Boolean> currentTf = trueFalseAnswers.computeIfAbsent(questionId, k -> new HashMap<>());
+        if (opts == null || opts.isEmpty()) return;
+
+        for (int i = 0; i < opts.size(); i++) {
+            Question.Option opt = opts.get(i);
+            String label = opt.getOptionLabel() != null ? opt.getOptionLabel() : String.valueOf((char) ('a' + i));
+            String propKey = label.toLowerCase(Locale.ROOT);
+            Boolean currentVal = currentTf.get(propKey);
+
+            MaterialCardView card = new MaterialCardView(this);
+            card.setRadius(dpToPx(8));
+            card.setCardElevation(dpToPx(1));
+            card.setStrokeWidth(dpToPx(1));
+            card.setStrokeColor(0xFFE0E0E0);
+            card.setCardBackgroundColor(Color.WHITE);
+            LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            cardLp.bottomMargin = dpToPx(8);
+            card.setLayoutParams(cardLp);
+
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(dpToPx(12), dpToPx(10), dpToPx(12), dpToPx(10));
+
+            TextView tvText = new TextView(this);
+            tvText.setText(label + ") " + (opt.getOptionText() != null ? opt.getOptionText() : ""));
+            tvText.setTextSize(13);
+            tvText.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
+            LinearLayout.LayoutParams textLp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+            tvText.setLayoutParams(textLp);
+            row.addView(tvText);
+
+            TextView btnDung = new TextView(this);
+            btnDung.setText("Đúng");
+            btnDung.setTextSize(12);
+            btnDung.setGravity(Gravity.CENTER);
+            btnDung.setTypeface(null, android.graphics.Typeface.BOLD);
+            boolean isDung = Boolean.TRUE.equals(currentVal);
+            btnDung.setTextColor(isDung ? Color.WHITE : 0xFF2E7D32);
+            android.graphics.drawable.GradientDrawable gdDung = new android.graphics.drawable.GradientDrawable();
+            gdDung.setColor(isDung ? 0xFF2E7D32 : 0xFFE8F5E9);
+            gdDung.setCornerRadius(dpToPx(6));
+            btnDung.setBackground(gdDung);
+            btnDung.setPadding(dpToPx(12), dpToPx(6), dpToPx(12), dpToPx(6));
+            LinearLayout.LayoutParams dungLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            dungLp.rightMargin = dpToPx(6);
+            btnDung.setLayoutParams(dungLp);
+            Long optId = opt.getId();
+            btnDung.setOnClickListener(v -> {
+                currentTf.put(propKey, true);
+                selectedAnswers.put(questionId, optId != null ? optId : (questionId * 10 + 1));
+                submitAnswer(questionId, selectedAnswers.get(questionId));
+                displayQuestion(currentQuestion);
+            });
+            row.addView(btnDung);
+
+            TextView btnSai = new TextView(this);
+            btnSai.setText("Sai");
+            btnSai.setTextSize(12);
+            btnSai.setGravity(Gravity.CENTER);
+            btnSai.setTypeface(null, android.graphics.Typeface.BOLD);
+            boolean isSai = Boolean.FALSE.equals(currentVal);
+            btnSai.setTextColor(isSai ? Color.WHITE : 0xFFC62828);
+            android.graphics.drawable.GradientDrawable gdSai = new android.graphics.drawable.GradientDrawable();
+            gdSai.setColor(isSai ? 0xFFC62828 : 0xFFFFEBEE);
+            gdSai.setCornerRadius(dpToPx(6));
+            btnSai.setBackground(gdSai);
+            btnSai.setPadding(dpToPx(12), dpToPx(6), dpToPx(12), dpToPx(6));
+            btnSai.setOnClickListener(v -> {
+                currentTf.put(propKey, false);
+                selectedAnswers.put(questionId, optId != null ? optId : (questionId * 10 + 1));
+                submitAnswer(questionId, selectedAnswers.get(questionId));
+                displayQuestion(currentQuestion);
+            });
+            row.addView(btnSai);
+
+            card.addView(row);
+            binding.llOptions.addView(card);
+        }
+    }
+
+    private void renderBackendTrueFalseWidget(Long questionId, List<QuestionOptionContentResponse> opts) {
+        binding.llOptions.addView(createFormatBadge(
+                "PHẦN 1: CÂU HỎI ĐÚNG / SAI (4 Ý)", 0xFF006064, 0xFFE0F7FA));
+
+        Map<String, Boolean> currentTf = trueFalseAnswers.computeIfAbsent(questionId, k -> new HashMap<>());
+        if (opts == null || opts.isEmpty()) return;
+
+        for (int i = 0; i < opts.size(); i++) {
+            QuestionOptionContentResponse opt = opts.get(i);
+            String label = String.valueOf((char) ('a' + i));
+            String propKey = label.toLowerCase(Locale.ROOT);
+            Boolean currentVal = currentTf.get(propKey);
+
+            MaterialCardView card = new MaterialCardView(this);
+            card.setRadius(dpToPx(8));
+            card.setCardElevation(dpToPx(1));
+            card.setStrokeWidth(dpToPx(1));
+            card.setStrokeColor(0xFFE0E0E0);
+            card.setCardBackgroundColor(Color.WHITE);
+            LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            cardLp.bottomMargin = dpToPx(8);
+            card.setLayoutParams(cardLp);
+
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(dpToPx(12), dpToPx(10), dpToPx(12), dpToPx(10));
+
+            TextView tvText = new TextView(this);
+            tvText.setText(label + ") " + (opt.getContent() != null ? opt.getContent() : ""));
+            tvText.setTextSize(13);
+            tvText.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
+            LinearLayout.LayoutParams textLp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+            tvText.setLayoutParams(textLp);
+            row.addView(tvText);
+
+            TextView btnDung = new TextView(this);
+            btnDung.setText("Đúng");
+            btnDung.setTextSize(12);
+            btnDung.setGravity(Gravity.CENTER);
+            btnDung.setTypeface(null, android.graphics.Typeface.BOLD);
+            boolean isDung = Boolean.TRUE.equals(currentVal);
+            btnDung.setTextColor(isDung ? Color.WHITE : 0xFF2E7D32);
+            android.graphics.drawable.GradientDrawable gdDung = new android.graphics.drawable.GradientDrawable();
+            gdDung.setColor(isDung ? 0xFF2E7D32 : 0xFFE8F5E9);
+            gdDung.setCornerRadius(dpToPx(6));
+            btnDung.setBackground(gdDung);
+            btnDung.setPadding(dpToPx(12), dpToPx(6), dpToPx(12), dpToPx(6));
+            LinearLayout.LayoutParams dungLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            dungLp.rightMargin = dpToPx(6);
+            btnDung.setLayoutParams(dungLp);
+            btnDung.setOnClickListener(v -> {
+                currentTf.put(propKey, true);
+                selectedAnswers.put(questionId, opt.getId());
+                submitAnswer(questionId, opt.getId());
+                displayBackendQuestion(currentBackendQuestion);
+            });
+            row.addView(btnDung);
+
+            TextView btnSai = new TextView(this);
+            btnSai.setText("Sai");
+            btnSai.setTextSize(12);
+            btnSai.setGravity(Gravity.CENTER);
+            btnSai.setTypeface(null, android.graphics.Typeface.BOLD);
+            boolean isSai = Boolean.FALSE.equals(currentVal);
+            btnSai.setTextColor(isSai ? Color.WHITE : 0xFFC62828);
+            android.graphics.drawable.GradientDrawable gdSai = new android.graphics.drawable.GradientDrawable();
+            gdSai.setColor(isSai ? 0xFFC62828 : 0xFFFFEBEE);
+            gdSai.setCornerRadius(dpToPx(6));
+            btnSai.setBackground(gdSai);
+            btnSai.setPadding(dpToPx(12), dpToPx(6), dpToPx(12), dpToPx(6));
+            btnSai.setOnClickListener(v -> {
+                currentTf.put(propKey, false);
+                selectedAnswers.put(questionId, opt.getId());
+                submitAnswer(questionId, opt.getId());
+                displayBackendQuestion(currentBackendQuestion);
+            });
+            row.addView(btnSai);
+
+            card.addView(row);
+            binding.llOptions.addView(card);
+        }
+    }
+
+    private void renderMatchingWidget(Long questionId, List<Question.Option> opts) {
+        binding.llOptions.addView(createFormatBadge(
+                "PHẦN 3: GHÉP HỢP (NỐI CẶP)", 0xFFE65100, 0xFFFFF3E0));
+
+        Map<String, String> currentMatch = matchingAnswers.computeIfAbsent(questionId, k -> new HashMap<>());
+        if (opts == null || opts.isEmpty()) return;
+
+        for (int i = 0; i < opts.size(); i++) {
+            Question.Option opt = opts.get(i);
+            String itemKey = String.valueOf(i + 1);
+            String selectedChoice = currentMatch.get(itemKey);
+
+            MaterialCardView card = new MaterialCardView(this);
+            card.setRadius(dpToPx(8));
+            card.setCardElevation(dpToPx(1));
+            card.setStrokeWidth(dpToPx(1));
+            card.setStrokeColor(0xFFE0E0E0);
+            card.setCardBackgroundColor(Color.WHITE);
+            LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            cardLp.bottomMargin = dpToPx(8);
+            card.setLayoutParams(cardLp);
+
+            LinearLayout container = new LinearLayout(this);
+            container.setOrientation(LinearLayout.VERTICAL);
+            container.setPadding(dpToPx(12), dpToPx(10), dpToPx(12), dpToPx(10));
+
+            TextView tvItem = new TextView(this);
+            tvItem.setText((i + 1) + ". " + (opt.getOptionText() != null ? opt.getOptionText() : ""));
+            tvItem.setTextSize(13);
+            tvItem.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
+            container.addView(tvItem);
+
+            LinearLayout chipsRow = new LinearLayout(this);
+            chipsRow.setOrientation(LinearLayout.HORIZONTAL);
+            chipsRow.setGravity(Gravity.CENTER_VERTICAL);
+            LinearLayout.LayoutParams chipsLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            chipsLp.topMargin = dpToPx(6);
+            chipsRow.setLayoutParams(chipsLp);
+
+            TextView tvPrompt = new TextView(this);
+            tvPrompt.setText("Ghép với: ");
+            tvPrompt.setTextSize(11);
+            tvPrompt.setTextColor(0xFF757575);
+            chipsRow.addView(tvPrompt);
+
+            String[] choices = {"A", "B", "C", "D"};
+            Long optId = opt.getId();
+            for (String ch : choices) {
+                boolean isChosen = ch.equalsIgnoreCase(selectedChoice);
+                TextView btnChip = new TextView(this);
+                btnChip.setText(ch);
+                btnChip.setTextSize(12);
+                btnChip.setGravity(Gravity.CENTER);
+                btnChip.setTypeface(null, android.graphics.Typeface.BOLD);
+                btnChip.setTextColor(isChosen ? Color.WHITE : 0xFF1565C0);
+                android.graphics.drawable.GradientDrawable gdChip = new android.graphics.drawable.GradientDrawable();
+                gdChip.setColor(isChosen ? 0xFF1565C0 : 0xFFE3F2FD);
+                gdChip.setCornerRadius(dpToPx(6));
+                btnChip.setBackground(gdChip);
+                btnChip.setPadding(dpToPx(12), dpToPx(4), dpToPx(12), dpToPx(4));
+
+                LinearLayout.LayoutParams chipLp = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                chipLp.rightMargin = dpToPx(8);
+                btnChip.setLayoutParams(chipLp);
+
+                btnChip.setOnClickListener(v -> {
+                    currentMatch.put(itemKey, ch);
+                    selectedAnswers.put(questionId, optId != null ? optId : (questionId * 10 + 1));
+                    submitAnswer(questionId, selectedAnswers.get(questionId));
+                    displayQuestion(currentQuestion);
+                });
+                chipsRow.addView(btnChip);
+            }
+
+            container.addView(chipsRow);
+            card.addView(container);
+            binding.llOptions.addView(card);
+        }
+    }
+
+    private void renderBackendMatchingWidget(Long questionId, List<QuestionOptionContentResponse> opts) {
+        binding.llOptions.addView(createFormatBadge(
+                "PHẦN 3: GHÉP HỢP (NỐI CẶP)", 0xFFE65100, 0xFFFFF3E0));
+
+        Map<String, String> currentMatch = matchingAnswers.computeIfAbsent(questionId, k -> new HashMap<>());
+        if (opts == null || opts.isEmpty()) return;
+
+        for (int i = 0; i < opts.size(); i++) {
+            QuestionOptionContentResponse opt = opts.get(i);
+            String itemKey = String.valueOf(i + 1);
+            String selectedChoice = currentMatch.get(itemKey);
+
+            MaterialCardView card = new MaterialCardView(this);
+            card.setRadius(dpToPx(8));
+            card.setCardElevation(dpToPx(1));
+            card.setStrokeWidth(dpToPx(1));
+            card.setStrokeColor(0xFFE0E0E0);
+            card.setCardBackgroundColor(Color.WHITE);
+            LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            cardLp.bottomMargin = dpToPx(8);
+            card.setLayoutParams(cardLp);
+
+            LinearLayout container = new LinearLayout(this);
+            container.setOrientation(LinearLayout.VERTICAL);
+            container.setPadding(dpToPx(12), dpToPx(10), dpToPx(12), dpToPx(10));
+
+            TextView tvItem = new TextView(this);
+            tvItem.setText((i + 1) + ". " + (opt.getContent() != null ? opt.getContent() : ""));
+            tvItem.setTextSize(13);
+            tvItem.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
+            container.addView(tvItem);
+
+            LinearLayout chipsRow = new LinearLayout(this);
+            chipsRow.setOrientation(LinearLayout.HORIZONTAL);
+            chipsRow.setGravity(Gravity.CENTER_VERTICAL);
+            LinearLayout.LayoutParams chipsLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            chipsLp.topMargin = dpToPx(6);
+            chipsRow.setLayoutParams(chipsLp);
+
+            TextView tvPrompt = new TextView(this);
+            tvPrompt.setText("Ghép với: ");
+            tvPrompt.setTextSize(11);
+            tvPrompt.setTextColor(0xFF757575);
+            chipsRow.addView(tvPrompt);
+
+            String[] choices = {"A", "B", "C", "D"};
+            for (String ch : choices) {
+                boolean isChosen = ch.equalsIgnoreCase(selectedChoice);
+                TextView btnChip = new TextView(this);
+                btnChip.setText(ch);
+                btnChip.setTextSize(12);
+                btnChip.setGravity(Gravity.CENTER);
+                btnChip.setTypeface(null, android.graphics.Typeface.BOLD);
+                btnChip.setTextColor(isChosen ? Color.WHITE : 0xFF1565C0);
+                android.graphics.drawable.GradientDrawable gdChip = new android.graphics.drawable.GradientDrawable();
+                gdChip.setColor(isChosen ? 0xFF1565C0 : 0xFFE3F2FD);
+                gdChip.setCornerRadius(dpToPx(6));
+                btnChip.setBackground(gdChip);
+                btnChip.setPadding(dpToPx(12), dpToPx(4), dpToPx(12), dpToPx(4));
+
+                LinearLayout.LayoutParams chipLp = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                chipLp.rightMargin = dpToPx(8);
+                btnChip.setLayoutParams(chipLp);
+
+                btnChip.setOnClickListener(v -> {
+                    currentMatch.put(itemKey, ch);
+                    selectedAnswers.put(questionId, opt.getId());
+                    submitAnswer(questionId, opt.getId());
+                    displayBackendQuestion(currentBackendQuestion);
+                });
+                chipsRow.addView(btnChip);
+            }
+
+            container.addView(chipsRow);
+            card.addView(container);
+            binding.llOptions.addView(card);
+        }
+    }
+
+    private void renderShortAnswerWidget(Long questionId) {
+        binding.llOptions.addView(createFormatBadge(
+                "PHẦN 4: ĐIỀN SỐ / TRẢ LỜI NGẮN", 0xFF1B5E20, 0xFFE8F5E9));
+
+        MaterialCardView card = new MaterialCardView(this);
+        card.setRadius(dpToPx(10));
+        card.setCardElevation(dpToPx(1));
+        card.setStrokeWidth(dpToPx(1));
+        card.setStrokeColor(0xFFE0E0E0);
+        card.setCardBackgroundColor(Color.WHITE);
+        LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        cardLp.bottomMargin = dpToPx(10);
+        card.setLayoutParams(cardLp);
+
+        LinearLayout container = new LinearLayout(this);
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setPadding(dpToPx(14), dpToPx(14), dpToPx(14), dpToPx(14));
+
+        TextView tvTitle = new TextView(this);
+        tvTitle.setText("Nhập kết quả hoặc đáp án của bạn:");
+        tvTitle.setTextSize(14);
+        tvTitle.setTypeface(null, android.graphics.Typeface.BOLD);
+        tvTitle.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
+        container.addView(tvTitle);
+
+        android.widget.EditText etAnswer = new android.widget.EditText(this);
+        etAnswer.setHint("Ví dụ: 37 hoặc 7.44...");
+        etAnswer.setTextSize(15);
+        etAnswer.setSingleLine(true);
+        etAnswer.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
+        gd.setColor(0xFFF9F9FB);
+        gd.setCornerRadius(dpToPx(8));
+        gd.setStroke(dpToPx(1), 0xFFCCCCCC);
+        etAnswer.setBackground(gd);
+        etAnswer.setPadding(dpToPx(12), dpToPx(10), dpToPx(12), dpToPx(10));
+        String currentVal = shortAnswers.get(questionId);
+        if (currentVal != null) {
+            etAnswer.setText(currentVal);
+        }
+        LinearLayout.LayoutParams etLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        etLp.topMargin = dpToPx(8);
+        etLp.bottomMargin = dpToPx(12);
+        etAnswer.setLayoutParams(etLp);
+        container.addView(etAnswer);
+
+        com.google.android.material.button.MaterialButton btnSave =
+                new com.google.android.material.button.MaterialButton(this);
+        btnSave.setText(currentVal != null && !currentVal.isEmpty() ? "Cập nhật đáp án" : "Lưu đáp án");
+        btnSave.setCornerRadius(dpToPx(8));
+        btnSave.setBackgroundColor(ContextCompat.getColor(this, R.color.primary));
+        btnSave.setTextColor(Color.WHITE);
+        btnSave.setOnClickListener(v -> {
+            String textVal = etAnswer.getText() != null ? etAnswer.getText().toString().trim() : "";
+            if (!textVal.isEmpty()) {
+                shortAnswers.put(questionId, textVal);
+                selectedAnswers.put(questionId, questionId * 10 + 1);
+                submitAnswer(questionId, selectedAnswers.get(questionId));
+                Toast.makeText(this, "Đã lưu đáp án: " + textVal, Toast.LENGTH_SHORT).show();
+            } else {
+                shortAnswers.remove(questionId);
+                selectedAnswers.remove(questionId);
+            }
+        });
+        container.addView(btnSave);
+
+        card.addView(container);
+        binding.llOptions.addView(card);
+    }
+
+    private void renderSingleChoiceWidget(Long questionId, List<Question.Option> opts, Long alreadySelected) {
+        binding.llOptions.addView(createFormatBadge(
+                "PHẦN 2: TRẮC NGHIỆM 4 LỰA CHỌN", 0xFF283593, 0xFFE8EAF6));
+
+        for (int i = 0; i < opts.size(); i += 2) {
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            rowLp.bottomMargin = dpToPx(10);
+            row.setLayoutParams(rowLp);
+
+            MaterialCardView card1 = buildOptionCard(opts.get(i), questionId, alreadySelected);
+            LinearLayout.LayoutParams lp1 = new LinearLayout.LayoutParams(0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+            lp1.rightMargin = dpToPx(5);
+            card1.setLayoutParams(lp1);
+            row.addView(card1);
+
+            if (i + 1 < opts.size()) {
+                MaterialCardView card2 = buildOptionCard(opts.get(i + 1), questionId, alreadySelected);
+                LinearLayout.LayoutParams lp2 = new LinearLayout.LayoutParams(0,
+                        LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+                lp2.leftMargin = dpToPx(5);
+                card2.setLayoutParams(lp2);
+                row.addView(card2);
+            } else {
+                View placeholder = new View(this);
+                LinearLayout.LayoutParams lp2 = new LinearLayout.LayoutParams(0,
+                        LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+                lp2.leftMargin = dpToPx(5);
+                placeholder.setLayoutParams(lp2);
+                row.addView(placeholder);
+            }
+
+            binding.llOptions.addView(row);
+        }
+    }
+
+    private void renderBackendSingleChoiceWidget(Long questionId, List<QuestionOptionContentResponse> opts, Long alreadySelected) {
+        binding.llOptions.addView(createFormatBadge(
+                "PHẦN 2: TRẮC NGHIỆM 4 LỰA CHỌN", 0xFF283593, 0xFFE8EAF6));
+
+        for (int i = 0; i < opts.size(); i += 2) {
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            rowLp.bottomMargin = dpToPx(10);
+            row.setLayoutParams(rowLp);
+
+            MaterialCardView card1 = buildBackendOptionCard(
+                    opts.get(i), questionId, alreadySelected, i);
+            LinearLayout.LayoutParams lp1 = new LinearLayout.LayoutParams(0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+            lp1.rightMargin = dpToPx(5);
+            card1.setLayoutParams(lp1);
+            row.addView(card1);
+
+            if (i + 1 < opts.size()) {
+                MaterialCardView card2 = buildBackendOptionCard(
+                        opts.get(i + 1), questionId, alreadySelected, i + 1);
+                LinearLayout.LayoutParams lp2 = new LinearLayout.LayoutParams(0,
+                        LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+                lp2.leftMargin = dpToPx(5);
+                card2.setLayoutParams(lp2);
+                row.addView(card2);
+            } else {
+                View placeholder = new View(this);
+                LinearLayout.LayoutParams lp2 = new LinearLayout.LayoutParams(0,
+                        LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+                lp2.leftMargin = dpToPx(5);
+                placeholder.setLayoutParams(lp2);
+                row.addView(placeholder);
+            }
+
+            binding.llOptions.addView(row);
+        }
+    }
+
     private void displayQuestion(Question question) {
         if (question == null) {
             binding.tvQuestionText.setText("(Khong the tai cau hoi)");
@@ -420,51 +1036,23 @@ public class ExamSessionActivity extends AppCompatActivity {
         if (content == null || content.trim().isEmpty()) {
             content = "(Cau hoi chua co noi dung)";
         }
-        binding.tvQuestionText.setText("Cau " + (currentIndex + 1) + ": " + content);
+            binding.tvQuestionText.setText("Câu " + (currentIndex + 1) + ": " + content);
         binding.llOptions.removeAllViews();
 
         if (question.getOptions() == null || question.getOptions().isEmpty()) return;
 
         List<Question.Option> opts = question.getOptions();
         Long alreadySelected = selectedAnswers.get(question.getId());
+        String qType = resolveQuestionType(question, null);
 
-        // Build 2-column grid: pair options into rows
-        for (int i = 0; i < opts.size(); i += 2) {
-            LinearLayout row = new LinearLayout(this);
-            row.setOrientation(LinearLayout.HORIZONTAL);
-            LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT);
-            rowLp.bottomMargin = dpToPx(10);
-            row.setLayoutParams(rowLp);
-
-            // Left option card
-            MaterialCardView card1 = buildOptionCard(opts.get(i), question.getId(), alreadySelected);
-            LinearLayout.LayoutParams lp1 = new LinearLayout.LayoutParams(0,
-                    LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-            lp1.rightMargin = dpToPx(5);
-            card1.setLayoutParams(lp1);
-            row.addView(card1);
-
-            // Right option card (if exists)
-            if (i + 1 < opts.size()) {
-                MaterialCardView card2 = buildOptionCard(opts.get(i + 1), question.getId(), alreadySelected);
-                LinearLayout.LayoutParams lp2 = new LinearLayout.LayoutParams(0,
-                        LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-                lp2.leftMargin = dpToPx(5);
-                card2.setLayoutParams(lp2);
-                row.addView(card2);
-            } else {
-                // Placeholder to keep grid balanced
-                View placeholder = new View(this);
-                LinearLayout.LayoutParams lp2 = new LinearLayout.LayoutParams(0,
-                        LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-                lp2.leftMargin = dpToPx(5);
-                placeholder.setLayoutParams(lp2);
-                row.addView(placeholder);
-            }
-
-            binding.llOptions.addView(row);
+        if ("TRUE_FALSE".equalsIgnoreCase(qType)) {
+            renderTrueFalseWidget(question.getId(), opts);
+        } else if ("MATCHING".equalsIgnoreCase(qType)) {
+            renderMatchingWidget(question.getId(), opts);
+        } else if ("SHORT_ANSWER".equalsIgnoreCase(qType) || "FILL_IN_BLANK".equalsIgnoreCase(qType)) {
+            renderShortAnswerWidget(question.getId());
+        } else {
+            renderSingleChoiceWidget(question.getId(), opts, alreadySelected);
         }
     }
 
@@ -548,50 +1136,22 @@ public class ExamSessionActivity extends AppCompatActivity {
         if (content == null || content.trim().isEmpty()) {
             content = "(Cau hoi chua co noi dung)";
         }
-        binding.tvQuestionText.setText("Cau " + (currentIndex + 1) + ": " + content);
+            binding.tvQuestionText.setText("Câu " + (currentIndex + 1) + ": " + content);
         binding.llOptions.removeAllViews();
 
         List<QuestionOptionContentResponse> opts = question.getOptions();
-        if (opts == null || opts.isEmpty()) return;
-
         Long questionId = question.getId();
         Long alreadySelected = selectedAnswers.get(questionId);
+        String qType = resolveQuestionType(null, question);
 
-        for (int i = 0; i < opts.size(); i += 2) {
-            LinearLayout row = new LinearLayout(this);
-            row.setOrientation(LinearLayout.HORIZONTAL);
-            LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT);
-            rowLp.bottomMargin = dpToPx(10);
-            row.setLayoutParams(rowLp);
-
-            MaterialCardView card1 = buildBackendOptionCard(
-                    opts.get(i), questionId, alreadySelected, i);
-            LinearLayout.LayoutParams lp1 = new LinearLayout.LayoutParams(0,
-                    LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-            lp1.rightMargin = dpToPx(5);
-            card1.setLayoutParams(lp1);
-            row.addView(card1);
-
-            if (i + 1 < opts.size()) {
-                MaterialCardView card2 = buildBackendOptionCard(
-                        opts.get(i + 1), questionId, alreadySelected, i + 1);
-                LinearLayout.LayoutParams lp2 = new LinearLayout.LayoutParams(0,
-                        LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-                lp2.leftMargin = dpToPx(5);
-                card2.setLayoutParams(lp2);
-                row.addView(card2);
-            } else {
-                View placeholder = new View(this);
-                LinearLayout.LayoutParams lp2 = new LinearLayout.LayoutParams(0,
-                        LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-                lp2.leftMargin = dpToPx(5);
-                placeholder.setLayoutParams(lp2);
-                row.addView(placeholder);
-            }
-
-            binding.llOptions.addView(row);
+        if ("TRUE_FALSE".equalsIgnoreCase(qType)) {
+            renderBackendTrueFalseWidget(questionId, opts);
+        } else if ("MATCHING".equalsIgnoreCase(qType)) {
+            renderBackendMatchingWidget(questionId, opts);
+        } else if ("SHORT_ANSWER".equalsIgnoreCase(qType) || "FILL_IN_BLANK".equalsIgnoreCase(qType)) {
+            renderShortAnswerWidget(questionId);
+        } else {
+            renderBackendSingleChoiceWidget(questionId, opts, alreadySelected);
         }
     }
 
@@ -796,6 +1356,10 @@ public class ExamSessionActivity extends AppCompatActivity {
                             answersJson);
                     ExamHistoryRepository.getInstance().saveEntry(ExamSessionActivity.this, historyEntry,
                             () -> historySaveFailed[0] = true);
+                    GamificationRepository.getInstance().recordExamCompleted(
+                            ExamSessionActivity.this,
+                            result.getCorrectAnswers(),
+                            resultTotal);
 
                     Intent intent = new Intent(ExamSessionActivity.this, ExamResultActivity.class);
                     intent.putExtra("session_id", result.getId());
@@ -837,9 +1401,9 @@ public class ExamSessionActivity extends AppCompatActivity {
 
         SharedPreferences prefs = getSharedPreferences(BACKEND_REVIEW_PREFS, MODE_PRIVATE);
         prefs.edit()
-                .putLong(PREF_SESSION_PREFIX + examId, sessionId)
-                .putString(PREF_QUESTION_IDS_PREFIX + examId, new Gson().toJson(questionIds))
-                .putString(PREF_QUESTIONS_PREFIX + examId, new Gson().toJson(orderedQuestions))
+                .putLong(perUserKey(PREF_SESSION_PREFIX, examId), sessionId)
+                .putString(perUserKey(PREF_QUESTION_IDS_PREFIX, examId), new Gson().toJson(questionIds))
+                .putString(perUserKey(PREF_QUESTIONS_PREFIX, examId), new Gson().toJson(orderedQuestions))
                 .apply();
     }
 
@@ -849,11 +1413,23 @@ public class ExamSessionActivity extends AppCompatActivity {
             Long qId = entry.getKey();
             Long selectedOptionId = entry.getValue();
             Question q = questionCache.get(qId);
-            if (q != null && q.getOptions() != null) {
-                for (Question.Option opt : q.getOptions()) {
-                    if (opt.getId() != null && opt.getId().equals(selectedOptionId) && opt.isCorrect()) {
+            if (q != null) {
+                String qType = resolveQuestionType(q, null);
+                if ("SHORT_ANSWER".equalsIgnoreCase(qType) || "FILL_IN_BLANK".equalsIgnoreCase(qType)) {
+                    String entered = shortAnswers.get(qId);
+                    String expected = null;
+                    if (q.getOptions() != null && !q.getOptions().isEmpty()) {
+                        expected = q.getOptions().get(0).getOptionText();
+                    }
+                    if (entered != null && expected != null && entered.trim().equalsIgnoreCase(expected.trim())) {
                         correct++;
-                        break;
+                    }
+                } else if (q.getOptions() != null) {
+                    for (Question.Option opt : q.getOptions()) {
+                        if (opt.getId() != null && opt.getId().equals(selectedOptionId) && opt.isCorrect()) {
+                            correct++;
+                            break;
+                        }
                     }
                 }
             } else {
@@ -902,6 +1478,19 @@ public class ExamSessionActivity extends AppCompatActivity {
         final boolean[] historySaveFailed = {false};
         ExamHistoryRepository.getInstance().saveEntry(this, historyEntry,
                 () -> historySaveFailed[0] = true);
+        GamificationRepository.getInstance().recordExamCompleted(this, correct, total);
+
+        if (offlineDownloadedSession) {
+            OfflineExamSyncRepository.getInstance().enqueueResult(
+                    this,
+                    OfflineExamSyncRepository.item(
+                            examId,
+                            score,
+                            correct,
+                            total,
+                            timeSpentSeconds,
+                            buildOfflineSyncAnswers()));
+        }
 
         Intent intent = new Intent(ExamSessionActivity.this, ExamResultActivity.class);
         intent.putExtra("session_id", sessionId != null ? sessionId : System.currentTimeMillis());
@@ -916,6 +1505,19 @@ public class ExamSessionActivity extends AppCompatActivity {
         intent.putExtra("history_save_failed", historySaveFailed[0]);
         startActivity(intent);
         finish();
+    }
+
+    private List<OfflineExamSyncRepository.Answer> buildOfflineSyncAnswers() {
+        List<OfflineExamSyncRepository.Answer> answers = new ArrayList<>();
+        for (int i = 0; i < questionIds.size(); i++) {
+            Long qId = questionIds.get(i);
+            answers.add(OfflineExamSyncRepository.answer(
+                    qId,
+                    selectedAnswers.get(qId),
+                    i + 1,
+                    bookmarkedQuestions.contains(qId)));
+        }
+        return answers;
     }
 
     private int getElapsedSeconds() {

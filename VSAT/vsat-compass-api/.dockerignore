@@ -1,0 +1,8 @@
+.gradle/
+build/*
+!build/libs/*.jar
+bootrun-live.log
+bootrun-live.err
+*.log
+.env
+docs/

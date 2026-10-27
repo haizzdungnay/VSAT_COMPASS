@@ -1,0 +1,51 @@
+[
+  {
+    "id": "eng-vocab-001",
+    "front": "abundant",
+    "back": "More than enough; plentiful. Example: abundant resources.",
+    "deck": "Vocab Starter",
+    "subject": "English"
+  },
+  {
+    "id": "eng-vocab-002",
+    "front": "consequence",
+    "back": "A result or effect of an action or condition.",
+    "deck": "Vocab Starter",
+    "subject": "English"
+  },
+  {
+    "id": "eng-vocab-003",
+    "front": "infer",
+    "back": "To reach a conclusion from evidence and reasoning.",
+    "deck": "Vocab Starter",
+    "subject": "English"
+  },
+  {
+    "id": "math-formula-001",
+    "front": "Quadratic formula",
+    "back": "For ax^2 + bx + c = 0, x = (-b +/- sqrt(b^2 - 4ac)) / 2a.",
+    "deck": "Core Formulas",
+    "subject": "Math"
+  },
+  {
+    "id": "math-formula-002",
+    "front": "Arithmetic series sum",
+    "back": "S_n = n(a_1 + a_n) / 2 = n(2a_1 + (n - 1)d) / 2.",
+    "deck": "Core Formulas",
+    "subject": "Math"
+  },
+  {
+    "id": "physics-formula-001",
+    "front": "Uniform acceleration velocity",
+    "back": "v = v0 + at, where a is constant acceleration.",
+    "deck": "Physics Basics",
+    "subject": "Physics"
+  },
+  {
+    "id": "physics-formula-002",
+    "front": "Ohm's law",
+    "back": "U = I R. Voltage equals current times resistance.",
+    "deck": "Physics Basics",
+    "subject": "Physics"
+  }
+]

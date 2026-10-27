@@ -4,6 +4,8 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- F8: local daily-reminder notification (Android 13+ runtime permission). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".VsatApp"
@@ -33,16 +35,32 @@
 
         <!-- ── Exam (Student) ── -->
         <activity android:name=".ui.exam.ExamDetailActivity"           android:exported="false" />
+        <activity android:name=".ui.exam.DownloadedExamsActivity"      android:exported="false" />
         <activity android:name=".ui.exam.session.ExamSessionActivity"  android:exported="false" />
         <activity android:name=".ui.exam.session.ExamResultActivity"   android:exported="false" />
         <activity android:name=".ui.exam.session.ExamReviewActivity"   android:exported="false" />
+        <activity android:name=".ui.practice.PracticeSessionActivity"  android:exported="false" />
         <activity android:name=".ui.history.ExamHistoryActivity"       android:exported="false" />
+        <activity android:name=".ui.flashcards.FlashcardReviewActivity" android:exported="false" />
+        <activity android:name=".ui.progress.ProgressActivity"          android:exported="false" />
 
         <!-- ── Admin Mode ── -->
         <activity
             android:name=".ui.admin.AdminActivity"
             android:exported="false"
             android:label="Quản trị V-SAT" />
+
+        <!-- ── F8: local notification settings ── -->
+        <activity
+            android:name=".ui.settings.SettingsActivity"
+            android:exported="false"
+            android:label="@string/settings_title" />
+
+        <!-- ── F9: leaderboard screen ── -->
+        <activity
+            android:name=".ui.leaderboard.LeaderboardActivity"
+            android:exported="false"
+            android:label="@string/leaderboard_title" />
 
         <!-- Admin: Question management -->
         <activity android:name=".ui.admin.questions.AdminReviewQuestionActivity" android:exported="false" />
@@ -51,6 +69,7 @@
         <activity android:name=".ui.admin.exam.AdminCreateExamActivity" android:exported="false" />
         <activity android:name=".ui.admin.exam.AdminExamDetailActivity" android:exported="false" />
         <activity android:name=".ui.admin.exam.AdminQuestionPickerActivity" android:exported="false" />
+        <activity android:name=".ui.admin.tickets.AdminTicketActivity" android:exported="false" />
 
         <!-- ── Collaborator ── -->
         <activity

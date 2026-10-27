@@ -1,7 +1,6 @@
 package com.example.v_sat_compass.ui.profile;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
@@ -10,6 +9,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -20,17 +21,24 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
 import com.example.v_sat_compass.BuildConfig;
+import com.example.v_sat_compass.R;
 import com.example.v_sat_compass.data.api.ApiClient;
 import com.example.v_sat_compass.data.api.AuthApi;
 import com.example.v_sat_compass.data.model.ApiResponse;
+import com.example.v_sat_compass.data.model.GamificationState;
 import com.example.v_sat_compass.data.model.UserProfile;
 import com.example.v_sat_compass.data.repository.ExamHistoryRepository;
+import com.example.v_sat_compass.data.repository.GamificationRepository;
 import com.example.v_sat_compass.databinding.FragmentProfileBinding;
 import com.example.v_sat_compass.ui.admin.AdminActivity;
 import com.example.v_sat_compass.ui.auth.LoginActivity;
+import com.example.v_sat_compass.ui.leaderboard.LeaderboardActivity;
+import com.example.v_sat_compass.ui.settings.SettingsActivity;
+import com.example.v_sat_compass.util.AvatarPreferences;
 import com.example.v_sat_compass.util.UserRoleHelper;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.card.MaterialCardView;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -41,11 +49,13 @@ import java.util.Map;
 
 public class ProfileFragment extends Fragment {
 
-    private static final String PROFILE_PREFS = "profile_local_overrides";
-    private static final String KEY_AVATAR_URI = "avatar_uri";
-
     private FragmentProfileBinding binding;
     private ActivityResultLauncher<Intent> avatarPicker;
+    private TextView tvProfileLevel;
+    private TextView tvProfileXp;
+    private TextView tvProfileStreak;
+    private TextView tvNextLevel;
+    private ProgressBar progressLevel;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -82,6 +92,8 @@ public class ProfileFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         loadProfile();
+        setupGamificationPanel();
+        loadGamification();
         loadLocalAvatar();
         setupProfileActions();
         setupAdminAccess();
@@ -92,6 +104,92 @@ public class ProfileFragment extends Fragment {
             startActivity(new Intent(requireActivity(), LoginActivity.class));
             requireActivity().finishAffinity();
         });
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        loadGamification();
+    }
+
+    private void setupGamificationPanel() {
+        if (binding == null || tvProfileLevel != null) return;
+        LinearLayout container = (LinearLayout) binding.getRoot().getChildAt(0);
+        LinearLayout contentRoot = (LinearLayout) container.getChildAt(1);
+
+        MaterialCardView card = new MaterialCardView(requireContext());
+        card.setRadius(dp(12));
+        card.setCardElevation(dp(1));
+        LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        cardLp.bottomMargin = dp(12);
+        card.setLayoutParams(cardLp);
+
+        LinearLayout content = new LinearLayout(requireContext());
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(dp(16), dp(16), dp(16), dp(16));
+        card.addView(content);
+
+        TextView title = profileText("Tien trinh hoc tap", 16, true, R.color.text_primary);
+        content.addView(title);
+
+        LinearLayout row = new LinearLayout(requireContext());
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setPadding(0, dp(10), 0, dp(8));
+        content.addView(row);
+
+        tvProfileLevel = profileMetric(row, "Level");
+        tvProfileXp = profileMetric(row, "XP");
+        tvProfileStreak = profileMetric(row, "Streak");
+
+        tvNextLevel = profileText("Con 500 XP den level tiep theo", 13, false, R.color.text_secondary);
+        content.addView(tvNextLevel);
+        progressLevel = new ProgressBar(requireContext(), null, android.R.attr.progressBarStyleHorizontal);
+        progressLevel.setMax(500);
+        LinearLayout.LayoutParams barLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(6));
+        barLp.topMargin = dp(6);
+        progressLevel.setLayoutParams(barLp);
+        content.addView(progressLevel);
+
+        contentRoot.addView(card, 0);
+    }
+
+    private TextView profileMetric(LinearLayout row, String label) {
+        LinearLayout col = new LinearLayout(requireContext());
+        col.setOrientation(LinearLayout.VERTICAL);
+        col.setGravity(android.view.Gravity.CENTER);
+        col.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        TextView value = profileText("0", 20, true, R.color.primary);
+        TextView caption = profileText(label, 11, false, R.color.text_secondary);
+        col.addView(value);
+        col.addView(caption);
+        row.addView(col);
+        return value;
+    }
+
+    private TextView profileText(String value, int sp, boolean bold, int color) {
+        TextView tv = new TextView(requireContext());
+        tv.setText(value);
+        tv.setTextSize(sp);
+        tv.setTextColor(getResources().getColor(color, null));
+        if (bold) tv.setTypeface(null, android.graphics.Typeface.BOLD);
+        return tv;
+    }
+
+    private void loadGamification() {
+        if (getContext() == null) return;
+        GamificationRepository.getInstance().getState(requireContext(), this::renderGamification);
+    }
+
+    private void renderGamification(GamificationState state) {
+        if (binding == null || state == null || tvProfileLevel == null) return;
+        tvProfileLevel.setText(String.valueOf(state.getLevel()));
+        tvProfileXp.setText(String.valueOf(state.getTotalXp()));
+        tvProfileStreak.setText(String.valueOf(state.getCurrentStreak()));
+        progressLevel.setProgress(state.getXpIntoLevel());
+        tvNextLevel.setText("Con " + state.getXpToNextLevel() + " XP den level tiep theo");
     }
 
     // ─── Load profile từ API ──────────────────────────────────────────────────
@@ -149,6 +247,14 @@ public class ProfileFragment extends Fragment {
     private void setupProfileActions() {
         binding.itemAccountSettings.setOnClickListener(v -> showEditProfileDialog());
         binding.itemChangePassword.setOnClickListener(v -> showChangePasswordDialog());
+        binding.itemNotifications.setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), SettingsActivity.class);
+            startActivity(intent);
+        });
+        binding.itemLeaderboard.setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), LeaderboardActivity.class);
+            startActivity(intent);
+        });
         binding.ivAvatar.setOnClickListener(v -> openAvatarPicker());
     }
 
@@ -171,17 +277,17 @@ public class ProfileFragment extends Fragment {
         form.addView(phoneInput);
 
         AlertDialog dialog = new AlertDialog.Builder(requireContext())
-                .setTitle("Cap nhat tai khoan")
+                .setTitle("Cập nhật tài khoản")
                 .setView(form)
-                .setPositiveButton("Luu", null)
-                .setNegativeButton("Huy", null)
+                .setPositiveButton("Lưu", null)
+                .setNegativeButton("Hủy", null)
                 .create();
         dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             String name = nameInput.getText().toString().trim();
             String email = emailInput.getText().toString().trim();
             String phone = phoneInput.getText().toString().trim();
             if (name.length() < 2) {
-                nameInput.setError("Nhap ho ten tu 2 ky tu");
+                    nameInput.setError("Nhập họ tên từ 2 ký tự");
                 return;
             }
             if (!email.contains("@") || email.length() > 255) {
@@ -211,20 +317,20 @@ public class ProfileFragment extends Fragment {
                             binding.tvFullName.setText(user.getFullName());
                             binding.tvEmail.setText(user.getEmail());
                             binding.tvPhone.setText(user.getPhone() != null && !user.getPhone().isEmpty()
-                                    ? user.getPhone() : "Chua cap nhat");
+                                    ? user.getPhone() : "Chưa cập nhật");
                             UserRoleHelper.saveUserInfo(user.getId(), user.getFullName(),
                                     user.getEmail(), user.getRole());
                             dialog.dismiss();
-                            Snackbar.make(binding.getRoot(), "Da cap nhat ho so", Snackbar.LENGTH_SHORT).show();
+                            Snackbar.make(binding.getRoot(), "Đã cập nhật hồ sơ", Snackbar.LENGTH_SHORT).show();
                         } else {
-                            Toast.makeText(requireContext(), "Khong cap nhat duoc ho so", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(requireContext(), "Không cập nhật được hồ sơ", Toast.LENGTH_SHORT).show();
                         }
                     }
 
                     @Override
                     public void onFailure(Call<ApiResponse<UserProfile>> call, Throwable t) {
                         if (getContext() != null) {
-                            Toast.makeText(requireContext(), "Loi ket noi khi cap nhat ho so", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(requireContext(), "Lỗi kết nối khi cập nhật hồ sơ", Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
@@ -237,7 +343,7 @@ public class ProfileFragment extends Fragment {
         int pad = dp(20);
         form.setPadding(pad, dp(8), pad, 0);
 
-        EditText oldInput = buildInput("Mat khau cu", "", InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        EditText oldInput = buildInput("Mật khẩu cũ", "", InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         EditText newInput = buildInput("Mat khau moi", "", InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         EditText confirmInput = buildInput("Nhap lai mat khau moi", "", InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         form.addView(oldInput);
@@ -247,15 +353,15 @@ public class ProfileFragment extends Fragment {
         AlertDialog dialog = new AlertDialog.Builder(requireContext())
                 .setTitle("Doi mat khau")
                 .setView(form)
-                .setPositiveButton("Luu", null)
-                .setNegativeButton("Huy", null)
+                .setPositiveButton("Lưu", null)
+                .setNegativeButton("Hủy", null)
                 .create();
         dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             String oldPassword = oldInput.getText().toString();
             String newPassword = newInput.getText().toString();
             String confirm = confirmInput.getText().toString();
             if (oldPassword.isEmpty()) {
-                oldInput.setError("Nhap mat khau cu");
+                    oldInput.setError("Nhập mật khẩu cũ");
                 return;
             }
             if (newPassword.length() < 8 || !newPassword.matches(".*[A-Za-z].*") || !newPassword.matches(".*\\d.*")) {
@@ -333,15 +439,11 @@ public class ProfileFragment extends Fragment {
     }
 
     private void saveAvatarUri(String avatarUri) {
-        prefs().edit().putString(KEY_AVATAR_URI, avatarUri).apply();
+        AvatarPreferences.saveCurrentUserAvatar(requireContext(), avatarUri);
     }
 
     private String getSavedAvatarUri() {
-        return prefs().getString(KEY_AVATAR_URI, "");
-    }
-
-    private SharedPreferences prefs() {
-        return requireContext().getSharedPreferences(PROFILE_PREFS, android.content.Context.MODE_PRIVATE);
+        return AvatarPreferences.getCurrentUserAvatar(requireContext());
     }
 
     private int dp(int value) {

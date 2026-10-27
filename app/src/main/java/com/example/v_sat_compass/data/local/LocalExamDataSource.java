@@ -152,6 +152,15 @@ public class LocalExamDataSource {
             questionObj.addProperty("explanation", getString(sourceQuestion, "explanation", ""));
             questionObj.addProperty("subject_name", getString(sourceExam, "subject_name", ""));
             questionObj.addProperty("topic_name", getString(sourceQuestion, "topic", ""));
+            String qType = getString(sourceQuestion, "question_type", getString(sourceQuestion, "type", null));
+            if (qType == null) {
+                String code = getString(sourceQuestion, "code", "");
+                if (code.contains("TF") || code.contains("TRUE_FALSE")) qType = "TRUE_FALSE";
+                else if (code.contains("MATCH")) qType = "MATCHING";
+                else if (code.contains("SA") || code.contains("SHORT")) qType = "SHORT_ANSWER";
+                else qType = "SINGLE_CHOICE";
+            }
+            questionObj.addProperty("question_type", qType);
 
             JsonArray convertedOptions = new JsonArray();
             JsonArray sourceOptions = sourceQuestion.getAsJsonArray("options");

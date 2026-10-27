@@ -84,7 +84,7 @@ public class ExamResultActivity extends AppCompatActivity {
         binding.llSubjectResults.removeAllViews();
         String label = subject != null && !subject.trim().isEmpty() ? subject : "Chung";
         binding.llSubjectResults.addView(buildMetricRow(label,
-                percentage + "% - " + correct + "/" + total + " cau", percentage, R.drawable.progress_purple));
+                percentage + "% - " + correct + "/" + total + " câu", percentage, R.drawable.progress_purple));
     }
 
     private void loadWeakTopics() {
@@ -122,9 +122,9 @@ public class ExamResultActivity extends AppCompatActivity {
         int count = Math.min(3, rows.size());
         for (int i = 0; i < count; i++) {
             TopicStatsResponse topic = rows.get(i);
-            String label = topic.getTopicName() != null ? topic.getTopicName() : "Chu de";
+            String label = topic.getTopicName() != null ? topic.getTopicName() : "Chủ đề";
             binding.llWeakTopics.addView(buildMetricRow(label,
-                    topic.getPercentage() + "% - " + topic.getCorrect() + "/" + topic.getTotal() + " cau",
+                    topic.getPercentage() + "% - " + topic.getCorrect() + "/" + topic.getTotal() + " câu",
                     topic.getPercentage(), R.drawable.progress_orange));
         }
     }

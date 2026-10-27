@@ -30,5 +30,8 @@ public class AuthResponse {
         private Boolean emailVerified;
         private OffsetDateTime lastLoginAt;
         private OffsetDateTime createdAt;
+        // F9 — exposed so the client can render the opt-in toggle correctly
+        // right after login/refresh without an extra round-trip.
+        private Boolean leaderboardOptIn;
     }
 }

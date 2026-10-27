@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -34,7 +35,7 @@ public class ExamRepository {
     private final SubjectRepository subjectRepository;
     private final Gson gson = new Gson();
     private final ExecutorService ioExecutor = Executors.newSingleThreadExecutor();
-    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final Executor resultPoster;
     private Map<Long, String> subjectNameCache;
 
     public ExamRepository() {
@@ -42,8 +43,18 @@ public class ExamRepository {
     }
 
     public ExamRepository(ExamApi examApi, SubjectRepository subjectRepository) {
+        this(examApi, subjectRepository, createMainThreadPoster());
+    }
+
+    ExamRepository(ExamApi examApi, SubjectRepository subjectRepository, Executor resultPoster) {
         this.examApi = examApi;
         this.subjectRepository = subjectRepository;
+        this.resultPoster = resultPoster;
+    }
+
+    private static Executor createMainThreadPoster() {
+        Handler mainHandler = new Handler(Looper.getMainLooper());
+        return mainHandler::post;
     }
 
     public static synchronized ExamRepository getInstance() {
@@ -99,19 +110,19 @@ public class ExamRepository {
     }
 
     private void postSuccess(ExamsCallback callback, List<Exam> exams) {
-        mainHandler.post(() -> callback.onSuccess(exams));
+        resultPoster.execute(() -> callback.onSuccess(exams));
     }
 
     private void postSuccess(ExamCallback callback, Exam exam) {
-        mainHandler.post(() -> callback.onSuccess(exam));
+        resultPoster.execute(() -> callback.onSuccess(exam));
     }
 
     private void postError(ExamsCallback callback, String message) {
-        mainHandler.post(() -> callback.onError(message));
+        resultPoster.execute(() -> callback.onError(message));
     }
 
     private void postError(ExamCallback callback, String message) {
-        mainHandler.post(() -> callback.onError(message));
+        resultPoster.execute(() -> callback.onError(message));
     }
 
     public Exam getLocalExamDetail(Context context, long examId) {

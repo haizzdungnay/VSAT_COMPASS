@@ -20,6 +20,8 @@ import com.example.v_sat_compass.R;
 import com.example.v_sat_compass.data.api.ApiClient;
 import com.example.v_sat_compass.data.model.Exam;
 import com.example.v_sat_compass.data.repository.ExamRepository;
+import com.example.v_sat_compass.data.repository.OfflineExamRepository;
+import com.example.v_sat_compass.data.repository.OfflineExamSyncRepository;
 import com.example.v_sat_compass.util.NetworkUtils;
 import com.example.v_sat_compass.databinding.FragmentExamBinding;
 import com.example.v_sat_compass.ui.exam.adapter.ExamAdapter;
@@ -36,6 +38,7 @@ public class ExamFragment extends Fragment {
     private String searchQuery = "";
     private final boolean clientSideProcessing = ApiClient.isClientSideExamProcessingEnabled();
     private final boolean backendExamContent = ApiClient.USE_BACKEND_EXAM_CONTENT;
+    private final OfflineExamRepository offlineExamRepository = OfflineExamRepository.getInstance();
 
     @Nullable
     @Override
@@ -53,11 +56,15 @@ public class ExamFragment extends Fragment {
         binding.rvExams.setAdapter(adapter);
 
         adapter.setOnExamClickListener(exam -> navigateToDetail(exam));
+        adapter.setOnExamDownloadClickListener(this::downloadExam);
 
         setupChipFilters();
         setupSearch();
 
+        binding.btnDownloadedExams.setOnClickListener(v ->
+                startActivity(new Intent(requireContext(), DownloadedExamsActivity.class)));
         binding.swipeRefresh.setOnRefreshListener(this::loadExams);
+        OfflineExamSyncRepository.getInstance().syncPending(requireContext());
         loadExams();
     }
 
@@ -127,6 +134,7 @@ public class ExamFragment extends Fragment {
         }
 
         adapter.setExams(filtered);
+        refreshDownloadedStates();
 
         if (filtered.isEmpty()) {
             binding.tvEmpty.setVisibility(View.VISIBLE);
@@ -193,6 +201,49 @@ public class ExamFragment extends Fragment {
         intent.putExtra("total_questions", exam.getTotalQuestions());
         intent.putExtra("duration_minutes", exam.getDurationMinutes());
         startActivity(intent);
+    }
+
+    private void downloadExam(Exam exam) {
+        if (exam == null || exam.getId() == null || !isFreeExam(exam)) {
+            return;
+        }
+        long examId = exam.getId();
+        adapter.setDownloading(examId, true);
+        offlineExamRepository.downloadExam(requireContext(), examId, new OfflineExamRepository.DownloadCallback() {
+            @Override
+            public void onSuccess(com.example.v_sat_compass.data.model.OfflineExamBundle bundle) {
+                if (binding == null) return;
+                adapter.setDownloading(examId, false);
+                refreshDownloadedStates();
+                Toast.makeText(requireContext(), "Da tai de offline", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onError(String message) {
+                if (binding == null) return;
+                adapter.setDownloading(examId, false);
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void refreshDownloadedStates() {
+        if (getContext() == null) return;
+        List<Long> idsToCheck = new ArrayList<>();
+        for (Exam exam : allExams) {
+            if (exam.getId() != null) {
+                idsToCheck.add(exam.getId());
+            }
+        }
+        offlineExamRepository.findDownloadedExamIds(requireContext(), idsToCheck, ids -> {
+            if (binding == null) return;
+            adapter.setDownloadedExamIds(new java.util.HashSet<>(ids));
+        });
+    }
+
+    private boolean isFreeExam(Exam exam) {
+        String pricingType = exam.getPricingType();
+        return pricingType == null || "FREE".equalsIgnoreCase(pricingType);
     }
 
     @Override

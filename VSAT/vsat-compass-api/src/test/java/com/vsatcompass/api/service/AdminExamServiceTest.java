@@ -53,6 +53,7 @@ class AdminExamServiceTest {
     @Mock ExamQuestionRepository examQuestionRepository;
     @Mock QuestionRepository questionRepository;
     @Mock SubjectRepository subjectRepository;
+    @Mock com.vsatcompass.api.repository.QuestionOptionRepository questionOptionRepository;
 
     @InjectMocks AdminExamServiceImpl adminExamService;
 
@@ -1367,5 +1368,32 @@ class AdminExamServiceTest {
                 .createdAt(FIXED_TIME)
                 .updatedAt(FIXED_TIME)
                 .build();
+    }
+    @Test
+    @DisplayName("getExamVariants returns 4 default variants for draft exam")
+    void getExamVariants_returnsVariants() {
+        Exam exam = baseExam(1L, ExamStatus.DRAFT);
+        when(examRepository.findById(1L)).thenReturn(Optional.of(exam));
+
+        var variants = adminExamService.getExamVariants(1L);
+
+        assertThat(variants).hasSize(4);
+        assertThat(variants.get(0).getVariantCode()).isEqualTo("101");
+    }
+
+    @Test
+    @DisplayName("generateVariants produces custom number of variants")
+    void generateVariants_customCount() {
+        Exam exam = baseExam(1L, ExamStatus.DRAFT);
+        when(examRepository.findById(1L)).thenReturn(Optional.of(exam));
+
+        var req = com.vsatcompass.api.dto.request.GenerateVariantsRequest.builder()
+                .variantCount(4)
+                .randomSeed("test_seed")
+                .build();
+        var variants = adminExamService.generateVariants(1L, req);
+
+        assertThat(variants).hasSize(4);
+        assertThat(variants.get(3).getVariantCode()).isEqualTo("104");
     }
 }

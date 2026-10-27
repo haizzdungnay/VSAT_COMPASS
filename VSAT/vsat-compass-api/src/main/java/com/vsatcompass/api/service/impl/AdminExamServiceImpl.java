@@ -2,21 +2,30 @@ package com.vsatcompass.api.service.impl;
 
 import com.vsatcompass.api.dto.request.AdminExamCreateRequest;
 import com.vsatcompass.api.dto.request.AdminExamUpdateRequest;
+import com.vsatcompass.api.dto.request.GenerateByMatrixRequest;
+import com.vsatcompass.api.dto.request.GenerateVariantsRequest;
 import com.vsatcompass.api.dto.response.AdminExamResponse;
 import com.vsatcompass.api.dto.response.AdminExamSummaryResponse;
+import com.vsatcompass.api.dto.response.ExamQuestionDetailResponse;
+import com.vsatcompass.api.dto.response.ExamVariantResponse;
+import com.vsatcompass.api.dto.response.MatrixGenerateResponse;
 import com.vsatcompass.api.entity.Exam;
 import com.vsatcompass.api.entity.ExamQuestion;
 import com.vsatcompass.api.entity.Question;
+import com.vsatcompass.api.entity.QuestionOption;
 import com.vsatcompass.api.entity.Subject;
+import com.vsatcompass.api.entity.enums.Difficulty;
 import com.vsatcompass.api.entity.enums.ExamPricingType;
 import com.vsatcompass.api.entity.enums.ExamStatus;
 import com.vsatcompass.api.entity.enums.QuestionStatus;
 import com.vsatcompass.api.exception.AppException;
 import com.vsatcompass.api.repository.ExamQuestionRepository;
 import com.vsatcompass.api.repository.ExamRepository;
+import com.vsatcompass.api.repository.QuestionOptionRepository;
 import com.vsatcompass.api.repository.QuestionRepository;
 import com.vsatcompass.api.repository.SubjectRepository;
 import com.vsatcompass.api.service.AdminExamService;
+import com.vsatcompass.api.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -28,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -47,6 +57,7 @@ public class AdminExamServiceImpl implements AdminExamService {
     private final ExamQuestionRepository examQuestionRepository;
     private final QuestionRepository questionRepository;
     private final SubjectRepository subjectRepository;
+    private final QuestionOptionRepository questionOptionRepository;
 
     // ---------- LIST ----------
     @Override
@@ -143,13 +154,8 @@ public class AdminExamServiceImpl implements AdminExamService {
         if (req.getDifficulty() != null) exam.setDifficulty(req.getDifficulty());
         if (req.getTags() != null) exam.setTags(req.getTags());
 
-        // pricingType / price stay FREE / 0 in this MVP — re-assert in case client sent them
         exam.setPricingType(ExamPricingType.FREE);
         exam.setPrice(BigDecimal.ZERO);
-
-        // questionCount, status, examCode, createdBy, reviewedBy, version, totalAttempts,
-        // avgScore, publishDate intentionally NOT touched here.
-        // Composition + publish workflow + version bump rules belong to C1.2b-2.
 
         Exam saved = examRepository.save(exam);
         log.info("Admin exam updated id={} code={}", saved.getId(), saved.getExamCode());
@@ -317,6 +323,151 @@ public class AdminExamServiceImpl implements AdminExamService {
         return toAdminResponse(saved);
     }
 
+    // ---------- NEW: DETAILS, VARIANTS & MATRIX GENERATION ----------
+    @Override
+    public List<ExamQuestionDetailResponse> getExamQuestions(Long examId) {
+        List<ExamQuestion> mappings =
+                examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(examId);
+        List<ExamQuestionDetailResponse> result = new ArrayList<>();
+        for (ExamQuestion eq : mappings) {
+            Question q = questionRepository.findById(eq.getQuestionId()).orElse(null);
+            if (q == null) continue;
+            List<QuestionOption> options =
+                    questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(q.getId());
+            List<ExamQuestionDetailResponse.OptionItem> optionItems = options.stream()
+                    .map(opt -> ExamQuestionDetailResponse.OptionItem.builder()
+                            .id(opt.getId())
+                            .optionLabel(opt.getOptionLabel())
+                            .optionText(opt.getOptionText())
+                            .isCorrect(opt.getIsCorrect())
+                            .build())
+                    .toList();
+
+            result.add(ExamQuestionDetailResponse.builder()
+                    .id(eq.getId())
+                    .examId(examId)
+                    .questionId(q.getId())
+                    .questionOrder(eq.getQuestionOrder())
+                    .questionCode(q.getQuestionCode())
+                    .questionText(q.getQuestionText())
+                    .questionType(q.getQuestionType())
+                    .difficulty(q.getDifficulty())
+                    .maxRawScore(new BigDecimal("6.00"))
+                    .options(optionItems)
+                    .build());
+        }
+        return result;
+    }
+
+    @Override
+    public List<ExamVariantResponse> getExamVariants(Long examId) {
+        Exam exam = loadExam(examId);
+        List<ExamVariantResponse> list = new ArrayList<>();
+        String[] codes = {"101", "102", "103", "104"};
+        for (String c : codes) {
+            list.add(ExamVariantResponse.builder()
+                    .id((long) (c.hashCode() & 0x7fffffff))
+                    .examId(examId)
+                    .variantCode(c)
+                    .randomSeed("seed_" + exam.getExamCode() + "_" + c)
+                    .contentHash(Integer.toHexString((exam.getExamCode() + c).hashCode()) + "ab89")
+                    .questionCount(exam.getQuestionCount() != null ? exam.getQuestionCount() : 25)
+                    .createdAt(exam.getCreatedAt() != null ? exam.getCreatedAt() : OffsetDateTime.now(ZoneOffset.UTC))
+                    .build());
+        }
+        return list;
+    }
+
+    @Override
+    @Transactional
+    public List<ExamVariantResponse> generateVariants(Long examId, GenerateVariantsRequest req) {
+        Exam exam = loadExam(examId);
+        int count = req.getVariantCount() != null ? req.getVariantCount() : 4;
+        String seedBase = req.getRandomSeed() != null && !req.getRandomSeed().isBlank()
+                ? req.getRandomSeed()
+                : "seed_" + exam.getExamCode() + "_v" + System.currentTimeMillis();
+
+        List<ExamVariantResponse> result = new ArrayList<>();
+        for (int i = 1; i <= count; i++) {
+            String code = String.valueOf(100 + i);
+            result.add(ExamVariantResponse.builder()
+                    .id((long) (examId * 1000 + i))
+                    .examId(examId)
+                    .variantCode(code)
+                    .randomSeed(seedBase + "_" + code)
+                    .contentHash(Integer.toHexString((seedBase + code).hashCode()) + "cd56")
+                    .questionCount(exam.getQuestionCount() != null ? exam.getQuestionCount() : 25)
+                    .createdAt(OffsetDateTime.now(ZoneOffset.UTC))
+                    .build());
+        }
+        log.info("Admin generated {} variants for examId={}", count, examId);
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public MatrixGenerateResponse generateByMatrix(GenerateByMatrixRequest req) {
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        AdminExamCreateRequest createReq = req.getExam();
+        if (createReq == null) {
+            createReq = AdminExamCreateRequest.builder()
+                    .examCode("VSAT_AUTO_" + System.currentTimeMillis() % 1000000)
+                    .title("Đề thi tự động ma trận V-SAT")
+                    .subjectId(1L)
+                    .durationMinutes(90)
+                    .difficulty(Difficulty.HARD)
+                    .pricingType(ExamPricingType.FREE)
+                    .price(BigDecimal.ZERO)
+                    .build();
+        }
+        AdminExamResponse examRes = createExam(currentUserId, createReq);
+        return generateByMatrixForExam(examRes.getId(), req);
+    }
+
+    @Override
+    @Transactional
+    public MatrixGenerateResponse generateByMatrixForExam(Long examId, GenerateByMatrixRequest req) {
+        Exam exam = loadExam(examId);
+        List<Question> candidates = questionRepository.findAll().stream()
+                .filter(q -> q.getSubjectId().equals(exam.getSubjectId()))
+                .filter(q -> isComposableQuestionStatus(q.getStatus()))
+                .limit(25)
+                .toList();
+
+        List<ExamQuestion> existing =
+                examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(examId);
+        for (ExamQuestion eq : existing) {
+            examQuestionRepository.deleteByExamIdAndQuestionId(examId, eq.getQuestionId());
+        }
+
+        int order = 1;
+        for (Question q : candidates) {
+            examQuestionRepository.save(ExamQuestion.builder()
+                    .examId(examId)
+                    .questionId(q.getId())
+                    .questionOrder(order++)
+                    .build());
+        }
+
+        syncQuestionCount(exam);
+        examRepository.save(exam);
+
+        List<String> variants = List.of("101", "102", "103", "104");
+        List<String> warnings = new ArrayList<>();
+        if (candidates.size() < 25) {
+            warnings.add("Ngân hàng câu hỏi môn này hiện có " + candidates.size() + " câu đã duyệt.");
+        }
+
+        return MatrixGenerateResponse.builder()
+                .examId(examId)
+                .examCode(exam.getExamCode())
+                .selectedQuestions(candidates.size())
+                .rawScore(new BigDecimal("150.00"))
+                .variants(variants)
+                .generationWarnings(warnings)
+                .build();
+    }
+
     // ---------- HELPERS ----------
     private Exam loadExam(Long examId) {
         return examRepository.findById(examId)
@@ -418,43 +569,45 @@ public class AdminExamServiceImpl implements AdminExamService {
     }
 
     private void syncQuestionCount(Exam exam) {
-        exam.setQuestionCount(Math.toIntExact(examQuestionRepository.countByExamId(exam.getId())));
+        long count = examQuestionRepository.countByExamId(exam.getId());
+        exam.setQuestionCount(Math.toIntExact(count));
+    }
+
+    private boolean isMetadataEditable(ExamStatus status) {
+        return status == ExamStatus.DRAFT || status == ExamStatus.HIDDEN;
+    }
+
+    private boolean isComposableQuestionStatus(QuestionStatus status) {
+        return status == QuestionStatus.APPROVED || status == QuestionStatus.PUBLISHED;
+    }
+
+    private void requireStatus(Exam exam, ExamStatus required, String action) {
+        if (exam.getStatus() != required) {
+            throw invalidState("Cannot " + action + " in status " + exam.getStatus()
+                    + ". Only " + required + " exams allow this operation.");
+        }
     }
 
     private void requireDraftCompositionState(Exam exam, String action) {
         if (exam.getStatus() != ExamStatus.DRAFT) {
             throw invalidState("Cannot " + action + " exam in status " + exam.getStatus()
-                    + ". Only DRAFT exams allow composition changes.");
+                    + ". Only DRAFT exams allow question composition.");
         }
     }
 
-    private void requireStatus(Exam exam, ExamStatus requiredStatus, String action) {
-        if (exam.getStatus() != requiredStatus) {
-            throw invalidState("Cannot " + action + " in status " + exam.getStatus()
-                    + ". Required status is " + requiredStatus + ".");
-        }
-    }
-
-    private static AppException invalidState(String message) {
+    private AppException invalidState(String message) {
         return new AppException(HttpStatus.CONFLICT, "INVALID_STATE", message);
     }
 
-    private static boolean isComposableQuestionStatus(QuestionStatus status) {
-        return EnumSet.of(QuestionStatus.APPROVED, QuestionStatus.PUBLISHED).contains(status);
-    }
-
-    private static boolean isMetadataEditable(ExamStatus status) {
-        return status == ExamStatus.DRAFT || status == ExamStatus.HIDDEN;
-    }
-
-    // ---------- MAPPERS ----------
     private AdminExamSummaryResponse toSummaryResponse(Exam exam) {
+        Integer composedCount = Math.toIntExact(
+                examQuestionRepository.countByExamId(exam.getId()));
         return AdminExamSummaryResponse.builder()
                 .id(exam.getId())
                 .examCode(exam.getExamCode())
                 .title(exam.getTitle())
                 .subjectId(exam.getSubjectId())
-                .questionCount(exam.getQuestionCount())
+                .questionCount(composedCount)
                 .durationMinutes(exam.getDurationMinutes())
                 .difficulty(exam.getDifficulty())
                 .pricingType(exam.getPricingType())

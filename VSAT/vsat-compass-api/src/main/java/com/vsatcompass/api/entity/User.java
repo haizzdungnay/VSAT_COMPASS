@@ -63,6 +63,11 @@ public class User {
     @Column(name = "last_login_at")
     private OffsetDateTime lastLoginAt;
 
+    // F9 — leaderboard opt-in. Default false (hidden). Per-row gate.
+    @Column(name = "leaderboard_opt_in", nullable = false)
+    @Builder.Default
+    private Boolean leaderboardOptIn = false;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
@@ -76,5 +81,6 @@ public class User {
         if (role == null) role = UserRole.STUDENT;
         if (status == null) status = UserStatus.ACTIVE;
         if (emailVerified == null) emailVerified = false;
+        if (leaderboardOptIn == null) leaderboardOptIn = false;
     }
 }
