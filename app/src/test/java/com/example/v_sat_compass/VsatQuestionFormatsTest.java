@@ -7,6 +7,9 @@ import com.google.gson.Gson;
 
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -51,6 +54,30 @@ public class VsatQuestionFormatsTest {
         Question q = new Question();
         q.setQuestionType("SHORT_ANSWER");
         assertEquals("SHORT_ANSWER", q.getQuestionType());
+    }
+
+    @Test
+    public void testAnswerPayloadJsonSerialization() {
+        Gson gson = new Gson();
+
+        Map<String, Object> tfPayload = new HashMap<>();
+        tfPayload.put("a", true);
+        tfPayload.put("b", false);
+        String tfJson = gson.toJson(tfPayload);
+        assertTrue(tfJson.contains("\"a\":true"));
+        assertTrue(tfJson.contains("\"b\":false"));
+
+        Map<String, Object> matchPayload = new HashMap<>();
+        matchPayload.put("1", "A");
+        matchPayload.put("2", "C");
+        String matchJson = gson.toJson(matchPayload);
+        assertTrue(matchJson.contains("\"1\":\"A\""));
+        assertTrue(matchJson.contains("\"2\":\"C\""));
+
+        Map<String, Object> saPayload = new HashMap<>();
+        saPayload.put("value", "37");
+        String saJson = gson.toJson(saPayload);
+        assertEquals("{\"value\":\"37\"}", saJson);
     }
 }
 // ponytail: focused test for V-SAT 2026 formats on Android. Add instrumented UI tests when emulator farm enabled.
