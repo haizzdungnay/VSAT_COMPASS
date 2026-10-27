@@ -34,6 +34,7 @@ import org.springframework.http.HttpStatus;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.math.BigDecimal;
 import java.util.Optional;
 
@@ -831,6 +832,124 @@ class SessionServiceTest {
                     assertThat(ex.getStatus()).isEqualTo(HttpStatus.CONFLICT);
                     assertThat(ex.getCode()).isEqualTo("SESSION_ALREADY_SUBMITTED");
                 });
+    }
+
+
+    @Test
+    @DisplayName("submitAnswer: TRUE_FALSE payload evaluates propositions and awards V-SAT tiered points")
+    void submitAnswer_trueFalsePayload_scoresTieredPoints() {
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(EXAM_ID))
+                .thenReturn(List.of(examQuestion(QUESTION_ID, 1)));
+
+        Question tfQuestion = Question.builder()
+                .id(QUESTION_ID)
+                .questionCode("TF-001")
+                .questionType(QuestionType.TRUE_FALSE)
+                .build();
+        when(questionRepository.findById(QUESTION_ID)).thenReturn(Optional.of(tfQuestion));
+
+        List<QuestionOption> tfOptions = List.of(
+                QuestionOption.builder().id(101L).questionId(QUESTION_ID).optionLabel("a").isCorrect(true).displayOrder(1).build(),
+                QuestionOption.builder().id(102L).questionId(QUESTION_ID).optionLabel("b").isCorrect(false).displayOrder(2).build(),
+                QuestionOption.builder().id(103L).questionId(QUESTION_ID).optionLabel("c").isCorrect(true).displayOrder(3).build(),
+                QuestionOption.builder().id(104L).questionId(QUESTION_ID).optionLabel("d").isCorrect(false).displayOrder(4).build()
+        );
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(QUESTION_ID))
+                .thenReturn(tfOptions);
+        when(sessionAnswerRepository.findBySessionIdAndQuestionId(SESSION_ID, QUESTION_ID))
+                .thenReturn(Optional.empty());
+        when(sessionAnswerRepository.countBySessionId(SESSION_ID)).thenReturn(1L);
+
+        SessionRequest.SubmitAnswer req = new SessionRequest.SubmitAnswer();
+        req.setQuestionId(QUESTION_ID);
+        req.setAnswerPayload(Map.of("a", true, "b", false, "c", true, "d", true));
+
+        sessionService.submitAnswer(USER_ID, SESSION_ID, req);
+
+        ArgumentCaptor<SessionAnswer> cap = ArgumentCaptor.forClass(SessionAnswer.class);
+        verify(sessionAnswerRepository).save(cap.capture());
+        SessionAnswer saved = cap.getValue();
+        assertThat(saved.getCorrectSubitems()).isEqualTo(3);
+        assertThat(saved.getTotalSubitems()).isEqualTo(4);
+        assertThat(saved.getIsCorrect()).isFalse();
+        assertThat(saved.getRawPointsAwarded()).isEqualByComparingTo(BigDecimal.valueOf(3.0));
+    }
+
+    @Test
+    @DisplayName("submitAnswer: MATCHING payload evaluates paired items")
+    void submitAnswer_matchingPayload_scoresPairs() {
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(EXAM_ID))
+                .thenReturn(List.of(examQuestion(QUESTION_ID, 1)));
+
+        Question matchQuestion = Question.builder()
+                .id(QUESTION_ID)
+                .questionCode("MATCH-001")
+                .questionType(QuestionType.MATCHING)
+                .build();
+        when(questionRepository.findById(QUESTION_ID)).thenReturn(Optional.of(matchQuestion));
+
+        List<QuestionOption> matchOptions = List.of(
+                QuestionOption.builder().id(201L).questionId(QUESTION_ID).optionLabel("1").optionText("⇄ Cột 2: A").isCorrect(true).displayOrder(1).build(),
+                QuestionOption.builder().id(202L).questionId(QUESTION_ID).optionLabel("2").optionText("⇄ Cột 2: C").isCorrect(true).displayOrder(2).build()
+        );
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(QUESTION_ID))
+                .thenReturn(matchOptions);
+        when(sessionAnswerRepository.findBySessionIdAndQuestionId(SESSION_ID, QUESTION_ID))
+                .thenReturn(Optional.empty());
+        when(sessionAnswerRepository.countBySessionId(SESSION_ID)).thenReturn(1L);
+
+        SessionRequest.SubmitAnswer req = new SessionRequest.SubmitAnswer();
+        req.setQuestionId(QUESTION_ID);
+        req.setAnswerPayload(Map.of("1", "A", "2", "C"));
+
+        sessionService.submitAnswer(USER_ID, SESSION_ID, req);
+
+        ArgumentCaptor<SessionAnswer> cap = ArgumentCaptor.forClass(SessionAnswer.class);
+        verify(sessionAnswerRepository).save(cap.capture());
+        SessionAnswer saved = cap.getValue();
+        assertThat(saved.getCorrectSubitems()).isEqualTo(2);
+        assertThat(saved.getTotalSubitems()).isEqualTo(2);
+        assertThat(saved.getIsCorrect()).isTrue();
+        assertThat(saved.getRawPointsAwarded()).isEqualByComparingTo(BigDecimal.valueOf(3.0));
+    }
+
+    @Test
+    @DisplayName("submitAnswer: SHORT_ANSWER payload evaluates numeric string value")
+    void submitAnswer_shortAnswerPayload_evaluatesValue() {
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(EXAM_ID))
+                .thenReturn(List.of(examQuestion(QUESTION_ID, 1)));
+
+        Question saQuestion = Question.builder()
+                .id(QUESTION_ID)
+                .questionCode("SA-001")
+                .questionType(QuestionType.SHORT_ANSWER)
+                .build();
+        when(questionRepository.findById(QUESTION_ID)).thenReturn(Optional.of(saQuestion));
+
+        List<QuestionOption> saOptions = List.of(
+                QuestionOption.builder().id(301L).questionId(QUESTION_ID).optionLabel("Đáp án").optionText("37").isCorrect(true).displayOrder(1).build()
+        );
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(QUESTION_ID))
+                .thenReturn(saOptions);
+        when(sessionAnswerRepository.findBySessionIdAndQuestionId(SESSION_ID, QUESTION_ID))
+                .thenReturn(Optional.empty());
+        when(sessionAnswerRepository.countBySessionId(SESSION_ID)).thenReturn(1L);
+
+        SessionRequest.SubmitAnswer req = new SessionRequest.SubmitAnswer();
+        req.setQuestionId(QUESTION_ID);
+        req.setAnswerPayload(Map.of("value", "37"));
+
+        sessionService.submitAnswer(USER_ID, SESSION_ID, req);
+
+        ArgumentCaptor<SessionAnswer> cap = ArgumentCaptor.forClass(SessionAnswer.class);
+        verify(sessionAnswerRepository).save(cap.capture());
+        SessionAnswer saved = cap.getValue();
+        assertThat(saved.getCorrectSubitems()).isEqualTo(1);
+        assertThat(saved.getIsCorrect()).isTrue();
+        assertThat(saved.getRawPointsAwarded()).isEqualByComparingTo(BigDecimal.valueOf(6.0));
     }
 
     private void assertQuestionContentStatusRejected(SessionStatus status) {

@@ -587,7 +587,7 @@ public class ExamSessionActivity extends AppCompatActivity {
             btnDung.setOnClickListener(v -> {
                 currentTf.put(propKey, true);
                 selectedAnswers.put(questionId, optId != null ? optId : (questionId * 10 + 1));
-                submitAnswer(questionId, selectedAnswers.get(questionId));
+                submitAnswer(questionId, selectedAnswers.get(questionId), new HashMap<>(currentTf));
                 displayQuestion(currentQuestion);
             });
             row.addView(btnDung);
@@ -607,7 +607,7 @@ public class ExamSessionActivity extends AppCompatActivity {
             btnSai.setOnClickListener(v -> {
                 currentTf.put(propKey, false);
                 selectedAnswers.put(questionId, optId != null ? optId : (questionId * 10 + 1));
-                submitAnswer(questionId, selectedAnswers.get(questionId));
+                submitAnswer(questionId, selectedAnswers.get(questionId), new HashMap<>(currentTf));
                 displayQuestion(currentQuestion);
             });
             row.addView(btnSai);
@@ -674,7 +674,7 @@ public class ExamSessionActivity extends AppCompatActivity {
             btnDung.setOnClickListener(v -> {
                 currentTf.put(propKey, true);
                 selectedAnswers.put(questionId, opt.getId());
-                submitAnswer(questionId, opt.getId());
+                submitAnswer(questionId, opt.getId(), new HashMap<>(currentTf));
                 displayBackendQuestion(currentBackendQuestion);
             });
             row.addView(btnDung);
@@ -694,7 +694,7 @@ public class ExamSessionActivity extends AppCompatActivity {
             btnSai.setOnClickListener(v -> {
                 currentTf.put(propKey, false);
                 selectedAnswers.put(questionId, opt.getId());
-                submitAnswer(questionId, opt.getId());
+                submitAnswer(questionId, opt.getId(), new HashMap<>(currentTf));
                 displayBackendQuestion(currentBackendQuestion);
             });
             row.addView(btnSai);
@@ -776,7 +776,7 @@ public class ExamSessionActivity extends AppCompatActivity {
                 btnChip.setOnClickListener(v -> {
                     currentMatch.put(itemKey, ch);
                     selectedAnswers.put(questionId, optId != null ? optId : (questionId * 10 + 1));
-                    submitAnswer(questionId, selectedAnswers.get(questionId));
+                    submitAnswer(questionId, selectedAnswers.get(questionId), new HashMap<>(currentMatch));
                     displayQuestion(currentQuestion);
                 });
                 chipsRow.addView(btnChip);
@@ -859,7 +859,7 @@ public class ExamSessionActivity extends AppCompatActivity {
                 btnChip.setOnClickListener(v -> {
                     currentMatch.put(itemKey, ch);
                     selectedAnswers.put(questionId, opt.getId());
-                    submitAnswer(questionId, opt.getId());
+                    submitAnswer(questionId, opt.getId(), new HashMap<>(currentMatch));
                     displayBackendQuestion(currentBackendQuestion);
                 });
                 chipsRow.addView(btnChip);
@@ -931,7 +931,9 @@ public class ExamSessionActivity extends AppCompatActivity {
             if (!textVal.isEmpty()) {
                 shortAnswers.put(questionId, textVal);
                 selectedAnswers.put(questionId, questionId * 10 + 1);
-                submitAnswer(questionId, selectedAnswers.get(questionId));
+                Map<String, Object> saPayload = new HashMap<>();
+                saPayload.put("value", textVal);
+                submitAnswer(questionId, selectedAnswers.get(questionId), saPayload);
                 Toast.makeText(this, "Đã lưu đáp án: " + textVal, Toast.LENGTH_SHORT).show();
             } else {
                 shortAnswers.remove(questionId);
@@ -1230,6 +1232,10 @@ public class ExamSessionActivity extends AppCompatActivity {
     }
 
     private void submitAnswer(Long questionId, Long optionId) {
+        submitAnswer(questionId, optionId, null);
+    }
+
+    private void submitAnswer(Long questionId, Long optionId, Map<String, Object> payload) {
         if (clientSideProcessing && !backendExamContent) {
             return;
         }
@@ -1239,7 +1245,12 @@ public class ExamSessionActivity extends AppCompatActivity {
 
         Map<String, Object> body = new HashMap<>();
         body.put("questionId", questionId);
-        body.put("selectedOptionId", optionId);
+        if (optionId != null) {
+            body.put("selectedOptionId", optionId);
+        }
+        if (payload != null && !payload.isEmpty()) {
+            body.put("answerPayload", payload);
+        }
         body.put("isBookmarked", bookmarkedQuestions.contains(questionId));
         body.put("timeSpentSeconds", 0);
 

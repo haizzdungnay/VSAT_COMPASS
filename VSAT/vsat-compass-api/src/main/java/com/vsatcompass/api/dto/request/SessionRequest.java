@@ -5,6 +5,7 @@ import jakarta.validation.constraints.*;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Map;
 
 public class SessionRequest {
 
@@ -24,8 +25,10 @@ public class SessionRequest {
         @NotNull(message = "questionId không được để trống")
         private Long questionId;
 
-        @NotNull(message = "selectedOptionId không được để trống")
         private Long selectedOptionId;
+
+        @JsonAlias({"payload", "answerPayload", "rawAnswer"})
+        private Map<String, Object> answerPayload;
 
         @JsonAlias("isBookmarked")
         private Boolean bookmarked = false;
@@ -67,6 +70,9 @@ public class SessionRequest {
             private Integer questionOrder;
 
             private Boolean bookmarked;
+
+            @JsonAlias({"payload", "answerPayload", "rawAnswer"})
+            private Map<String, Object> answerPayload;
         }
     }
 }

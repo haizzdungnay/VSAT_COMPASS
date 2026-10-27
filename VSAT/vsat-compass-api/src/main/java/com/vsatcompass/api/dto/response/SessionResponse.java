@@ -18,6 +18,8 @@ public class SessionResponse {
         private String status;
         private BigDecimal score;
         private BigDecimal scorePercentage;
+        private BigDecimal rawScore;
+        private BigDecimal maxRawScore;
         private Integer correctCount;
         private Integer totalQuestions;
         private Integer timeSpentSeconds;

@@ -2,8 +2,12 @@ package com.vsatcompass.api.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.Map;
 
 @Entity
 @Table(name = "session_answers")
@@ -42,4 +46,17 @@ public class SessionAnswer {
 
     @Column(name = "answered_at")
     private OffsetDateTime answeredAt;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "answer_payload", columnDefinition = "jsonb")
+    private Map<String, Object> answerPayload;
+
+    @Column(name = "correct_subitems")
+    private Integer correctSubitems;
+
+    @Column(name = "total_subitems")
+    private Integer totalSubitems;
+
+    @Column(name = "raw_points_awarded", precision = 7, scale = 2)
+    private BigDecimal rawPointsAwarded;
 }

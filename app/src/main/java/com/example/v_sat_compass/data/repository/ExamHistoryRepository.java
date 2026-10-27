@@ -266,8 +266,16 @@ public class ExamHistoryRepository {
             Log.e(TAG, "saveAtomicSync() failed writing tmp file", e);
             return false;
         }
-        // Atomic rename trên Android API 26+ (minSdk=28, OK)
-        boolean moved = tmpFile.renameTo(targetFile);
+        // Atomic rename trên Android API 26+ (minSdk=28, OK) / Windows unit test safe
+        boolean moved;
+        try {
+            java.nio.file.Files.move(
+                    tmpFile.toPath(), targetFile.toPath(),
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            moved = true;
+        } catch (IOException e) {
+            moved = tmpFile.renameTo(targetFile);
+        }
         if (!moved) {
             Log.e(TAG, "saveAtomicSync() renameTo failed — disk may be full");
         }

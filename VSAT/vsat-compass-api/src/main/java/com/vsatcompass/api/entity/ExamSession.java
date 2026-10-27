@@ -75,6 +75,12 @@ public class ExamSession {
     @Column(name = "score_percentage", precision = 5, scale = 2)
     private BigDecimal scorePercentage;
 
+    @Column(name = "raw_score", precision = 7, scale = 2)
+    private BigDecimal rawScore;
+
+    @Column(name = "max_raw_score", precision = 7, scale = 2)
+    private BigDecimal maxRawScore;
+
     @Column(name = "device_type", length = 20)
     @Builder.Default
     private String deviceType = "ANDROID";
