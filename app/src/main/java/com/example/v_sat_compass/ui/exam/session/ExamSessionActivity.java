@@ -1028,6 +1028,19 @@ public class ExamSessionActivity extends AppCompatActivity {
         }
     }
 
+
+    private void setQuestionTextWithMath(String fullText) {
+        if (com.example.v_sat_compass.util.KaTeXHelper.containsMath(fullText)) {
+            binding.tvQuestionText.setVisibility(android.view.View.GONE);
+            binding.wvQuestionMath.setVisibility(android.view.View.VISIBLE);
+            com.example.v_sat_compass.util.KaTeXHelper.renderMath(binding.wvQuestionMath, fullText);
+        } else {
+            binding.wvQuestionMath.setVisibility(android.view.View.GONE);
+            binding.tvQuestionText.setVisibility(android.view.View.VISIBLE);
+            binding.tvQuestionText.setText(fullText);
+        }
+    }
+
     private void displayQuestion(Question question) {
         if (question == null) {
             binding.tvQuestionText.setText("(Khong the tai cau hoi)");
@@ -1038,7 +1051,7 @@ public class ExamSessionActivity extends AppCompatActivity {
         if (content == null || content.trim().isEmpty()) {
             content = "(Cau hoi chua co noi dung)";
         }
-            binding.tvQuestionText.setText("Câu " + (currentIndex + 1) + ": " + content);
+            setQuestionTextWithMath("Câu " + (currentIndex + 1) + ": " + content);
         binding.llOptions.removeAllViews();
 
         if (question.getOptions() == null || question.getOptions().isEmpty()) return;
@@ -1138,7 +1151,7 @@ public class ExamSessionActivity extends AppCompatActivity {
         if (content == null || content.trim().isEmpty()) {
             content = "(Cau hoi chua co noi dung)";
         }
-            binding.tvQuestionText.setText("Câu " + (currentIndex + 1) + ": " + content);
+            setQuestionTextWithMath("Câu " + (currentIndex + 1) + ": " + content);
         binding.llOptions.removeAllViews();
 
         List<QuestionOptionContentResponse> opts = question.getOptions();

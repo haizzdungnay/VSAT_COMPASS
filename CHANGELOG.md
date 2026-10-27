@@ -2,6 +2,24 @@
 
 ## [Unreleased]
 
+### V-SAT 2026 Submission Payload & KaTeX Math Rendering (2026-10-27)
+
+**Backend (Spring Boot):**
+- Mở rộng endpoint `POST /sessions/{id}/answers` nhận `answerPayload` JSONB cho các dạng thức câu hỏi phức hợp: Đúng/Sai (TRUE_FALSE), Ghép hợp (MATCHING), Điền số (SHORT_ANSWER).
+- Map các trường DB: `answer_payload`, `correct_subitems`, `total_subitems`, `raw_points_awarded` trong `SessionAnswer` và `raw_score`, `max_raw_score` trong `ExamSession`.
+- Cập nhật chấm điểm server-side `SessionServiceImpl.serverSubmit` theo thang điểm 150 thô chuẩn V-SAT 2026 với cơ chế tiered scoring cho câu hỏi nhiều tiểu mục.
+- Bổ sung unit tests cho từng dạng payload trong `SessionServiceTest`.
+
+**Android Client:**
+- Tích hợp `KaTeXHelper` và nhúng bộ tài nguyên KaTeX offline vào `app/src/main/assets/katex/` (js, css, auto-render, fonts).
+- Thêm `wvQuestionMath` vào layout `activity_exam_session.xml`, tự động render KaTeX khi câu hỏi chứa công thức toán học (`$...$`, `$$...$$`, `\[...\]`, `\(...\)`).
+- Cập nhật `ExamSessionActivity` gửi `answerPayload` khi thí sinh chọn đáp án Đúng/Sai, Ghép cặp, Điền số.
+- Bổ sung `KaTeXHelperTest` (222 unit tests Android client pass 100%).
+- Fix atomic rename trong `ExamHistoryRepository` tương thích Windows JVM unit tests.
+
+**CI/CD Pipeline:**
+- Hoàn thiện GitHub Actions workflow `.github/workflows/ci.yml` tự động build và test 4 jobs (Backend Java 17, Web Admin Node 20 & 22 matrix, Android test + build APK).
+
 ### Real Data batch -- admin/exam/practice live data + offline demo (2026-05-26, `be545ba`, cha của HEAD `40cec10`)
 
 > ⚠️ Batch này làm **ngoài quy trình phase** chuẩn (Cursor co-author). **CHƯA chạy production smoke** và **chưa gắn tag** (`be545ba` là **cha của HEAD `40cec10`**, untagged). Tag gần nhất `v1.0.1` (`53111e6` "update ui") là **ông** của HEAD nên chưa bao gồm các thay đổi dưới đây. Các endpoint mới mới chỉ verify trên DB local.

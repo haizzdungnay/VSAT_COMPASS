@@ -137,15 +137,27 @@
                     app:cardElevation="1dp"
                     app:cardBackgroundColor="@color/white">
 
-                    <TextView
-                        android:id="@+id/tvQuestionText"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Nội dung câu hỏi..."
-                        android:textColor="@color/text_primary"
-                        android:textSize="15sp"
-                        android:lineSpacingExtra="4dp"
-                        android:padding="16dp" />
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:id="@+id/tvQuestionText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Nội dung câu hỏi..."
+                            android:textColor="@color/text_primary"
+                            android:textSize="15sp"
+                            android:lineSpacingExtra="4dp" />
+
+                        <android.webkit.WebView
+                            android:id="@+id/wvQuestionMath"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:visibility="gone" />
+                    </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
                 <!-- Answer options container (2-column pairs added programmatically) -->
