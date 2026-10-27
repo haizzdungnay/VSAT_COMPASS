@@ -4,6 +4,7 @@ dist/
 target/
 .gradle/
 *.jar
+!gradle/wrapper/gradle-wrapper.jar
 *.war
 
 # IDE
