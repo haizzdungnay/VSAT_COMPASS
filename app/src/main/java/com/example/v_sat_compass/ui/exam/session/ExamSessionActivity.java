@@ -1030,15 +1030,7 @@ public class ExamSessionActivity extends AppCompatActivity {
 
 
     private void setQuestionTextWithMath(String fullText) {
-        if (com.example.v_sat_compass.util.KaTeXHelper.containsMath(fullText)) {
-            binding.tvQuestionText.setVisibility(android.view.View.GONE);
-            binding.wvQuestionMath.setVisibility(android.view.View.VISIBLE);
-            com.example.v_sat_compass.util.KaTeXHelper.renderMath(binding.wvQuestionMath, fullText);
-        } else {
-            binding.wvQuestionMath.setVisibility(android.view.View.GONE);
-            binding.tvQuestionText.setVisibility(android.view.View.VISIBLE);
-            binding.tvQuestionText.setText(fullText);
-        }
+        com.example.v_sat_compass.util.KaTeXHelper.renderOrText(binding.wvQuestionMath, binding.tvQuestionText, fullText);
     }
 
     private void displayQuestion(Question question) {

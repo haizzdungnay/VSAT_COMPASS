@@ -83,14 +83,27 @@
                 app:cardCornerRadius="12dp"
                 app:cardElevation="2dp">
 
-                <TextView
-                    android:id="@+id/tvQuestion"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:lineSpacingExtra="4dp"
-                    android:padding="16dp"
-                    android:textColor="@color/text_primary"
-                    android:textSize="15sp" />
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvQuestion"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:lineSpacingExtra="4dp"
+                        android:padding="16dp"
+                        android:textColor="@color/text_primary"
+                        android:textSize="15sp" />
+
+                    <android.webkit.WebView
+                        android:id="@+id/wvQuestionMath"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="16dp"
+                        android:visibility="gone" />
+                </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <LinearLayout
@@ -132,6 +145,13 @@
                         android:lineSpacingExtra="4dp"
                         android:textColor="@color/text_primary"
                         android:textSize="14sp" />
+
+                    <android.webkit.WebView
+                        android:id="@+id/wvExplanationMath"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:visibility="gone" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>

@@ -17,6 +17,7 @@ import com.example.v_sat_compass.data.model.session.QuestionOptionContentRespons
 import com.example.v_sat_compass.data.model.session.SessionQuestionContentResponse;
 import com.example.v_sat_compass.data.repository.PracticeRepository;
 import com.example.v_sat_compass.databinding.ActivityPracticeSessionBinding;
+import com.example.v_sat_compass.util.KaTeXHelper;
 import com.example.v_sat_compass.util.NetworkUtils;
 import com.google.android.material.card.MaterialCardView;
 
@@ -79,7 +80,8 @@ public class PracticeSessionActivity extends AppCompatActivity {
         binding.btnPrimary.setText("Dang tai...");
         showState("Dang tai cau hoi...");
         binding.llOptions.removeAllViews();
-        binding.tvQuestion.setText("");
+        KaTeXHelper.renderOrText(binding.wvQuestionMath, binding.tvQuestion, "");
+        KaTeXHelper.renderOrText(binding.wvExplanationMath, binding.tvExplanation, "");
         updateMeta();
 
         Difficulty difficulty = difficultyEngine.current();
@@ -109,7 +111,7 @@ public class PracticeSessionActivity extends AppCompatActivity {
     private void showQuestion(SessionQuestionContentResponse question) {
         currentQuestion = question;
         hideState();
-        binding.tvQuestion.setText(question.getContent());
+        KaTeXHelper.renderOrText(binding.wvQuestionMath, binding.tvQuestion, question.getContent());
         binding.btnPrimary.setText("Chấm câu này");
         binding.btnPrimary.setEnabled(false);
         renderOptions(new ArrayList<>(), null);
@@ -134,9 +136,10 @@ public class PracticeSessionActivity extends AppCompatActivity {
                 binding.cardResult.setVisibility(android.view.View.VISIBLE);
                 binding.tvResult.setText(result.isCorrect() ? "Đúng" : "Chưa đúng");
                 String explanation = result.getExplanation();
-                binding.tvExplanation.setText(explanation != null && !explanation.trim().isEmpty()
+                String expText = explanation != null && !explanation.trim().isEmpty()
                         ? explanation
-                        : "Chua co loi giai cho cau nay");
+                        : "Chua co loi giai cho cau nay";
+                KaTeXHelper.renderOrText(binding.wvExplanationMath, binding.tvExplanation, expText);
                 binding.btnPrimary.setText("Cau tiep theo");
                 binding.btnPrimary.setEnabled(true);
                 updateMeta();

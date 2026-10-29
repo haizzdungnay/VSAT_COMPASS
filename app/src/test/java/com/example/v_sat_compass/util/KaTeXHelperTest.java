@@ -33,4 +33,10 @@ public class KaTeXHelperTest {
         assertTrue(html.contains("file:///android_asset/katex/auto-render.min.js"));
         assertTrue(html.contains("f(x) = $x^2$"));
     }
+
+    @Test
+    public void containsMath_handlesExplanationFormulas() {
+        assertTrue(KaTeXHelper.containsMath("Lời giải: Đặt $t = \\sqrt{x^2 + 1}$, suy ra $dt = \\frac{x}{\\sqrt{x^2+1}}dx$."));
+        assertFalse(KaTeXHelper.containsMath("Sau tính từ sở hữu 'Her' cần danh từ"));
+    }
 }

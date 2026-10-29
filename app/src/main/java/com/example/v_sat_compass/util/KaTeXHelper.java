@@ -2,7 +2,9 @@ package com.example.v_sat_compass.util;
 
 import android.annotation.SuppressLint;
 import android.graphics.Color;
+import android.view.View;
 import android.webkit.WebView;
+import android.widget.TextView;
 
 public final class KaTeXHelper {
 
@@ -56,6 +58,21 @@ public final class KaTeXHelper {
     }
 
     @SuppressLint("SetJavaScriptEnabled")
+    public static void renderOrText(WebView webView, TextView textView, String text) {
+        if (textView == null) return;
+        if (webView != null && containsMath(text)) {
+            textView.setVisibility(View.GONE);
+            webView.setVisibility(View.VISIBLE);
+            renderMath(webView, text);
+        } else {
+            if (webView != null) {
+                webView.setVisibility(View.GONE);
+            }
+            textView.setVisibility(View.VISIBLE);
+            textView.setText(text != null ? text : "");
+        }
+    }
+
     public static void renderMath(WebView webView, String rawText) {
         if (webView == null) return;
         webView.setBackgroundColor(Color.TRANSPARENT);

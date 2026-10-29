@@ -13,6 +13,7 @@
 **Android Client:**
 - Tích hợp `KaTeXHelper` và nhúng bộ tài nguyên KaTeX offline vào `app/src/main/assets/katex/` (js, css, auto-render, fonts).
 - Thêm `wvQuestionMath` vào layout `activity_exam_session.xml`, tự động render KaTeX khi câu hỏi chứa công thức toán học (`$...$`, `$$...$$`, `\[...\]`, `\(...\)`).
+- Bổ sung `KaTeXHelper.renderOrText` và tích hợp render KaTeX cho màn xem lại lời giải (`ExamReviewActivity`) và màn luyện tập (`PracticeSessionActivity`) trên cả câu hỏi lẫn lời giải.
 - Cập nhật `ExamSessionActivity` gửi `answerPayload` khi thí sinh chọn đáp án Đúng/Sai, Ghép cặp, Điền số.
 - Bổ sung `KaTeXHelperTest` (222 unit tests Android client pass 100%).
 - Fix atomic rename trong `ExamHistoryRepository` tương thích Windows JVM unit tests.

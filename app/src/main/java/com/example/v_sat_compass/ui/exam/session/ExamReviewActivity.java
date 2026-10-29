@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.v_sat_compass.R;
+import com.example.v_sat_compass.util.KaTeXHelper;
 import com.example.v_sat_compass.data.api.ApiClient;
 import com.example.v_sat_compass.data.local.LocalExamDataSource;
 import com.example.v_sat_compass.data.model.AiExplainResponse;
@@ -284,10 +285,10 @@ public class ExamReviewActivity extends AppCompatActivity {
 
         if (question == null) {
             // Pack đề có thể đã thay đổi sau khi bài cũ được lưu
-            binding.tvQuestionText.setText(getString(R.string.review_question_unavailable));
+            KaTeXHelper.renderOrText(binding.wvQuestionMath, binding.tvQuestionText, getString(R.string.review_question_unavailable));
             binding.tvUnansweredBadge.setVisibility(View.GONE);
             binding.llOptions.removeAllViews();
-            binding.tvExplanation.setText(getString(R.string.review_explanation_placeholder));
+            KaTeXHelper.renderOrText(binding.wvExplanationMath, binding.tvExplanation, getString(R.string.review_explanation_placeholder));
             return;
         }
 
@@ -302,7 +303,7 @@ public class ExamReviewActivity extends AppCompatActivity {
         }
 
         binding.tvUnansweredBadge.setVisibility(isAnswered ? View.GONE : View.VISIBLE);
-        binding.tvQuestionText.setText(question.getQuestionText());
+        KaTeXHelper.renderOrText(binding.wvQuestionMath, binding.tvQuestionText, question.getQuestionText());
 
         buildOptionViews(question, isAnswered ? selectedOptionId : null);
 
@@ -310,7 +311,7 @@ public class ExamReviewActivity extends AppCompatActivity {
         if (explanation == null || explanation.trim().isEmpty()) {
             explanation = getString(R.string.review_explanation_placeholder);
         }
-        binding.tvExplanation.setText(explanation);
+        KaTeXHelper.renderOrText(binding.wvExplanationMath, binding.tvExplanation, explanation);
     }
 
     /** Kiểm tra optionId có tồn tại trong danh sách options của question không. */
@@ -348,7 +349,7 @@ public class ExamReviewActivity extends AppCompatActivity {
         }
 
         binding.tvUnansweredBadge.setVisibility(isAnswered ? View.GONE : View.VISIBLE);
-        binding.tvQuestionText.setText(question.getContent());
+        KaTeXHelper.renderOrText(binding.wvQuestionMath, binding.tvQuestionText, question.getContent());
 
         buildBackendOptionViews(question, isAnswered ? selectedOptionId : null);
 
@@ -357,7 +358,7 @@ public class ExamReviewActivity extends AppCompatActivity {
         if (explanation == null || explanation.trim().isEmpty()) {
             explanation = getString(R.string.review_explanation_placeholder);
         }
-        binding.tvExplanation.setText(explanation);
+        KaTeXHelper.renderOrText(binding.wvExplanationMath, binding.tvExplanation, explanation);
     }
 
     private boolean optionExistsInBackendQuestion(
@@ -385,10 +386,10 @@ public class ExamReviewActivity extends AppCompatActivity {
                         Toast.makeText(ExamReviewActivity.this,
                                 "Khong tai duoc cau hoi -- kiem tra mang",
                                 Toast.LENGTH_SHORT).show();
-                        binding.tvQuestionText.setText(getString(R.string.review_question_unavailable));
+                        KaTeXHelper.renderOrText(binding.wvQuestionMath, binding.tvQuestionText, getString(R.string.review_question_unavailable));
                         binding.tvUnansweredBadge.setVisibility(View.GONE);
                         binding.llOptions.removeAllViews();
-                        binding.tvExplanation.setText(getString(R.string.review_explanation_placeholder));
+                        KaTeXHelper.renderOrText(binding.wvExplanationMath, binding.tvExplanation, getString(R.string.review_explanation_placeholder));
                     }
                 });
     }
