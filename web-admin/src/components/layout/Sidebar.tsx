@@ -117,6 +117,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onSelectTab }) => 
                 <span>Ngân hàng câu hỏi</span>
               </button>
               <button
+                onClick={() => onSelectTab('review-queue')}
+                className={`w-full flex items-center gap-space-md px-space-sm py-2 rounded-lg font-label-md transition-colors ${
+                  currentTab === 'review-queue'
+                    ? 'bg-primary-container text-on-primary font-medium shadow-sm'
+                    : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]">rate_review</span>
+                <span>Duyệt câu hỏi</span>
+              </button>
+              <button
                 onClick={() => onSelectTab('import-questions')}
                 className={`w-full flex items-center gap-space-md px-space-sm py-2 rounded-lg font-label-md transition-colors ${
                   currentTab === 'import-questions'

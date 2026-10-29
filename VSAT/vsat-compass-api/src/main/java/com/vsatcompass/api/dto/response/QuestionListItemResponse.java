@@ -20,6 +20,7 @@ public class QuestionListItemResponse {
 
     private Long id;
     private String questionCode;
+    private String questionTextSnippet;
     private Long subjectId;
     private Long topicId;
     private Difficulty difficulty;

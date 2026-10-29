@@ -63,6 +63,16 @@ public class AdminQuestionController {
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('CONTENT_ADMIN', 'SUPER_ADMIN')")
+    @Operation(summary = "Q-ADM-06: Chi tiết câu hỏi (admin)")
+    public ResponseEntity<ApiResponse<QuestionResponse>> getQuestionDetail(@PathVariable Long id) {
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        String currentUserRole = SecurityUtils.getCurrentUserRole();
+        QuestionResponse result = questionService.getById(currentUserId, currentUserRole, id);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
     @PostMapping("/{id}/approve")
     @PreAuthorize("hasAnyRole('CONTENT_ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Q-ADM-02: Duyệt (PENDING_REVIEW → APPROVED)")

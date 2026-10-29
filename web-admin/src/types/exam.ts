@@ -2,7 +2,7 @@ export type SubjectCode = 'MATH' | 'PHY' | 'CHEM' | 'BIO' | 'HIS' | 'GEO' | 'ENG
 
 export type ExamStatus = 'DRAFT' | 'COMPOSING' | 'PENDING_REVIEW' | 'PUBLISHED' | 'HIDDEN' | 'ARCHIVED';
 
-export type QuestionStatus = 'DRAFT' | 'PENDING_REVIEW' | 'APPROVED' | 'NEEDS_REVISION' | 'ARCHIVED';
+export type QuestionStatus = 'DRAFT' | 'PENDING_REVIEW' | 'APPROVED' | 'NEEDS_REVISION' | 'ARCHIVED' | 'PUBLISHED';
 
 export type QuestionType = 'TRUE_FALSE' | 'SINGLE_CHOICE' | 'MATCHING' | 'SHORT_ANSWER';
 

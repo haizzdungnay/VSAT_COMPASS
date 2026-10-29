@@ -4,6 +4,7 @@ import { Header } from './components/layout/Header';
 import { ExamList } from './pages/ExamList';
 import { CreateExamWizard } from './pages/ExamWizard';
 import { QuestionBank } from './pages/QuestionBank';
+import { ReviewQueue } from './pages/ReviewQueue';
 
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<string>('exams');
@@ -15,6 +16,7 @@ export const App: React.FC = () => {
     blueprints: 'Ma trận đề thi V-SAT',
     schedules: 'Ca thi & Lịch thi',
     'question-bank': 'Ngân hàng câu hỏi V-SAT 2026',
+    'review-queue': 'Hàng đợi duyệt câu hỏi V-SAT',
     'import-questions': 'Import câu hỏi',
     settings: 'Cấu hình hệ thống'
   };
@@ -41,6 +43,10 @@ export const App: React.FC = () => {
 
           {currentTab === 'question-bank' && (
             <QuestionBank />
+          )}
+
+          {currentTab === 'review-queue' && (
+            <ReviewQueue />
           )}
 
           {currentTab === 'blueprints' && (

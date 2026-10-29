@@ -498,41 +498,124 @@ export async function fetchBankQuestions(params?: {
   return fallbackQuestions;
 }
 
-export async function approveBankQuestion(id: number): Promise<boolean> {
+export interface ReviewActionResult {
+  ok: boolean;
+  error?: string;
+}
+
+export async function fetchReviewQueue(params?: {
+  status?: string;
+  page?: number;
+  size?: number;
+}): Promise<FullQuestionItem[]> {
+  const query = new URLSearchParams();
+  if (params?.status && params.status !== "ALL") query.append("status", params.status);
+  query.append("page", (params?.page ?? 0).toString());
+  query.append("size", (params?.size ?? 50).toString());
+
+  const res = await authenticatedFetch(BASE_URL + "/admin/questions?" + query.toString());
+  if (!res.ok) {
+    const errorJson = await res.json().catch(() => ({}));
+    throw new Error(errorJson?.error?.message || errorJson?.message || ("Lỗi tải danh sách duyệt (" + res.status + ")"));
+  }
+  const json = await res.json();
+  const content = json.data?.content || json.data;
+  if (!Array.isArray(content)) return [];
+
+  return content.map((q: any) => ({
+    id: q.id,
+    questionCode: q.questionCode || ("Q_" + q.id),
+    subjectId: q.subjectId || 1,
+    subjectName: q.subjectId === 1 ? "Toán học" : (q.subjectId === 2 ? "Tiếng Anh" : (q.subjectId === 3 ? "Vật lí" : ("Môn #" + q.subjectId))),
+    topicName: q.topicName || ("Chủ đề #" + (q.topicId || 1)),
+    questionType: q.questionType || "SINGLE_CHOICE",
+    cognitiveLevel: "UNDERSTANDING",
+    difficulty: q.difficulty || "MEDIUM",
+    questionText: q.questionTextSnippet || q.questionText || "(Chưa có nội dung xem trước)",
+    status: q.status || "PENDING_REVIEW",
+    rawPoints: 6.0,
+    updatedAt: q.updatedAt ? q.updatedAt.substring(0, 10) : undefined
+  }));
+}
+
+export async function fetchQuestionDetail(id: number): Promise<FullQuestionItem | null> {
+  let res = await authenticatedFetch(BASE_URL + "/admin/questions/" + id);
+  if (!res.ok) {
+    res = await authenticatedFetch(BASE_URL + "/collaborator/questions/" + id);
+  }
+  if (!res.ok) {
+    return null;
+  }
+  const json = await res.json();
+  const q = json.data;
+  if (!q) return null;
+
+  return {
+    id: q.id,
+    questionCode: q.questionCode,
+    subjectId: q.subjectId,
+    subjectName: q.subjectId === 1 ? "Toán học" : (q.subjectId === 2 ? "Tiếng Anh" : (q.subjectId === 3 ? "Vật lí" : ("Môn #" + q.subjectId))),
+    topicId: q.topicId,
+    questionType: q.questionType,
+    cognitiveLevel: "UNDERSTANDING",
+    difficulty: q.difficulty,
+    questionText: q.questionText || "",
+    explanation: q.explanation || "",
+    status: q.status,
+    rawPoints: 6.0,
+    updatedAt: q.updatedAt ? q.updatedAt.substring(0, 10) : undefined,
+    options: (q.options || []).map((opt: any) => ({
+      label: opt.optionLabel,
+      text: opt.optionText,
+      isCorrect: opt.isCorrect
+    })),
+    trueFalseItems: q.trueFalseItems,
+    matchingPairs: q.matchingPairs,
+    shortAnswerKey: q.shortAnswerKey
+  };
+}
+
+export async function approveBankQuestion(id: number, comment?: string): Promise<ReviewActionResult> {
   try {
-    const res = await authenticatedFetch(`${BASE_URL}/admin/questions/${id}/approve`, {
-      method: 'POST'
+    const res = await authenticatedFetch(BASE_URL + "/admin/questions/" + id + "/approve", {
+      method: "POST",
+      body: comment ? JSON.stringify({ comment }) : undefined
     });
-    return res.ok;
-  } catch {
-    return false;
+    if (res.ok) return { ok: true };
+    const err = await res.json().catch(() => ({}));
+    return { ok: false, error: err?.error?.message || err?.message || ("Lỗi phê duyệt (" + res.status + ")") };
+  } catch (e: any) {
+    return { ok: false, error: e?.message || "Lỗi kết nối mạng" };
   }
 }
 
-export async function rejectBankQuestion(id: number, comment = 'Không đạt tiêu chuẩn'): Promise<boolean> {
+export async function rejectBankQuestion(id: number, comment = "Không đạt tiêu chuẩn"): Promise<ReviewActionResult> {
   try {
-    const res = await authenticatedFetch(`${BASE_URL}/admin/questions/${id}/reject`, {
-      method: 'POST',
+    const res = await authenticatedFetch(BASE_URL + "/admin/questions/" + id + "/reject", {
+      method: "POST",
       body: JSON.stringify({ comment })
     });
-    return res.ok;
-  } catch {
-    return false;
+    if (res.ok) return { ok: true };
+    const err = await res.json().catch(() => ({}));
+    return { ok: false, error: err?.error?.message || err?.message || ("Lỗi từ chối (" + res.status + ")") };
+  } catch (e: any) {
+    return { ok: false, error: e?.message || "Lỗi kết nối mạng" };
   }
 }
 
-export async function requestRevisionBankQuestion(id: number, comment: string): Promise<boolean> {
+export async function requestRevisionBankQuestion(id: number, comment = "Cần chỉnh sửa nội dung"): Promise<ReviewActionResult> {
   try {
-    const res = await authenticatedFetch(`${BASE_URL}/admin/questions/${id}/request-revision`, {
-      method: 'POST',
+    const res = await authenticatedFetch(BASE_URL + "/admin/questions/" + id + "/request-revision", {
+      method: "POST",
       body: JSON.stringify({ comment })
     });
-    return res.ok;
-  } catch {
-    return false;
+    if (res.ok) return { ok: true };
+    const err = await res.json().catch(() => ({}));
+    return { ok: false, error: err?.error?.message || err?.message || ("Lỗi yêu cầu sửa (" + res.status + ")") };
+  } catch (e: any) {
+    return { ok: false, error: e?.message || "Lỗi kết nối mạng" };
   }
 }
-
 export async function createBankQuestion(q: Partial<FullQuestionItem>): Promise<FullQuestionItem> {
   const options = (q.options || []).map((opt, i) => ({
     optionLabel: opt.label,

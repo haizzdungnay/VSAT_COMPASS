@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+### V-SAT 2026 Question Review Queue & Web-Admin Workflow (2026-10-29)
+
+**Web Admin:**
+- Thêm trang Quản trị Hàng đợi duyệt câu hỏi (`ReviewQueue/index.tsx`) hỗ trợ kiểm duyệt, phê duyệt (`APPROVE`), yêu cầu chỉnh sửa (`NEEDS_REVISION`) và từ chối (`ARCHIVED`) câu hỏi do Cộng tác viên gửi lên.
+- Tích hợp xem trước chi tiết câu hỏi kèm công thức toán học KaTeX (`MathView`), danh sách lựa chọn/tiểu mục và lời giải chi tiết.
+- Thêm cơ chế phân trang 20 câu/trang, hiển thị lỗi chính xác từ server (`ReviewActionResult`) không dùng mock fallback khi API lỗi.
+- Cập nhật Sidebar điều hướng thêm mục "Duyệt câu hỏi" trong nhóm Ngân hàng câu hỏi.
+
+**Backend (Spring Boot):**
+- Thêm endpoint `GET /admin/questions/{id}` cho phép CONTENT_ADMIN và SUPER_ADMIN xem chi tiết bất kỳ câu hỏi nào trong hàng đợi.
+- Bổ sung trường `questionTextSnippet` trong `QuestionListItemResponse` hiển thị nội dung tóm tắt ở danh sách câu hỏi.
+- Bổ sung unit tests cho toàn bộ endpoints duyệt (`approve`, `requestRevision`, `reject`, `getQuestionDetail`, role check 403 cho Student) trong `AdminQuestionControllerTest` và `QuestionServiceTest`.
+
+**Kiểm thử & Audit:**
+- Thêm runnable self-check script `scripts/test-review-queue.mjs` kiểm tra trọn vẹn luồng tạo, gửi duyệt, phê duyệt, conflict 409 và phân quyền 403 (9/9 pass).
+- Đã được kiểm thử và audit độc lập qua Claude Code CLI (PASS).
+
 ### V-SAT 2026 Submission Payload & KaTeX Math Rendering (2026-10-27)
 
 **Backend (Spring Boot):**

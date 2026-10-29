@@ -32,7 +32,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.vsatcompass.api.dto.response.QuestionResponse;
+import org.springframework.http.MediaType;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -269,6 +273,100 @@ class AdminQuestionControllerTest {
                 .andExpect(status().isUnauthorized());
 
         verify(questionService, never()).findForPicker(any(), any(), any(), any(), any(), any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("GET /admin/questions/{id} by CONTENT_ADMIN returns 200")
+    @WithMockUser(roles = "CONTENT_ADMIN", username = "1")
+    void getQuestionDetail_contentAdmin_success() throws Exception {
+        when(questionService.getById(any(), any(), eq(10L))).thenReturn(
+                QuestionResponse.builder()
+                        .id(10L)
+                        .questionCode("Q-T10-TEST")
+                        .status(QuestionStatus.PENDING_REVIEW)
+                        .build());
+
+        mockMvc.perform(get("/admin/questions/10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Success"))
+                .andExpect(jsonPath("$.data.id").value(10))
+                .andExpect(jsonPath("$.data.questionCode").value("Q-T10-TEST"))
+                .andExpect(jsonPath("$.data.status").value("PENDING_REVIEW"));
+
+        verify(questionService).getById(any(), any(), eq(10L));
+    }
+
+    @Test
+    @DisplayName("GET /admin/questions/{id} by STUDENT returns 403")
+    @WithMockUser(roles = "STUDENT")
+    void getQuestionDetail_student_forbidden() throws Exception {
+        mockMvc.perform(get("/admin/questions/10"))
+                .andExpect(status().isForbidden());
+
+        verify(questionService, never()).getById(any(), any(), any());
+    }
+
+        
+
+    @Test
+    @DisplayName("POST /admin/questions/{id}/approve by CONTENT_ADMIN returns 200")
+    @WithMockUser(roles = "CONTENT_ADMIN", username = "1")
+    void approve_contentAdmin_success() throws Exception {
+        when(questionService.approve(any(), eq(10L), any())).thenReturn(
+                QuestionResponse.builder().id(10L).status(QuestionStatus.APPROVED).build());
+
+        mockMvc.perform(post("/admin/questions/10/approve").with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"comment\":\"Dat yeu cau\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Đã duyệt"))
+                .andExpect(jsonPath("$.data.status").value("APPROVED"));
+
+        verify(questionService).approve(any(), eq(10L), any());
+    }
+
+    @Test
+    @DisplayName("POST /admin/questions/{id}/approve by STUDENT returns 403")
+    @WithMockUser(roles = "STUDENT")
+    void approve_student_forbidden() throws Exception {
+        mockMvc.perform(post("/admin/questions/10/approve").with(csrf()))
+                .andExpect(status().isForbidden());
+
+        verify(questionService, never()).approve(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("POST /admin/questions/{id}/request-revision by CONTENT_ADMIN returns 200")
+    @WithMockUser(roles = "CONTENT_ADMIN", username = "1")
+    void requestRevision_contentAdmin_success() throws Exception {
+        when(questionService.requestRevision(any(), eq(10L), any())).thenReturn(
+                QuestionResponse.builder().id(10L).status(QuestionStatus.NEEDS_REVISION).build());
+
+        mockMvc.perform(post("/admin/questions/10/request-revision").with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"comment\":\"Sua lai\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Đã yêu cầu sửa"))
+                .andExpect(jsonPath("$.data.status").value("NEEDS_REVISION"));
+
+        verify(questionService).requestRevision(any(), eq(10L), any());
+    }
+
+    @Test
+    @DisplayName("POST /admin/questions/{id}/reject by CONTENT_ADMIN returns 200")
+    @WithMockUser(roles = "CONTENT_ADMIN", username = "1")
+    void reject_contentAdmin_success() throws Exception {
+        when(questionService.reject(any(), eq(10L), any())).thenReturn(
+                QuestionResponse.builder().id(10L).status(QuestionStatus.ARCHIVED).build());
+
+        mockMvc.perform(post("/admin/questions/10/reject").with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"comment\":\"Tu choi\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Đã từ chối"))
+                .andExpect(jsonPath("$.data.status").value("ARCHIVED"));
+
+        verify(questionService).reject(any(), eq(10L), any());
     }
 
     private void stubQuestionQueuePage() {

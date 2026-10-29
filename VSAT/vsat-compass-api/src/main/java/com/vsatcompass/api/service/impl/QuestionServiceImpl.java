@@ -398,9 +398,14 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     private QuestionListItemResponse toQuestionListItemResponse(Question q) {
+        String snippet = q.getQuestionText();
+        if (snippet != null && snippet.length() > 120) {
+            snippet = snippet.substring(0, 117) + "...";
+        }
         return QuestionListItemResponse.builder()
                 .id(q.getId())
                 .questionCode(q.getQuestionCode())
+                .questionTextSnippet(snippet)
                 .subjectId(q.getSubjectId())
                 .topicId(q.getTopicId())
                 .difficulty(q.getDifficulty())
