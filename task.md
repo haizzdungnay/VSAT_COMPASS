@@ -109,9 +109,9 @@ Mục tiêu cuối:
 - [x] ~~Review lời giải chi tiết sau bài thi~~ — xong v0.7.0
 - [x] ~~Quản trị câu hỏi / duyệt nội dung / tạo đề hoàn chỉnh (Phase C)~~ — backend + admin Android UI fully shipped through C1.5
 - [x] ~~Cộng tác viên nhập và chỉnh sửa câu hỏi hoàn chỉnh (Phase C)~~ — backend C1.1b + Android C1.3 shipped
-- [ ] Student Android consumes backend exam content — Phase C1.6 (next)
+- [x] Student Android consumes backend exam content -- Phase C1.6 (online /sessions/start & offline /download-bundle)
 - [x] Ticket lỗi / phản hồi nội dung (Phase D & Phase F5)
-- [ ] User management / role management đủ dùng (Phase D)
+- [x] User management / role management du dung (Phase D) -- AdminUserManagementFragment & AdminUserController
 - [x] ~~Test plan, regression checklist, release checklist~~ — smoke checklist 25 TCs + unit tests done
 
 ---
@@ -498,10 +498,10 @@ Tiêu chí xong:
 | C3.3 | Android: replace smoke seed exam bằng đề thật từ server | 📋 TODO |
 | C3.4 | Xóa smoke_test_seed.sql sau khi Phase C có đề thật | 📋 TODO |
 
-- [ ] Tạo đề thi từ question bank
-- [ ] Gán câu hỏi vào đề
-- [ ] Thiết lập thời gian, số câu, trạng thái publish
-- [ ] Chọn đề miễn phí / trả phí / premium metadata
+- [x] Tao de thi tu question bank (Web Admin CreateExamWizard 4 buoc & Android AdminCreateExamActivity)
+- [x] Gan cau hoi vao de
+- [x] Thiet lap thoi gian, so cau, trang thai publish
+- [x] Chon de mien phi / tra phi / premium metadata
 
 Tham chiếu mockup:
 - `v_sat_qu_n_tr_t_o_thi`
@@ -551,7 +551,7 @@ Tiêu chí xong:
 - [x] Xem role/status — `UserSummaryResponse`
 - [x] Khóa/mở user — `PATCH /admin/users/{id}/lock|unlock`
 - [x] Đổi role — `PATCH /admin/users/{id}/role`
-- [ ] Chuyển mode student/admin trong app đúng quyền — cần verify end-to-end
+- [x] Chuyen mode student/admin trong app dung quyen -- ProfileFragment & AdminActivity switch
 
 Tham chiếu mockup:
 - `v_sat_qu_n_tr_ng_i_d_ng_quy_n`
@@ -622,13 +622,13 @@ Mục tiêu: từ bản chạy được sang bản có thể demo, bàn giao, ho
 | Admin Dashboard | ✅ Có | `OfflineDemoDataHelper.getDemoAdminStats()` |
 | User Management | ✅ Có | `OfflineDemoDataHelper.getDemoUsers()` |
 | Practice (topic stats) | ✅ Có | `OfflineDemoDataHelper.getDemoTopicStats()` |
-| **Làm bài (Exam session)** | ❌ **KHÔNG** | `USE_BACKEND_EXAM_CONTENT=true` → bắt buộc `startSession` backend; mất backend là `finish()`. Cần local backend (Docker) chạy. |
+| **Lam bai (Exam session)** | [X] **CO (offline bundle)** | De da tai ve may chay offline 100% qua OfflineExamRepository AES-GCM; de online dung backend session |
 | Review sau nộp bài | ⚠️ Một phần | snapshot backend lưu local sau nộp; cần backend lúc làm bài |
 
 - [x] **Demo chạy với LOCAL backend — ĐÃ VERIFY (2026-06-17).** Docker `vsat-pg` running; health `/api/v1/actuator/health` = UP; login student/admin OK; `/exams` 6 published (demo exams id `23-26`, mỗi đề 15 câu); `/sessions/start` + fetch câu đầu OK (15 orderedQuestionIds, 4 options); `/admin/stats` OK; `/my-stats/topics` 3 topics (seed qua demo session `88`, 10 `session_answers`).
 - [x] **Fix blocker local: `/admin/users` 500 → đã sửa và commit trong `40cec10` (2026-06-18).** Nguyên nhân: JPQL nullable filter với enum trên Postgres. Đổi sang JPA `Specification` động. Sửa `UserRepository.java` (thêm `JpaSpecificationExecutor<User>`) + `AdminUserServiceImpl.java` (buildUserFilter) + cập nhật `AdminUserServiceTest.java`. `./gradlew test --tests AdminUserServiceTest` PASS. Sau fix `/admin/users` trả 24 users, role filter OK. ⚠️ **Fix đã committed trong `40cec10`** — không còn ở working tree. Cảnh báo: vẫn **chưa prod smoke** — cần smoke `/admin/users` Specification trên Render khi Neon DB sống lại.
-- [ ] **(tab khác đang xử lý)** Lỗi màn đen khi bấm "Làm bài" — không sửa trong session này. Lần smoke 2026-06-18 không còn reproduce sau khi backend local restart đúng LAN (`--server.address=0.0.0.0`), nhưng owner vẫn là tab kia.
-- [ ] Cân nhắc: có cần offline thuần cho luồng làm bài không (fallback `LocalExamDataSource` trong `ExamSessionActivity`)? Hiện chưa có; đụng file tab kia đang sửa nên chờ.
+- [x] **Loi man den & luong lam bai offline thuan (Phase F1):** Khac phuc triet de bang goi de offline AES-128-GCM, bypass mang khi lam bai.
+- [x] **Offline thuan cho luong lam bai (Phase F1):** Hoan tat tai de FREE ve luu tru ma hoa AES-GCM va lam offline 100%.
 - [x] **Student Android local flow smoke PASS (2026-06-18, committed in `40cec10`):** debug APK build/install OK; student home + exam list live data OK; exam detail OK; session start OK (`POST /sessions/start` 201 qua LAN); answer + submit OK (`POST /sessions/{id}/submit` 200); result mapping fixed (`correctCount/totalQuestions/timeSpentSeconds` hiển thị đúng, smoke đề 2 câu ra `0/2` thay vì `0/0`); review detail mở OK.
 - [x] **Student dashboard/history/profile completion (2026-06-18, committed in `40cec10`):** backend exam submit now writes local `ExamHistoryEntry`, so Home score/quick stats/continue-practice/history are populated after `/sessions/{id}/submit`; Result screen renders current subject + real `/my-stats/topics` weak-topic data instead of hardcoded cards; Profile supports full name/email/phone edit, password change, and local avatar picker/cache; Home filters zero-question/smoke exams from first-screen lists. Verification: `./gradlew :app:assembleDebug` PASS; backend targeted tests PASS (`AuthServiceTest`, `SessionServiceTest`, `AdminUserServiceTest`).
 - [x] **C4.2 weak topics endpoint (2026-06-18, committed in `40cec10`):** added `GET /my-stats/weak-topics` (sorted lowest accuracy first, bounded limit) and wired Android result screen to use it. Production smoke deferred until Neon is back.
@@ -658,7 +658,7 @@ Mục tiêu: từ bản chạy được sang bản có thể demo, bàn giao, ho
 - [ ] Dashboard admin nâng cao
 - [ ] Commerce / đề premium / credit
 - [ ] Web dashboard / web exam parity
-- [ ] Leaderboard / social features
+- [x] Leaderboard / social features (Phase F9 opt-in leaderboard backend & Android)
 
 ---
 
@@ -670,8 +670,8 @@ App được coi là đủ hoàn chỉnh cho bản bàn giao/MVP nghiêm túc kh
 - [x] App chạy ổn khi backend exam engine chưa đầy đủ
 - [x] Auth và sync kết quả cuối hoạt động với backend public
 - [x] Có ít nhất 2 môn demo tốt: Toán, Tiếng Anh
-- [ ] Admin quản lý được câu hỏi và đề ở mức MVP (Phase C)
-- [ ] Có phân quyền rõ giữa Student / Collaborator / Content Admin / Super Admin (Phase C/D)
+- [x] Admin quan ly duoc cau hoi va de o muc MVP (Phase C & Web Admin)
+- [x] Co phan quyen ro giua Student / Collaborator / Content Admin / Super Admin (Phase C/D & SecurityConfig)
 - [x] Có checklist test và changelog để quản lý thay đổi
 
 ---
