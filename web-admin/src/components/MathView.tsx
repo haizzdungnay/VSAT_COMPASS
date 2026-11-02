@@ -20,7 +20,7 @@ export const MathView: React.FC<MathViewProps> = ({ content = '', className = ''
         if (part.startsWith('$$') && part.endsWith('$$')) {
           const formula = part.slice(2, -2).trim();
           try {
-            const html = katex.renderToString(formula, { displayMode: true, throwOnError: false });
+            const html = katex.renderToString(formula, { displayMode: true, throwOnError: false, trust: false });
             return <span key={idx} dangerouslySetInnerHTML={{ __html: html }} className="my-1 block" />;
           } catch {
             return <span key={idx} className="font-mono text-amber-600">{part}</span>;
@@ -29,7 +29,7 @@ export const MathView: React.FC<MathViewProps> = ({ content = '', className = ''
         if (part.startsWith('\\[') && part.endsWith('\\]')) {
           const formula = part.slice(2, -2).trim();
           try {
-            const html = katex.renderToString(formula, { displayMode: true, throwOnError: false });
+            const html = katex.renderToString(formula, { displayMode: true, throwOnError: false, trust: false });
             return <span key={idx} dangerouslySetInnerHTML={{ __html: html }} className="my-1 block" />;
           } catch {
             return <span key={idx} className="font-mono text-amber-600">{part}</span>;
@@ -38,7 +38,7 @@ export const MathView: React.FC<MathViewProps> = ({ content = '', className = ''
         if (part.startsWith('$') && part.endsWith('$')) {
           const formula = part.slice(1, -1).trim();
           try {
-            const html = katex.renderToString(formula, { displayMode: false, throwOnError: false });
+            const html = katex.renderToString(formula, { displayMode: false, throwOnError: false, trust: false });
             return <span key={idx} dangerouslySetInnerHTML={{ __html: html }} />;
           } catch {
             return <span key={idx} className="font-mono text-amber-600">{part}</span>;
@@ -47,7 +47,7 @@ export const MathView: React.FC<MathViewProps> = ({ content = '', className = ''
         if (part.startsWith('\\(') && part.endsWith('\\)')) {
           const formula = part.slice(2, -2).trim();
           try {
-            const html = katex.renderToString(formula, { displayMode: false, throwOnError: false });
+            const html = katex.renderToString(formula, { displayMode: false, throwOnError: false, trust: false });
             return <span key={idx} dangerouslySetInnerHTML={{ __html: html }} />;
           } catch {
             return <span key={idx} className="font-mono text-amber-600">{part}</span>;

@@ -151,3 +151,35 @@ export interface ExamQuestionDetail {
   maxRawScore: number;
   options: OptionItem[];
 }
+
+export interface QuestionImportItem {
+  sheetName: string;
+  rowNumber: number;
+  groupCode?: string;
+  groupTitle?: string;
+  passageText?: string;
+  subjectId?: number;
+  subjectCode?: string;
+  topicId?: number;
+  subtopicId?: number;
+  difficulty?: DifficultyLevel;
+  questionType?: QuestionType;
+  questionText?: string;
+  options?: string[];
+  correctAnswer?: string;
+  explanation?: string;
+  tags?: string;
+  valid: boolean;
+  error?: string;
+}
+
+export interface QuestionImportResult {
+  totalRows: number;
+  validCount: number;
+  errorCount: number;
+  importedQuestions: number;
+  createdGroups: number;
+  dryRun: boolean;
+  items: QuestionImportItem[];
+  errors: string[];
+}

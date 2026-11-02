@@ -26,7 +26,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -62,11 +68,28 @@ public class ExamServiceImpl implements ExamService {
                 .filter(this::isZeroPrice)
                 .orElseThrow(() -> AppException.notFound("Exam", id));
 
-        List<ExamDownloadBundleResponse.QuestionBundleItem> questions = examQuestionRepository
-                .findByExamIdOrderByQuestionOrderAscIdAsc(exam.getId())
-                .stream()
-                .map(this::toBundleQuestion)
+        List<ExamQuestion> examQuestions = examQuestionRepository
+                .findByExamIdOrderByQuestionOrderAscIdAsc(exam.getId());
+
+        List<Question> rawQuestions = examQuestions.stream()
+                .map(eq -> questionRepository.findById(eq.getQuestionId())
+                        .orElseThrow(() -> AppException.notFound("Question", eq.getQuestionId())))
                 .toList();
+
+        Set<Long> groupIds = rawQuestions.stream()
+                .map(Question::getQuestionGroupId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Map<Long, QuestionGroupResponse> groupMap = groupIds.isEmpty()
+                ? Collections.emptyMap()
+                : questionGroupRepository.findAllById(groupIds).stream()
+                        .collect(Collectors.toMap(QuestionGroup::getId, this::toQuestionGroupResponse));
+
+        List<ExamDownloadBundleResponse.QuestionBundleItem> questions = new ArrayList<>(examQuestions.size());
+        for (int i = 0; i < examQuestions.size(); i++) {
+            questions.add(toBundleQuestion(examQuestions.get(i), rawQuestions.get(i), groupMap));
+        }
 
         return ExamDownloadBundleResponse.builder()
                 .id(exam.getId())
@@ -134,9 +157,11 @@ public class ExamServiceImpl implements ExamService {
                 .imageUrl(g.getImageUrl())
                 .build();
     }
-    private ExamDownloadBundleResponse.QuestionBundleItem toBundleQuestion(ExamQuestion examQuestion) {
-        Question question = questionRepository.findById(examQuestion.getQuestionId())
-                .orElseThrow(() -> AppException.notFound("Question", examQuestion.getQuestionId()));
+    private ExamDownloadBundleResponse.QuestionBundleItem toBundleQuestion(
+            ExamQuestion examQuestion,
+            Question question,
+            Map<Long, QuestionGroupResponse> groupMap
+    ) {
         List<QuestionOption> options = questionOptionRepository
                 .findByQuestionIdOrderByDisplayOrderAscIdAsc(question.getId());
         List<Long> correctOptionIds = options.stream()
@@ -149,12 +174,9 @@ public class ExamServiceImpl implements ExamService {
                 .findFirst()
                 .orElse(null);
 
-        QuestionGroupResponse group = null;
-        if (question.getQuestionGroupId() != null) {
-            group = questionGroupRepository.findById(question.getQuestionGroupId())
-                    .map(this::toQuestionGroupResponse)
-                    .orElse(null);
-        }
+        QuestionGroupResponse group = question.getQuestionGroupId() != null
+                ? groupMap.get(question.getQuestionGroupId())
+                : null;
         return ExamDownloadBundleResponse.QuestionBundleItem.builder()
                 .id(question.getId())
                 .questionCode(question.getQuestionCode())

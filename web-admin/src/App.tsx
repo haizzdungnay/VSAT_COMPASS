@@ -5,6 +5,7 @@ import { ExamList } from './pages/ExamList';
 import { CreateExamWizard } from './pages/ExamWizard';
 import { QuestionBank } from './pages/QuestionBank';
 import { ReviewQueue } from './pages/ReviewQueue';
+import { ImportQuestions } from './pages/ImportQuestions';
 
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<string>('exams');
@@ -47,6 +48,10 @@ export const App: React.FC = () => {
 
           {currentTab === 'review-queue' && (
             <ReviewQueue />
+          )}
+
+          {currentTab === 'import-questions' && (
+            <ImportQuestions />
           )}
 
           {currentTab === 'blueprints' && (

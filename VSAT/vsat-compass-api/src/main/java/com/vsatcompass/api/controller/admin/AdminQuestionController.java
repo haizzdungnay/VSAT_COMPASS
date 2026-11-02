@@ -2,11 +2,13 @@ package com.vsatcompass.api.controller.admin;
 
 import com.vsatcompass.api.dto.common.ApiResponse;
 import com.vsatcompass.api.dto.request.ReviewActionRequest;
+import com.vsatcompass.api.dto.response.QuestionImportResultResponse;
 import com.vsatcompass.api.dto.response.QuestionListItemResponse;
 import com.vsatcompass.api.dto.response.QuestionPickerItemResponse;
 import com.vsatcompass.api.dto.response.QuestionResponse;
 import com.vsatcompass.api.entity.enums.QuestionStatus;
 import com.vsatcompass.api.entity.enums.QuestionType;
+import com.vsatcompass.api.service.QuestionImportService;
 import com.vsatcompass.api.service.QuestionService;
 import com.vsatcompass.api.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,23 +20,21 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/admin/questions")
 @RequiredArgsConstructor
-@Tag(name = "Admin-Questions", description = "Duyệt, từ chối, yêu cầu sửa câu hỏi (admin)")
+@Tag(name = "Admin-Questions", description = "Duyệt, từ chối, yêu cầu sửa, import câu hỏi (admin)")
 public class AdminQuestionController {
 
     private final QuestionService questionService;
+    private final QuestionImportService questionImportService;
 
     @GetMapping
     @PreAuthorize("hasAnyRole('CONTENT_ADMIN', 'SUPER_ADMIN')")
@@ -105,6 +105,29 @@ public class AdminQuestionController {
         Long currentUserId = SecurityUtils.getCurrentUserId();
         QuestionResponse result = questionService.reject(currentUserId, id, req);
         return ResponseEntity.ok(ApiResponse.success(result, "Đã từ chối"));
+    }
+
+    @GetMapping(value = "/import/template", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    @PreAuthorize("hasAnyRole('CONTENT_ADMIN', 'SUPER_ADMIN')")
+    @Operation(summary = "Q-ADM-07: Tải file template Excel mẫu")
+    public ResponseEntity<byte[]> downloadTemplate() {
+        byte[] bytes = questionImportService.generateTemplate();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"vsat_question_import_template.xlsx\"")
+                .header(HttpHeaders.CONTENT_TYPE, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                .body(bytes);
+    }
+
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('CONTENT_ADMIN', 'SUPER_ADMIN')")
+    @Operation(summary = "Q-ADM-08: Import câu hỏi từ Excel (preview khi dryRun=true, lưu khi dryRun=false)")
+    public ResponseEntity<ApiResponse<QuestionImportResultResponse>> importQuestions(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "dryRun", defaultValue = "true") boolean dryRun) {
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        QuestionImportResultResponse result = questionImportService.importQuestions(file, dryRun, currentUserId);
+        String msg = dryRun ? "Kiểm tra dữ liệu hoàn tất" : "Import câu hỏi thành công (" + result.getImportedQuestions() + " câu)";
+        return ResponseEntity.ok(ApiResponse.success(result, msg));
     }
 
     private Pageable capPageSize(Pageable pageable) {

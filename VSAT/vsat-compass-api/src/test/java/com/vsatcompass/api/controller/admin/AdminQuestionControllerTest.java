@@ -8,6 +8,7 @@ import com.vsatcompass.api.entity.enums.QuestionType;
 import com.vsatcompass.api.security.jwt.JwtUtils;
 import com.vsatcompass.api.security.service.CustomUserDetailsService;
 import com.vsatcompass.api.service.QuestionService;
+import com.vsatcompass.api.service.QuestionImportService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -50,6 +51,9 @@ class AdminQuestionControllerTest {
 
     @MockBean
     QuestionService questionService;
+
+    @MockBean
+    QuestionImportService questionImportService;
 
     @MockBean
     JwtUtils jwtUtils;

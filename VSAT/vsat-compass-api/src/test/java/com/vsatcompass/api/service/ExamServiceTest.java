@@ -210,6 +210,50 @@ class ExamServiceTest {
     }
 
     @Test
+    @DisplayName("getDownloadBundle: batches QuestionGroup lookup using findAllById")
+    void getDownloadBundle_withQuestionGroups_batchesLookup() {
+        Question q1 = question(501L);
+        q1.setQuestionGroupId(99L);
+        Question q2 = question(502L);
+        q2.setQuestionGroupId(99L);
+
+        when(examRepository.findByIdAndStatusAndPricingType(
+                1L, ExamStatus.PUBLISHED, ExamPricingType.FREE))
+                .thenReturn(Optional.of(algebraExam));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(1L))
+                .thenReturn(List.of(
+                        ExamQuestion.builder().examId(1L).questionId(501L).questionOrder(1).build(),
+                        ExamQuestion.builder().examId(1L).questionId(502L).questionOrder(2).build()
+                ));
+        when(questionRepository.findById(501L)).thenReturn(Optional.of(q1));
+        when(questionRepository.findById(502L)).thenReturn(Optional.of(q2));
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(501L))
+                .thenReturn(List.of(option(9001L, 501L, "A", true, 1)));
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(502L))
+                .thenReturn(List.of(option(9002L, 502L, "B", true, 1)));
+
+        com.vsatcompass.api.entity.QuestionGroup group = com.vsatcompass.api.entity.QuestionGroup.builder()
+                .id(99L)
+                .code("GRP_01")
+                .subjectId(10L)
+                .title("Passage 1")
+                .passageText("Shared text")
+                .build();
+        when(questionGroupRepository.findAllById(java.util.Set.of(99L)))
+                .thenReturn(List.of(group));
+
+        ExamDownloadBundleResponse result = examService.getDownloadBundle(1L);
+
+        assertThat(result.getQuestions()).hasSize(2);
+        assertThat(result.getQuestions().get(0).getQuestionGroup()).isNotNull();
+        assertThat(result.getQuestions().get(0).getQuestionGroup().getTitle()).isEqualTo("Passage 1");
+        assertThat(result.getQuestions().get(1).getQuestionGroup()).isNotNull();
+        assertThat(result.getQuestions().get(1).getQuestionGroup().getTitle()).isEqualTo("Passage 1");
+        verify(questionGroupRepository).findAllById(java.util.Set.of(99L));
+        verify(questionGroupRepository, never()).findById(anyLong());
+    }
+
+    @Test
     @DisplayName("getDownloadBundle: non-free exam is invisible and returns RESOURCE_NOT_FOUND")
     void getDownloadBundle_nonFree_returns404() {
         when(examRepository.findByIdAndStatusAndPricingType(

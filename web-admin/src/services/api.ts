@@ -5,7 +5,8 @@ import type {
   FullQuestionItem,
   BlueprintItem,
   ExamVariantItem,
-  ExamQuestionDetail
+  ExamQuestionDetail,
+  QuestionImportResult
 } from '../types/exam';
 
 const BASE_URL = 'http://localhost:18080/api/v1';
@@ -889,4 +890,64 @@ export async function fetchSubjects(): Promise<Array<{ id: number; code: string;
     { id: 6, code: 'HIS', name: 'Lịch sử' },
     { id: 7, code: 'GEO', name: 'Địa lí' }
   ];
+}
+
+export async function uploadQuestionFile(
+  file: File,
+  dryRun = true
+): Promise<QuestionImportResult> {
+  let token = getStoredToken();
+  if (!token) token = await loginAdmin();
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const headers: Record<string, string> = {
+    'Accept': 'application/json'
+  };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetch(`${BASE_URL}/admin/questions/import?dryRun=${dryRun}`, {
+    method: 'POST',
+    headers,
+    body: formData
+  });
+
+  if (!res.ok) {
+    const errorJson = await res.json().catch(() => null);
+    throw new Error(errorJson?.message || `Import failed with status ${res.status}`);
+  }
+
+  const json = await res.json();
+  return json.data;
+}
+
+export async function downloadImportTemplate(): Promise<Blob> {
+  let token = getStoredToken();
+  if (!token) token = await loginAdmin();
+
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetch(`${BASE_URL}/admin/questions/import/template`, {
+    method: 'GET',
+    headers
+  });
+
+  if (!res.ok) {
+    throw new Error(`Download template failed with status ${res.status}`);
+  }
+
+  return await res.blob();
+}
+
+export function triggerBlobDownload(blob: Blob, filename = 'vsat_question_import_template.xlsx') {
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
 }
