@@ -30,6 +30,8 @@ public class CreateQuestionRequest {
 
     private Long subtopicId;
 
+    private Long questionGroupId;
+
     @NotNull(message = "difficulty is required")
     private Difficulty difficulty;
 

@@ -476,6 +476,35 @@ export const ReviewQueue: React.FC = () => {
 
             {/* Modal Body */}
             <div className="p-space-lg space-y-space-md max-h-[70vh] overflow-y-auto">
+              {/* Question Group / Reading Passage (if present) */}
+              {selectedQuestion.questionGroup && (selectedQuestion.questionGroup.title || selectedQuestion.questionGroup.passageText) && (
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                  <div className="flex items-center gap-2 text-primary font-label-sm font-bold uppercase tracking-wider text-[11px]">
+                    <span className="material-symbols-outlined text-[16px]">menu_book</span>
+                    <span>{selectedQuestion.questionGroup.title || 'Ngữ liệu chung / Đoạn văn đọc hiểu'}</span>
+                    {selectedQuestion.questionGroup.code && (
+                      <span className="text-outline font-mono text-[10px] font-normal">
+                        ({selectedQuestion.questionGroup.code})
+                      </span>
+                    )}
+                  </div>
+                  {selectedQuestion.questionGroup.passageText && (
+                    <div className="text-body-sm text-on-surface leading-relaxed">
+                      <MathView content={selectedQuestion.questionGroup.passageText} />
+                    </div>
+                  )}
+                  {selectedQuestion.questionGroup.imageUrl && (
+                    <div className="mt-2">
+                      <img
+                        src={selectedQuestion.questionGroup.imageUrl}
+                        alt="Passage illustration"
+                        className="max-h-60 rounded-lg border border-outline-variant/30 object-contain"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Question content with MathView */}
               <div className="space-y-2">
                 <span className="font-label-sm uppercase text-[11px] text-outline font-bold tracking-wider">

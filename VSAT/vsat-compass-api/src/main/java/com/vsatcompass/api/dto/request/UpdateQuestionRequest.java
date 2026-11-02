@@ -29,6 +29,7 @@ public class UpdateQuestionRequest {
     private Long subjectId;
     private Long topicId;
     private Long subtopicId;
+    private Long questionGroupId;
     private Difficulty difficulty;
     private QuestionType questionType;
 

@@ -9,6 +9,7 @@ import com.vsatcompass.api.entity.enums.Difficulty;
 import com.vsatcompass.api.entity.enums.QuestionStatus;
 import com.vsatcompass.api.entity.enums.QuestionType;
 import com.vsatcompass.api.exception.AppException;
+import com.vsatcompass.api.repository.QuestionGroupRepository;
 import com.vsatcompass.api.repository.QuestionOptionRepository;
 import com.vsatcompass.api.repository.QuestionRepository;
 import com.vsatcompass.api.service.impl.PracticeServiceImpl;
@@ -37,6 +38,7 @@ class PracticeServiceTest {
 
     @Mock QuestionRepository questionRepository;
     @Mock QuestionOptionRepository questionOptionRepository;
+    @Mock QuestionGroupRepository questionGroupRepository;
     @InjectMocks PracticeServiceImpl practiceService;
 
     @Test

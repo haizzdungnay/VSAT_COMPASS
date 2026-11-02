@@ -2,13 +2,16 @@ package com.vsatcompass.api.service.impl;
 
 import com.vsatcompass.api.dto.request.PracticeGradeRequest;
 import com.vsatcompass.api.dto.response.PracticeGradeResponse;
+import com.vsatcompass.api.dto.response.QuestionGroupResponse;
 import com.vsatcompass.api.dto.response.QuestionOptionContentResponse;
 import com.vsatcompass.api.dto.response.SessionQuestionContentResponse;
 import com.vsatcompass.api.entity.Question;
+import com.vsatcompass.api.entity.QuestionGroup;
 import com.vsatcompass.api.entity.QuestionOption;
 import com.vsatcompass.api.entity.enums.Difficulty;
 import com.vsatcompass.api.entity.enums.QuestionStatus;
 import com.vsatcompass.api.exception.AppException;
+import com.vsatcompass.api.repository.QuestionGroupRepository;
 import com.vsatcompass.api.repository.QuestionOptionRepository;
 import com.vsatcompass.api.repository.QuestionRepository;
 import com.vsatcompass.api.service.PracticeService;
@@ -31,6 +34,7 @@ public class PracticeServiceImpl implements PracticeService {
 
     private final QuestionRepository questionRepository;
     private final QuestionOptionRepository questionOptionRepository;
+    private final QuestionGroupRepository questionGroupRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -80,6 +84,19 @@ public class PracticeServiceImpl implements PracticeService {
                 .build();
     }
 
+
+    private QuestionGroupResponse toQuestionGroupResponse(QuestionGroup g) {
+        if (g == null) return null;
+        return QuestionGroupResponse.builder()
+                .id(g.getId())
+                .code(g.getCode())
+                .subjectId(g.getSubjectId())
+                .title(g.getTitle())
+                .passageText(g.getPassageText())
+                .passageHtml(g.getPassageHtml())
+                .imageUrl(g.getImageUrl())
+                .build();
+    }
     private SessionQuestionContentResponse toQuestionContent(Question question) {
         List<QuestionOptionContentResponse> options = questionOptionRepository
                 .findByQuestionIdOrderByDisplayOrderAscIdAsc(question.getId())
@@ -91,9 +108,17 @@ public class PracticeServiceImpl implements PracticeService {
                         .build())
                 .toList();
 
+        QuestionGroupResponse group = null;
+        if (question.getQuestionGroupId() != null) {
+            group = questionGroupRepository.findById(question.getQuestionGroupId())
+                    .map(this::toQuestionGroupResponse)
+                    .orElse(null);
+        }
         return SessionQuestionContentResponse.builder()
                 .id(question.getId())
                 .questionCode(question.getQuestionCode())
+                .questionGroupId(question.getQuestionGroupId())
+                .questionGroup(group)
                 .content(question.getQuestionText())
                 .questionType(question.getQuestionType())
                 .difficulty(question.getDifficulty())

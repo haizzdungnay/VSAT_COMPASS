@@ -8,6 +8,7 @@ import com.vsatcompass.api.dto.response.QuestionPickerItemResponse;
 import com.vsatcompass.api.dto.response.QuestionResponse;
 import com.vsatcompass.api.entity.Question;
 import com.vsatcompass.api.entity.QuestionOption;
+import com.vsatcompass.api.entity.QuestionGroup;
 import com.vsatcompass.api.entity.QuestionReview;
 import com.vsatcompass.api.entity.Subtopic;
 import com.vsatcompass.api.entity.Topic;
@@ -17,6 +18,7 @@ import com.vsatcompass.api.entity.enums.QuestionType;
 import com.vsatcompass.api.entity.enums.ReviewAction;
 import com.vsatcompass.api.entity.enums.UserRole;
 import com.vsatcompass.api.exception.AppException;
+import com.vsatcompass.api.repository.QuestionGroupRepository;
 import com.vsatcompass.api.repository.QuestionOptionRepository;
 import com.vsatcompass.api.repository.QuestionRepository;
 import com.vsatcompass.api.repository.QuestionReviewRepository;
@@ -71,6 +73,7 @@ class QuestionServiceTest {
     @Mock SubjectRepository subjectRepository;
     @Mock TopicRepository topicRepository;
     @Mock SubtopicRepository subtopicRepository;
+    @Mock QuestionGroupRepository questionGroupRepository;
 
     @InjectMocks QuestionServiceImpl questionService;
 
@@ -202,6 +205,49 @@ class QuestionServiceTest {
             assertThat(result.getStatus()).isEqualTo(QuestionStatus.DRAFT);
             assertThat(result.getCreatedBy()).isEqualTo(OWNER_ID);
             assertThat(result.getId()).isEqualTo(7777L);
+        }
+
+        @Test
+        @DisplayName("create: invalid questionGroupId throws 404 QuestionGroup not found")
+        void create_invalidQuestionGroupId_throws404() {
+            when(subjectRepository.existsById(SUBJECT_MATH)).thenReturn(true);
+            when(topicRepository.findById(TOPIC_ALGEBRA)).thenReturn(Optional.of(algebraTopic));
+            when(subtopicRepository.findById(SUBTOPIC_LINEAR)).thenReturn(Optional.of(linearSubtopic));
+            when(questionGroupRepository.findById(999L)).thenReturn(Optional.empty());
+
+            CreateQuestionRequest req = validSingleChoiceReq();
+            req.setQuestionGroupId(999L);
+
+            assertThatThrownBy(() -> questionService.create(OWNER_ID, req))
+                    .isInstanceOf(AppException.class)
+                    .satisfies(ex -> {
+                        AppException ae = (AppException) ex;
+                        assertThat(ae.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    });
+            verify(questionRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("create: mismatched questionGroup subject throws 400 Bad Request")
+        void create_mismatchedQuestionGroupSubject_throws400() {
+            when(subjectRepository.existsById(SUBJECT_MATH)).thenReturn(true);
+            when(topicRepository.findById(TOPIC_ALGEBRA)).thenReturn(Optional.of(algebraTopic));
+            when(subtopicRepository.findById(SUBTOPIC_LINEAR)).thenReturn(Optional.of(linearSubtopic));
+            when(questionGroupRepository.findById(999L)).thenReturn(Optional.of(QuestionGroup.builder()
+                    .id(999L)
+                    .subjectId(SUBJECT_OTHER)
+                    .build()));
+
+            CreateQuestionRequest req = validSingleChoiceReq();
+            req.setQuestionGroupId(999L);
+
+            assertThatThrownBy(() -> questionService.create(OWNER_ID, req))
+                    .isInstanceOf(AppException.class)
+                    .satisfies(ex -> {
+                        AppException ae = (AppException) ex;
+                        assertThat(ae.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    });
+            verify(questionRepository, never()).save(any());
         }
 
         @Test
@@ -573,6 +619,34 @@ class QuestionServiceTest {
     @Nested
     @DisplayName("getById()")
     class GetById {
+
+        @Test
+        @DisplayName("getById: with questionGroupId populates questionGroup details")
+        void getById_withQuestionGroup_populatesQuestionGroupDetails() {
+            Question q = existingQuestion(70L, QuestionStatus.DRAFT, OWNER_ID);
+            q.setQuestionGroupId(999L);
+            when(questionRepository.findById(70L)).thenReturn(Optional.of(q));
+            when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(70L))
+                    .thenReturn(Collections.emptyList());
+            when(questionReviewRepository.findByQuestionIdOrderByCreatedAtDesc(70L))
+                    .thenReturn(Collections.emptyList());
+            when(questionGroupRepository.findById(999L)).thenReturn(Optional.of(QuestionGroup.builder()
+                    .id(999L)
+                    .code("QG-READING-1")
+                    .subjectId(SUBJECT_MATH)
+                    .title("Đoạn văn đọc hiểu")
+                    .passageText("Đọc đoạn văn sau...")
+                    .build()));
+
+            QuestionResponse result = questionService.getById(OWNER_ID, ROLE_COLLAB, 70L);
+
+            assertThat(result.getId()).isEqualTo(70L);
+            assertThat(result.getQuestionGroupId()).isEqualTo(999L);
+            assertThat(result.getQuestionGroup()).isNotNull();
+            assertThat(result.getQuestionGroup().getCode()).isEqualTo("QG-READING-1");
+            assertThat(result.getQuestionGroup().getTitle()).isEqualTo("Đoạn văn đọc hiểu");
+            assertThat(result.getQuestionGroup().getPassageText()).isEqualTo("Đọc đoạn văn sau...");
+        }
 
         @Test
         @DisplayName("getById: owner can read own question")

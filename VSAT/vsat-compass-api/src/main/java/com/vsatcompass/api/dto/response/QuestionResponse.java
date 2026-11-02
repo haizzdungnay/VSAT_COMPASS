@@ -24,6 +24,8 @@ public class QuestionResponse {
     private Long subjectId;
     private Long topicId;
     private Long subtopicId;
+    private Long questionGroupId;
+    private QuestionGroupResponse questionGroup;
     private Difficulty difficulty;
     private QuestionType questionType;
     private String questionText;

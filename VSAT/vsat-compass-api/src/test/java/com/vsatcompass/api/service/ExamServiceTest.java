@@ -18,6 +18,7 @@ import com.vsatcompass.api.entity.enums.QuestionType;
 import com.vsatcompass.api.exception.AppException;
 import com.vsatcompass.api.repository.ExamQuestionRepository;
 import com.vsatcompass.api.repository.ExamRepository;
+import com.vsatcompass.api.repository.QuestionGroupRepository;
 import com.vsatcompass.api.repository.QuestionOptionRepository;
 import com.vsatcompass.api.repository.QuestionRepository;
 import com.vsatcompass.api.service.impl.ExamServiceImpl;
@@ -56,6 +57,7 @@ class ExamServiceTest {
     @Mock ExamQuestionRepository examQuestionRepository;
     @Mock QuestionRepository questionRepository;
     @Mock QuestionOptionRepository questionOptionRepository;
+    @Mock QuestionGroupRepository questionGroupRepository;
 
     @InjectMocks ExamServiceImpl examService;
 

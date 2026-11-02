@@ -256,6 +256,21 @@ public class ExamReviewActivity extends AppCompatActivity {
         }
     }
 
+
+    private void bindPassageWidget(com.example.v_sat_compass.data.model.QuestionGroup group) {
+        if (group != null && (group.getTitle() != null || group.getPassageText() != null)) {
+            binding.cardPassage.setVisibility(View.VISIBLE);
+            String title = group.getTitle() != null && !group.getTitle().trim().isEmpty()
+                    ? group.getTitle()
+                    : "NGỮ LIỆU CHUNG / ĐỌC HIỂU";
+            binding.tvPassageTitle.setText(title);
+            String text = group.getPassageText() != null ? group.getPassageText() : "";
+            KaTeXHelper.renderOrText(binding.wvPassageMath, binding.tvPassageText, text);
+        } else {
+            binding.cardPassage.setVisibility(View.GONE);
+        }
+    }
+
     private void showQuestion(int index) {
         if (backendReviewMode) {
             showBackendQuestion(index);
@@ -303,6 +318,7 @@ public class ExamReviewActivity extends AppCompatActivity {
         }
 
         binding.tvUnansweredBadge.setVisibility(isAnswered ? View.GONE : View.VISIBLE);
+        bindPassageWidget(question != null ? question.getQuestionGroup() : null);
         KaTeXHelper.renderOrText(binding.wvQuestionMath, binding.tvQuestionText, question.getQuestionText());
 
         buildOptionViews(question, isAnswered ? selectedOptionId : null);
@@ -349,6 +365,7 @@ public class ExamReviewActivity extends AppCompatActivity {
         }
 
         binding.tvUnansweredBadge.setVisibility(isAnswered ? View.GONE : View.VISIBLE);
+        bindPassageWidget(question != null ? question.getQuestionGroup() : null);
         KaTeXHelper.renderOrText(binding.wvQuestionMath, binding.tvQuestionText, question.getContent());
 
         buildBackendOptionViews(question, isAnswered ? selectedOptionId : null);

@@ -312,6 +312,8 @@ public class OfflineExamRepository {
         json.addProperty("question_text", source.getQuestionText());
         json.addProperty("question_type", source.getQuestionType());
         json.addProperty("explanation", source.getExplanation());
+        if (source.getQuestionGroupId() != null) { json.addProperty("question_group_id", source.getQuestionGroupId()); }
+        if (source.getQuestionGroup() != null) { json.add("question_group", gson.toJsonTree(source.getQuestionGroup())); }
         JsonArray options = new JsonArray();
         if (source.getOptions() != null) {
             for (OfflineExamBundle.OptionBundleItem option : source.getOptions()) {

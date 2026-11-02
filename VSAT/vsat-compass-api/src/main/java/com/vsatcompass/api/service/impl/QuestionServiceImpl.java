@@ -3,12 +3,14 @@ package com.vsatcompass.api.service.impl;
 import com.vsatcompass.api.dto.request.CreateQuestionRequest;
 import com.vsatcompass.api.dto.request.ReviewActionRequest;
 import com.vsatcompass.api.dto.request.UpdateQuestionRequest;
+import com.vsatcompass.api.dto.response.QuestionGroupResponse;
 import com.vsatcompass.api.dto.response.QuestionListItemResponse;
 import com.vsatcompass.api.dto.response.QuestionOptionResponse;
 import com.vsatcompass.api.dto.response.QuestionPickerItemResponse;
 import com.vsatcompass.api.dto.response.QuestionResponse;
 import com.vsatcompass.api.dto.response.QuestionReviewResponse;
 import com.vsatcompass.api.entity.Question;
+import com.vsatcompass.api.entity.QuestionGroup;
 import com.vsatcompass.api.entity.QuestionOption;
 import com.vsatcompass.api.entity.QuestionReview;
 import com.vsatcompass.api.entity.Subtopic;
@@ -18,6 +20,7 @@ import com.vsatcompass.api.entity.enums.QuestionType;
 import com.vsatcompass.api.entity.enums.ReviewAction;
 import com.vsatcompass.api.entity.enums.UserRole;
 import com.vsatcompass.api.exception.AppException;
+import com.vsatcompass.api.repository.QuestionGroupRepository;
 import com.vsatcompass.api.repository.QuestionOptionRepository;
 import com.vsatcompass.api.repository.QuestionRepository;
 import com.vsatcompass.api.repository.QuestionReviewRepository;
@@ -50,12 +53,20 @@ public class QuestionServiceImpl implements QuestionService {
     private final SubjectRepository subjectRepository;
     private final TopicRepository topicRepository;
     private final SubtopicRepository subtopicRepository;
+    private final QuestionGroupRepository questionGroupRepository;
 
     // ---------- CREATE ----------
     @Override
     @Transactional
     public QuestionResponse create(Long currentUserId, CreateQuestionRequest req) {
         validateSubjectTopicSubtopic(req.getSubjectId(), req.getTopicId(), req.getSubtopicId());
+        if (req.getQuestionGroupId() != null) {
+            QuestionGroup group = questionGroupRepository.findById(req.getQuestionGroupId())
+                    .orElseThrow(() -> AppException.notFound("QuestionGroup", req.getQuestionGroupId()));
+            if (!req.getSubjectId().equals(group.getSubjectId())) {
+                throw AppException.badRequest("Question group subject must match question subject");
+            }
+        }
         validateOptionsForType(req.getQuestionType(),
                 req.getOptions().stream().map(o -> o.getIsCorrect()).toList(),
                 req.getOptions().size());
@@ -65,6 +76,7 @@ public class QuestionServiceImpl implements QuestionService {
                 .subjectId(req.getSubjectId())
                 .topicId(req.getTopicId())
                 .subtopicId(req.getSubtopicId())
+                .questionGroupId(req.getQuestionGroupId())
                 .difficulty(req.getDifficulty())
                 .questionType(req.getQuestionType())
                 .questionText(req.getQuestionText())
@@ -131,6 +143,15 @@ public class QuestionServiceImpl implements QuestionService {
             q.setSubtopicId(newSubtopicId);
         }
 
+        if (req.getQuestionGroupId() != null) {
+            Long effectiveSubjectId = req.getSubjectId() != null ? req.getSubjectId() : q.getSubjectId();
+            QuestionGroup group = questionGroupRepository.findById(req.getQuestionGroupId())
+                    .orElseThrow(() -> AppException.notFound("QuestionGroup", req.getQuestionGroupId()));
+            if (!effectiveSubjectId.equals(group.getSubjectId())) {
+                throw AppException.badRequest("Question group subject must match question subject");
+            }
+            q.setQuestionGroupId(req.getQuestionGroupId());
+        }
         if (req.getDifficulty() != null) q.setDifficulty(req.getDifficulty());
         boolean questionTypeChanged = req.getQuestionType() != null;
         if (questionTypeChanged) q.setQuestionType(req.getQuestionType());
@@ -366,17 +387,38 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     // ---------- MAPPERS ----------
+    private QuestionGroupResponse toQuestionGroupResponse(QuestionGroup g) {
+        if (g == null) return null;
+        return QuestionGroupResponse.builder()
+                .id(g.getId())
+                .code(g.getCode())
+                .subjectId(g.getSubjectId())
+                .title(g.getTitle())
+                .passageText(g.getPassageText())
+                .passageHtml(g.getPassageHtml())
+                .imageUrl(g.getImageUrl())
+                .build();
+    }
+
     private QuestionResponse toQuestionResponse(Question q) {
         List<QuestionOption> options =
                 questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(q.getId());
         List<QuestionReview> reviews =
                 questionReviewRepository.findByQuestionIdOrderByCreatedAtDesc(q.getId());
+        QuestionGroupResponse group = null;
+        if (q.getQuestionGroupId() != null) {
+            group = questionGroupRepository.findById(q.getQuestionGroupId())
+                    .map(this::toQuestionGroupResponse)
+                    .orElse(null);
+        }
         return QuestionResponse.builder()
                 .id(q.getId())
                 .questionCode(q.getQuestionCode())
                 .subjectId(q.getSubjectId())
                 .topicId(q.getTopicId())
                 .subtopicId(q.getSubtopicId())
+                .questionGroupId(q.getQuestionGroupId())
+                .questionGroup(group)
                 .difficulty(q.getDifficulty())
                 .questionType(q.getQuestionType())
                 .questionText(q.getQuestionText())

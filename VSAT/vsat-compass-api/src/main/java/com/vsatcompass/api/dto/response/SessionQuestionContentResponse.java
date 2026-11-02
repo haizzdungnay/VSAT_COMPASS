@@ -19,6 +19,8 @@ public class SessionQuestionContentResponse {
 
     private Long id;
     private String questionCode;
+    private Long questionGroupId;
+    private QuestionGroupResponse questionGroup;
     private String content;
     private QuestionType questionType;
     private Difficulty difficulty;

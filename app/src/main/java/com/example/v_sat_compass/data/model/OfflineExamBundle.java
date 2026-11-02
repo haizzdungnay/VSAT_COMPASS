@@ -37,6 +37,8 @@ public class OfflineExamBundle {
         private Long subjectId;
         private Long topicId;
         private Long subtopicId;
+        private Long questionGroupId;
+        private QuestionGroup questionGroup;
         private String difficulty;
         private String questionType;
         private String questionText;
@@ -50,6 +52,8 @@ public class OfflineExamBundle {
         private List<OptionBundleItem> options;
 
         public Long getId() { return id; }
+        public Long getQuestionGroupId() { return questionGroupId; }
+        public QuestionGroup getQuestionGroup() { return questionGroup; }
         public String getQuestionCode() { return questionCode; }
         public String getQuestionText() { return questionText; }
         public String getQuestionType() { return questionType; }

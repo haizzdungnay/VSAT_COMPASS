@@ -2,6 +2,7 @@ package com.example.v_sat_compass.ui.practice;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.View;
 import android.view.Gravity;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -108,9 +109,24 @@ public class PracticeSessionActivity extends AppCompatActivity {
         });
     }
 
+    private void bindPassageWidget(com.example.v_sat_compass.data.model.QuestionGroup group) {
+        if (group != null && (group.getTitle() != null || group.getPassageText() != null)) {
+            binding.cardPassage.setVisibility(View.VISIBLE);
+            String title = group.getTitle() != null && !group.getTitle().trim().isEmpty()
+                    ? group.getTitle()
+                    : "NGỮ LIỆU CHUNG / ĐỌC HIỂU";
+            binding.tvPassageTitle.setText(title);
+            String text = group.getPassageText() != null ? group.getPassageText() : "";
+            KaTeXHelper.renderOrText(binding.wvPassageMath, binding.tvPassageText, text);
+        } else {
+            binding.cardPassage.setVisibility(View.GONE);
+        }
+    }
+
     private void showQuestion(SessionQuestionContentResponse question) {
         currentQuestion = question;
         hideState();
+        bindPassageWidget(question != null ? question.getQuestionGroup() : null);
         KaTeXHelper.renderOrText(binding.wvQuestionMath, binding.tvQuestion, question.getContent());
         binding.btnPrimary.setText("Chấm câu này");
         binding.btnPrimary.setEnabled(false);

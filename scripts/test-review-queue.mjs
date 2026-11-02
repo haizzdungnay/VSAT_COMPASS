@@ -33,6 +33,15 @@ async function run() {
   console.log(`2. GET /admin/questions returned ${queueJson.data.content.length} items. Question code: ${sample.questionCode}`);
 
   // Check 2: GET /admin/questions/{id} (or fallback /collaborator/questions/{id})
+  // Direct admin endpoint check
+  const adminDetailRes = await fetch(`${BASE_URL}/admin/questions/10`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
+  assert.ok(adminDetailRes.ok, 'GET /admin/questions/10 must return 200');
+  const adminDetailJson = await adminDetailRes.json();
+  assert.equal(adminDetailJson.data.id, 10);
+  assert.ok(adminDetailJson.data.questionGroup, 'Question 10 must have questionGroup populated');
+  assert.equal(adminDetailJson.data.questionGroup.id, 100);
+  console.log('2.5. GET /admin/questions/10 with QuestionGroup verified');
+
   const detailRes = await fetch(`${BASE_URL}/collaborator/questions/10`, {
     headers: { 'Authorization': `Bearer ${adminToken}` }
   });

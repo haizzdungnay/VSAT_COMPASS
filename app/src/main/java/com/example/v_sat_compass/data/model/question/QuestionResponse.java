@@ -23,6 +23,12 @@ public class QuestionResponse {
     @SerializedName("subtopicId")
     private Long subtopicId;
 
+    @SerializedName("questionGroupId")
+    private Long questionGroupId;
+
+    @SerializedName("questionGroup")
+    private com.example.v_sat_compass.data.model.QuestionGroup questionGroup;
+
     @SerializedName("difficulty")
     private Difficulty difficulty;
 
@@ -112,6 +118,11 @@ public class QuestionResponse {
     public Long getSubtopicId() {
         return subtopicId;
     }
+
+    public Long getQuestionGroupId() { return questionGroupId; }
+    public void setQuestionGroupId(Long questionGroupId) { this.questionGroupId = questionGroupId; }
+    public com.example.v_sat_compass.data.model.QuestionGroup getQuestionGroup() { return questionGroup; }
+    public void setQuestionGroup(com.example.v_sat_compass.data.model.QuestionGroup questionGroup) { this.questionGroup = questionGroup; }
 
     public void setSubtopicId(Long subtopicId) {
         this.subtopicId = subtopicId;

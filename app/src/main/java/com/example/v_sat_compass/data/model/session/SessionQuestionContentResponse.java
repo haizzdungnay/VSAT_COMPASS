@@ -1,5 +1,6 @@
 package com.example.v_sat_compass.data.model.session;
 
+import com.example.v_sat_compass.data.model.QuestionGroup;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.Collections;
@@ -11,6 +12,12 @@ public class SessionQuestionContentResponse {
 
     @SerializedName("questionCode")
     private String questionCode;
+
+    @SerializedName("questionGroupId")
+    private Long questionGroupId;
+
+    @SerializedName("questionGroup")
+    private QuestionGroup questionGroup;
 
     @SerializedName("content")
     private String content;
@@ -29,6 +36,8 @@ public class SessionQuestionContentResponse {
 
     public long getId() { return id; }
     public String getQuestionCode() { return questionCode; }
+    public Long getQuestionGroupId() { return questionGroupId; }
+    public QuestionGroup getQuestionGroup() { return questionGroup; }
     public String getContent() { return content; }
     public String getQuestionType() { return questionType; }
     public String getDifficulty() { return difficulty; }

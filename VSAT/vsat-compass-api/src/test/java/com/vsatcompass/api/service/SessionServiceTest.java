@@ -8,6 +8,7 @@ import com.vsatcompass.api.dto.response.SessionResponse;
 import com.vsatcompass.api.entity.ExamQuestion;
 import com.vsatcompass.api.entity.ExamSession;
 import com.vsatcompass.api.entity.Question;
+import com.vsatcompass.api.entity.QuestionGroup;
 import com.vsatcompass.api.entity.QuestionOption;
 import com.vsatcompass.api.entity.enums.Difficulty;
 import com.vsatcompass.api.entity.enums.QuestionType;
@@ -18,6 +19,7 @@ import com.vsatcompass.api.repository.ExamQuestionRepository;
 import com.vsatcompass.api.repository.ExamSessionRepository;
 import com.vsatcompass.api.repository.QuestionOptionRepository;
 import com.vsatcompass.api.repository.QuestionRepository;
+import com.vsatcompass.api.repository.QuestionGroupRepository;
 import com.vsatcompass.api.repository.SessionAnswerRepository;
 import com.vsatcompass.api.entity.SessionAnswer;
 import com.vsatcompass.api.service.impl.SessionServiceImpl;
@@ -60,6 +62,7 @@ class SessionServiceTest {
     @Mock QuestionRepository questionRepository;
     @Mock QuestionOptionRepository questionOptionRepository;
     @Mock SessionAnswerRepository sessionAnswerRepository;
+    @Mock QuestionGroupRepository questionGroupRepository;
 
     @InjectMocks SessionServiceImpl sessionService;
 

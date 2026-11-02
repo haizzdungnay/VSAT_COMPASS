@@ -556,6 +556,8 @@ export async function fetchQuestionDetail(id: number): Promise<FullQuestionItem 
     subjectId: q.subjectId,
     subjectName: q.subjectId === 1 ? "Toán học" : (q.subjectId === 2 ? "Tiếng Anh" : (q.subjectId === 3 ? "Vật lí" : ("Môn #" + q.subjectId))),
     topicId: q.topicId,
+    questionGroupId: q.questionGroupId,
+    questionGroup: q.questionGroup,
     questionType: q.questionType,
     cognitiveLevel: "UNDERSTANDING",
     difficulty: q.difficulty,

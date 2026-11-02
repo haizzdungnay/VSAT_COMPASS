@@ -66,6 +66,16 @@ export interface QuestionPickerItem {
   imageUrl?: string;
 }
 
+export interface QuestionGroupItem {
+  id: number;
+  code?: string;
+  subjectId?: number;
+  title?: string;
+  passageText?: string;
+  passageHtml?: string;
+  imageUrl?: string;
+}
+
 export interface FullQuestionItem {
   id: number;
   questionCode: string;
@@ -73,6 +83,8 @@ export interface FullQuestionItem {
   subjectName?: string;
   topicId?: number;
   topicName?: string;
+  questionGroupId?: number;
+  questionGroup?: QuestionGroupItem;
   questionType: QuestionType;
   cognitiveLevel: CognitiveLevel;
   difficulty: DifficultyLevel;

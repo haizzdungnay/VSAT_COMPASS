@@ -1033,7 +1033,23 @@ public class ExamSessionActivity extends AppCompatActivity {
         com.example.v_sat_compass.util.KaTeXHelper.renderOrText(binding.wvQuestionMath, binding.tvQuestionText, fullText);
     }
 
+
+    private void bindPassageWidget(com.example.v_sat_compass.data.model.QuestionGroup group) {
+        if (group != null && (group.getTitle() != null || group.getPassageText() != null)) {
+            binding.cardPassage.setVisibility(View.VISIBLE);
+            String title = group.getTitle() != null && !group.getTitle().trim().isEmpty()
+                    ? group.getTitle()
+                    : "NGỮ LIỆU CHUNG / ĐỌC HIỂU";
+            binding.tvPassageTitle.setText(title);
+            String text = group.getPassageText() != null ? group.getPassageText() : "";
+            com.example.v_sat_compass.util.KaTeXHelper.renderOrText(binding.wvPassageMath, binding.tvPassageText, text);
+        } else {
+            binding.cardPassage.setVisibility(View.GONE);
+        }
+    }
+
     private void displayQuestion(Question question) {
+        bindPassageWidget(question != null ? question.getQuestionGroup() : null);
         if (question == null) {
             binding.tvQuestionText.setText("(Khong the tai cau hoi)");
             binding.llOptions.removeAllViews();
@@ -1134,6 +1150,7 @@ public class ExamSessionActivity extends AppCompatActivity {
     }
 
     private void displayBackendQuestion(SessionQuestionContentResponse question) {
+        bindPassageWidget(question != null ? question.getQuestionGroup() : null);
         if (question == null) {
             binding.tvQuestionText.setText("(Khong the tai noi dung cau hoi tu backend)");
             binding.llOptions.removeAllViews();

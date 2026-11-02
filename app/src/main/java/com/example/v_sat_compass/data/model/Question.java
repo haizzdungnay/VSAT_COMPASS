@@ -10,6 +10,12 @@ public class Question {
     @SerializedName("question_code")
     private String questionCode;
 
+    @SerializedName(value = "questionGroupId", alternate = {"question_group_id"})
+    private Long questionGroupId;
+
+    @SerializedName(value = "questionGroup", alternate = {"question_group"})
+    private QuestionGroup questionGroup;
+
     @SerializedName("question_text")
     private String questionText;
 
@@ -29,6 +35,10 @@ public class Question {
 
     public Long getId() { return id; }
     public String getQuestionCode() { return questionCode; }
+    public Long getQuestionGroupId() { return questionGroupId; }
+    public void setQuestionGroupId(Long questionGroupId) { this.questionGroupId = questionGroupId; }
+    public QuestionGroup getQuestionGroup() { return questionGroup; }
+    public void setQuestionGroup(QuestionGroup questionGroup) { this.questionGroup = questionGroup; }
     public String getQuestionText() { return questionText; }
     public String getQuestionType() { return questionType; }
     public void setQuestionType(String questionType) { this.questionType = questionType; }

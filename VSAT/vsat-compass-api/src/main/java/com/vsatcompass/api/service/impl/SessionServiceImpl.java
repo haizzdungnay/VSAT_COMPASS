@@ -2,6 +2,7 @@ package com.vsatcompass.api.service.impl;
 
 import com.vsatcompass.api.dto.request.SessionRequest;
 import com.vsatcompass.api.dto.response.QuestionAnswerKeyResponse;
+import com.vsatcompass.api.dto.response.QuestionGroupResponse;
 import com.vsatcompass.api.dto.response.QuestionOptionContentResponse;
 import com.vsatcompass.api.dto.response.SessionAnswerKeysResponse;
 import com.vsatcompass.api.dto.response.SessionQuestionContentResponse;
@@ -9,6 +10,7 @@ import com.vsatcompass.api.dto.response.SessionResponse;
 import com.vsatcompass.api.entity.ExamQuestion;
 import com.vsatcompass.api.entity.ExamSession;
 import com.vsatcompass.api.entity.Question;
+import com.vsatcompass.api.entity.QuestionGroup;
 import com.vsatcompass.api.entity.QuestionOption;
 import com.vsatcompass.api.entity.SessionAnswer;
 import com.vsatcompass.api.entity.enums.QuestionType;
@@ -17,6 +19,7 @@ import com.vsatcompass.api.entity.enums.SessionStatus;
 import com.vsatcompass.api.exception.AppException;
 import com.vsatcompass.api.repository.ExamQuestionRepository;
 import com.vsatcompass.api.repository.ExamSessionRepository;
+import com.vsatcompass.api.repository.QuestionGroupRepository;
 import com.vsatcompass.api.repository.QuestionOptionRepository;
 import com.vsatcompass.api.repository.QuestionRepository;
 import com.vsatcompass.api.repository.SessionAnswerRepository;
@@ -45,6 +48,7 @@ public class SessionServiceImpl implements SessionService {
     private final QuestionRepository questionRepository;
     private final QuestionOptionRepository questionOptionRepository;
     private final SessionAnswerRepository sessionAnswerRepository;
+    private final QuestionGroupRepository questionGroupRepository;
 
     @Override
     @Transactional
@@ -98,9 +102,17 @@ public class SessionServiceImpl implements SessionService {
                 .map(this::toOptionContent)
                 .toList();
 
+        QuestionGroupResponse group = null;
+        if (question.getQuestionGroupId() != null) {
+            group = questionGroupRepository.findById(question.getQuestionGroupId())
+                    .map(this::toQuestionGroupResponse)
+                    .orElse(null);
+        }
         return SessionQuestionContentResponse.builder()
                 .id(question.getId())
                 .questionCode(question.getQuestionCode())
+                .questionGroupId(question.getQuestionGroupId())
+                .questionGroup(group)
                 .content(question.getQuestionText())
                 .questionType(question.getQuestionType())
                 .difficulty(question.getDifficulty())
@@ -594,6 +606,19 @@ public class SessionServiceImpl implements SessionService {
                 .orElseThrow(() -> AppException.notFound("ExamQuestion", questionId));
     }
 
+
+    private QuestionGroupResponse toQuestionGroupResponse(QuestionGroup g) {
+        if (g == null) return null;
+        return QuestionGroupResponse.builder()
+                .id(g.getId())
+                .code(g.getCode())
+                .subjectId(g.getSubjectId())
+                .title(g.getTitle())
+                .passageText(g.getPassageText())
+                .passageHtml(g.getPassageHtml())
+                .imageUrl(g.getImageUrl())
+                .build();
+    }
     private QuestionOptionContentResponse toOptionContent(QuestionOption option) {
         return QuestionOptionContentResponse.builder()
                 .id(option.getId())

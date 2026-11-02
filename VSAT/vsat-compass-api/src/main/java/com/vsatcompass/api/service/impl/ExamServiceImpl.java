@@ -2,16 +2,19 @@ package com.vsatcompass.api.service.impl;
 
 import com.vsatcompass.api.dto.response.ExamDetailResponse;
 import com.vsatcompass.api.dto.response.ExamDownloadBundleResponse;
+import com.vsatcompass.api.dto.response.QuestionGroupResponse;
 import com.vsatcompass.api.dto.response.ExamSummaryResponse;
 import com.vsatcompass.api.entity.Exam;
 import com.vsatcompass.api.entity.ExamQuestion;
 import com.vsatcompass.api.entity.Question;
+import com.vsatcompass.api.entity.QuestionGroup;
 import com.vsatcompass.api.entity.QuestionOption;
 import com.vsatcompass.api.entity.enums.ExamPricingType;
 import com.vsatcompass.api.entity.enums.ExamStatus;
 import com.vsatcompass.api.exception.AppException;
 import com.vsatcompass.api.repository.ExamQuestionRepository;
 import com.vsatcompass.api.repository.ExamRepository;
+import com.vsatcompass.api.repository.QuestionGroupRepository;
 import com.vsatcompass.api.repository.QuestionOptionRepository;
 import com.vsatcompass.api.repository.QuestionRepository;
 import com.vsatcompass.api.service.ExamService;
@@ -35,6 +38,7 @@ public class ExamServiceImpl implements ExamService {
     private final ExamQuestionRepository examQuestionRepository;
     private final QuestionRepository questionRepository;
     private final QuestionOptionRepository questionOptionRepository;
+    private final QuestionGroupRepository questionGroupRepository;
 
     @Override
     public Page<ExamSummaryResponse> listPublishedFreeExams(Pageable pageable) {
@@ -117,6 +121,19 @@ public class ExamServiceImpl implements ExamService {
         return Math.toIntExact(examQuestionRepository.countByExamId(exam.getId()));
     }
 
+
+    private QuestionGroupResponse toQuestionGroupResponse(QuestionGroup g) {
+        if (g == null) return null;
+        return QuestionGroupResponse.builder()
+                .id(g.getId())
+                .code(g.getCode())
+                .subjectId(g.getSubjectId())
+                .title(g.getTitle())
+                .passageText(g.getPassageText())
+                .passageHtml(g.getPassageHtml())
+                .imageUrl(g.getImageUrl())
+                .build();
+    }
     private ExamDownloadBundleResponse.QuestionBundleItem toBundleQuestion(ExamQuestion examQuestion) {
         Question question = questionRepository.findById(examQuestion.getQuestionId())
                 .orElseThrow(() -> AppException.notFound("Question", examQuestion.getQuestionId()));
@@ -132,12 +149,20 @@ public class ExamServiceImpl implements ExamService {
                 .findFirst()
                 .orElse(null);
 
+        QuestionGroupResponse group = null;
+        if (question.getQuestionGroupId() != null) {
+            group = questionGroupRepository.findById(question.getQuestionGroupId())
+                    .map(this::toQuestionGroupResponse)
+                    .orElse(null);
+        }
         return ExamDownloadBundleResponse.QuestionBundleItem.builder()
                 .id(question.getId())
                 .questionCode(question.getQuestionCode())
                 .subjectId(question.getSubjectId())
                 .topicId(question.getTopicId())
                 .subtopicId(question.getSubtopicId())
+                .questionGroupId(question.getQuestionGroupId())
+                .questionGroup(group)
                 .difficulty(question.getDifficulty())
                 .questionType(question.getQuestionType())
                 .questionText(question.getQuestionText())
