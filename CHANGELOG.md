@@ -2,6 +2,31 @@
 
 ## [Unreleased]
 
+### V-SAT 2026 QuestionGroup Passage Support & Excel Import Pipeline (2026-11-02)
+
+**Backend (Spring Boot):**
+- Thêm hỗ trợ chùm câu hỏi đọc hiểu / ngữ liệu chung (`QuestionGroup`): entity `QuestionGroup`, `QuestionGroupRepository`, DTO `QuestionGroupResponse`, map `questionGroupId` và `questionGroup` trong `QuestionResponse`, `SessionQuestionContentResponse`, `ExamDownloadBundleResponse`, `CreateQuestionRequest`, `UpdateQuestionRequest`.
+- Validation: kiểm tra tồn tại group (404), kiểm tra cùng `subjectId` (400).
+- Tối ưu N+1 query: `ExamServiceImpl.getDownloadBundle` batch lookup `QuestionGroup` qua `findAllById(groupIds)` thay vì `findById` trong vòng lặp.
+- Import Excel (.xlsx) qua Apache POI: `QuestionImportService` & `QuestionImportServiceImpl`, endpoint `GET /admin/questions/import/template` tải file mẫu và `POST /admin/questions/import` hỗ trợ 2 sheet (Single Questions & Question Groups), preview `dryRun=true` không ghi DB, commit `dryRun=false` với transaction rollback khi có lỗi.
+- Giới hạn tải lên an toàn (file size <= 10MB, tối đa 1000 dòng).
+
+**Web Admin:**
+- Thêm trang Import câu hỏi (`ImportQuestions/index.tsx`): upload kéo thả .xlsx, tải file mẫu, thẻ KPI thống kê, bảng preview hiển thị công thức toán KaTeX (`MathView` với `trust: false`), hiển thị lỗi chi tiết từng hàng, khóa nút nạp khi có lỗi.
+- Hiển thị widget đoạn văn đọc hiểu KaTeX `MathView` trên modal duyệt câu hỏi (`ReviewQueue/index.tsx`).
+
+**Android Client:**
+- Thêm model `QuestionGroup` với Gson `@SerializedName(value = "questionGroup", alternate = {"question_group"})`.
+- Cập nhật `OfflineExamBundle` và `OfflineExamRepository` hỗ trợ tải và lưu bài thi offline có ngữ liệu chung.
+- Hiển thị thẻ `cardPassage` trên 3 màn hình: `ExamSessionActivity` (thi online/offline), `ExamReviewActivity` (xem lại), `PracticeSessionActivity` (luyện tập).
+
+**Kiểm thử & Audit:**
+- Thêm E2E self-check script `scripts/test-question-import.mjs` (7/7 checks pass).
+- Unit tests mới: `QuestionImportServiceTest` (5 tests), `ExamServiceTest` batching test. 284/284 backend tests pass.
+- Web Admin: oxlint 0 error, build production pass.
+- Android: 226/226 unit tests pass, assembleDebug pass.
+- Đã kiểm thử và audit độc lập qua Claude Code CLI (PASS).
+
 ### V-SAT 2026 Question Review Queue & Web-Admin Workflow (2026-10-29)
 
 **Web Admin:**

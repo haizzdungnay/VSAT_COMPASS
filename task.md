@@ -97,6 +97,10 @@ Mục tiêu cuối:
 - [x] **Local demo smoke + profile/stats** (`40cec10`, HEAD, 2026-06-18) — ngoài quy trình phase, **chưa prod smoke, chưa tag**:
   - Backend: `UserRepository extends ... JpaSpecificationExecutor<User>` + `AdminUserServiceImpl` chuyển sang `Specification<User> buildUserFilter(...)` (fix `/admin/users` 500 do JPQL nullable filter trên Postgres); thêm `GET /my-stats/weak-topics` (sort accuracy tăng dần, bounded limit); mở rộng `SessionService` + `SessionAnswerRepository` để persist answer-key cho client-submit; `AuthServiceImpl` cho phép đổi email kèm duplicate check + reset `emailVerified=false` khi đổi email; kèm test mới `AdminUserServiceTest`/`MyStatsServiceTest`/`SessionServiceTest`.
   - Android: `ExamSession` Gson camelCase aliases cho result mapping (`examId`/`correctCount`/`totalQuestions`/`scorePercentage`/`timeSpentSeconds`); `ExamResultActivity` render subject/weak-topics động từ backend; `HomeFragment` filter zero-question/smoke exams + populate stats từ server-submit; `ProfileFragment` edit full name/email/phone + đổi mật khẩu + avatar picker/cache; `SplashActivity` route theo role.
+- [x] **QuestionGroup reading passage & Excel Import Pipeline** (2026-11-02):
+  - Backend: entity `QuestionGroup`, `QuestionGroupRepository`, DTOs, N+1 batching optimization trong `ExamServiceImpl.getDownloadBundle` qua `findAllById(groupIds)`; `QuestionImportService` với Apache POI .xlsx parser (Single Questions + Question Groups sheets), dryRun preview và transactional commit có guard limits (10MB, 1000 rows); endpoints `GET /admin/questions/import/template` và `POST /admin/questions/import` (`CONTENT_ADMIN` / `SUPER_ADMIN`).
+  - Web Admin: Trang `ImportQuestions` (upload kéo thả, KPI cards, KaTeX `MathView` preview với `trust: false`, error list, template download) và xem trước passage trên `ReviewQueue`.
+  - Android: model `QuestionGroup`, `OfflineExamBundle`, thẻ `cardPassage` trên 3 màn hình (`ExamSessionActivity`, `ExamReviewActivity`, `PracticeSessionActivity`).
 
 ### 2.2 Chưa hoàn chỉnh
 
@@ -582,7 +586,7 @@ Mục tiêu: từ bản chạy được sang bản có thể demo, bàn giao, ho
 - [ ] Chuẩn hóa ngân hàng câu hỏi Toán và Tiếng Anh
 - [ ] Đảm bảo mỗi môn có đủ dữ liệu demo hợp lý
 - [ ] Soát lỗi chính tả, lời giải, đáp án
-- [ ] Tạo file import chuẩn nếu dùng Excel
+- [x] Tạo file import chuẩn nếu dùng Excel (QuestionImportService .xlsx template + import pipeline)
 
 ### E2. Test & QA
 - [ ] Viết checklist smoke test Android
@@ -768,3 +772,4 @@ Mỗi khi hoàn thành một task:
 | APK-2 | Release Build Verification + First APK | 🟡 In progress | assembleRelease verified, android/v0.1.0 pending tag after merge |
 
 - [x] APK-1 release config foundation prepared -- signing, ProGuard/R8, versionCode=1/versionName=0.1.0, release runbook. Merge pending.
+

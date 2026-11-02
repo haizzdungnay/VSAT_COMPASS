@@ -192,6 +192,8 @@ http://localhost:8080/api/v1/swagger-ui.html
 | Tickets (Admin) | `/admin/tickets` | list, assign, resolve, status | 📋 Phase D |
 | Dashboard | `/admin/stats` | overview counts | 🟢 Impl (`be545ba`) — chưa prod smoke |
 | User Management | `/admin/users` | list, role (`PATCH .../role`), lock/unlock | 🟢 Impl (`be545ba`) + Specification fix (`40cec10` HEAD) — chưa prod smoke |
+| Question Import | `/admin/questions/import` | Excel (.xlsx) preview (`dryRun=true`), commit (`dryRun=false`), template download | 🟢 Impl — verified E2E |
+| Question Groups | `/admin/questions` | passage text support in bundle, review queue, question response | 🟢 Impl — verified E2E |
 
 Note 2026-06-18 (committed in `40cec10`): `/my-stats/weak-topics` is wired into the Android result screen for the improvement list; production smoke is still deferred until Neon is back.
 
@@ -218,11 +220,13 @@ As of C1.3 closeout, the Android collaborator flow is wired against the backend 
 
 Deferred:
 - question version snapshots
-- passage/question groups
 - exam composition from approved questions
 - publication scheduling
-- Excel import
-- admin review UI integration
+
+Implemented (2026-10 / 2026-11):
+- passage/question groups (QuestionGroup reading passage across Backend, Web Admin KaTeX preview, Android client)
+- Excel import (Apache POI 2-sheet parser for single and grouped questions, Web Admin drag & drop UI)
+- admin review UI integration (Web Admin ReviewQueue with KaTeX MathView and action modals)
 
 ### Exam API status
 
