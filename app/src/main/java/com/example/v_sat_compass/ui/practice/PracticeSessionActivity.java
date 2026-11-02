@@ -16,6 +16,7 @@ import com.example.v_sat_compass.data.model.PracticeGradeResponse;
 import com.example.v_sat_compass.data.model.enums.Difficulty;
 import com.example.v_sat_compass.data.model.session.QuestionOptionContentResponse;
 import com.example.v_sat_compass.data.model.session.SessionQuestionContentResponse;
+import com.example.v_sat_compass.data.repository.GamificationRepository;
 import com.example.v_sat_compass.data.repository.PracticeRepository;
 import com.example.v_sat_compass.databinding.ActivityPracticeSessionBinding;
 import com.example.v_sat_compass.util.KaTeXHelper;
@@ -148,6 +149,7 @@ public class PracticeSessionActivity extends AppCompatActivity {
                 total++;
                 if (result.isCorrect()) correct++;
                 difficultyEngine.recordAnswer(result.isCorrect());
+                GamificationRepository.getInstance().recordPracticeAnswer(PracticeSessionActivity.this, result.isCorrect());
                 renderOptions(result.getCorrectOptionIds(), result.getSelectedOptionId());
                 binding.cardResult.setVisibility(android.view.View.VISIBLE);
                 binding.tvResult.setText(result.isCorrect() ? "Đúng" : "Chưa đúng");

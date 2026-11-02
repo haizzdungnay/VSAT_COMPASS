@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+### Phase F Competitive Features Hardening & Gamification-Practice Integration (2026-11-02)
+
+**Android Client:**
+- **Gamification & Practice Integration (F2 & F3):**
+  - Thêm `recordPracticeAnswer(Context, boolean)` trong `GamificationRepository`: ghi nhận chuỗi hoạt động hằng ngày (streak), cộng 10 XP cho mỗi câu luyện tập đúng, và tự động tích lũy tiến độ thử thách hằng ngày (`dailyChallenge`).
+  - `PracticeSessionActivity` tích hợp trực tiếp `GamificationRepository.recordPracticeAnswer` sau khi hoàn thành chấm điểm câu hỏi.
+  - Tối ưu ghi file trạng thái Gamification và Flashcard: áp dụng `Files.move(..., ATOMIC_MOVE, REPLACE_EXISTING)` (minSdk 28), loại bỏ nguy cơ ghi đè lỗi do `File.renameTo`.
+  - Hỗ trợ dependency injection cho `GamificationRepository` phục vụ kiểm thử đơn vị độc lập không phụ thuộc Main Looper.
+- **Unit Tests:**
+  - Thêm `GamificationRepositoryTest` (7 test cases: khởi tạo, cộng XP, cập nhật streak qua nhiều ngày, hoàn thành thử thách hằng ngày, persistence).
+  - Thêm `AiExplanationRepositoryTest` (3 test cases: phân giải phản hồi thành công, xử lý lỗi thân thiện HTTP 503 / `AI_NOT_CONFIGURED`, xử lý lỗi mất kết nối mạng).
+  - Toàn bộ 246/246 Android unit tests PASS, `assembleDebug` PASS.
+
 ### Phase F Android Offline Exam Bundle & Web Admin Wizard Blueprint Integration (2026-11-02)
 
 **Android Client:**

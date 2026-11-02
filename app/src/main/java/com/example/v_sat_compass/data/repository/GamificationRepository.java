@@ -1,6 +1,8 @@
 package com.example.v_sat_compass.data.repository;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import com.example.v_sat_compass.data.model.GamificationState;
@@ -12,6 +14,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.ExecutorService;
@@ -28,11 +32,20 @@ public class GamificationRepository {
 
     private static GamificationRepository instance;
 
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
-    private final Gson gson = new Gson();
+    private final ExecutorService executor;
+    private final Handler mainHandler;
+    private final Gson gson;
     private final Object fileLock = new Object();
 
-    private GamificationRepository() {}
+    private GamificationRepository() {
+        this(Executors.newSingleThreadExecutor(), new Handler(Looper.getMainLooper()), new Gson());
+    }
+
+    GamificationRepository(ExecutorService executor, Handler mainHandler, Gson gson) {
+        this.executor = executor;
+        this.mainHandler = mainHandler;
+        this.gson = gson != null ? gson : new Gson();
+    }
 
     public static synchronized GamificationRepository getInstance() {
         if (instance == null) {
@@ -50,7 +63,7 @@ public class GamificationRepository {
         executor.execute(() -> {
             GamificationState state;
             synchronized (fileLock) {
-                state = normalizeForToday(loadSync(appCtx));
+                state = normalizeForToday(loadSync(appCtx), LocalDate.now());
                 saveAtomicSync(appCtx, state);
             }
             postOnMain(appCtx, () -> callback.onResult(state));
@@ -61,8 +74,8 @@ public class GamificationRepository {
         Context appCtx = context.getApplicationContext();
         executor.execute(() -> {
             synchronized (fileLock) {
-                GamificationState state = normalizeForToday(loadSync(appCtx));
                 LocalDate today = LocalDate.now();
+                GamificationState state = normalizeForToday(loadSync(appCtx), today);
                 updateStreak(state, today);
                 int safeCorrect = Math.max(0, correctCount);
                 state.setTotalXp(Math.max(0, state.getTotalXp()) + XP_PER_EXAM + safeCorrect * XP_PER_CORRECT);
@@ -79,19 +92,39 @@ public class GamificationRepository {
         Context appCtx = context.getApplicationContext();
         executor.execute(() -> {
             synchronized (fileLock) {
-                GamificationState state = normalizeForToday(loadSync(appCtx));
-                updateStreak(state, LocalDate.now());
+                LocalDate today = LocalDate.now();
+                GamificationState state = normalizeForToday(loadSync(appCtx), today);
+                updateStreak(state, today);
                 state.setTotalXp(Math.max(0, state.getTotalXp()) + XP_PER_FLASHCARD_REVIEW);
                 saveAtomicSync(appCtx, state);
             }
         });
     }
 
-    private GamificationState normalizeForToday(GamificationState state) {
+    public void recordPracticeAnswer(Context context, boolean correct) {
+        Context appCtx = context.getApplicationContext();
+        executor.execute(() -> {
+            synchronized (fileLock) {
+                LocalDate today = LocalDate.now();
+                GamificationState state = normalizeForToday(loadSync(appCtx), today);
+                updateStreak(state, today);
+                if (correct) {
+                    state.setTotalXp(Math.max(0, state.getTotalXp()) + XP_PER_CORRECT);
+                    state.setChallengeProgress(Math.min(
+                            DAILY_CHALLENGE_TARGET,
+                            Math.max(0, state.getChallengeProgress()) + 1));
+                    state.setChallengeCompleted(state.getChallengeProgress() >= DAILY_CHALLENGE_TARGET);
+                }
+                saveAtomicSync(appCtx, state);
+            }
+        });
+    }
+
+    private GamificationState normalizeForToday(GamificationState state, LocalDate today) {
         if (state == null) state = new GamificationState();
-        String today = LocalDate.now().toString();
-        if (!today.equals(state.getChallengeDate())) {
-            state.setChallengeDate(today);
+        String todayStr = today.toString();
+        if (!todayStr.equals(state.getChallengeDate())) {
+            state.setChallengeDate(todayStr);
             state.setChallengeProgress(0);
             state.setChallengeCompleted(false);
         }
@@ -145,12 +178,23 @@ public class GamificationRepository {
             Log.e(TAG, "saveAtomicSync write failed", e);
             return false;
         }
+        // ponytail: atomic replace target file on minSdk 28+. Fallback to renameTo if filesystem move fails.
+        try {
+            Files.move(tmp.toPath(), target.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            return true;
+        } catch (IOException e) {
+            Log.w(TAG, "saveAtomicSync Files.move failed, falling back to renameTo", e);
+        }
         boolean moved = tmp.renameTo(target);
         if (!moved) Log.e(TAG, "saveAtomicSync rename failed");
         return moved;
     }
 
     private void postOnMain(Context context, Runnable action) {
-        new android.os.Handler(context.getMainLooper()).post(action);
+        if (mainHandler != null) {
+            mainHandler.post(action);
+        } else {
+            action.run();
+        }
     }
 }

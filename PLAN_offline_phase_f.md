@@ -33,13 +33,13 @@
 
 | ID | Tính năng | Ưu tiên | Trạng thái | Phụ thuộc |
 |----|-----------|---------|------------|-----------|
-| F1 | Tải đề FREE về làm offline + sync kết quả | **P0** | 📋 TODO | quyết định mã hoá |
-| F2 | Adaptive practice (luyện theo chủ đề yếu + độ khó động) | **P1** | 📋 TODO | F-data (Difficulty, weak-topics) |
-| F3 | Gamification: streak ngày + XP/level + daily challenge | **P1** | 📋 TODO | — |
-| F4 | AI giải thích lời giải từng câu (review) | **P1** | 📋 TODO | chọn LLM provider |
-| F5 | Học viên báo lỗi câu hỏi + ticket admin (= D3 cũ) | **P1** | 📋 TODO | — |
-| F6 | Flashcard / spaced-repetition (từ vựng + công thức) | P2 | 📋 TODO | — |
-| F7 | Analytics tiến bộ theo thời gian + thời gian/câu | P2 | 📋 TODO | session_answers (đã có) |
+| F1 | Tải đề FREE về làm offline + sync kết quả | **P0** | ✅ Done (100%) | quyết định mã hoá |
+| F2 | Adaptive practice (luyện theo chủ đề yếu + độ khó động) | **P1** | ✅ Done (100%) | F-data (Difficulty, weak-topics) |
+| F3 | Gamification: streak ngày + XP/level + daily challenge | **P1** | ✅ Done (100%) | — |
+| F4 | AI giải thích lời giải từng câu (review) | **P1** | ✅ Done (100%) | chọn LLM provider |
+| F5 | Học viên báo lỗi câu hỏi + ticket admin (= D3 cũ) | **P1** | ✅ Done (100%) | — |
+| F6 | Flashcard / spaced-repetition (từ vựng + công thức) | P2 | ✅ Done (100%) | — |
+| F7 | Analytics tiến bộ theo thời gian + thời gian/câu | P2 | ✅ Done (100%) | session_answers (đã có) |
 | F8 | Nhắc học theo lịch (local notification) | P2 | ✅ Done (local) | — |
 | F9 | Leaderboard opt-in (XP/điểm bài thi) | P2 (tùy chọn) | ✅ Done | — |
 
@@ -93,6 +93,10 @@ Tham chiếu: `app/.../ui/exam/session/ExamSessionActivity.java`, `ExamResultAct
 
 ## F2 — Adaptive practice (P1)
 
+> **Trạng thái (2026-11-02):** ✅ **HOÀN THÀNH 100%**.
+> - Backend: endpoint `GET /practice/questions` cấp câu hỏi luyện theo `subtopicId`/`topicId`/`difficulty` (đã strip đáp án), `POST /practice/grade` chấm câu hỏi kèm lời giải chi tiết. Unit tests `PracticeServiceTest` PASS.
+> - Android: `AdaptiveDifficultyEngine` tăng độ khó khi đúng 3 câu liên tiếp, giảm khi sai. `PracticeSessionActivity` kết hợp render KaTeX, chùm ngữ liệu `QuestionGroup`, chấm câu trực tiếp và tích hợp ghi nhận tiến độ Gamification (`recordPracticeAnswer`).
+
 **Mục tiêu:** Chế độ "Luyện thông minh": chọn câu theo chủ đề yếu (`/my-stats/weak-topics` đã có) và nâng/giảm `Difficulty` theo chuỗi đúng/sai trong phiên.
 
 | ID | Hạng mục | Tiêu chí |
@@ -109,6 +113,11 @@ Tham chiếu: `app/.../ui/practice/PracticeFragment.java`, `StudentStatsReposito
 
 ## F3 — Gamification (P1)
 
+> **Trạng thái (2026-11-02):** ✅ **HOÀN THÀNH 100%**.
+> - `GamificationRepository` & `GamificationState`: Quản lý streak ngày, tính toán XP/level (10 XP/câu đúng, 50 XP/đề thi, 5 XP/flashcard), mục tiêu daily challenge (10 câu/ngày).
+> - Ghi nhận tiến độ toàn diện: liên kết làm bài thi (`ExamSessionActivity`), luyện tập thông minh (`PracticeSessionActivity`), ôn tập thẻ ghi nhớ (`FlashcardReviewActivity`).
+> - An toàn dữ liệu: Ghi file nguyên tử chuẩn `Files.move(..., ATOMIC_MOVE, REPLACE_EXISTING)` (minSdk 28). Unit tests `GamificationRepositoryTest` PASS.
+
 **Mục tiêu:** Tạo động lực quay lại hằng ngày (nhóm app SAT ghi nhận giữ streak gắn với tăng điểm rõ rệt).
 
 | ID | Hạng mục | Tiêu chí |
@@ -124,6 +133,10 @@ Tham chiếu: `app/.../ui/practice/PracticeFragment.java`, `StudentStatsReposito
 
 ## F4 — AI giải thích lời giải (P1)
 
+> **Trạng thái (2026-11-02):** ✅ **HOÀN THÀNH 100%**.
+> - Backend: `AiExplanationServiceImpl` kết nối OpenAI-compatible API (`gemini-2.5-flash-lite`), rate limiting 10 req/min per user, cache giải thích theo `questionId:selectedOptionId`. Unit tests `AiExplanationServiceTest` PASS.
+> - Android: `ExamReviewActivity` tích hợp nút "Giải thích thêm", render kết quả hoặc lỗi thân thiện tiếng Việt. Unit tests `AiExplanationRepositoryTest` PASS.
+
 **Mục tiêu:** Trong màn review câu sai, nút "Giải thích thêm" gọi LLM diễn giải bước giải / vì sao đáp án đúng. **KHÔNG** dùng AI để chấm điểm.
 
 | ID | Hạng mục | Tiêu chí |
@@ -137,6 +150,10 @@ Tham chiếu: `app/.../ui/practice/PracticeFragment.java`, `StudentStatsReposito
 ---
 
 ## F5 — Báo lỗi câu hỏi + Ticket (P1) — chính là D3 cũ
+
+> **Trạng thái (2026-11-02):** ✅ **HOÀN THÀNH 100%**.
+> - Backend: `TicketController` (student `POST /tickets`), `AdminTicketController` (`GET/PATCH /admin/tickets`), migration `0001_create_tickets.sql`. Unit tests `TicketServiceTest` PASS.
+> - Android: Học viên báo lỗi câu hỏi trong màn xem lại bài thi (`ExamReviewActivity`), quản trị viên duyệt/xử lý ticket trong `AdminTicketActivity`.
 
 **Mục tiêu:** Vòng khép kín: học viên báo sai đáp án/nội dung → admin xử lý → đóng ticket. Tối thiểu để giữ chất lượng ngân hàng đề.
 

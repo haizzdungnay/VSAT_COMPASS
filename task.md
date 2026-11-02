@@ -110,7 +110,7 @@ Mục tiêu cuối:
 - [x] ~~Quản trị câu hỏi / duyệt nội dung / tạo đề hoàn chỉnh (Phase C)~~ — backend + admin Android UI fully shipped through C1.5
 - [x] ~~Cộng tác viên nhập và chỉnh sửa câu hỏi hoàn chỉnh (Phase C)~~ — backend C1.1b + Android C1.3 shipped
 - [ ] Student Android consumes backend exam content — Phase C1.6 (next)
-- [ ] Ticket lỗi / phản hồi nội dung (Phase D)
+- [x] Ticket lỗi / phản hồi nội dung (Phase D & Phase F5)
 - [ ] User management / role management đủ dùng (Phase D)
 - [x] ~~Test plan, regression checklist, release checklist~~ — smoke checklist 25 TCs + unit tests done
 
@@ -529,14 +529,14 @@ Mục tiêu: có đủ công cụ để app vận hành như một sản phẩm 
 |----|----------|------------|
 | D1 | Admin dashboard (overview counts) | 🟢 IMPLEMENTED (`be545ba`, cha của HEAD) — `GET /admin/stats` + `AdminDashboardFragment` live data; chưa prod smoke |
 | D2 | User management (list, role, status) | 🟢 IMPLEMENTED (`be545ba`, cha của HEAD) + `/admin/users` Specification fix trong `40cec10` (HEAD) — `GET /admin/users` + `PATCH .../role\|lock\|unlock` + `AdminUserManagementFragment`; chưa prod smoke |
-| D3 | Ticket system (student feedback) | 🔜 Future |
+| D3 | Ticket system (student feedback) | 🟢 IMPLEMENTED (F5) — student `POST /tickets`, admin `GET/PATCH /admin/tickets`, `AdminTicketActivity`; local verified |
 | D4 | Git history cleanup (bfg-repo-cleaner) | 🔜 Future |
 | D5 | Custom domain (nâng Render lên paid tier hoặc VPS) | 🔜 Future |
 
 ### D1. Ticket / báo lỗi
-- [ ] Học viên gửi báo lỗi câu hỏi / nội dung
-- [ ] Admin xem danh sách ticket
-- [ ] Gán xử lý, cập nhật trạng thái, phản hồi
+- [x] Học viên gửi báo lỗi câu hỏi / nội dung
+- [x] Admin xem danh sách ticket
+- [x] Gán xử lý, cập nhật trạng thái, phản hồi
 
 Tham chiếu mockup:
 - `v_sat_qu_n_tr_ticket_l_i_n_i_dung`
@@ -650,7 +650,7 @@ Mục tiêu: từ bản chạy được sang bản có thể demo, bàn giao, ho
 - [x] Question bank quản trị
 - [x] Review workflow câu hỏi
 - [x] Tạo đề thi quản trị
-- [ ] Ticket nội dung
+- [x] Ticket nội dung (Phase F5)
 - [x] User / role management — implemented trong `be545ba` (cha của HEAD) + `/admin/users` Specification fix trong `40cec10` (HEAD), cần prod smoke
 - [ ] **Đưa batch real data (`be545ba`) + local demo smoke (`40cec10`, HEAD) vào quy trình chuẩn:** prod smoke + closeout + đồng bộ `README.md` / `CHANGELOG.md` (hiện vẫn dừng ở v0.10.2) + quyết định tag
 

@@ -16,6 +16,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -151,6 +153,13 @@ public class FlashcardRepository {
         } catch (IOException e) {
             Log.e(TAG, "saveAtomicSync write failed", e);
             return false;
+        }
+        // ponytail: atomic replace target file on minSdk 28+. Fallback to renameTo if filesystem move fails.
+        try {
+            Files.move(tmp.toPath(), target.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            return true;
+        } catch (IOException e) {
+            Log.w(TAG, "saveAtomicSync Files.move failed, falling back to renameTo", e);
         }
         boolean moved = tmp.renameTo(target);
         if (!moved) Log.e(TAG, "saveAtomicSync rename failed");
