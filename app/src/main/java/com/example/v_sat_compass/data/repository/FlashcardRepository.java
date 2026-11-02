@@ -1,6 +1,8 @@
 package com.example.v_sat_compass.data.repository;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import com.example.v_sat_compass.data.model.Flashcard;
@@ -33,11 +35,20 @@ public class FlashcardRepository {
 
     private static FlashcardRepository instance;
 
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
-    private final Gson gson = new Gson();
+    private final ExecutorService executor;
+    private final Handler mainHandler;
+    private final Gson gson;
     private final Object fileLock = new Object();
 
-    private FlashcardRepository() {}
+    private FlashcardRepository() {
+        this(Executors.newSingleThreadExecutor(), new Handler(Looper.getMainLooper()), new Gson());
+    }
+
+    FlashcardRepository(ExecutorService executor, Handler mainHandler, Gson gson) {
+        this.executor = executor;
+        this.mainHandler = mainHandler;
+        this.gson = gson != null ? gson : new Gson();
+    }
 
     public static synchronized FlashcardRepository getInstance() {
         if (instance == null) {
@@ -167,6 +178,11 @@ public class FlashcardRepository {
     }
 
     private void postOnMain(Context context, Runnable action) {
-        new android.os.Handler(context.getMainLooper()).post(action);
+        // ponytail: null handler runs inline for JVM unit testing without Android Looper.
+        if (mainHandler != null) {
+            mainHandler.post(action);
+        } else {
+            action.run();
+        }
     }
 }

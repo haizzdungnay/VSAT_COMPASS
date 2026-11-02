@@ -10,10 +10,15 @@
   - `PracticeSessionActivity` tích hợp trực tiếp `GamificationRepository.recordPracticeAnswer` sau khi hoàn thành chấm điểm câu hỏi.
   - Tối ưu ghi file trạng thái Gamification và Flashcard: áp dụng `Files.move(..., ATOMIC_MOVE, REPLACE_EXISTING)` (minSdk 28), loại bỏ nguy cơ ghi đè lỗi do `File.renameTo`.
   - Hỗ trợ dependency injection cho `GamificationRepository` phục vụ kiểm thử đơn vị độc lập không phụ thuộc Main Looper.
+- **Flashcard & Progress Analytics (F6 & F7):**
+  - Tối ưu `FlashcardRepository`: hỗ trợ dependency injection `ExecutorService` và `Handler`, cho phép chạy test đồng bộ và độc lập không cần Main Looper.
+  - Tối ưu module phân tích tiến độ `ProgressActivity`: tách các hàm tính toán thống kê thuần (`hasEnoughData`, `aggregateBySubject`, `extractScores`, `calculateAvgTimePerQuestion`) giúp kiểm thử chính xác các chỉ số điểm số trung bình, độ chính xác % và thời gian làm bài trung bình từng môn.
 - **Unit Tests:**
   - Thêm `GamificationRepositoryTest` (7 test cases: khởi tạo, cộng XP, cập nhật streak qua nhiều ngày, hoàn thành thử thách hằng ngày, persistence).
   - Thêm `AiExplanationRepositoryTest` (3 test cases: phân giải phản hồi thành công, xử lý lỗi thân thiện HTTP 503 / `AI_NOT_CONFIGURED`, xử lý lỗi mất kết nối mạng).
-  - Toàn bộ 246/246 Android unit tests PASS, `assembleDebug` PASS.
+  - Thêm `FlashcardRepositoryTest` (3 test cases: tải danh sách thẻ từ seed, lọc thẻ đến hạn theo thuật toán SM-2, lưu và phục hồi tiến độ ôn tập).
+  - Thêm `ProgressAnalyticsTest` (4 test cases: ngưỡng dữ liệu tối thiểu, tính toán chính xác điểm trung bình/độ chính xác theo môn, chuẩn hoá tên môn thi, tính thời gian làm bài trung bình).
+  - Toàn bộ 253/253 Android unit tests PASS, `assembleDebug` PASS.
 
 ### Phase F Android Offline Exam Bundle & Web Admin Wizard Blueprint Integration (2026-11-02)
 

@@ -40,33 +40,51 @@ public class ProgressActivity extends AppCompatActivity {
     }
 
     private void render(List<ExamHistoryEntry> entries) {
-        boolean enoughData = entries.size() >= 2;
+        boolean enoughData = hasEnoughData(entries);
         binding.contentProgress.setVisibility(enoughData ? View.VISIBLE : View.GONE);
         binding.contentEmpty.setVisibility(enoughData ? View.GONE : View.VISIBLE);
         if (!enoughData) return;
 
-        List<Integer> scores = new ArrayList<>();
-        long totalSeconds = 0L;
-        int totalQuestions = 0;
-        Map<String, SubjectAggregate> bySubject = new LinkedHashMap<>();
+        Map<String, SubjectAggregate> bySubject = aggregateBySubject(entries);
+        binding.chartTrend.setScores(extractScores(entries));
+        binding.tvAttempts.setText(String.valueOf(entries.size()));
+        binding.tvAvgTime.setText(calculateAvgTimePerQuestion(entries));
+        renderSubjects(bySubject);
+    }
 
+    static boolean hasEnoughData(List<ExamHistoryEntry> entries) {
+        return entries != null && entries.size() >= 2;
+    }
+
+    static Map<String, SubjectAggregate> aggregateBySubject(List<ExamHistoryEntry> entries) {
+        Map<String, SubjectAggregate> bySubject = new LinkedHashMap<>();
+        if (entries == null) return bySubject;
         for (ExamHistoryEntry entry : entries) {
-            scores.add(entry.getScore());
-            totalSeconds += Math.max(0L, entry.getTimeSpentSeconds());
-            totalQuestions += Math.max(0, entry.getTotalQuestions());
             String subject = normalizeSubject(entry.getSubject());
-            SubjectAggregate aggregate = bySubject.get(subject);
-            if (aggregate == null) {
-                aggregate = new SubjectAggregate();
-                bySubject.put(subject, aggregate);
-            }
+            SubjectAggregate aggregate = bySubject.computeIfAbsent(subject, k -> new SubjectAggregate());
             aggregate.add(entry);
         }
+        return bySubject;
+    }
 
-        binding.chartTrend.setScores(scores);
-        binding.tvAttempts.setText(String.valueOf(entries.size()));
-        binding.tvAvgTime.setText(totalQuestions > 0 ? String.valueOf(Math.round(totalSeconds * 1.0 / totalQuestions)) : "--");
-        renderSubjects(bySubject);
+    static List<Integer> extractScores(List<ExamHistoryEntry> entries) {
+        List<Integer> scores = new ArrayList<>();
+        if (entries == null) return scores;
+        for (ExamHistoryEntry entry : entries) {
+            scores.add(entry.getScore());
+        }
+        return scores;
+    }
+
+    static String calculateAvgTimePerQuestion(List<ExamHistoryEntry> entries) {
+        if (entries == null || entries.isEmpty()) return "--";
+        long totalSeconds = 0L;
+        int totalQuestions = 0;
+        for (ExamHistoryEntry entry : entries) {
+            totalSeconds += Math.max(0L, entry.getTimeSpentSeconds());
+            totalQuestions += Math.max(0, entry.getTotalQuestions());
+        }
+        return totalQuestions > 0 ? String.valueOf(Math.round(totalSeconds * 1.0 / totalQuestions)) : "--";
     }
 
     private void renderSubjects(Map<String, SubjectAggregate> bySubject) {
@@ -103,7 +121,7 @@ public class ProgressActivity extends AppCompatActivity {
         }
     }
 
-    private String normalizeSubject(String subject) {
+    static String normalizeSubject(String subject) {
         if (subject == null || subject.trim().isEmpty()) return "General";
         return subject.trim();
     }
@@ -112,7 +130,7 @@ public class ProgressActivity extends AppCompatActivity {
         return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
-    private static class SubjectAggregate {
+    static class SubjectAggregate {
         int count;
         int scoreSum;
         int correctSum;
