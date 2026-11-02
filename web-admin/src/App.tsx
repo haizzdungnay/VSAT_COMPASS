@@ -8,9 +8,18 @@ import { ReviewQueue } from './pages/ReviewQueue';
 import { ImportQuestions } from './pages/ImportQuestions';
 import { BlueprintsPage } from './pages/Blueprints';
 import { SchedulesPage } from './pages/Schedules';
+import type { BlueprintItem } from './types/exam';
 
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<string>('exams');
+  const [selectedBlueprintForWizard, setSelectedBlueprintForWizard] = useState<BlueprintItem | null>(null);
+
+  const handleSelectTab = (tab: string) => {
+    if (tab !== 'create-exam') {
+      setSelectedBlueprintForWizard(null);
+    }
+    setCurrentTab(tab);
+  };
 
   const tabTitles: Record<string, string> = {
     dashboard: 'Dashboard Tổng quan',
@@ -27,7 +36,7 @@ export const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-surface font-body-md text-on-surface antialiased">
       {/* 260px Left Sidebar */}
-      <Sidebar currentTab={currentTab} onSelectTab={setCurrentTab} />
+      <Sidebar currentTab={currentTab} onSelectTab={handleSelectTab} />
 
       {/* Main Content Area */}
       <div className="pl-[260px]">
@@ -37,11 +46,14 @@ export const App: React.FC = () => {
         {/* Dynamic Page Views */}
         <main className="relative pt-16 w-full min-h-screen bg-background">
           {currentTab === 'exams' && (
-            <ExamList onCreateClick={() => setCurrentTab('create-exam')} />
+            <ExamList onCreateClick={() => { setSelectedBlueprintForWizard(null); setCurrentTab('create-exam'); }} />
           )}
 
           {currentTab === 'create-exam' && (
-            <CreateExamWizard onBackToList={() => setCurrentTab('exams')} />
+            <CreateExamWizard
+              initialBlueprint={selectedBlueprintForWizard}
+              onBackToList={() => { setSelectedBlueprintForWizard(null); setCurrentTab('exams'); }}
+            />
           )}
 
           {currentTab === 'question-bank' && (
@@ -57,7 +69,10 @@ export const App: React.FC = () => {
           )}
 
           {currentTab === 'blueprints' && (
-            <BlueprintsPage onCreateExamClick={() => setCurrentTab('create-exam')} />
+            <BlueprintsPage onCreateExamClick={(bp) => {
+              setSelectedBlueprintForWizard(bp || null);
+              setCurrentTab('create-exam');
+            }} />
           )}
 
           {currentTab === 'schedules' && (

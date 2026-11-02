@@ -10,15 +10,16 @@ import {
 interface Step2Props {
   exam: ExamDetail;
   onChange: (updated: Partial<ExamDetail>) => void;
+  initialBlueprintId?: number;
 }
 
-export const Step2Composition: React.FC<Step2Props> = ({ exam, onChange }) => {
-  const [mode, setMode] = useState<'MANUAL' | 'MATRIX'>('MANUAL');
+export const Step2Composition: React.FC<Step2Props> = ({ exam, onChange, initialBlueprintId }) => {
+  const [mode, setMode] = useState<'MANUAL' | 'MATRIX'>(initialBlueprintId ? 'MATRIX' : 'MANUAL');
   const [selectedTopic, setSelectedTopic] = useState('ALL');
   const [search, setSearch] = useState('');
   const [candidates, setCandidates] = useState<QuestionPickerItem[]>([]);
   const [blueprints, setBlueprints] = useState<BlueprintItem[]>([]);
-  const [selectedBlueprintId, setSelectedBlueprintId] = useState<number>(1);
+  const [selectedBlueprintId, setSelectedBlueprintId] = useState<number>(initialBlueprintId || 1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [matrixResult, setMatrixResult] = useState<string | null>(null);
 
@@ -26,9 +27,13 @@ export const Step2Composition: React.FC<Step2Props> = ({ exam, onChange }) => {
     fetchQuestionPicker({ subjectId: exam.subjectId }).then(setCandidates);
     fetchBlueprints(exam.subjectId).then(bps => {
       setBlueprints(bps);
-      if (bps.length > 0) setSelectedBlueprintId(bps[0].id);
+      if (initialBlueprintId && bps.some(b => b.id === initialBlueprintId)) {
+        setSelectedBlueprintId(initialBlueprintId);
+      } else if (bps.length > 0) {
+        setSelectedBlueprintId(bps[0].id);
+      }
     });
-  }, [exam.subjectId]);
+  }, [exam.subjectId, initialBlueprintId]);
 
   const handleAddQuestion = async (q: QuestionPickerItem) => {
     if (exam.id > 0) {

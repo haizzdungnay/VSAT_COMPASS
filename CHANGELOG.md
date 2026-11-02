@@ -2,6 +2,35 @@
 
 ## [Unreleased]
 
+### Phase F Android Offline Exam Bundle & Web Admin Wizard Blueprint Integration (2026-11-02)
+
+**Android Client:**
+- **Mã hoá file đề thi Offline:** Nâng cấp OfflineExamRepository lên chuẩn AES-128-GCM (IV ngẫu nhiên 12-byte, tag 128-bit) với magic header VSAT\x02.
+- **Bảo toàn dữ liệu & tự động di chuyển:** Đọc single-pass qua DecryptedResult, tự động re-encrypt các file đề cũ (XOR legacy) sang AES-GCM; ném IOException nếu file header bị cắt ngắn (< 33 bytes) chống bypass.
+- **Atomic File Replacement:** Áp dụng chuẩn java.nio.file.Files.move(..., ATOMIC_MOVE, REPLACE_EXISTING) cho saveBundle, saveQueueSync và saveDeadLetterSync (minSdk 28), đảm bảo thay thế nguyên tử ở tầng kernel, loại bỏ hoàn toàn nguy cơ mất dữ liệu bài thi offline khi ứng dụng crash.
+- **WorkManager Background Auto-Sync:** Thêm OfflineExamSyncWorker ràng buộc NetworkType.CONNECTED.
+- **Tối ưu hàng đợi đồng bộ bài thi (OfflineExamSyncRepository):**
+  - Tách biệt syncExecutor và syncLock với fileLock của disk I/O, chống race condition và không chặn thao tác enqueue.
+  - Loại bỏ hoàn toàn head-of-line blocking: duyệt theo localAttemptId với Set<String> processedAttemptIds, cho phép các bài thi hợp lệ phía sau tiếp tục đồng bộ khi gặp lỗi tạm thời.
+  - Bảo vệ tuyệt đối bài thi học sinh: các mã 400, 404, 401, 403, 5xx đều giữ pending; chỉ duy nhất lỗi schema không thể khắc phục (HTTP 422) mới đưa vào Dead-Letter Queue (DLQ).
+  - Tự động reset remoteSessionId = null khi submit trả về 404 để pass kế tiếp tạo session mới nộp lại.
+- **Unit Tests:** Thêm OfflineExamRepositoryTest (round-trip AES-GCM, legacy XOR auto-migration, tamper auth failure, truncated header) và OfflineExamSyncRepositoryTest (classification 422/404/401/403, DLQ save/load, offline check). Toàn bộ 231 unit tests PASS.
+
+**Web Admin:**
+- Liên kết trang ma trận BlueprintsPage trực tiếp vào CreateExamWizard:
+  - Nút "Soạn đề mới theo ma trận này" truyền blueprint được chọn sang wizard.
+  - Tự động điền môn thi, tên đề, mã đề, số lượng câu hỏi và hiển thị banner thông tin ma trận gốc.
+  - Step2Composition nhận initialBlueprintId, tự động chuyển sang phương thức MATRIX và chọn trước ma trận.
+  - App.tsx quản lý vòng đời state, tự động reset blueprint khi rời khỏi wizard.
+- Oxlint 0 warnings/errors, TypeScript & Vite build 100% PASS.
+
+**Kiểm thử & Nghiệm thu:**
+- Android: 231/231 unit tests PASS, Debug APK assemble PASS 100%.
+- Web Admin: Oxlint PASS, Vite build PASS 100%.
+- Backend: 298/298 unit tests PASS.
+- E2E smoke tests Docker: blueprints-schedules, exam-windows, question-import, review-queue PASS 100%.
+- Nghiệm thu độc lập Claude Code CLI: phán quyết PASS.
+
 ### V-SAT 2026 Exam Windows & Schedules Management Backend API (2026-11-02)
 
 **Backend (Spring Boot 3.5.9):**

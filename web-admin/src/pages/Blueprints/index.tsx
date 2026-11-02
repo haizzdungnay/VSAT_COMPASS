@@ -3,7 +3,7 @@ import type { BlueprintItem } from '../../types/exam';
 import { fetchBlueprints, fetchSubjects } from '../../services/api';
 
 interface BlueprintsPageProps {
-  onCreateExamClick?: () => void;
+  onCreateExamClick?: (blueprint?: BlueprintItem) => void;
 }
 
 export const BlueprintsPage: React.FC<BlueprintsPageProps> = ({ onCreateExamClick }) => {
@@ -91,7 +91,7 @@ export const BlueprintsPage: React.FC<BlueprintsPageProps> = ({ onCreateExamClic
 
           {onCreateExamClick && (
             <button
-              onClick={onCreateExamClick}
+              onClick={() => onCreateExamClick(currentBlueprint)}
               className="flex items-center gap-2 px-5 py-2 bg-primary text-on-primary hover:bg-primary/90 rounded-xl font-label-md font-semibold transition shadow-sm"
             >
               <span className="material-symbols-outlined text-[18px]">add_circle</span>

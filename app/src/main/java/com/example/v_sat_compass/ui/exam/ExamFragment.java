@@ -22,6 +22,7 @@ import com.example.v_sat_compass.data.model.Exam;
 import com.example.v_sat_compass.data.repository.ExamRepository;
 import com.example.v_sat_compass.data.repository.OfflineExamRepository;
 import com.example.v_sat_compass.data.repository.OfflineExamSyncRepository;
+import com.example.v_sat_compass.sync.OfflineExamSyncWorker;
 import com.example.v_sat_compass.util.NetworkUtils;
 import com.example.v_sat_compass.databinding.FragmentExamBinding;
 import com.example.v_sat_compass.ui.exam.adapter.ExamAdapter;
@@ -65,6 +66,7 @@ public class ExamFragment extends Fragment {
                 startActivity(new Intent(requireContext(), DownloadedExamsActivity.class)));
         binding.swipeRefresh.setOnRefreshListener(this::loadExams);
         OfflineExamSyncRepository.getInstance().syncPending(requireContext());
+        OfflineExamSyncWorker.scheduleSync(requireContext());
         loadExams();
     }
 

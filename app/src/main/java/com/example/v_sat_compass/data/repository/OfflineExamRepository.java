@@ -17,6 +17,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.security.SecureRandom;
+import javax.crypto.Cipher;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,6 +37,12 @@ public class OfflineExamRepository {
     private static final String TAG = "OfflineExamRepo";
     private static final String DIR_NAME = "offline_exams";
     private static final String FILE_EXTENSION = ".vsat";
+
+    private static final byte[] MAGIC_HEADER = new byte[]{'V', 'S', 'A', 'T', 0x02};
+    // ponytail: App-level AES-128 obfuscation per PLAN_offline_phase_f.md (2026-06-18). Prevents casual inspection of answers in local files. Upgrade to Android Keystore when commercial DRM is required.
+    private static final byte[] AES_KEY_BYTES = new byte[]{
+            0x56, 0x53, 0x41, 0x54, 0x5f, 0x43, 0x4f, 0x4d, 0x50, 0x41, 0x53, 0x53, 0x5f, 0x4b, 0x45, 0x59
+    };
 
     private static volatile OfflineExamRepository instance;
 
@@ -129,12 +140,13 @@ public class OfflineExamRepository {
 
         try {
             writeEncryptedFile(context, tempFile, bytes);
-            if (finalFile.exists()) {
-                finalFile.delete();
-            }
-            if (!tempFile.renameTo(finalFile)) {
-                writeEncryptedFile(context, finalFile, bytes);
-                tempFile.delete();
+            try {
+                java.nio.file.Files.move(tempFile.toPath(), finalFile.toPath(),
+                        java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            } catch (java.nio.file.AtomicMoveNotSupportedException e) {
+                java.nio.file.Files.move(tempFile.toPath(), finalFile.toPath(),
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
             }
         } catch (Exception e) {
             if (tempFile.exists()) {
@@ -204,15 +216,34 @@ public class OfflineExamRepository {
         void onResult(List<Long> downloadedIds);
     }
 
+    private static class DecryptedResult {
+        final byte[] bytes;
+        final boolean isLegacy;
+
+        DecryptedResult(byte[] bytes, boolean isLegacy) {
+            this.bytes = bytes;
+            this.isLegacy = isLegacy;
+        }
+    }
+
     public synchronized OfflineExamBundle loadBundle(Context context, long examId) {
         File file = bundleFile(context, examId);
         if (!file.exists()) {
             return null;
         }
         try {
-            byte[] bytes = readEncryptedFile(context, file);
-            String json = new String(bytes, StandardCharsets.UTF_8);
-            return gson.fromJson(json, OfflineExamBundle.class);
+            DecryptedResult result = readEncryptedFile(context, file);
+            String json = new String(result.bytes, StandardCharsets.UTF_8);
+            OfflineExamBundle bundle = gson.fromJson(json, OfflineExamBundle.class);
+            // Auto-migrate legacy XOR files to AES-GCM on read without reading disk twice
+            if (bundle != null && result.isLegacy) {
+                try {
+                    saveBundle(context, examId, bundle);
+                } catch (Exception e) {
+                    Log.w(TAG, "Failed to auto-migrate legacy bundle " + examId + " to AES-GCM", e);
+                }
+            }
+            return bundle;
         } catch (Exception e) {
             Log.e(TAG, "loadBundle failed for id " + examId, e);
             return null;
@@ -274,17 +305,30 @@ public class OfflineExamRepository {
     }
 
     private void writeEncryptedFile(Context context, File file, byte[] data) throws IOException {
-        try (FileOutputStream fos = new FileOutputStream(file)) {
-            byte[] masked = new byte[data.length];
-            for (int i = 0; i < data.length; i++) {
-                masked[i] = (byte) (data[i] ^ 0x5A);
+        try {
+            byte[] iv = new byte[12];
+            new SecureRandom().nextBytes(iv);
+
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            SecretKeySpec keySpec = new SecretKeySpec(AES_KEY_BYTES, "AES");
+            GCMParameterSpec gcmSpec = new GCMParameterSpec(128, iv);
+            cipher.init(Cipher.ENCRYPT_MODE, keySpec, gcmSpec);
+
+            byte[] cipherText = cipher.doFinal(data);
+
+            try (FileOutputStream fos = new FileOutputStream(file)) {
+                fos.write(MAGIC_HEADER);
+                fos.write(iv);
+                fos.write(cipherText);
+                fos.flush();
             }
-            fos.write(masked);
-            fos.flush();
+        } catch (GeneralSecurityException e) {
+            throw new IOException("Failed to encrypt bundle with AES-GCM", e);
         }
     }
 
-    private byte[] readEncryptedFile(Context context, File file) throws IOException {
+    private DecryptedResult readEncryptedFile(Context context, File file) throws IOException {
+        byte[] fileBytes;
         try (FileInputStream fis = new FileInputStream(file);
              ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
             byte[] buf = new byte[4096];
@@ -292,13 +336,44 @@ public class OfflineExamRepository {
             while ((read = fis.read(buf)) != -1) {
                 bos.write(buf, 0, read);
             }
-            byte[] data = bos.toByteArray();
-            byte[] unmasked = new byte[data.length];
-            for (int i = 0; i < data.length; i++) {
-                unmasked[i] = (byte) (data[i] ^ 0x5A);
-            }
-            return unmasked;
+            fileBytes = bos.toByteArray();
         }
+
+        if (startsWith(fileBytes, MAGIC_HEADER)) {
+            if (fileBytes.length < MAGIC_HEADER.length + 12 + 16) {
+                throw new IOException("Corrupted AES-GCM bundle: truncated file (< 33 bytes)");
+            }
+            try {
+                byte[] iv = new byte[12];
+                System.arraycopy(fileBytes, MAGIC_HEADER.length, iv, 0, 12);
+                int cipherOffset = MAGIC_HEADER.length + 12;
+                int cipherLen = fileBytes.length - cipherOffset;
+
+                Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+                SecretKeySpec keySpec = new SecretKeySpec(AES_KEY_BYTES, "AES");
+                GCMParameterSpec gcmSpec = new GCMParameterSpec(128, iv);
+                cipher.init(Cipher.DECRYPT_MODE, keySpec, gcmSpec);
+
+                return new DecryptedResult(cipher.doFinal(fileBytes, cipherOffset, cipherLen), false);
+            } catch (GeneralSecurityException e) {
+                throw new IOException("Failed to decrypt AES-GCM bundle: auth tag verification failed", e);
+            }
+        }
+
+        // Fallback for legacy XOR-masked bundles (backward compatibility)
+        byte[] unmasked = new byte[fileBytes.length];
+        for (int i = 0; i < fileBytes.length; i++) {
+            unmasked[i] = (byte) (fileBytes[i] ^ 0x5A);
+        }
+        return new DecryptedResult(unmasked, true);
+    }
+
+    private static boolean startsWith(byte[] data, byte[] prefix) {
+        if (data.length < prefix.length) return false;
+        for (int i = 0; i < prefix.length; i++) {
+            if (data[i] != prefix[i]) return false;
+        }
+        return true;
     }
 
     public File bundleFile(Context context, long examId) {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { ExamDetail } from '../../types/exam';
+import type { ExamDetail, BlueprintItem } from '../../types/exam';
 import { createExam, updateExam } from '../../services/api';
 import { Step1General } from './Step1General';
 import { Step2Composition } from './Step2Composition';
@@ -8,24 +8,43 @@ import { Step4VariantsPublish } from './Step4VariantsPublish';
 
 interface WizardProps {
   onBackToList: () => void;
+  initialBlueprint?: BlueprintItem | null;
 }
 
-export const CreateExamWizard: React.FC<WizardProps> = ({ onBackToList }) => {
+export const CreateExamWizard: React.FC<WizardProps> = ({ onBackToList, initialBlueprint }) => {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isSaving, setIsSaving] = useState(false);
-  const [exam, setExam] = useState<ExamDetail>({
-    id: 0,
-    examCode: 'VSAT_2026_TOAN_01',
-    title: 'Đề thi thử V-SAT Toán học - Khóa 2026 số 01',
-    subjectId: 1,
-    subjectName: 'Toán học',
-    questionCount: 25,
-    durationMinutes: 90,
-    difficulty: 'HARD',
-    pricingType: 'FREE',
-    status: 'DRAFT',
-    scoringProfileCode: 'VSAT_2026_RAW_150',
-    deliveryMode: 'PRACTICE'
+  const [exam, setExam] = useState<ExamDetail>(() => {
+    if (initialBlueprint) {
+      return {
+        id: 0,
+        examCode: `VSAT_2026_${initialBlueprint.subjectCode || 'EXAM'}_01`,
+        title: `Đề thi thử V-SAT ${initialBlueprint.subjectName} - Theo ma trận ${initialBlueprint.code}`,
+        subjectId: initialBlueprint.subjectId,
+        subjectName: initialBlueprint.subjectName,
+        questionCount: initialBlueprint.totalQuestions || 25,
+        durationMinutes: 90,
+        difficulty: 'MEDIUM',
+        pricingType: 'FREE',
+        status: 'DRAFT',
+        scoringProfileCode: 'VSAT_2026_RAW_150',
+        deliveryMode: 'PRACTICE'
+      };
+    }
+    return {
+      id: 0,
+      examCode: 'VSAT_2026_TOAN_01',
+      title: 'Đề thi thử V-SAT Toán học - Khóa 2026 số 01',
+      subjectId: 1,
+      subjectName: 'Toán học',
+      questionCount: 25,
+      durationMinutes: 90,
+      difficulty: 'HARD',
+      pricingType: 'FREE',
+      status: 'DRAFT',
+      scoringProfileCode: 'VSAT_2026_RAW_150',
+      deliveryMode: 'PRACTICE'
+    };
   });
 
   const handleUpdate = (updated: Partial<ExamDetail>) => {
@@ -97,6 +116,12 @@ export const CreateExamWizard: React.FC<WizardProps> = ({ onBackToList }) => {
           <p className="font-body-md text-body-md text-on-surface-variant">
             Quy trình 4 bước biên soạn, kiểm tra toàn vẹn 25 câu 150 điểm và sinh biến thể hoán vị
           </p>
+          {initialBlueprint && (
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 border border-primary/20 rounded-lg text-primary text-xs font-semibold">
+              <span className="material-symbols-outlined text-[16px]">dataset</span>
+              <span>Đang dùng ma trận: {initialBlueprint.name} ({initialBlueprint.totalQuestions} câu - {initialBlueprint.subjectName})</span>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-space-sm">
@@ -165,7 +190,7 @@ export const CreateExamWizard: React.FC<WizardProps> = ({ onBackToList }) => {
       {/* Step Body */}
       <div>
         {currentStep === 1 && <Step1General exam={exam} onChange={handleUpdate} />}
-        {currentStep === 2 && <Step2Composition exam={exam} onChange={handleUpdate} />}
+        {currentStep === 2 && <Step2Composition exam={exam} onChange={handleUpdate} initialBlueprintId={initialBlueprint?.id} />}
         {currentStep === 3 && <Step3Preview exam={exam} />}
         {currentStep === 4 && <Step4VariantsPublish exam={exam} onPublishSuccess={onBackToList} />}
       </div>

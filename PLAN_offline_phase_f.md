@@ -47,6 +47,11 @@
 
 ## F1 — Tải đề FREE về làm offline (P0)
 
+> **Trạng thái (2026-11-02):** ✅ **HOÀN THÀNH 100%**.
+> - Backend: endpoint `GET /exams/{id}/download-bundle` trả full bundle kèm đáp án, hỗ trợ chùm câu hỏi đọc hiểu `QuestionGroup`.
+> - Android Encrypted Storage: chuẩn AES-128-GCM (12-byte IV ngẫu nhiên, 128-bit tag, magic header `VSAT\x02`), single-pass auto-migration file XOR cũ sang AES-GCM, atomic move `Files.move` (minSdk 28).
+> - Android Background Sync: `OfflineExamSyncWorker` WorkManager (`NetworkType.CONNECTED`), loại bỏ head-of-line blocking qua `processedAttemptIds`, bảo toàn dữ liệu bài thi (chỉ DLQ khi 422, giữ pending khi 401/403/404/5xx).
+
 **Mục tiêu:** Mỗi item đề FREE có ô "Tải xuống". Đề đã tải → làm bài hoàn toàn offline (bỏ qua `startSession` mạng), chấm tại máy, kết quả vào hàng đợi và sync khi có mạng. Đây cũng là cơ hội **vá luôn lỗi luồng "Làm bài" chưa offline thuần / màn đen** đang treo trong `task.md`.
 
 ### F1-A — Backend: download bundle endpoint
