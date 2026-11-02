@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+### V-SAT 2026 Web Admin Blueprints & Exam Schedules (2026-11-02)
+
+**Web Admin:**
+- Thêm trang Ma trận đề thi V-SAT 2026 (`Blueprints/index.tsx`): kết nối `GET /admin/blueprints`, xem khung ma trận 3 chiều 7 môn học, thẻ KPI (25 câu, 150 điểm thô), thanh phân bổ cấu trúc trực quan (36% Đúng/Sai, 24% MCQ, 20% Ghép hợp, 20% Điền số), bảng chi tiết cells, sao chép cấu trúc JSON và nút soạn đề theo ma trận.
+- Thêm trang Ca thi & Lịch thi (`Schedules/index.tsx`): quản lý phòng thi trực tuyến theo Phase WEB-5, thẻ KPI ca thi đang mở / thí sinh / lượt nộp, modal tạo ca thi mới với client-side validation nghiêm ngặt (`startAt < endAt`, bù giờ trễ, lượt thi, chính sách công bố điểm), thao tác mở ca / đóng ca / xóa ca có cảnh báo mất dữ liệu.
+- Định nghĩa kiểu `ExamScheduleItem`, `ResultReleasePolicy` và các helper functions tại `services/api.ts`.
+
+**Kiểm thử & Audit:**
+- Thêm E2E self-check script `scripts/test-blueprints-schedules.mjs` (6/6 checks pass).
+- Oxlint: 0 warnings, 0 errors; Vite build: PASS 100%.
+- Được kiểm tra và phê duyệt độc lập qua Claude Code CLI (PASS).
+
 ### V-SAT 2026 QuestionGroup Passage Support & Excel Import Pipeline (2026-11-02)
 
 **Backend (Spring Boot):**

@@ -6,7 +6,8 @@ import type {
   BlueprintItem,
   ExamVariantItem,
   ExamQuestionDetail,
-  QuestionImportResult
+  QuestionImportResult,
+  ExamScheduleItem
 } from '../types/exam';
 
 const BASE_URL = 'http://localhost:18080/api/v1';
@@ -950,4 +951,116 @@ export function triggerBlobDownload(blob: Blob, filename = 'vsat_question_import
   a.click();
   a.remove();
   window.URL.revokeObjectURL(url);
+}
+
+const SCHEDULES_STORAGE_KEY = 'vsat_admin_exam_schedules';
+
+export const initialSchedules: ExamScheduleItem[] = [
+  {
+    id: 1,
+    windowCode: 'CA_VSAT_TOAN_2026_01',
+    name: 'Ca thi Khảo sát V-SAT Toán học đợt 1',
+    examId: 1,
+    examCode: 'VSAT_2026_MATH_01',
+    examTitle: 'Đề thi Khảo sát Năng lực V-SAT Toán học 2026',
+    subjectId: 1,
+    subjectName: 'Toán học',
+    mode: 'SCHEDULED_MOCK',
+    startAt: '2026-11-05T08:00:00Z',
+    endAt: '2026-11-05T09:30:00Z',
+    gracePeriodMinutes: 10,
+    maxAttempts: 1,
+    resultPolicy: 'AFTER_WINDOW_CLOSED',
+    status: 'UPCOMING',
+    activeCandidates: 45,
+    totalSubmissions: 0
+  },
+  {
+    id: 2,
+    windowCode: 'CA_VSAT_ANH_2026_PRACTICE',
+    name: 'Phòng luyện tập V-SAT Tiếng Anh tự do',
+    examId: 2,
+    examCode: 'VSAT_2026_ENG_01',
+    examTitle: 'Đề thi Luyện tập V-SAT Tiếng Anh chuẩn 2026',
+    subjectId: 2,
+    subjectName: 'Tiếng Anh',
+    mode: 'PRACTICE',
+    startAt: '2026-11-01T00:00:00Z',
+    endAt: '2026-11-30T23:59:59Z',
+    gracePeriodMinutes: 0,
+    maxAttempts: 10,
+    resultPolicy: 'IMMEDIATE',
+    status: 'RUNNING',
+    activeCandidates: 128,
+    totalSubmissions: 94
+  },
+  {
+    id: 3,
+    windowCode: 'CA_VSAT_DEMO_ACTIVE',
+    name: 'Ca thi Thử V-SAT Trực tuyến Phòng số 3',
+    examId: 1,
+    examCode: 'VSAT_2026_MATH_01',
+    examTitle: 'Đề thi Khảo sát Năng lực V-SAT Toán học 2026',
+    subjectId: 1,
+    subjectName: 'Toán học',
+    mode: 'SCHEDULED_MOCK',
+    startAt: '2026-11-02T08:00:00Z',
+    endAt: '2026-11-02T18:00:00Z',
+    gracePeriodMinutes: 15,
+    maxAttempts: 2,
+    resultPolicy: 'IMMEDIATE',
+    status: 'RUNNING',
+    activeCandidates: 32,
+    totalSubmissions: 28
+  }
+];
+
+export function fetchSchedules(): ExamScheduleItem[] {
+  try {
+    const raw = localStorage.getItem(SCHEDULES_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {
+    // fallback
+  }
+  try {
+    localStorage.setItem(SCHEDULES_STORAGE_KEY, JSON.stringify(initialSchedules));
+  } catch {}
+  return initialSchedules;
+}
+
+export function saveSchedule(item: ExamScheduleItem): ExamScheduleItem[] {
+  const current = fetchSchedules();
+  const index = current.findIndex(s => s.id === item.id);
+  let updated: ExamScheduleItem[];
+  if (index >= 0) {
+    updated = current.map(s => s.id === item.id ? item : s);
+  } else {
+    const newId = current.length > 0 ? Math.max(...current.map(s => s.id)) + 1 : 1;
+    updated = [{ ...item, id: newId }, ...current];
+  }
+  try {
+    localStorage.setItem(SCHEDULES_STORAGE_KEY, JSON.stringify(updated));
+  } catch {}
+  return updated;
+}
+
+export function deleteSchedule(id: number): ExamScheduleItem[] {
+  const current = fetchSchedules();
+  const updated = current.filter(s => s.id !== id);
+  try {
+    localStorage.setItem(SCHEDULES_STORAGE_KEY, JSON.stringify(updated));
+  } catch {}
+  return updated;
+}
+
+export function updateScheduleStatus(id: number, status: 'UPCOMING' | 'RUNNING' | 'CLOSED'): ExamScheduleItem[] {
+  const current = fetchSchedules();
+  const updated = current.map(s => s.id === id ? { ...s, status } : s);
+  try {
+    localStorage.setItem(SCHEDULES_STORAGE_KEY, JSON.stringify(updated));
+  } catch {}
+  return updated;
 }

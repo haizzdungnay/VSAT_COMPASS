@@ -183,3 +183,25 @@ export interface QuestionImportResult {
   items: QuestionImportItem[];
   errors: string[];
 }
+
+export type ResultReleasePolicy = 'IMMEDIATE' | 'AFTER_WINDOW_CLOSED' | 'MANUAL';
+
+export interface ExamScheduleItem {
+  id: number;
+  windowCode: string;
+  name: string;
+  examId: number;
+  examCode: string;
+  examTitle: string;
+  subjectId: number;
+  subjectName: string;
+  mode: DeliveryMode;
+  startAt: string;
+  endAt: string;
+  gracePeriodMinutes: number;
+  maxAttempts: number;
+  resultPolicy: ResultReleasePolicy;
+  status: 'UPCOMING' | 'RUNNING' | 'CLOSED';
+  activeCandidates: number;
+  totalSubmissions: number;
+}

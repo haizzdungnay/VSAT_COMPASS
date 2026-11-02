@@ -6,6 +6,8 @@ import { CreateExamWizard } from './pages/ExamWizard';
 import { QuestionBank } from './pages/QuestionBank';
 import { ReviewQueue } from './pages/ReviewQueue';
 import { ImportQuestions } from './pages/ImportQuestions';
+import { BlueprintsPage } from './pages/Blueprints';
+import { SchedulesPage } from './pages/Schedules';
 
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<string>('exams');
@@ -55,31 +57,11 @@ export const App: React.FC = () => {
           )}
 
           {currentTab === 'blueprints' && (
-            <div className="p-margin space-y-4">
-              <div className="flex justify-between items-center">
-                <h1 className="font-headline-lg text-on-surface">Ma trận đề thi V-SAT</h1>
-              </div>
-              <div className="p-6 rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-center space-y-2">
-                <span className="material-symbols-outlined text-[48px] text-primary">grid_view</span>
-                <h3 className="font-headline-sm text-on-surface">Khung Ma trận Khảo thí 3 chiều</h3>
-                <p className="text-body-sm text-outline max-w-md mx-auto">
-                  Quản lý các bản blueprint phân bổ 25 câu hỏi theo chủ đề kiến thức x mức độ nhận thức (NB/TH/VD/VDC) x 4 dạng câu hỏi.
-                </p>
-              </div>
-            </div>
+            <BlueprintsPage onCreateExamClick={() => setCurrentTab('create-exam')} />
           )}
 
           {currentTab === 'schedules' && (
-            <div className="p-margin space-y-4">
-              <h1 className="font-headline-lg text-on-surface">Ca thi & Lịch thi</h1>
-              <div className="p-6 rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-center space-y-2">
-                <span className="material-symbols-outlined text-[48px] text-primary">pending_actions</span>
-                <h3 className="font-headline-sm text-on-surface">Cấu hình Phòng thi & Ca thi (Exam Windows)</h3>
-                <p className="text-body-sm text-outline max-w-md mx-auto">
-                  Thiết lập thời gian bắt đầu, thời gian đóng ca, trễ giờ tối đa và chính sách công bố điểm tự động.
-                </p>
-              </div>
-            </div>
+            <SchedulesPage />
           )}
 
           {currentTab === 'dashboard' && (
