@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import type { ExamScheduleItem, ExamItem, ResultReleasePolicy, DeliveryMode } from '../../types/exam';
-import { fetchSchedules, saveSchedule, deleteSchedule, updateScheduleStatus, fetchExams } from '../../services/api';
+import { fetchSchedules, createSchedule, deleteSchedule, updateScheduleStatus, fetchExams } from '../../services/api';
 
 export const SchedulesPage: React.FC = () => {
-  const [schedules, setSchedules] = useState<ExamScheduleItem[]>(() => fetchSchedules());
+  const [schedules, setSchedules] = useState<ExamScheduleItem[]>([]);
   const [availableExams, setAvailableExams] = useState<ExamItem[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [showModal, setShowModal] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [submitting, setSubmitting] = useState<boolean>(false);
 
   // Form states
   const [selectedExamId, setSelectedExamId] = useState<number>(1);
@@ -17,9 +19,22 @@ export const SchedulesPage: React.FC = () => {
   const [endAt, setEndAt] = useState<string>('2026-11-05T10:00');
   const [gracePeriodMinutes, setGracePeriodMinutes] = useState<number>(15);
   const [maxAttempts, setMaxAttempts] = useState<number>(1);
-  const [resultPolicy, setResultPolicy] = useState<ResultReleasePolicy>('AFTER_WINDOW_CLOSED');
+  const [resultPolicy, setResultPolicy] = useState<ResultReleasePolicy>('AFTER_WINDOW_FULL');
+
+  const refreshSchedules = async () => {
+    try {
+      const data = await fetchSchedules();
+      setSchedules(data);
+    } catch (err) {
+      console.error('Failed to load schedules', err);
+    }
+  };
 
   useEffect(() => {
+    fetchSchedules().then(data => {
+      setSchedules(data);
+      setLoading(false);
+    }).catch(() => setLoading(false));
     fetchExams().then(exams => {
       setAvailableExams(exams);
       if (exams.length > 0) {
@@ -39,44 +54,50 @@ export const SchedulesPage: React.FC = () => {
     }
   };
 
-  const handleCreate = (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    const ex = availableExams.find(e => e.id === selectedExamId);
-    const newItem: ExamScheduleItem = {
-      id: 0,
-      windowCode: windowCode.trim(),
-      name: name.trim(),
-      examId: selectedExamId,
-      examCode: ex ? ex.examCode : 'VSAT_2026',
-      examTitle: ex ? ex.title : 'Đề thi V-SAT 2026',
-      subjectId: ex ? ex.subjectId : 1,
-      subjectName: ex ? (ex.subjectName || (ex.subjectId === 1 ? 'Toán học' : 'Tiếng Anh')) : 'Toán học',
-      mode,
-      startAt: new Date(startAt).toISOString(),
-      endAt: new Date(endAt).toISOString(),
-      gracePeriodMinutes,
-      maxAttempts,
-      resultPolicy,
-      status: 'UPCOMING',
-      activeCandidates: 0,
-      totalSubmissions: 0
-    };
-
-    const updated = saveSchedule(newItem);
-    setSchedules(updated);
-    setShowModal(false);
-  };
-
-  const handleDelete = (id: number) => {
-    if (confirm('Bạn có chắc chắn muốn xóa ca thi này không?')) {
-      const updated = deleteSchedule(id);
-      setSchedules(updated);
+    setSubmitting(true);
+    try {
+      await createSchedule({
+        examId: selectedExamId,
+        windowCode: windowCode.trim(),
+        title: name.trim(),
+        mode,
+        startAt: new Date(startAt).toISOString(),
+        endAt: new Date(endAt).toISOString(),
+        gracePeriodMinutes,
+        maxAttempts,
+        resultPolicy,
+        hardStopAtEnd: true,
+        allowOffline: false
+      });
+      setShowModal(false);
+      await refreshSchedules();
+    } catch (err: any) {
+      alert(err?.message || 'Có lỗi xảy ra khi tạo ca thi');
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const handleStatusChange = (id: number, newStatus: 'UPCOMING' | 'RUNNING' | 'CLOSED') => {
-    const updated = updateScheduleStatus(id, newStatus);
-    setSchedules(updated);
+  const handleDelete = async (id: number) => {
+    if (confirm('Bạn có chắc chắn muốn xóa ca thi này không?')) {
+      try {
+        await deleteSchedule(id);
+        await refreshSchedules();
+      } catch (err: any) {
+        alert(err?.message || 'Không thể xóa ca thi');
+      }
+    }
+  };
+
+  const handleStatusChange = async (id: number, newStatus: 'UPCOMING' | 'RUNNING' | 'CLOSED') => {
+    try {
+      await updateScheduleStatus(id, newStatus);
+      await refreshSchedules();
+    } catch (err: any) {
+      alert(err?.message || 'Không thể đổi trạng thái ca thi');
+    }
   };
 
   const filtered = schedules.filter(s => {
@@ -133,10 +154,20 @@ export const SchedulesPage: React.FC = () => {
 
   const getPolicyLabel = (policy: ResultReleasePolicy) => {
     switch (policy) {
-      case 'IMMEDIATE': return 'Công bố ngay khi nộp';
-      case 'AFTER_WINDOW_CLOSED': return 'Sau khi đóng ca thi';
-      case 'MANUAL': return 'Duyệt công bố thủ công';
-      default: return policy;
+      case 'IMMEDIATE':
+      case 'IMMEDIATE_FULL':
+        return 'Công bố ngay khi nộp';
+      case 'IMMEDIATE_SCORE':
+        return 'Công bố ngay (Chỉ điểm)';
+      case 'AFTER_WINDOW_CLOSED':
+      case 'AFTER_WINDOW_FULL':
+        return 'Sau khi đóng ca thi';
+      case 'AFTER_WINDOW_SCORE':
+        return 'Sau khi đóng ca (Chỉ điểm)';
+      case 'MANUAL':
+        return 'Duyệt công bố thủ công';
+      default:
+        return policy;
     }
   };
 
@@ -218,7 +249,12 @@ export const SchedulesPage: React.FC = () => {
           <span className="text-body-sm text-outline">Đồng bộ tự động với máy chủ V-SAT API</span>
         </div>
 
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="p-12 text-center text-outline flex items-center justify-center gap-2">
+            <span className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></span>
+            Đang tải dữ liệu ca thi từ máy chủ...
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="p-12 text-center text-outline">
             Chưa có ca thi nào phù hợp với bộ lọc.
           </div>
@@ -243,11 +279,11 @@ export const SchedulesPage: React.FC = () => {
                       {getStatusBadge(item.status)}
                     </td>
                     <td className="p-3.5 space-y-1">
-                      <div className="font-semibold text-on-surface">{item.name}</div>
+                      <div className="font-semibold text-on-surface">{item.name || item.windowCode}</div>
                       <div className="text-[12px] text-outline flex items-center gap-2">
                         <span className="font-mono text-primary font-medium">[{item.windowCode}]</span>
                         <span>•</span>
-                        <span>{item.examTitle}</span>
+                        <span>{item.examTitle || ('Đề #' + item.examId)}</span>
                       </div>
                     </td>
                     <td className="p-3.5">
@@ -446,8 +482,9 @@ export const SchedulesPage: React.FC = () => {
                   onChange={(e) => setResultPolicy(e.target.value as ResultReleasePolicy)}
                   className="w-full p-2.5 bg-surface-container-low border border-outline-variant/40 rounded-xl font-body-sm text-on-surface"
                 >
-                  <option value="AFTER_WINDOW_CLOSED">Sau khi đóng ca thi (Khuyến nghị chống lộ đề)</option>
-                  <option value="IMMEDIATE">Công bố điểm ngay sau khi nộp</option>
+                  <option value="AFTER_WINDOW_FULL">Sau khi đóng ca thi (Đầy đủ đáp án & giải thích)</option>
+                  <option value="IMMEDIATE_FULL">Công bố ngay khi nộp bài (Đầy đủ)</option>
+                  <option value="AFTER_WINDOW_SCORE">Sau khi đóng ca thi (Chỉ hiển thị điểm số)</option>
                   <option value="MANUAL">Chờ quản trị viên duyệt công bố thủ công</option>
                 </select>
               </div>
@@ -462,9 +499,10 @@ export const SchedulesPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-primary text-on-primary hover:bg-primary/90 rounded-xl font-label-md font-semibold transition shadow-sm"
+                  disabled={submitting}
+                  className="px-6 py-2 bg-primary text-on-primary hover:bg-primary/90 disabled:opacity-50 rounded-xl font-label-md font-semibold transition shadow-sm"
                 >
-                  Lưu ca thi
+                  {submitting ? 'Đang lưu...' : 'Lưu ca thi'}
                 </button>
               </div>
             </form>

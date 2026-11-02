@@ -20,6 +20,9 @@ import com.vsatcompass.api.exception.AppException;
 import com.vsatcompass.api.repository.ExamQuestionRepository;
 import com.vsatcompass.api.repository.ExamSessionRepository;
 import com.vsatcompass.api.repository.QuestionGroupRepository;
+import com.vsatcompass.api.entity.ExamWindow;
+import com.vsatcompass.api.entity.enums.ExamDeliveryMode;
+import com.vsatcompass.api.repository.ExamWindowRepository;
 import com.vsatcompass.api.repository.QuestionOptionRepository;
 import com.vsatcompass.api.repository.QuestionRepository;
 import com.vsatcompass.api.repository.SessionAnswerRepository;
@@ -49,6 +52,7 @@ public class SessionServiceImpl implements SessionService {
     private final QuestionOptionRepository questionOptionRepository;
     private final SessionAnswerRepository sessionAnswerRepository;
     private final QuestionGroupRepository questionGroupRepository;
+    private final ExamWindowRepository examWindowRepository;
 
     @Override
     @Transactional
@@ -66,9 +70,37 @@ public class SessionServiceImpl implements SessionService {
         // Default totalQuestions to 0 if not provided (client will update via client-submit)
         int totalQuestions = request.getTotalQuestions() != null ? request.getTotalQuestions() : 0;
 
+        Long examWindowId = request.getExamWindowId();
+        if (examWindowId != null) {
+            ExamWindow window = examWindowRepository.findById(examWindowId)
+                    .orElseThrow(() -> AppException.notFound("ExamWindow", examWindowId));
+            if (!Objects.equals(window.getExamId(), request.getExamId())) {
+                throw AppException.badRequest("Ca thi khong thuoc ve de thi nay");
+            }
+            if (window.getMode() == ExamDeliveryMode.SCHEDULED_MOCK) {
+                OffsetDateTime now = OffsetDateTime.now();
+                if (window.getStartAt() != null && now.isBefore(window.getStartAt())) {
+                    throw AppException.badRequest("Ca thi chua bat dau");
+                }
+                OffsetDateTime hardEnd = window.getEndAt() != null
+                        ? window.getEndAt().plusMinutes(window.getGracePeriodMinutes() != null ? window.getGracePeriodMinutes() : 0)
+                        : null;
+                if (hardEnd != null && now.isAfter(hardEnd)) {
+                    throw AppException.badRequest("Ca thi da ket thuc");
+                }
+            }
+            if (window.getMaxAttempts() != null && window.getMaxAttempts() > 0) {
+                long userAttempts = examSessionRepository.countByUserIdAndExamWindowId(userId, examWindowId);
+                if (userAttempts >= window.getMaxAttempts()) {
+                    throw AppException.badRequest("Ban da vuot qua so lan thi cho phep (" + window.getMaxAttempts() + " lan)");
+                }
+            }
+        }
+
         ExamSession session = ExamSession.builder()
                 .userId(userId)
                 .examId(request.getExamId())
+                .examWindowId(examWindowId)
                 .mode(mode)
                 .status(SessionStatus.IN_PROGRESS)
                 .totalQuestions(totalQuestions)

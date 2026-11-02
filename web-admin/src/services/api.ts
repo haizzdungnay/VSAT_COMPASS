@@ -1015,7 +1015,7 @@ export const initialSchedules: ExamScheduleItem[] = [
   }
 ];
 
-export function fetchSchedules(): ExamScheduleItem[] {
+export function fetchSchedulesLocal(): ExamScheduleItem[] {
   try {
     const raw = localStorage.getItem(SCHEDULES_STORAGE_KEY);
     if (raw) {
@@ -1031,36 +1031,84 @@ export function fetchSchedules(): ExamScheduleItem[] {
   return initialSchedules;
 }
 
-export function saveSchedule(item: ExamScheduleItem): ExamScheduleItem[] {
-  const current = fetchSchedules();
-  const index = current.findIndex(s => s.id === item.id);
-  let updated: ExamScheduleItem[];
-  if (index >= 0) {
-    updated = current.map(s => s.id === item.id ? item : s);
-  } else {
-    const newId = current.length > 0 ? Math.max(...current.map(s => s.id)) + 1 : 1;
-    updated = [{ ...item, id: newId }, ...current];
+export async function fetchSchedules(status?: string, examId?: number): Promise<ExamScheduleItem[]> {
+  try {
+    const params = new URLSearchParams();
+    if (status && status !== "ALL") params.set("status", status);
+    if (examId) params.set("examId", String(examId));
+    const qs = params.toString() ? "?" + params.toString() : "";
+    const res = await authenticatedFetch(BASE_URL + "/admin/exam-windows" + qs);
+    if (!res.ok) {
+      console.warn("[fetchSchedules] Backend " + res.status + ", using local fallback");
+      return fetchSchedulesLocal();
+    }
+    const json = await res.json();
+    if (json?.data && Array.isArray(json.data)) {
+      return json.data;
+    }
+    return [];
+  } catch (err) {
+    console.warn("[fetchSchedules] Network error, using local fallback", err);
+    return fetchSchedulesLocal();
   }
-  try {
-    localStorage.setItem(SCHEDULES_STORAGE_KEY, JSON.stringify(updated));
-  } catch {}
-  return updated;
 }
 
-export function deleteSchedule(id: number): ExamScheduleItem[] {
-  const current = fetchSchedules();
-  const updated = current.filter(s => s.id !== id);
-  try {
-    localStorage.setItem(SCHEDULES_STORAGE_KEY, JSON.stringify(updated));
-  } catch {}
-  return updated;
+export async function createSchedule(data: {
+  examId: number;
+  windowCode: string;
+  title?: string;
+  mode: import("../types/exam").DeliveryMode;
+  startAt?: string;
+  endAt?: string;
+  gracePeriodMinutes?: number;
+  maxAttempts?: number;
+  resultPolicy?: import("../types/exam").ResultReleasePolicy;
+  hardStopAtEnd?: boolean;
+  allowOffline?: boolean;
+}): Promise<ExamScheduleItem> {
+  const res = await authenticatedFetch(BASE_URL + "/admin/exam-windows", {
+    method: "POST",
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.message || "Loi tao ca thi (" + res.status + ")");
+  }
+  const json = await res.json();
+  return json.data;
 }
 
-export function updateScheduleStatus(id: number, status: 'UPCOMING' | 'RUNNING' | 'CLOSED'): ExamScheduleItem[] {
-  const current = fetchSchedules();
-  const updated = current.map(s => s.id === id ? { ...s, status } : s);
-  try {
-    localStorage.setItem(SCHEDULES_STORAGE_KEY, JSON.stringify(updated));
-  } catch {}
-  return updated;
+export async function updateSchedule(id: number, data: Partial<ExamScheduleItem>): Promise<ExamScheduleItem> {
+  const res = await authenticatedFetch(BASE_URL + "/admin/exam-windows/" + id, {
+    method: "PUT",
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.message || "Loi cap nhat ca thi (" + res.status + ")");
+  }
+  const json = await res.json();
+  return json.data;
+}
+
+export async function updateScheduleStatus(id: number, status: "UPCOMING" | "RUNNING" | "CLOSED"): Promise<ExamScheduleItem> {
+  const res = await authenticatedFetch(BASE_URL + "/admin/exam-windows/" + id + "/status?status=" + status, {
+    method: "PATCH"
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.message || "Loi doi trang thai ca thi (" + res.status + ")");
+  }
+  const json = await res.json();
+  return json.data;
+}
+
+export async function deleteSchedule(id: number): Promise<void> {
+  const res = await authenticatedFetch(BASE_URL + "/admin/exam-windows/" + id, {
+    method: "DELETE"
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.message || "Loi xoa ca thi (" + res.status + ")");
+  }
 }

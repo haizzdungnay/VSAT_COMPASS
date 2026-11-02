@@ -2,6 +2,34 @@
 
 ## [Unreleased]
 
+### V-SAT 2026 Exam Windows & Schedules Management Backend API (2026-11-02)
+
+**Backend (Spring Boot 3.5.9):**
+- Thêm migration `0011_add_exam_window_title.sql` bổ sung cột `title VARCHAR(200)` cho bảng `exam_windows` (tuân thủ Frozen Schema Rule).
+- Thêm Entity `ExamWindow`, enums `ExamDeliveryMode` (`PRACTICE`, `SCHEDULED_MOCK`), `ResultReleasePolicy` (`IMMEDIATE_SCORE`, `IMMEDIATE_FULL`, `AFTER_WINDOW_SCORE`, `AFTER_WINDOW_FULL`, `MANUAL`).
+- Thêm `ExamWindowRepository`, projection `WindowSessionCount`.
+- Thêm `AdminExamWindowService` & `AdminExamWindowController` (`/admin/exam-windows`):
+  - CRUD ca thi, bảo vệ phân quyền `CONTENT_ADMIN` / `SUPER_ADMIN`.
+  - Validate thời gian chặt chẽ (`startAt < endAt`), chặn bypass khi null mode, chặn trùng mã `windowCode` theo đề thi (409 Conflict).
+  - Khóa thay đổi đề thi/chế độ và khóa chuyển về `UPCOMING` khi ca thi đã có thí sinh tham gia.
+  - Xóa ca thi an toàn: chặn xóa nếu đã có thí sinh tham gia hoặc ràng buộc FK.
+  - Tối ưu N+1 query: gom nhóm đếm thí sinh/lượt nộp qua 1 query duy nhất `countSessionsByWindowIds`.
+  - Quick patch `/admin/exam-windows/{id}/status`: hỗ trợ đóng ca (`CLOSED`) tức thì, mở ca (`RUNNING`), hẹn ca (`UPCOMING`).
+- Cập nhật `SessionServiceImpl.startSession`: liên kết ca thi qua `examWindowId`, validate khung giờ mở ca và giới hạn số lượt thi `maxAttempts`.
+
+**Web Admin:**
+- Kết nối `SchedulesPage` trực tiếp với Backend REST API qua các hàm async trong `services/api.ts` (`fetchSchedules`, `createSchedule`, `updateSchedule`, `updateScheduleStatus`, `deleteSchedule`), giữ fallback an toàn.
+- Cập nhật định nghĩa `ResultReleasePolicy` đồng bộ 100% với backend.
+- Trạng thái loading, cảnh báo lỗi, xử lý badge trực quan.
+
+**Kiểm thử & Nghiệm thu:**
+- 298/298 backend unit tests PASS (thêm 11 test cases trong `AdminExamWindowServiceTest`).
+- Web Admin: Oxlint 0 warnings/errors, TypeScript & Vite build 100% PASS.
+- Android: 226/226 unit tests PASS.
+- E2E smoke test `scripts/test-exam-windows.mjs`: 23/23 checks PASS live trên Docker.
+- Nghiệm thu chéo độc lập Claude Code CLI: phán quyết PASS.
+
+
 ### V-SAT 2026 Web Admin Blueprints & Exam Schedules (2026-11-02)
 
 **Web Admin:**

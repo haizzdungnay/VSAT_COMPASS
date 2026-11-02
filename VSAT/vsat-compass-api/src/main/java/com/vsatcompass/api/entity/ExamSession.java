@@ -85,6 +85,9 @@ public class ExamSession {
     @Builder.Default
     private String deviceType = "ANDROID";
 
+    @Column(name = "exam_window_id")
+    private Long examWindowId;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;

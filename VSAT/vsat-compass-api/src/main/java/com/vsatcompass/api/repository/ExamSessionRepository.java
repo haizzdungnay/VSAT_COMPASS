@@ -16,6 +16,15 @@ public interface ExamSessionRepository extends JpaRepository<ExamSession, Long> 
 
     Optional<ExamSession> findByIdAndUserId(Long id, Long userId);
 
+    long countByExamWindowIdAndStatus(Long examWindowId, SessionStatus status);
+
+    boolean existsByExamWindowId(Long examWindowId);
+
+    long countByUserIdAndExamWindowId(Long userId, Long examWindowId);
+
+    @Query("SELECT s.examWindowId AS windowId, s.status AS status, COUNT(s) AS count FROM ExamSession s WHERE s.examWindowId IN :windowIds GROUP BY s.examWindowId, s.status")
+    List<WindowSessionCount> countSessionsByWindowIds(@Param("windowIds") List<Long> windowIds);
+
     long countByStatusAndSubmittedAtBetween(
             SessionStatus status,
             OffsetDateTime start,

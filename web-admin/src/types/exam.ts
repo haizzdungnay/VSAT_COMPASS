@@ -184,7 +184,7 @@ export interface QuestionImportResult {
   errors: string[];
 }
 
-export type ResultReleasePolicy = 'IMMEDIATE' | 'AFTER_WINDOW_CLOSED' | 'MANUAL';
+export type ResultReleasePolicy = 'IMMEDIATE' | 'AFTER_WINDOW_CLOSED' | 'IMMEDIATE_FULL' | 'IMMEDIATE_SCORE' | 'AFTER_WINDOW_FULL' | 'AFTER_WINDOW_SCORE' | 'MANUAL';
 
 export interface ExamScheduleItem {
   id: number;

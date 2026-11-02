@@ -18,6 +18,8 @@ public class SessionRequest {
 
         @Min(value = 1, message = "totalQuestions phải ≥ 1")
         private Integer totalQuestions;
+
+        private Long examWindowId;
     }
 
     @Data
