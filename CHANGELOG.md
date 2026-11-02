@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+### Production Deployment Preparation & Environment Configuration (2026-11-02)
+
+**Backend & Cloud Database:**
+- Áp dụng đầy đủ 11 bản migration SQL (`0001` đến `0011`) trực tiếp lên cơ sở dữ liệu production Neon Cloud (`PostgreSQL 17`), bao gồm các bảng `tickets`, `leaderboard_opt_in`, `question_groups`, `exam_blueprints`, `exam_windows`.
+- Cập nhật `application.yml`: chuyển thời hạn access token về chuẩn production 15 phút (`JWT_ACCESS_TOKEN_EXPIRATION_MS:900000`), mở rộng `cors.allowed-origins` cho production domains (`vsat-admin.onrender.com`, `vsat-compass.vercel.app`).
+- Chuyển cấu hình môi trường `.env` kết nối Neon Cloud DB với profile `prod`.
+
+**Web Admin Portal:**
+- Cấu hình `BASE_URL` động: tự động trỏ đến production backend `https://vsat-compass-api.onrender.com/api/v1` trong chế độ build (`import.meta.env.PROD`), hỗ trợ override biến môi trường `VITE_API_URL`.
+
+**Android Client Release Build:**
+- Build thành công bản phát hành chính thức `app-release.apk` (4.3 MB, giảm từ 21 MB do tối ưu hoá R8/ProGuard và resource shrinking).
+- Ký số release bằng `vsat-release.keystore`, `USE_LOCAL_BACKEND = false`, trỏ trực tiếp đến `https://vsat-compass-api.onrender.com/api/v1/`.
+
 ### Phase F Competitive Features Hardening & Gamification-Practice Integration (2026-11-02)
 
 **Android Client:**

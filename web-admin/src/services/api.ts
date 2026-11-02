@@ -10,7 +10,7 @@ import type {
   ExamScheduleItem
 } from '../types/exam';
 
-const BASE_URL = 'http://localhost:18080/api/v1';
+const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) || (import.meta.env.PROD ? 'https://vsat-compass-api.onrender.com/api/v1' : 'http://localhost:18080/api/v1');
 const TOKEN_KEY = 'vsat_admin_access_token';
 
 export function getStoredToken(): string | null {
