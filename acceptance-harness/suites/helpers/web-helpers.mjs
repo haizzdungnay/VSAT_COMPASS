@@ -1,15 +1,17 @@
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { crc32 } from 'node:zlib';
 
 export function findBrowserExecutable() {
+  const isWin = process.platform === 'win32';
   const candidates = [
     process.env.CHROME_BIN,
     process.env.EDGE_BIN,
     'C:/Program Files/Google/Chrome/Application/chrome.exe',
     'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
+    '/usr/bin/google-chrome-stable',
     '/usr/bin/google-chrome',
     '/usr/bin/chromium-browser',
     '/usr/bin/chromium'
@@ -18,6 +20,18 @@ export function findBrowserExecutable() {
   for (const path of candidates) {
     if (existsSync(path)) return path;
   }
+
+  const whichCmd = isWin ? 'where.exe' : 'which';
+  for (const bin of ['google-chrome-stable', 'google-chrome', 'chromium-browser', 'chromium']) {
+    try {
+      const res = spawnSync(whichCmd, [bin], { encoding: 'utf8' });
+      if (res.status === 0 && res.stdout.trim()) {
+        const found = res.stdout.trim().split(/\r?\n/)[0].trim();
+        if (existsSync(found)) return found;
+      }
+    } catch {}
+  }
+
   throw new Error('No compatible headless browser (Chrome/Edge/Chromium) found on host system');
 }
 

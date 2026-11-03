@@ -27,16 +27,19 @@ export function findAdbPath() {
   const custom = process.env.ADB_PATH;
   if (custom && existsSync(custom)) return custom;
 
+  const isWin = process.platform === 'win32';
+  const adbBin = isWin ? 'adb.exe' : 'adb';
+
   const candidates = [
     'adb',
-    'adb.exe',
+    adbBin,
     'C:\\Users\\PC\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe',
-    join(process.env.LOCALAPPDATA || '', 'Android/Sdk/platform-tools/adb.exe'),
-    join(process.env.ANDROID_HOME || '', 'platform-tools/adb.exe')
-  ];
+    process.env.LOCALAPPDATA ? join(process.env.LOCALAPPDATA, 'Android/Sdk/platform-tools', adbBin) : null,
+    process.env.ANDROID_HOME ? join(process.env.ANDROID_HOME, 'platform-tools', adbBin) : null,
+    process.env.ANDROID_SDK_ROOT ? join(process.env.ANDROID_SDK_ROOT, 'platform-tools', adbBin) : null
+  ].filter(Boolean);
 
   for (const c of candidates) {
-    if (!c) continue;
     try {
       const probe = spawnSync(c, ['version'], { encoding: 'utf8' });
       if (probe.status === 0) return c;

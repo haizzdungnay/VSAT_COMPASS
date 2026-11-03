@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { spawn, spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { resolve, join } from 'node:path';
+import { resolve, join, delimiter } from 'node:path';
 import { runSafetyPreflight } from './safety-preflight.mjs';
 import { bootstrapDatabase } from './db-bootstrap.mjs';
 import { startLlmMock } from './stubs/llm-mock-server.mjs';
@@ -14,6 +14,34 @@ const IS_WIN = process.platform === 'win32';
 
 let llmServerInstance = null;
 let backendProcess = null;
+
+export function resolveJbrHome() {
+  const isWin = process.platform === 'win32';
+  const javaExe = isWin ? 'bin/java.exe' : 'bin/java';
+
+  if (process.env.JAVA_HOME && existsSync(join(process.env.JAVA_HOME, javaExe))) {
+    return process.env.JAVA_HOME;
+  }
+
+  const candidates = isWin
+    ? [
+        'C:\\Program Files\\Android\\Android Studio1\\jbr',
+        'C:\\Program Files\\Android\\Android Studio\\jbr',
+        'C:\\Program Files\\Java\\jdk-21',
+        'C:\\Program Files\\Eclipse Adoptium\\jdk-21'
+      ]
+    : [
+        '/usr/lib/jvm/temurin-21-jdk-amd64',
+        '/usr/lib/jvm/java-21-openjdk-amd64'
+      ];
+
+  for (const c of candidates) {
+    if (existsSync(c) && existsSync(join(c, javaExe))) {
+      return c;
+    }
+  }
+  return process.env.JAVA_HOME || null;
+}
 
 async function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -77,9 +105,16 @@ async function ensureBackendRunning() {
 
   console.log('[RUN-ALL] Spawning Backend Spring Boot with clean-room acceptance configuration...');
   const gradlewCmd = IS_WIN ? resolve(BACKEND_DIR, 'gradlew.bat') : resolve(BACKEND_DIR, 'gradlew');
+  const jbrHome = resolveJbrHome();
 
   const env = {
     ...process.env,
+    ...(jbrHome
+      ? {
+          JAVA_HOME: jbrHome,
+          PATH: `${join(jbrHome, 'bin')}${delimiter}${process.env.PATH || ''}`
+        }
+      : {}),
     SERVER_PORT: '18080',
     SPRING_PROFILES_ACTIVE: 'dev',
     DATABASE_URL: 'jdbc:postgresql://127.0.0.1:55432/vsat_compass_acceptance',

@@ -1,0 +1,76 @@
+name: Clean-Room Acceptance
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    name: Clean-Room Full Acceptance Harness
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Normalize line-endings and executable permissions for Gradle wrapper
+        run: |
+          sed -i 's/\r$//' gradlew VSAT/vsat-compass-api/gradlew && chmod +x gradlew VSAT/vsat-compass-api/gradlew
+          mkdir -p VSAT
+          ln -sf ../web-admin VSAT/web-admin
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web-admin/package-lock.json
+
+      - name: Install web-admin dependencies and verify browser
+        working-directory: web-admin
+        run: |
+          npm ci
+          google-chrome-stable --version || chromium --version || true
+
+      - name: Safety Preflight Gate
+        env:
+          DATABASE_URL: postgresql://vsat_clean:vsat_clean_pass@127.0.0.1:55432/vsat_compass_acceptance
+          SPRING_DATASOURCE_URL: jdbc:postgresql://127.0.0.1:55432/vsat_compass_acceptance
+          API_BASE_URL: http://127.0.0.1:18080/api/v1
+          VITE_API_URL: http://127.0.0.1:18080/api/v1
+          VITE_API_BASE_URL: http://127.0.0.1:18080/api/v1
+          LLM_BASE_URL: http://127.0.0.1:18081/v1
+        run: node acceptance-harness/safety-preflight.mjs --check-ports
+
+      - name: Run Full Clean-Room Acceptance Harness
+        env:
+          DATABASE_URL: postgresql://vsat_clean:vsat_clean_pass@127.0.0.1:55432/vsat_compass_acceptance
+          SPRING_DATASOURCE_URL: jdbc:postgresql://127.0.0.1:55432/vsat_compass_acceptance
+          API_BASE_URL: http://127.0.0.1:18080/api/v1
+          VITE_API_URL: http://127.0.0.1:18080/api/v1
+          VITE_API_BASE_URL: http://127.0.0.1:18080/api/v1
+          LLM_BASE_URL: http://127.0.0.1:18081/v1
+          CI: "true"
+        run: node acceptance-harness/run-all.mjs
+
+      - name: Upload Acceptance Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clean-room-acceptance-results
+          path: acceptance-harness/results/
+          if-no-files-found: warn

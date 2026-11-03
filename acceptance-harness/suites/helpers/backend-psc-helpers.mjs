@@ -1,16 +1,68 @@
 import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 
 const REPO_ROOT = resolve(import.meta.dirname, '../../../');
 const HARNESS_DIR = resolve(REPO_ROOT, 'acceptance-harness');
 const BACKEND_CLASSES = resolve(REPO_ROOT, 'VSAT/vsat-compass-api/build/classes/java/main');
 const TRIGGERS_DIR = resolve(HARNESS_DIR, 'jvm-triggers');
 
-// PostgreSQL driver jar in gradle cache
-const PG_JAR = 'C:/Users/PC/.gradle/caches/modules-2/files-2.1/org.postgresql/postgresql/42.7.8/81b840fbfe0a6c0b7aa14c6bd4856108d36ed780/postgresql-42.7.8.jar';
-const JAVA_BIN = 'C:/Program Files/Android/Android Studio1/jbr/bin/java.exe';
-const JAVAC_BIN = 'C:/Program Files/Android/Android Studio1/jbr/bin/javac.exe';
+function resolveJavaBinary(binName) {
+  const isWin = process.platform === 'win32';
+  const exe = isWin ? `${binName}.exe` : binName;
+
+  if (process.env.JAVA_HOME) {
+    const candidate = resolve(process.env.JAVA_HOME, 'bin', exe);
+    if (existsSync(candidate)) return candidate;
+  }
+  const defaults = isWin
+    ? [
+        `C:/Program Files/Android/Android Studio1/jbr/bin/${exe}`,
+        `C:/Program Files/Android/Android Studio/jbr/bin/${exe}`,
+        `C:/Program Files/Java/jdk-21/bin/${exe}`,
+        `C:/Program Files/Eclipse Adoptium/jdk-21/bin/${exe}`
+      ]
+    : [
+        `/usr/lib/jvm/temurin-21-jdk-amd64/bin/${exe}`,
+        `/usr/lib/jvm/java-21-openjdk-amd64/bin/${exe}`,
+        `/usr/bin/${exe}`
+      ];
+  for (const c of defaults) {
+    if (existsSync(c)) return c;
+  }
+  return exe;
+}
+
+function findPgJar() {
+  if (process.env.PG_JAR && existsSync(process.env.PG_JAR)) {
+    return process.env.PG_JAR;
+  }
+  const hardcodedWin = 'C:/Users/PC/.gradle/caches/modules-2/files-2.1/org.postgresql/postgresql/42.7.8/81b840fbfe0a6c0b7aa14c6bd4856108d36ed780/postgresql-42.7.8.jar';
+  if (existsSync(hardcodedWin)) return hardcodedWin;
+
+  const home = process.env.USERPROFILE || process.env.HOME || '';
+  if (home) {
+    const gradleDir = resolve(home, '.gradle/caches/modules-2/files-2.1/org.postgresql/postgresql');
+    if (existsSync(gradleDir)) {
+      try {
+        const stack = [gradleDir];
+        while (stack.length > 0) {
+          const curr = stack.pop();
+          const entries = readdirSync(curr, { withFileTypes: true });
+          for (const e of entries) {
+            const full = resolve(curr, e.name);
+            if (e.isDirectory()) stack.push(full);
+            else if (e.name.endsWith('.jar')) return full;
+          }
+        }
+      } catch {}
+    }
+  }
+  return null;
+}
+
+const JAVA_BIN = resolveJavaBinary('java');
+const JAVAC_BIN = resolveJavaBinary('javac');
 
 export const sharedState = {
   tempUser: {
@@ -54,10 +106,12 @@ export function runJvmRefreshTokenCleanup() {
   compileJvmTriggerIfNeeded();
 
   const classpathParts = [TRIGGERS_DIR, BACKEND_CLASSES];
-  if (existsSync(PG_JAR)) {
-    classpathParts.push(PG_JAR);
+  const pgJar = findPgJar();
+  if (pgJar && existsSync(pgJar)) {
+    classpathParts.push(pgJar);
   }
-  const cp = classpathParts.join(';');
+  const cpSep = process.platform === 'win32' ? ';' : ':';
+  const cp = classpathParts.join(cpSep);
 
   const env = {
     ...process.env,
