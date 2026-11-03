@@ -1,0 +1,963 @@
+{
+  "suite": "android-student-report",
+  "generatedAt": "2026-11-03T06:28:47.168Z",
+  "totalCases": 20,
+  "passedCount": 20,
+  "failedCount": 0,
+  "results": [
+    {
+      "id": "AND-001",
+      "description": "SplashActivity (Application launcher entry point, token verification, role redirect)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 32,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "SplashActivity must be declared in AndroidManifest.xml"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "SplashActivity is the launcher activity and must be exported=\"true\""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "activity_splash.xml must exist"
+        }
+      ],
+      "evidence": {
+        "splash": {
+          "manifestDeclared": true,
+          "exported": true,
+          "deviceTested": false,
+          "deviceLaunch": null
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "AND-002",
+      "description": "LoginActivity (User authentication with email and password, EncryptedSharedPreferences token persistence)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 10,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "LoginActivity must be declared in AndroidManifest.xml"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "LoginActivity must be secure with android:exported=\"false\""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "activity_login.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "LoginActivity must contain all required views: "
+        }
+      ],
+      "evidence": {
+        "login": {
+          "manifestDeclared": true,
+          "nonExported": true,
+          "views": [
+            "etEmail",
+            "etPassword",
+            "btnLogin",
+            "progressBar"
+          ],
+          "deviceTested": false
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "AND-003",
+      "description": "RegisterActivity (Student registration form with validation and auto-login)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 14,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "RegisterActivity must be declared in AndroidManifest.xml"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "RegisterActivity must be secure with android:exported=\"false\""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "activity_register.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "RegisterActivity must have form fields: "
+        }
+      ],
+      "evidence": {
+        "register": {
+          "manifestDeclared": true,
+          "nonExported": true,
+          "views": [
+            "etFullName",
+            "etEmail",
+            "etPassword",
+            "etConfirmPassword",
+            "btnRegister"
+          ],
+          "deviceTested": false
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "AND-004",
+      "description": "MainActivity (Root student navigation container with BottomNavigationView, hosts 4 student fragments, privileged mode switcher)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 6,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "MainActivity must be declared in AndroidManifest.xml"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "MainActivity must be secure with android:exported=\"false\""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "activity_main.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "MainActivity must contain bottom_nav and nav_host_fragment"
+        }
+      ],
+      "evidence": {
+        "main": {
+          "manifestDeclared": true,
+          "nonExported": true,
+          "navContainer": [
+            "bottom_nav",
+            "nav_host_fragment"
+          ],
+          "deviceTested": false
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "AND-005",
+      "description": "HomeFragment (Student dashboard with daily challenge streak, subject shortcut chips, featured practice exams)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 11,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "fragment_home.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "HomeFragment must contain score and exam components: "
+        }
+      ],
+      "evidence": {
+        "homeFragment": {
+          "layoutExists": true,
+          "views": [
+            "tvGreeting",
+            "progressScore",
+            "tvScoreValue",
+            "rvUpcomingExams"
+          ]
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "AND-006",
+      "description": "ExamFragment (Exam catalog search and subject filters, one-tap offline exam bundle download button, badge indicators)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 33,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "fragment_exam.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "ExamFragment must have search, downloaded exams launcher, and filter chips"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "item_exam.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Exam list item must support one-tap offline download button"
+        }
+      ],
+      "evidence": {
+        "examFragment": {
+          "fragmentLayout": [
+            "btnDownloadedExams",
+            "etSearch",
+            "chipContainer",
+            "chipAll"
+          ],
+          "itemLayout": [
+            "tvExamTitle",
+            "tvQuestionCount",
+            "tvDuration",
+            "btnDownloadExam"
+          ]
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "AND-007",
+      "description": "ExamDetailActivity (Detailed exam syllabus overview, download offline bundle action, start live exam session)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 20,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "ExamDetailActivity must be declared in AndroidManifest.xml"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "ExamDetailActivity must have android:exported=\"false\""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "activity_exam_detail.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "ExamDetailActivity must have start exam and overview views: "
+        }
+      ],
+      "evidence": {
+        "examDetail": {
+          "manifestDeclared": true,
+          "nonExported": true,
+          "views": [
+            "tvExamTitle",
+            "tvDuration",
+            "btnStartExam",
+            "btnBookmark"
+          ],
+          "deviceTested": false
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "AND-008",
+      "description": "DownloadedExamsActivity (Offline library of downloaded encrypted .vsat exams, bundle deletion, offline session launcher)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 1,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "DownloadedExamsActivity must be declared in AndroidManifest.xml"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "DownloadedExamsActivity must have android:exported=\"false\""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Offline .vsat bundle must start with VSAT 0x02 magic header"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Offline .vsat bundle must decrypt correctly via AES-128 GCM"
+        }
+      ],
+      "evidence": {
+        "downloadedExams": {
+          "manifestDeclared": true,
+          "nonExported": true,
+          "vsatCryptoValid": true,
+          "deviceTested": false
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "AND-009",
+      "description": "ExamSessionActivity (Countdown timer, question grid modal, KaTeX formula WebView, 4 V-SAT formats, submission dialog, offline caching)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 47,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "ExamSessionActivity must be declared in AndroidManifest.xml"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "ExamSessionActivity must have android:exported=\"false\""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "activity_exam_session.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "ExamSessionActivity must include timer, grid launcher, and sync status"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "dialog_question_grid.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Question navigation grid modal must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "KaTeX STEM assets (katex.min.js, CSS, auto-render, fonts) must be fully integrated"
+        }
+      ],
+      "evidence": {
+        "examSession": {
+          "manifestDeclared": true,
+          "views": [
+            "tvTimer",
+            "btnGrid",
+            "tvExamTitle",
+            "tvQuestionNumber",
+            "progressQuestion",
+            "tvSyncStatus"
+          ],
+          "katexAssetsVerified": true,
+          "deviceTested": false
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "AND-010",
+      "description": "ExamResultActivity (V-SAT 150-point score summary breakdown, accuracy stats, time spent, review solutions action)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 25,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "ExamResultActivity must be declared in AndroidManifest.xml"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "ExamResultActivity must have android:exported=\"false\""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "activity_exam_result.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "ExamResultActivity must display score breakdown, time spent, and review action"
+        }
+      ],
+      "evidence": {
+        "examResult": {
+          "manifestDeclared": true,
+          "views": [
+            "tvScore",
+            "tvScoreMax",
+            "progressScore",
+            "tvCorrectCount",
+            "tvTimeSpent",
+            "btnViewDetail"
+          ],
+          "deviceTested": false
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "AND-011",
+      "description": "ExamReviewActivity (Full post-exam solution review with KaTeX, AI explanation dialog, question error ticket report)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 15,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "ExamReviewActivity must be declared in AndroidManifest.xml"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "ExamReviewActivity must have android:exported=\"false\""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "activity_exam_review.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "ExamReviewActivity must support scroll content, question badges, and KaTeX WebView"
+        }
+      ],
+      "evidence": {
+        "examReview": {
+          "manifestDeclared": true,
+          "views": [
+            "scrollContent",
+            "tvQuestionBadge",
+            "wvPassageMath"
+          ],
+          "deviceTested": false
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "AND-012",
+      "description": "PracticeFragment (Adaptive practice topic selection and difficulty preferences, quick flashcard review launcher, weak topic drills)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 16,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "fragment_practice.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "PracticeFragment must have practice topics list and empty state"
+        }
+      ],
+      "evidence": {
+        "practiceFragment": {
+          "layoutExists": true,
+          "views": [
+            "rvPracticeTopics",
+            "tvPracticeEmpty"
+          ]
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "AND-013",
+      "description": "PracticeSessionActivity (Instant practice loop with immediate grading and explanations, KaTeX WebView rendering)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 14,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "PracticeSessionActivity must be declared in AndroidManifest.xml"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "PracticeSessionActivity must have android:exported=\"false\""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "activity_practice_session.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "PracticeSessionActivity must contain header controls and score counter"
+        }
+      ],
+      "evidence": {
+        "practiceSession": {
+          "manifestDeclared": true,
+          "views": [
+            "btnBack",
+            "tvTitle",
+            "tvScore"
+          ],
+          "deviceTested": false
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "AND-014",
+      "description": "ExamHistoryActivity (Historical exam attempts, scores, and review navigation)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 19,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "ExamHistoryActivity must be declared in AndroidManifest.xml"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "ExamHistoryActivity must have android:exported=\"false\""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "activity_exam_history.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "ExamHistoryActivity must contain history list, stat summaries, and subject filters"
+        }
+      ],
+      "evidence": {
+        "examHistory": {
+          "manifestDeclared": true,
+          "views": [
+            "rvHistory",
+            "tvStatAttempts",
+            "tvStatAvgScore",
+            "tvStatAccuracy",
+            "tvEmpty",
+            "chipAll",
+            "chipMath"
+          ],
+          "deviceTested": false
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "AND-015",
+      "description": "FlashcardReviewActivity (Leitner spaced repetition formula flashcard review, card flip animation, self-assessed mastery tracking)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 27,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "FlashcardReviewActivity must be declared in AndroidManifest.xml"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "FlashcardReviewActivity must have android:exported=\"false\""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "activity_flashcard_review.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "FlashcardReviewActivity must contain counter, deck title, and flippable flashcard"
+        }
+      ],
+      "evidence": {
+        "flashcardReview": {
+          "manifestDeclared": true,
+          "views": [
+            "tvBack",
+            "tvCounter",
+            "contentReview",
+            "tvDeck",
+            "cardFlashcard",
+            "tvSideLabel",
+            "tvCardText"
+          ],
+          "deviceTested": false
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "AND-016",
+      "description": "ProgressActivity (Personal analytics: accuracy per topic, weak points, study streaks)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 13,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "ProgressActivity must be declared in AndroidManifest.xml"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "ProgressActivity must have android:exported=\"false\""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "activity_progress.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "ProgressActivity must contain trend chart, attempt counters, and container"
+        }
+      ],
+      "evidence": {
+        "progress": {
+          "manifestDeclared": true,
+          "views": [
+            "tvBack",
+            "contentProgress",
+            "chartTrend",
+            "tvAttempts"
+          ],
+          "deviceTested": false
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "AND-017",
+      "description": "ProfileFragment (Student profile overview and streak achievements, avatar picker using ActivityResultContracts.StartActivityForResult, edit profile and change password dialogs, logout confirmation)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 14,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "fragment_profile.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "ProfileFragment must contain user avatar, info, admin switch, and logout button: "
+        }
+      ],
+      "evidence": {
+        "profileFragment": {
+          "layoutExists": true,
+          "views": [
+            "ivAvatar",
+            "tvFullName",
+            "tvEmail",
+            "tvRoleBadge",
+            "switchAdminMode",
+            "btnLogout"
+          ]
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "AND-018",
+      "description": "SettingsActivity (Local daily reminder notification schedule and time picker, streak reminder alerts toggle)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 0,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "SettingsActivity must be declared in AndroidManifest.xml"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "SettingsActivity must have android:exported=\"false\""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "SettingsActivity notification settings verified"
+        }
+      ],
+      "evidence": {
+        "settings": {
+          "manifestDeclared": true,
+          "nonExported": true,
+          "deviceTested": false
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "AND-019",
+      "description": "LeaderboardActivity (Exam competitive leaderboard rankings, student public leaderboard opt-in toggle)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 0,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "LeaderboardActivity must be declared in AndroidManifest.xml"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "LeaderboardActivity must have android:exported=\"false\""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "LeaderboardActivity verified"
+        }
+      ],
+      "evidence": {
+        "leaderboard": {
+          "manifestDeclared": true,
+          "nonExported": true,
+          "deviceTested": false
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "AND-020",
+      "description": "AdminActivity (Native Android Admin portal container, hosts AdminDashboardFragment, AdminExamListFragment, AdminQuestionBankFragment, AdminUserManagementFragment)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 15,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "AdminActivity must be declared in AndroidManifest.xml"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "AdminActivity must have android:exported=\"false\""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "activity_admin.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "AdminActivity must contain admin banner, switch mode, nav host, and bottom nav"
+        }
+      ],
+      "evidence": {
+        "admin": {
+          "manifestDeclared": true,
+          "nonExported": true,
+          "views": [
+            "bannerAdminMode",
+            "tvSwitchToStudent",
+            "admin_nav_host_fragment",
+            "adminBottomNav"
+          ],
+          "deviceTested": false
+        }
+      },
+      "error": null
+    }
+  ]
+}

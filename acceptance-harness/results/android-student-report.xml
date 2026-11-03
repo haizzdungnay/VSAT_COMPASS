@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="android-student-report" tests="20" failures="0" errors="0" time="0.332">
+  <testsuite name="android-student-report" tests="20" failures="0" errors="0" time="0.332">
+    <testcase classname="android.student" name="AND-001" time="0.032">
+    </testcase>
+    <testcase classname="android.student" name="AND-002" time="0.010">
+    </testcase>
+    <testcase classname="android.student" name="AND-003" time="0.014">
+    </testcase>
+    <testcase classname="android.student" name="AND-004" time="0.006">
+    </testcase>
+    <testcase classname="android.student" name="AND-005" time="0.011">
+    </testcase>
+    <testcase classname="android.student" name="AND-006" time="0.033">
+    </testcase>
+    <testcase classname="android.student" name="AND-007" time="0.020">
+    </testcase>
+    <testcase classname="android.student" name="AND-008" time="0.001">
+    </testcase>
+    <testcase classname="android.student" name="AND-009" time="0.047">
+    </testcase>
+    <testcase classname="android.student" name="AND-010" time="0.025">
+    </testcase>
+    <testcase classname="android.student" name="AND-011" time="0.015">
+    </testcase>
+    <testcase classname="android.student" name="AND-012" time="0.016">
+    </testcase>
+    <testcase classname="android.student" name="AND-013" time="0.014">
+    </testcase>
+    <testcase classname="android.student" name="AND-014" time="0.019">
+    </testcase>
+    <testcase classname="android.student" name="AND-015" time="0.027">
+    </testcase>
+    <testcase classname="android.student" name="AND-016" time="0.013">
+    </testcase>
+    <testcase classname="android.student" name="AND-017" time="0.014">
+    </testcase>
+    <testcase classname="android.student" name="AND-018" time="0.000">
+    </testcase>
+    <testcase classname="android.student" name="AND-019" time="0.000">
+    </testcase>
+    <testcase classname="android.student" name="AND-020" time="0.015">
+    </testcase>
+  </testsuite>
+</testsuites>

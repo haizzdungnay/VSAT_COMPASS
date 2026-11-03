@@ -1,0 +1,29 @@
+{
+  "name": "acceptance-harness",
+  "version": "1.0.0",
+  "description": "Clean-Room Acceptance Harness for V-SAT Compass",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "preflight": "node safety-preflight.mjs",
+    "db:up": "docker compose -f docker-compose.clean.yml up -d",
+    "db:bootstrap": "node db-bootstrap.mjs",
+    "mock:llm": "node stubs/llm-mock-server.mjs",
+    "test:backend:admin": "node suites/backend-admin.mjs",
+    "test:backend:psc": "node suites/backend-public-student-collab.mjs",
+    "test:web": "node suites/run-web-suite.mjs",
+    "test:android:student": "node suites/android-student-suite.mjs",
+    "test:android:roles": "node suites/android-roles-workers-suite.mjs",
+    "verdict": "node verdict-gate.mjs",
+    "run:all": "node run-all.mjs"
+  },
+  "keywords": [
+    "acceptance",
+    "testing",
+    "clean-room",
+    "vsat-compass"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

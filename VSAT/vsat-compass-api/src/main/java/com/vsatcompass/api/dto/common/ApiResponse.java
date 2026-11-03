@@ -21,6 +21,10 @@ public class ApiResponse<T> {
     @Builder.Default
     private OffsetDateTime timestamp = OffsetDateTime.now();
 
+    public boolean isSuccess() {
+        return this.error == null;
+    }
+
     public static <T> ApiResponse<T> success(T data) {
         return ApiResponse.<T>builder()
                 .data(data)

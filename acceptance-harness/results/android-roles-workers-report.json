@@ -1,0 +1,985 @@
+{
+  "suite": "android-roles-workers-report",
+  "generatedAt": "2026-11-03T06:28:58.701Z",
+  "totalCases": 18,
+  "passedCount": 18,
+  "failedCount": 0,
+  "results": [
+    {
+      "id": "AND-021",
+      "description": "Admin KPI statistics on Android (users, exams, question approval rates)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 166,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "fragment_admin_dashboard.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Dashboard layout missing views: "
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "AdminDashboardFragment must bind to AdminStats"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "AdminDashboardFragment must fetch admin stats"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Admin stats endpoint must return 200 for CONTENT_ADMIN"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Admin stats response must contain data"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "AdminDashboardFragment KPI layout and data bindings validated"
+        }
+      ],
+      "evidence": {
+        "liveAdminStats": {
+          "pending_questions": 0,
+          "revenue_today": 0,
+          "error_tickets": 0,
+          "total_exams": 1,
+          "total_users": 4,
+          "total_sessions_today": 0,
+          "sessions_last_7_days": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "AND-022",
+      "description": "Exam administration list with status filters and create exam launcher",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 28,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "fragment_admin_exam_list.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "item_admin_exam_row.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Exam list layout missing views: "
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Exam list must launch AdminCreateExamActivity"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "GET /api/v1/admin/exams must return 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Exams list content must be an array"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "AdminExamListFragment status tabs and create launcher verified"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "AND-023",
+      "description": "Native Android form to create new draft exam",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 3,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "activity_admin_create_exam.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Create exam layout missing inputs: "
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "AdminCreateExamActivity must be declared in AndroidManifest.xml and non-exported"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Activity must invoke exam creation repository"
+        }
+      ],
+      "evidence": {
+        "createExamVerified": true
+      },
+      "error": null
+    },
+    {
+      "id": "AND-024",
+      "description": "Admin exam question configuration, publish, and discard actions",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 10,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "activity_admin_exam_detail.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Exam detail layout missing actions: "
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Detail must open question picker to add questions"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Detail must support exam publish"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Detail must support exam discard"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "AdminExamDetailActivity must be in AndroidManifest"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "AND-025",
+      "description": "Select approved questions from bank to attach to draft exam",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 4,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "activity_admin_question_picker.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Question picker missing UI controls: "
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Question picker must filter by APPROVED questions"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Question picker must return selected question IDs via activity result"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "AdminQuestionPickerActivity registered in manifest"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "AND-026",
+      "description": "Question bank browser with review status tabs on Android",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 4,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "fragment_admin_question_bank.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "item_admin_review_queue_row.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Question bank missing tabs: "
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Fragment must navigate to review question screen"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "AND-027",
+      "description": "Admin question review interface with KaTeX math preview",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 2,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "activity_admin_review_question.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Review question missing review actions: "
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Review screen must issue approve and reject actions"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "AdminReviewQuestionActivity must be in AndroidManifest"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "AND-028",
+      "description": "User role change dialog (STUDENT, COLLABORATOR, CONTENT_ADMIN, SUPER_ADMIN)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 3,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "fragment_admin_user_management.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "item_admin_user.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "User management missing role tabs: "
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Role dialog must handle SUPER_ADMIN"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Role dialog must handle CONTENT_ADMIN"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Role dialog must handle COLLABORATOR"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Role dialog must handle STUDENT"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Must support account lock/unlock"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "AND-029",
+      "description": "Triage and resolve question error reports from students",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 2,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "AdminTicketActivity.java must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Activity must use TicketRepository"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Activity must handle ticket triage states"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Activity must load ticket lists"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "AdminTicketActivity declared in AndroidManifest"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "AND-030",
+      "description": "Collaborator workspace shell hosting question submissions list and authoring actions",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 2,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "activity_collaborator_workspace.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Collaborator workspace missing components: "
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Workspace must launch question creation"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "CollaboratorWorkspaceActivity in AndroidManifest"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "AND-031",
+      "description": "Collaborator drafted, pending, and approved questions list",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 90,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "fragment_collaborator_question_list.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "item_collaborator_question_row.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Collaborator question list missing views: "
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Item click must open CollaboratorQuestionDetailActivity"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Collaborator questions endpoint must return 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Collaborator question list status tabs verified"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "AND-032",
+      "description": "Collaborator question creation form with format selectors (MCQ, True/False, Matching, Short Answer)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 2,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "activity_collaborator_create_question.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Create question form missing views: "
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Validator handles MCQ"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Validator handles True/False"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "QuestionType enum defines SHORT_ANSWER and MATCHING"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "CollaboratorCreateQuestionActivity registered in AndroidManifest"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "AND-033",
+      "description": "Collaborator question detail viewer, edit draft, submit for review, review feedback comments history",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 3,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "activity_collaborator_question_detail.xml must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Question detail missing views: "
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Activity must support submitting draft for review"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "CollaboratorQuestionDetailActivity in AndroidManifest"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "AND-034",
+      "description": "KaTeX math equation detection and rendering via embedded WebView",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 0,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Inline $ delimiter must be detected"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Display \\[ delimiter must be detected"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "\\frac must be detected as math"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "\\sqrt must be detected as math"
+        },
+        {
+          "name": "assertFalse",
+          "passed": true,
+          "actual": false,
+          "expected": false,
+          "message": "Plain text must not trigger math mode"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "HTML template includes local CSS"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "HTML template includes local KaTeX JS"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "HTML template includes auto-render JS"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "HTML template invokes auto-render"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Local KaTeX assets and fonts must be present on disk"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "HTML escaping is correct"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "AND-035",
+      "description": "Download complete exam bundle via GET /api/v1/exams/{id}/download-bundle",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 3,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Repository calls downloadExamBundle API"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Repository enforces AES-128-GCM cipher mode"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Ciphertext must start with VSAT 0x02 magic header"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 207,
+          "expected": 207,
+          "message": "Ciphertext matches header + IV + payload + auth tag length"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "{\"examId\":9999,\"title\":\"Kỳ thi thử nghiệm chấp nhận V-SAT\",\"questions\":[{\"id\":101,\"stem\":\"Tìm x biết $x^2 = 4$\",\"options\":[\"x = 2\",\"x = -2\",\"x = ±2\",\"x = 0\"]}]}",
+          "expected": "{\"examId\":9999,\"title\":\"Kỳ thi thử nghiệm chấp nhận V-SAT\",\"questions\":[{\"id\":101,\"stem\":\"Tìm x biết $x^2 = 4$\",\"options\":[\"x = 2\",\"x = -2\",\"x = ±2\",\"x = 0\"]}]}",
+          "message": "AES-GCM encryption roundtrip must restore exact payload"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Sync repository tracks pending results queue"
+        }
+      ],
+      "evidence": {
+        "cryptoRoundtripOk": true
+      },
+      "error": null
+    },
+    {
+      "id": "WRK-001",
+      "description": "Sends customized study streak and daily practice challenge notification to student",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 2,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "DailyReminderWorker must extend androidx.work.Worker"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Worker checks user reminder preference"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Worker validates notification permission"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Worker dispatches reminder notification"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "POST_NOTIFICATIONS permission declared"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Streak reminder title string defined"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Streak reminder body string defined"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "DailyReminderWorker streak logic and WorkManager contract verified"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "WRK-002",
+      "description": "Automatically synchronizes pending offline exam submissions when internet connection is restored",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 0,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "OfflineExamSyncWorker extends androidx.work.Worker"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Worker uses unique work name"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Worker sets CONNECTED network constraint"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Worker triggers sync repository"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "ACCESS_NETWORK_STATE declared"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "INTERNET permission declared"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "OfflineExamSyncWorker network constraint and background synchronization verified"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "WRK-003",
+      "description": "System notification channel for daily study reminder and streak alert notifications",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 2,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Channel ID must be vsat_daily_reminder"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Channel importance must be IMPORTANCE_DEFAULT"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "NotificationHelper provides idempotent channel creator"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Channel name string resource exists"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Channel description string resource exists"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Notification channel vsat_daily_reminder configuration verified"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    }
+  ]
+}

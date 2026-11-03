@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="android-roles-workers-report" tests="18" failures="0" errors="0" time="0.326">
+  <testsuite name="android-roles-workers-report" tests="18" failures="0" errors="0" skipped="0" time="0.326">
+    <testcase classname="com.example.v_sat_compass.screens.AND-021" name="AND-021: Admin KPI statistics on Android (users, exams, question approval rates)" time="0.166">
+    </testcase>
+    <testcase classname="com.example.v_sat_compass.screens.AND-022" name="AND-022: Exam administration list with status filters and create exam launcher" time="0.028">
+    </testcase>
+    <testcase classname="com.example.v_sat_compass.screens.AND-023" name="AND-023: Native Android form to create new draft exam" time="0.003">
+    </testcase>
+    <testcase classname="com.example.v_sat_compass.screens.AND-024" name="AND-024: Admin exam question configuration, publish, and discard actions" time="0.010">
+    </testcase>
+    <testcase classname="com.example.v_sat_compass.screens.AND-025" name="AND-025: Select approved questions from bank to attach to draft exam" time="0.004">
+    </testcase>
+    <testcase classname="com.example.v_sat_compass.screens.AND-026" name="AND-026: Question bank browser with review status tabs on Android" time="0.004">
+    </testcase>
+    <testcase classname="com.example.v_sat_compass.screens.AND-027" name="AND-027: Admin question review interface with KaTeX math preview" time="0.002">
+    </testcase>
+    <testcase classname="com.example.v_sat_compass.screens.AND-028" name="AND-028: User role change dialog (STUDENT, COLLABORATOR, CONTENT_ADMIN, SUPER_ADMIN)" time="0.003">
+    </testcase>
+    <testcase classname="com.example.v_sat_compass.screens.AND-029" name="AND-029: Triage and resolve question error reports from students" time="0.002">
+    </testcase>
+    <testcase classname="com.example.v_sat_compass.screens.AND-030" name="AND-030: Collaborator workspace shell hosting question submissions list and authoring actions" time="0.002">
+    </testcase>
+    <testcase classname="com.example.v_sat_compass.screens.AND-031" name="AND-031: Collaborator drafted, pending, and approved questions list" time="0.090">
+    </testcase>
+    <testcase classname="com.example.v_sat_compass.screens.AND-032" name="AND-032: Collaborator question creation form with format selectors (MCQ, True/False, Matching, Short Answer)" time="0.002">
+    </testcase>
+    <testcase classname="com.example.v_sat_compass.screens.AND-033" name="AND-033: Collaborator question detail viewer, edit draft, submit for review, review feedback comments history" time="0.003">
+    </testcase>
+    <testcase classname="com.example.v_sat_compass.screens.AND-034" name="AND-034: KaTeX math equation detection and rendering via embedded WebView" time="0.000">
+    </testcase>
+    <testcase classname="com.example.v_sat_compass.screens.AND-035" name="AND-035: Download complete exam bundle via GET /api/v1/exams/{id}/download-bundle" time="0.003">
+    </testcase>
+    <testcase classname="com.example.v_sat_compass.workers.WRK-001" name="WRK-001: Sends customized study streak and daily practice challenge notification to student" time="0.002">
+    </testcase>
+    <testcase classname="com.example.v_sat_compass.workers.WRK-002" name="WRK-002: Automatically synchronizes pending offline exam submissions when internet connection is restored" time="0.000">
+    </testcase>
+    <testcase classname="com.example.v_sat_compass.workers.WRK-003" name="WRK-003: System notification channel for daily study reminder and streak alert notifications" time="0.002">
+    </testcase>
+  </testsuite>
+</testsuites>

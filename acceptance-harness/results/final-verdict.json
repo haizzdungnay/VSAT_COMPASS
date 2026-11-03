@@ -1,0 +1,34 @@
+{
+  "verdict": "ACCEPTED",
+  "timestamp": "2026-11-03T06:31:20.053Z",
+  "summary": {
+    "requiredCount": 126,
+    "collectedCount": 126,
+    "passedCount": 126,
+    "failedCount": 0,
+    "violationCount": 0
+  },
+  "violations": [],
+  "suiteBreakdown": {
+    "backend_endpoints": {
+      "total": 76,
+      "passed": 76
+    },
+    "backend_jobs_and_integrations": {
+      "total": 2,
+      "passed": 2
+    },
+    "web_admin_pages": {
+      "total": 10,
+      "passed": 10
+    },
+    "android_screens_and_flows": {
+      "total": 35,
+      "passed": 35
+    },
+    "android_workers_and_services": {
+      "total": 3,
+      "passed": 3
+    }
+  }
+}

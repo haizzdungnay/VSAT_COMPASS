@@ -40,11 +40,7 @@ public class AdminBlueprintServiceImpl implements AdminBlueprintService {
     @Override
     public BlueprintResponse getBlueprint(Long id) {
         Subject subject = subjectRepository.findById(id)
-                .orElse(null);
-        if (subject == null) {
-            subject = subjectRepository.findAll().stream().findFirst()
-                    .orElseThrow(() -> AppException.notFound("Blueprint", id));
-        }
+                .orElseThrow(() -> AppException.notFound("Blueprint", id));
         return buildVsat2026Blueprint(subject);
     }
 

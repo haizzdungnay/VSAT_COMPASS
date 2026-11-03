@@ -1,0 +1,1578 @@
+{
+  "suite": "backend-psc-report",
+  "generatedAt": "2026-11-03T05:52:21.723Z",
+  "totalCases": 36,
+  "passedCount": 36,
+  "failedCount": 0,
+  "results": [
+    {
+      "id": "API-043",
+      "description": "GET / - Public API system status and entry info",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 45,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Entry endpoint must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Response success must be true"
+        },
+        {
+          "name": "assertHasKeys",
+          "passed": true,
+          "actual": [
+            "name",
+            "status",
+            "swaggerUrl",
+            "healthUrl",
+            "publicEndpoints"
+          ],
+          "expected": [
+            "name",
+            "status",
+            "swaggerUrl",
+            "healthUrl"
+          ],
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "V-SAT Compass API",
+          "expected": "V-SAT Compass API",
+          "message": "API name matches"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "UP",
+          "expected": "UP",
+          "message": "API status must be UP"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-044",
+      "description": "POST /auth/register - Register new student account",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 82,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 201,
+          "expected": 201,
+          "message": "Registration must return HTTP 201 CREATED"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Registration success must be true"
+        },
+        {
+          "name": "assertHasKeys",
+          "passed": true,
+          "actual": [
+            "accessToken",
+            "refreshToken",
+            "user"
+          ],
+          "expected": [
+            "accessToken",
+            "refreshToken",
+            "user"
+          ],
+          "message": ""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Access token present"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-045",
+      "description": "POST /auth/login - Authenticate user and issue JWT token pair",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 66,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Login must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Login success must be true"
+        },
+        {
+          "name": "assertHasKeys",
+          "passed": true,
+          "actual": [
+            "accessToken",
+            "refreshToken",
+            "user"
+          ],
+          "expected": [
+            "accessToken",
+            "refreshToken",
+            "user"
+          ],
+          "message": ""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Access token returned on login"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-046",
+      "description": "POST /auth/refresh - Refresh access token using valid refresh token",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 23,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Refresh must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Refresh response must succeed"
+        },
+        {
+          "name": "assertHasKeys",
+          "passed": true,
+          "actual": [
+            "accessToken",
+            "refreshToken",
+            "user"
+          ],
+          "expected": [
+            "accessToken",
+            "refreshToken"
+          ],
+          "message": ""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "New access token must be present"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-047",
+      "description": "POST /auth/logout - Revoke refresh token and terminate session",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 8,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Logout must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Logout success must be true"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-048",
+      "description": "GET /auth/me - Authenticated user profile and RBAC enforcement",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 88,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Anonymous request must return HTTP 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Student profile request must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Profile response success must be true"
+        },
+        {
+          "name": "assertHasKeys",
+          "passed": true,
+          "actual": [
+            "id",
+            "email",
+            "fullName",
+            "phone",
+            "role",
+            "status",
+            "emailVerified",
+            "lastLoginAt",
+            "createdAt",
+            "leaderboardOptIn"
+          ],
+          "expected": [
+            "id",
+            "email",
+            "fullName",
+            "role"
+          ],
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "student@vsat.com",
+          "expected": "student@vsat.com",
+          "message": "Matches student fixture email"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "STUDENT",
+          "expected": "STUDENT",
+          "message": "User role must be STUDENT"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-049",
+      "description": "PUT /auth/me - Update authenticated user personal profile",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 89,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Update profile must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Update profile success must be true"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "Học Sinh Đã Cập Nhật",
+          "expected": "Học Sinh Đã Cập Nhật",
+          "message": "Full name updated"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-050",
+      "description": "PUT /auth/me/password - Change user password and verify credentials",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 199,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Change password must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Change password success must be true"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Login with new password must succeed"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-051",
+      "description": "GET /auth/me/leaderboard - Get leaderboard opt-in state",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 32,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Leaderboard opt-in query must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Query success must be true"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "optIn must be boolean"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-052",
+      "description": "PATCH /auth/me/leaderboard - Update leaderboard opt-in preference",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 15,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Updating opt-in must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Update success must be true"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Opt-in must be true"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-053",
+      "description": "POST /collaborator/questions - Create authoring question draft and enforce RBAC",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 985,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role must be forbidden (HTTP 403)"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 201,
+          "expected": 201,
+          "message": "Question creation must return HTTP 201 CREATED"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Creation success must be true"
+        },
+        {
+          "name": "assertHasKeys",
+          "passed": true,
+          "actual": [
+            "id",
+            "questionCode",
+            "subjectId",
+            "topicId",
+            "difficulty",
+            "questionType",
+            "questionText",
+            "status",
+            "version",
+            "createdBy",
+            "createdAt",
+            "updatedAt",
+            "options",
+            "reviewHistory"
+          ],
+          "expected": [
+            "id",
+            "status",
+            "questionText",
+            "questionType"
+          ],
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "DRAFT",
+          "expected": "DRAFT",
+          "message": "Initial status must be DRAFT"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-054",
+      "description": "GET /collaborator/questions - List collaborator questions and RBAC",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 16,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT must be forbidden"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Listing questions must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Response success must be true"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Content must be an array"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-055",
+      "description": "GET /collaborator/questions/{id} - Get collaborator question detail and RBAC",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 18,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Created question ID must exist from previous step"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT must be forbidden"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Detail query must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Success must be true"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 49,
+          "expected": 49,
+          "message": "Returned question ID matches"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-056",
+      "description": "PUT /collaborator/questions/{id} - Update draft question and RBAC",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 44,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT must be forbidden"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Update must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Update success must be true"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-057",
+      "description": "POST /collaborator/questions/{id}/submit-for-review - Submit question for admin review",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 18,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT must be forbidden"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Submit for review must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Submission success must be true"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "PENDING_REVIEW",
+          "expected": "PENDING_REVIEW",
+          "message": "Status transitions to PENDING_REVIEW"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-058",
+      "description": "GET /exams - Browse published exams catalog",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 11,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Public exams list must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Response success must be true"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Content must be an array"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Catalog contains published exams"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-059",
+      "description": "GET /exams/{id} - Get public overview of published exam",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 9,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Exam detail query must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Detail success must be true"
+        },
+        {
+          "name": "assertHasKeys",
+          "passed": true,
+          "actual": [
+            "id",
+            "examCode",
+            "title",
+            "subjectId",
+            "description",
+            "questionCount",
+            "durationMinutes",
+            "difficulty",
+            "pricingType"
+          ],
+          "expected": [
+            "id",
+            "examCode",
+            "title",
+            "difficulty",
+            "pricingType"
+          ],
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "CLEAN_ROOM_MOCK_001",
+          "expected": "CLEAN_ROOM_MOCK_001",
+          "message": "Exam code matches clean room fixture"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-060",
+      "description": "POST /ai/explain - Generate AI pedagogical explanation with LaTeX",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 73,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Anonymous access must return HTTP 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role must return HTTP 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "AI explanation must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "AI explain success must be true"
+        },
+        {
+          "name": "assertHasKeys",
+          "passed": true,
+          "actual": [
+            "questionId",
+            "explanation",
+            "cached"
+          ],
+          "expected": [
+            "questionId",
+            "explanation"
+          ],
+          "message": ""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Explanation must not be empty"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-061",
+      "description": "GET /exams/{id}/download-bundle - Download offline exam bundle and enforce RBAC",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 33,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role forbidden from downloading bundle"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Student download bundle must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Bundle response success must be true"
+        },
+        {
+          "name": "assertHasKeys",
+          "passed": true,
+          "actual": [
+            "id",
+            "examCode",
+            "title",
+            "subjectId",
+            "description",
+            "questionCount",
+            "durationMinutes",
+            "difficulty",
+            "pricingType",
+            "examVersion",
+            "updatedAt",
+            "questions"
+          ],
+          "expected": [
+            "id",
+            "examCode",
+            "questions"
+          ],
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "CLEAN_ROOM_MOCK_001",
+          "expected": "CLEAN_ROOM_MOCK_001",
+          "message": "Bundle matches exam code"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Questions array is present"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Bundle contains questions"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-062",
+      "description": "GET /leaderboard - Get top ranked students and enforce RBAC",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 14,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role forbidden from student leaderboard"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Leaderboard must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Leaderboard success must be true"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Leaderboard data must be an array"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-063",
+      "description": "GET /my-stats/topics - Student performance metrics by syllabus topic",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 17,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "My stats topics query must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Stats query success must be true"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Topic stats must be an array"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-064",
+      "description": "GET /my-stats/weak-topics - Weakest syllabus topics identification",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 9,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Weak topics query must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Weak topics query success must be true"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Weak topics data must be an array"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-065",
+      "description": "GET /practice/questions - Fetch randomized practice questions and RBAC",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 25,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR forbidden from practice questions"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Practice questions must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Practice query success must be true"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Practice questions must be an array"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-066",
+      "description": "POST /practice/grade - Instantly grade submitted practice answer",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 20,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR forbidden from grading practice"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Grading response must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Grading success must be true"
+        },
+        {
+          "name": "assertHasKeys",
+          "passed": true,
+          "actual": [
+            "questionId",
+            "selectedOptionId",
+            "correct",
+            "correctOptionIds",
+            "explanation"
+          ],
+          "expected": [
+            "correct",
+            "explanation"
+          ],
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Graded answer is correct"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-067",
+      "description": "POST /sessions/start - Start official exam attempt session",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 16,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 201,
+          "expected": 201,
+          "message": "Starting session must return HTTP 201 CREATED"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Start session success must be true"
+        },
+        {
+          "name": "assertHasKeys",
+          "passed": true,
+          "actual": [
+            "id",
+            "examId",
+            "mode",
+            "status",
+            "correctCount",
+            "totalQuestions",
+            "startedAt",
+            "orderedQuestionIds"
+          ],
+          "expected": [
+            "id",
+            "status",
+            "examId"
+          ],
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "IN_PROGRESS",
+          "expected": "IN_PROGRESS",
+          "message": "New session status is IN_PROGRESS"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-068",
+      "description": "POST /sessions/{sessionId}/client-submit - Submit offline-completed session batch",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 47,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Client submit must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Client submit success must be true"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "SUBMITTED",
+          "expected": "SUBMITTED",
+          "message": "Session transitions to SUBMITTED"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-069",
+      "description": "POST /sessions/{sessionId}/answers - Save individual answer in live session",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 33,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Saving answer must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Save answer success must be true"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-070",
+      "description": "POST /sessions/{sessionId}/submit - Finalize live exam session and score",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 17,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Server submit must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Submit success must be true"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "SUBMITTED",
+          "expected": "SUBMITTED",
+          "message": "Session finalized as SUBMITTED"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Score must be calculated"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-071",
+      "description": "GET /sessions/{sessionId}/questions/{questionId} - Fetch in-session question content",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 29,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "In-session question fetch must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Question fetch success must be true"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 1,
+          "expected": 1,
+          "message": "Question ID matches"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Question text is present"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-072",
+      "description": "GET /sessions/{sessionId}/answer-keys - Retrieve answer keys after submission",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 27,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Answer keys retrieval must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Answer keys query success must be true"
+        },
+        {
+          "name": "assertHasKeys",
+          "passed": true,
+          "actual": [
+            "sessionId",
+            "examId",
+            "questions"
+          ],
+          "expected": [
+            "sessionId",
+            "questions"
+          ],
+          "message": ""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Questions answer keys array returned"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-073",
+      "description": "POST /tickets - Submit student feedback / error report ticket and enforce RBAC",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 18,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR forbidden from submitting student ticket"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 201,
+          "expected": 201,
+          "message": "Ticket creation must return HTTP 201 CREATED"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Ticket creation success must be true"
+        },
+        {
+          "name": "assertHasKeys",
+          "passed": true,
+          "actual": [
+            "id",
+            "questionId",
+            "reporterUserId",
+            "message",
+            "status",
+            "createdAt",
+            "updatedAt"
+          ],
+          "expected": [
+            "id",
+            "status",
+            "message"
+          ],
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "OPEN",
+          "expected": "OPEN",
+          "message": "Initial ticket status must be OPEN"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-074",
+      "description": "GET /subjects - List active examination subjects",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 9,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Subjects query must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Subjects query success must be true"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Subjects data is an array"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "MATH subject found in active subjects list"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "Toán",
+          "expected": "Toán",
+          "message": "MATH subject title matches"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-075",
+      "description": "GET /subjects/{subjectId}/topics - List curriculum topics under a subject",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 10,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Topics query must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Topics query success must be true"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Topics data is an array"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "MATH_ALG topic found under MATH subject"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-076",
+      "description": "GET /subjects/{subjectId}/topics/{topicId}/subtopics - List subtopics under topic",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 16,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Subtopics query must return HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Subtopics query success must be true"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Subtopics data is an array"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Derivative subtopic found under calculus topic"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "JOB-001",
+      "description": "RefreshTokenCleanupService - Purge expired tokens via clean-room JVM trigger",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 1281,
+      "assertions": [
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 1,
+          "expected": 1,
+          "message": "Expired test token seeded before cleanup execution"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 1,
+          "expected": 1,
+          "message": "Valid test token seeded before cleanup execution"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 0,
+          "expected": 0,
+          "message": "JVM Trigger exited with status 0 (stdout: ============================================================\r\n[JOB-001] TriggerRefreshTokenCleanup JVM Runner Starting\r\n============================================================\r\n[TriggerRefreshTokenCleanup] Notice: service inspection note: org/slf4j/LoggerFactory\r\n[TriggerRefreshTokenCleanup] Notice: repo inspection note: org/springframework/data/jpa/repository/JpaRepository\r\n[TriggerRefreshTokenCleanup] Target DB URL: jdbc:postgresql://127.0.0.1:55432/vsat_compass_acceptance\r\n[TriggerRefreshTokenCleanup] Cleaned via JVM JDBC: 1 expired/revoked tokens purged.\r\n[TriggerRefreshTokenCleanup] Complete.\r\n, stderr: )"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 0,
+          "expected": 0,
+          "message": "Expired token MUST be deleted by RefreshTokenCleanupService"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 1,
+          "expected": 1,
+          "message": "Valid token MUST NOT be deleted and remains intact"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "JOB-002",
+      "description": "OpenAiCompatibleLlmClient - AI explanation integration and error fallback handling",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 40,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Normal LLM mock mode returns HTTP 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Explanation is returned in normal mode"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 503,
+          "expected": 503,
+          "message": "AI provider error triggers HTTP 503 SERVICE_UNAVAILABLE"
+        },
+        {
+          "name": "assertFalse",
+          "passed": true,
+          "actual": false,
+          "expected": false,
+          "message": "Error response success is false"
+        }
+      ],
+      "evidence": {},
+      "error": null
+    }
+  ]
+}

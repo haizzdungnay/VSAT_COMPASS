@@ -1,0 +1,1768 @@
+{
+  "metadata": {
+    "system_name": "V-SAT Compass",
+    "generated_at": "2026-11-03T12:00:00.000Z",
+    "description": "Comprehensive feature inventory across Backend Spring Boot, Web Admin, Android App, and Toolchain",
+    "version": "1.0.0"
+  },
+  "backend_endpoints": [
+    {
+      "id": "API-001",
+      "controller": "AdminBlueprintController",
+      "method": "GET",
+      "full_path": "/api/v1/admin/blueprints",
+      "request_body": "none",
+      "response_type": "ApiResponse<List<BlueprintResponse>>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminBlueprintController.java:23",
+      "description": "List all V-SAT exam matrix blueprints (GDPT 2018)"
+    },
+    {
+      "id": "API-002",
+      "controller": "AdminBlueprintController",
+      "method": "GET",
+      "full_path": "/api/v1/admin/blueprints/{id}",
+      "request_body": "none",
+      "response_type": "ApiResponse<BlueprintResponse>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminBlueprintController.java:32",
+      "description": "Get detailed exam matrix blueprint with section cells"
+    },
+    {
+      "id": "API-003",
+      "controller": "AdminDashboardController",
+      "method": "GET",
+      "full_path": "/api/v1/admin/stats",
+      "request_body": "none",
+      "response_type": "ApiResponse<AdminStatsResponse>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminDashboardController.java:23",
+      "description": "Get administrative dashboard statistics (users, exams, questions, pass rates)"
+    },
+    {
+      "id": "API-004",
+      "controller": "AdminExamController",
+      "method": "GET",
+      "full_path": "/api/v1/admin/exams",
+      "request_body": "none",
+      "response_type": "ApiResponse<Page<AdminExamSummaryResponse>>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminExamController.java:47",
+      "description": "List paginated exams with filters for subject, status, and title keyword"
+    },
+    {
+      "id": "API-005",
+      "controller": "AdminExamController",
+      "method": "GET",
+      "full_path": "/api/v1/admin/exams/{id}",
+      "request_body": "none",
+      "response_type": "ApiResponse<AdminExamResponse>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminExamController.java:59",
+      "description": "Get detailed admin exam configuration by ID"
+    },
+    {
+      "id": "API-006",
+      "controller": "AdminExamController",
+      "method": "POST",
+      "full_path": "/api/v1/admin/exams",
+      "request_body": "AdminExamCreateRequest",
+      "response_type": "ApiResponse<AdminExamResponse>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminExamController.java:67",
+      "description": "Create new draft exam"
+    },
+    {
+      "id": "API-007",
+      "controller": "AdminExamController",
+      "method": "PUT",
+      "full_path": "/api/v1/admin/exams/{id}",
+      "request_body": "AdminExamUpdateRequest",
+      "response_type": "ApiResponse<AdminExamResponse>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminExamController.java:78",
+      "description": "Update draft exam properties"
+    },
+    {
+      "id": "API-008",
+      "controller": "AdminExamController",
+      "method": "DELETE",
+      "full_path": "/api/v1/admin/exams/{examId}",
+      "request_body": "none",
+      "response_type": "ApiResponse<Void>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminExamController.java:88",
+      "description": "Discard unapproved draft exam"
+    },
+    {
+      "id": "API-009",
+      "controller": "AdminExamController",
+      "method": "POST",
+      "full_path": "/api/v1/admin/exams/{examId}/questions",
+      "request_body": "AdminExamAddQuestionRequest",
+      "response_type": "ApiResponse<AdminExamResponse>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminExamController.java:96",
+      "description": "Add approved question to draft exam"
+    },
+    {
+      "id": "API-010",
+      "controller": "AdminExamController",
+      "method": "DELETE",
+      "full_path": "/api/v1/admin/exams/{examId}/questions/{questionId}",
+      "request_body": "none",
+      "response_type": "ApiResponse<AdminExamResponse>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminExamController.java:106",
+      "description": "Remove question from draft exam"
+    },
+    {
+      "id": "API-011",
+      "controller": "AdminExamController",
+      "method": "PUT",
+      "full_path": "/api/v1/admin/exams/{examId}/questions/reorder",
+      "request_body": "AdminExamReorderQuestionsRequest",
+      "response_type": "ApiResponse<AdminExamResponse>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminExamController.java:116",
+      "description": "Reorder question sequence numbers in draft exam"
+    },
+    {
+      "id": "API-012",
+      "controller": "AdminExamController",
+      "method": "POST",
+      "full_path": "/api/v1/admin/exams/{examId}/submit-review",
+      "request_body": "none",
+      "response_type": "ApiResponse<AdminExamResponse>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminExamController.java:126",
+      "description": "Submit draft exam for admin review"
+    },
+    {
+      "id": "API-013",
+      "controller": "AdminExamController",
+      "method": "POST",
+      "full_path": "/api/v1/admin/exams/{examId}/publish",
+      "request_body": "none",
+      "response_type": "ApiResponse<AdminExamResponse>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminExamController.java:134",
+      "description": "Publish reviewed exam for students"
+    },
+    {
+      "id": "API-014",
+      "controller": "AdminExamController",
+      "method": "POST",
+      "full_path": "/api/v1/admin/exams/{examId}/hide",
+      "request_body": "none",
+      "response_type": "ApiResponse<AdminExamResponse>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminExamController.java:143",
+      "description": "Temporarily hide published exam from public catalog"
+    },
+    {
+      "id": "API-015",
+      "controller": "AdminExamController",
+      "method": "POST",
+      "full_path": "/api/v1/admin/exams/{examId}/archive",
+      "request_body": "none",
+      "response_type": "ApiResponse<AdminExamResponse>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminExamController.java:151",
+      "description": "Archive outdated exam"
+    },
+    {
+      "id": "API-016",
+      "controller": "AdminExamController",
+      "method": "POST",
+      "full_path": "/api/v1/admin/exams/{examId}/reject-review",
+      "request_body": "none",
+      "response_type": "ApiResponse<AdminExamResponse>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminExamController.java:159",
+      "description": "Reject submitted exam review and return feedback"
+    },
+    {
+      "id": "API-017",
+      "controller": "AdminExamController",
+      "method": "POST",
+      "full_path": "/api/v1/admin/exams/{examId}/return-to-draft",
+      "request_body": "none",
+      "response_type": "ApiResponse<AdminExamResponse>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminExamController.java:167",
+      "description": "Reopen review-rejected exam back to draft state"
+    },
+    {
+      "id": "API-018",
+      "controller": "AdminExamController",
+      "method": "GET",
+      "full_path": "/api/v1/admin/exams/{examId}/questions",
+      "request_body": "none",
+      "response_type": "ApiResponse<List<ExamQuestionDetailResponse>>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminExamController.java:175",
+      "description": "List questions linked to an exam with full options and correct flags"
+    },
+    {
+      "id": "API-019",
+      "controller": "AdminExamController",
+      "method": "GET",
+      "full_path": "/api/v1/admin/exams/{examId}/variants",
+      "request_body": "none",
+      "response_type": "ApiResponse<List<ExamVariantResponse>>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminExamController.java:184",
+      "description": "List generated exam permutation variants (mã đề hoán vị)"
+    },
+    {
+      "id": "API-020",
+      "controller": "AdminExamController",
+      "method": "POST",
+      "full_path": "/api/v1/admin/exams/{examId}/variants/generate",
+      "request_body": "GenerateVariantsRequest",
+      "response_type": "ApiResponse<List<ExamVariantResponse>>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminExamController.java:193",
+      "description": "Generate N randomized permutation variants for an exam"
+    },
+    {
+      "id": "API-021",
+      "controller": "AdminExamController",
+      "method": "POST",
+      "full_path": "/api/v1/admin/exams/generate-by-matrix",
+      "request_body": "MatrixGenerateRequest",
+      "response_type": "ApiResponse<MatrixGenerateResponse>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminExamController.java:204",
+      "description": "Generate a full new exam automatically from a blueprint matrix"
+    },
+    {
+      "id": "API-022",
+      "controller": "AdminExamController",
+      "method": "POST",
+      "full_path": "/api/v1/admin/exams/{examId}/generate-by-matrix",
+      "request_body": "MatrixGenerateRequest",
+      "response_type": "ApiResponse<MatrixGenerateResponse>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminExamController.java:213",
+      "description": "Populate questions into existing draft exam using blueprint matrix"
+    },
+    {
+      "id": "API-023",
+      "controller": "AdminExamWindowController",
+      "method": "GET",
+      "full_path": "/api/v1/admin/exam-windows",
+      "request_body": "none",
+      "response_type": "ApiResponse<List<AdminExamWindowResponse>>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminExamWindowController.java:26",
+      "description": "List scheduled exam windows (Ca thi & Lịch thi) by status or examId"
+    },
+    {
+      "id": "API-024",
+      "controller": "AdminExamWindowController",
+      "method": "GET",
+      "full_path": "/api/v1/admin/exam-windows/{id}",
+      "request_body": "none",
+      "response_type": "ApiResponse<AdminExamWindowResponse>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminExamWindowController.java:36",
+      "description": "Get exam window details by ID"
+    },
+    {
+      "id": "API-025",
+      "controller": "AdminExamWindowController",
+      "method": "POST",
+      "full_path": "/api/v1/admin/exam-windows",
+      "request_body": "CreateExamWindowRequest",
+      "response_type": "ApiResponse<AdminExamWindowResponse>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminExamWindowController.java:44",
+      "description": "Create new scheduled exam window"
+    },
+    {
+      "id": "API-026",
+      "controller": "AdminExamWindowController",
+      "method": "PUT",
+      "full_path": "/api/v1/admin/exam-windows/{id}",
+      "request_body": "UpdateExamWindowRequest",
+      "response_type": "ApiResponse<AdminExamWindowResponse>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminExamWindowController.java:53",
+      "description": "Update scheduled exam window configuration"
+    },
+    {
+      "id": "API-027",
+      "controller": "AdminExamWindowController",
+      "method": "PATCH",
+      "full_path": "/api/v1/admin/exam-windows/{id}/status",
+      "request_body": "UpdateExamWindowStatusRequest",
+      "response_type": "ApiResponse<AdminExamWindowResponse>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminExamWindowController.java:63",
+      "description": "Update status of exam window (UPCOMING, RUNNING, CLOSED)"
+    },
+    {
+      "id": "API-028",
+      "controller": "AdminExamWindowController",
+      "method": "DELETE",
+      "full_path": "/api/v1/admin/exam-windows/{id}",
+      "request_body": "none",
+      "response_type": "ApiResponse<Void>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminExamWindowController.java:73",
+      "description": "Delete scheduled exam window"
+    },
+    {
+      "id": "API-029",
+      "controller": "AdminQuestionController",
+      "method": "GET",
+      "full_path": "/api/v1/admin/questions",
+      "request_body": "none",
+      "response_type": "ApiResponse<Page<QuestionListItemResponse>>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminQuestionController.java:39",
+      "description": "List question review queue with multi-filter (subject, format, cognitive, difficulty, status)"
+    },
+    {
+      "id": "API-030",
+      "controller": "AdminQuestionController",
+      "method": "GET",
+      "full_path": "/api/v1/admin/questions/picker",
+      "request_body": "none",
+      "response_type": "ApiResponse<Page<QuestionPickerItemResponse>>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminQuestionController.java:49",
+      "description": "Paginated question picker list for adding questions into an exam"
+    },
+    {
+      "id": "API-031",
+      "controller": "AdminQuestionController",
+      "method": "GET",
+      "full_path": "/api/v1/admin/questions/{id}",
+      "request_body": "none",
+      "response_type": "ApiResponse<QuestionResponse>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminQuestionController.java:66",
+      "description": "Get full question detail including all format sub-items and options"
+    },
+    {
+      "id": "API-032",
+      "controller": "AdminQuestionController",
+      "method": "POST",
+      "full_path": "/api/v1/admin/questions/{id}/approve",
+      "request_body": "ReviewActionRequest",
+      "response_type": "ApiResponse<QuestionResponse>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminQuestionController.java:76",
+      "description": "Approve submitted question into master question bank"
+    },
+    {
+      "id": "API-033",
+      "controller": "AdminQuestionController",
+      "method": "POST",
+      "full_path": "/api/v1/admin/questions/{id}/request-revision",
+      "request_body": "ReviewActionRequest",
+      "response_type": "ApiResponse<QuestionResponse>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminQuestionController.java:88",
+      "description": "Request revision for question back to collaborator with feedback comment"
+    },
+    {
+      "id": "API-034",
+      "controller": "AdminQuestionController",
+      "method": "POST",
+      "full_path": "/api/v1/admin/questions/{id}/reject",
+      "request_body": "ReviewActionRequest",
+      "response_type": "ApiResponse<QuestionResponse>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminQuestionController.java:99",
+      "description": "Reject question submission with reason"
+    },
+    {
+      "id": "API-035",
+      "controller": "AdminQuestionController",
+      "method": "GET",
+      "full_path": "/api/v1/admin/questions/import/template",
+      "request_body": "none",
+      "response_type": "byte[] (.xlsx spreadsheet)",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminQuestionController.java:110",
+      "description": "Download standard Excel (.xlsx) template for bulk question importing"
+    },
+    {
+      "id": "API-036",
+      "controller": "AdminQuestionController",
+      "method": "POST",
+      "full_path": "/api/v1/admin/questions/import",
+      "request_body": "MultipartFile file (multipart/form-data)",
+      "response_type": "ApiResponse<QuestionImportResultResponse>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminQuestionController.java:121",
+      "description": "Upload and parse Excel (.xlsx) file to bulk import questions"
+    },
+    {
+      "id": "API-037",
+      "controller": "AdminTicketController",
+      "method": "GET",
+      "full_path": "/api/v1/admin/tickets",
+      "request_body": "none",
+      "response_type": "ApiResponse<Page<TicketResponse>>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminTicketController.java:30",
+      "description": "List user feedback & question error report tickets"
+    },
+    {
+      "id": "API-038",
+      "controller": "AdminTicketController",
+      "method": "PATCH",
+      "full_path": "/api/v1/admin/tickets/{id}",
+      "request_body": "UpdateTicketRequest",
+      "response_type": "ApiResponse<TicketResponse>",
+      "allowed_roles": [
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminTicketController.java:38",
+      "description": "Update ticket resolution status and note"
+    },
+    {
+      "id": "API-039",
+      "controller": "AdminUserController",
+      "method": "GET",
+      "full_path": "/api/v1/admin/users",
+      "request_body": "none",
+      "response_type": "ApiResponse<Page<UserSummaryResponse>>",
+      "allowed_roles": [
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminUserController.java:35",
+      "description": "List registered users with role and status filtering"
+    },
+    {
+      "id": "API-040",
+      "controller": "AdminUserController",
+      "method": "PATCH",
+      "full_path": "/api/v1/admin/users/{id}/role",
+      "request_body": "UpdateUserRoleRequest",
+      "response_type": "ApiResponse<UserSummaryResponse>",
+      "allowed_roles": [
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminUserController.java:48",
+      "description": "Change user role between STUDENT, COLLABORATOR, CONTENT_ADMIN, SUPER_ADMIN"
+    },
+    {
+      "id": "API-041",
+      "controller": "AdminUserController",
+      "method": "PATCH",
+      "full_path": "/api/v1/admin/users/{id}/lock",
+      "request_body": "none",
+      "response_type": "ApiResponse<Void>",
+      "allowed_roles": [
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminUserController.java:60",
+      "description": "Lock user account from accessing the platform"
+    },
+    {
+      "id": "API-042",
+      "controller": "AdminUserController",
+      "method": "PATCH",
+      "full_path": "/api/v1/admin/users/{id}/unlock",
+      "request_body": "none",
+      "response_type": "ApiResponse<Void>",
+      "allowed_roles": [
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/admin/AdminUserController.java:68",
+      "description": "Unlock suspended user account"
+    },
+    {
+      "id": "API-043",
+      "controller": "ApiInfoController",
+      "method": "GET",
+      "full_path": "/api/v1/",
+      "request_body": "none",
+      "response_type": "ApiResponse<ApiInfoResponse>",
+      "allowed_roles": [
+        "PUBLIC"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/ApiInfoController.java:16",
+      "description": "API system status, server version and environment details"
+    },
+    {
+      "id": "API-044",
+      "controller": "AuthController",
+      "method": "POST",
+      "full_path": "/api/v1/auth/register",
+      "request_body": "RegisterRequest",
+      "response_type": "ApiResponse<AuthResponse.TokenPair>",
+      "allowed_roles": [
+        "PUBLIC"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/auth/AuthController.java:28",
+      "description": "Register new student account"
+    },
+    {
+      "id": "API-045",
+      "controller": "AuthController",
+      "method": "POST",
+      "full_path": "/api/v1/auth/login",
+      "request_body": "LoginRequest",
+      "response_type": "ApiResponse<AuthResponse.TokenPair>",
+      "allowed_roles": [
+        "PUBLIC"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/auth/AuthController.java:36",
+      "description": "Authenticate user and issue JWT access/refresh token pair"
+    },
+    {
+      "id": "API-046",
+      "controller": "AuthController",
+      "method": "POST",
+      "full_path": "/api/v1/auth/refresh",
+      "request_body": "RefreshTokenRequest",
+      "response_type": "ApiResponse<AuthResponse.TokenPair>",
+      "allowed_roles": [
+        "PUBLIC"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/auth/AuthController.java:44",
+      "description": "Refresh expired access token with valid refresh token"
+    },
+    {
+      "id": "API-047",
+      "controller": "AuthController",
+      "method": "POST",
+      "full_path": "/api/v1/auth/logout",
+      "request_body": "RefreshTokenRequest",
+      "response_type": "ApiResponse<Void>",
+      "allowed_roles": [
+        "PUBLIC"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/auth/AuthController.java:52",
+      "description": "Revoke refresh token and terminate session"
+    },
+    {
+      "id": "API-048",
+      "controller": "AuthController",
+      "method": "GET",
+      "full_path": "/api/v1/auth/me",
+      "request_body": "none",
+      "response_type": "ApiResponse<AuthResponse.UserInfo>",
+      "allowed_roles": [
+        "STUDENT",
+        "COLLABORATOR",
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/auth/AuthController.java:60",
+      "description": "Get authenticated user profile"
+    },
+    {
+      "id": "API-049",
+      "controller": "AuthController",
+      "method": "PUT",
+      "full_path": "/api/v1/auth/me",
+      "request_body": "UpdateProfileRequest",
+      "response_type": "ApiResponse<AuthResponse.UserInfo>",
+      "allowed_roles": [
+        "STUDENT",
+        "COLLABORATOR",
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/auth/AuthController.java:68",
+      "description": "Update authenticated user personal profile"
+    },
+    {
+      "id": "API-050",
+      "controller": "AuthController",
+      "method": "PUT",
+      "full_path": "/api/v1/auth/me/password",
+      "request_body": "ChangePasswordRequest",
+      "response_type": "ApiResponse<Void>",
+      "allowed_roles": [
+        "STUDENT",
+        "COLLABORATOR",
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/auth/AuthController.java:77",
+      "description": "Change authenticated user password"
+    },
+    {
+      "id": "API-051",
+      "controller": "AuthController",
+      "method": "GET",
+      "full_path": "/api/v1/auth/me/leaderboard",
+      "request_body": "none",
+      "response_type": "ApiResponse<LeaderboardMeResponse>",
+      "allowed_roles": [
+        "STUDENT",
+        "COLLABORATOR",
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/auth/AuthController.java:88",
+      "description": "Get leaderboard public ranking opt-in state"
+    },
+    {
+      "id": "API-052",
+      "controller": "AuthController",
+      "method": "PATCH",
+      "full_path": "/api/v1/auth/me/leaderboard",
+      "request_body": "LeaderboardOptInRequest",
+      "response_type": "ApiResponse<LeaderboardMeResponse>",
+      "allowed_roles": [
+        "STUDENT",
+        "COLLABORATOR",
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/auth/AuthController.java:95",
+      "description": "Update leaderboard public ranking opt-in preference"
+    },
+    {
+      "id": "API-053",
+      "controller": "CollaboratorQuestionController",
+      "method": "POST",
+      "full_path": "/api/v1/collaborator/questions",
+      "request_body": "CreateQuestionRequest",
+      "response_type": "ApiResponse<QuestionResponse>",
+      "allowed_roles": [
+        "COLLABORATOR",
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/collaborator/CollaboratorQuestionController.java:37",
+      "description": "Create authoring question draft"
+    },
+    {
+      "id": "API-054",
+      "controller": "CollaboratorQuestionController",
+      "method": "GET",
+      "full_path": "/api/v1/collaborator/questions",
+      "request_body": "none",
+      "response_type": "ApiResponse<Page<QuestionListItemResponse>>",
+      "allowed_roles": [
+        "COLLABORATOR",
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/collaborator/CollaboratorQuestionController.java:48",
+      "description": "List questions created by current collaborator"
+    },
+    {
+      "id": "API-055",
+      "controller": "CollaboratorQuestionController",
+      "method": "GET",
+      "full_path": "/api/v1/collaborator/questions/{id}",
+      "request_body": "none",
+      "response_type": "ApiResponse<QuestionResponse>",
+      "allowed_roles": [
+        "COLLABORATOR",
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/collaborator/CollaboratorQuestionController.java:59",
+      "description": "Get collaborator question detail"
+    },
+    {
+      "id": "API-056",
+      "controller": "CollaboratorQuestionController",
+      "method": "PUT",
+      "full_path": "/api/v1/collaborator/questions/{id}",
+      "request_body": "UpdateQuestionRequest",
+      "response_type": "ApiResponse<QuestionResponse>",
+      "allowed_roles": [
+        "COLLABORATOR",
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/collaborator/CollaboratorQuestionController.java:69",
+      "description": "Update draft or revision-requested question"
+    },
+    {
+      "id": "API-057",
+      "controller": "CollaboratorQuestionController",
+      "method": "POST",
+      "full_path": "/api/v1/collaborator/questions/{id}/submit-for-review",
+      "request_body": "none",
+      "response_type": "ApiResponse<QuestionResponse>",
+      "allowed_roles": [
+        "COLLABORATOR",
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/collaborator/CollaboratorQuestionController.java:81",
+      "description": "Submit collaborator question for admin review"
+    },
+    {
+      "id": "API-058",
+      "controller": "ExamPublicController",
+      "method": "GET",
+      "full_path": "/api/v1/exams",
+      "request_body": "none",
+      "response_type": "ApiResponse<Page<ExamSummaryResponse>>",
+      "allowed_roles": [
+        "PUBLIC"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/exam/ExamPublicController.java:26",
+      "description": "Browse published exams catalog with subject and difficulty filters"
+    },
+    {
+      "id": "API-059",
+      "controller": "ExamPublicController",
+      "method": "GET",
+      "full_path": "/api/v1/exams/{id}",
+      "request_body": "none",
+      "response_type": "ApiResponse<ExamDetailResponse>",
+      "allowed_roles": [
+        "PUBLIC"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/exam/ExamPublicController.java:33",
+      "description": "Get public overview of published exam"
+    },
+    {
+      "id": "API-060",
+      "controller": "AiController",
+      "method": "POST",
+      "full_path": "/api/v1/ai/explain",
+      "request_body": "AiExplainRequest",
+      "response_type": "ApiResponse<AiExplainResponse>",
+      "allowed_roles": [
+        "STUDENT",
+        "CONTENT_ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/student/AiController.java:24",
+      "description": "Generate concise AI pedagogical explanation for a question answer"
+    },
+    {
+      "id": "API-061",
+      "controller": "ExamDownloadController",
+      "method": "GET",
+      "full_path": "/api/v1/exams/{id}/download-bundle",
+      "request_body": "none",
+      "response_type": "ApiResponse<ExamDownloadBundleResponse>",
+      "allowed_roles": [
+        "STUDENT"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/student/ExamDownloadController.java:23",
+      "description": "Download complete offline exam payload for client-side encrypted storage"
+    },
+    {
+      "id": "API-062",
+      "controller": "LeaderboardController",
+      "method": "GET",
+      "full_path": "/api/v1/leaderboard",
+      "request_body": "none",
+      "response_type": "ApiResponse<List<LeaderboardEntryResponse>>",
+      "allowed_roles": [
+        "STUDENT"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/student/LeaderboardController.java:26",
+      "description": "Get top ranked students for an exam"
+    },
+    {
+      "id": "API-063",
+      "controller": "MyStatsController",
+      "method": "GET",
+      "full_path": "/api/v1/my-stats/topics",
+      "request_body": "none",
+      "response_type": "ApiResponse<List<TopicStatsResponse>>",
+      "allowed_roles": [
+        "STUDENT"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/student/MyStatsController.java:26",
+      "description": "Get student performance metrics broken down by syllabus topic"
+    },
+    {
+      "id": "API-064",
+      "controller": "MyStatsController",
+      "method": "GET",
+      "full_path": "/api/v1/my-stats/weak-topics",
+      "request_body": "none",
+      "response_type": "ApiResponse<List<TopicStatsResponse>>",
+      "allowed_roles": [
+        "STUDENT"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/student/MyStatsController.java:34",
+      "description": "Get list of weak topics where student accuracy is below threshold"
+    },
+    {
+      "id": "API-065",
+      "controller": "PracticeController",
+      "method": "GET",
+      "full_path": "/api/v1/practice/questions",
+      "request_body": "none",
+      "response_type": "ApiResponse<List<SessionQuestionContentResponse>>",
+      "allowed_roles": [
+        "STUDENT"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/student/PracticeController.java:29",
+      "description": "Fetch randomized practice questions by topic and difficulty"
+    },
+    {
+      "id": "API-066",
+      "controller": "PracticeController",
+      "method": "POST",
+      "full_path": "/api/v1/practice/grade",
+      "request_body": "PracticeGradeRequest",
+      "response_type": "ApiResponse<PracticeGradeResponse>",
+      "allowed_roles": [
+        "STUDENT"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/student/PracticeController.java:41",
+      "description": "Instantly grade submitted practice answers and update user statistics"
+    },
+    {
+      "id": "API-067",
+      "controller": "SessionController",
+      "method": "POST",
+      "full_path": "/api/v1/sessions/start",
+      "request_body": "StartSessionRequest",
+      "response_type": "ApiResponse<SessionResponse.SessionInfo>",
+      "allowed_roles": [
+        "STUDENT"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/student/SessionController.java:26",
+      "description": "Start official online exam session attempt"
+    },
+    {
+      "id": "API-068",
+      "controller": "SessionController",
+      "method": "POST",
+      "full_path": "/api/v1/sessions/{sessionId}/client-submit",
+      "request_body": "ClientSubmitSessionRequest",
+      "response_type": "ApiResponse<SessionResponse.SessionInfo>",
+      "allowed_roles": [
+        "STUDENT"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/student/SessionController.java:36",
+      "description": "Submit offline-completed exam answers in a single synchronized batch"
+    },
+    {
+      "id": "API-069",
+      "controller": "SessionController",
+      "method": "POST",
+      "full_path": "/api/v1/sessions/{sessionId}/answers",
+      "request_body": "SubmitAnswerRequest",
+      "response_type": "ApiResponse<Void>",
+      "allowed_roles": [
+        "STUDENT"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/student/SessionController.java:46",
+      "description": "Save individual answer in real-time during live online exam session"
+    },
+    {
+      "id": "API-070",
+      "controller": "SessionController",
+      "method": "POST",
+      "full_path": "/api/v1/sessions/{sessionId}/submit",
+      "request_body": "none",
+      "response_type": "ApiResponse<SessionResponse.SessionInfo>",
+      "allowed_roles": [
+        "STUDENT"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/student/SessionController.java:56",
+      "description": "Finalize live exam session, calculate final 150-point score and freeze answers"
+    },
+    {
+      "id": "API-071",
+      "controller": "SessionController",
+      "method": "GET",
+      "full_path": "/api/v1/sessions/{sessionId}/questions/{questionId}",
+      "request_body": "none",
+      "response_type": "ApiResponse<SessionQuestionContentResponse>",
+      "allowed_roles": [
+        "STUDENT"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/student/SessionController.java:65",
+      "description": "Get single question content for active examination session"
+    },
+    {
+      "id": "API-072",
+      "controller": "SessionController",
+      "method": "GET",
+      "full_path": "/api/v1/sessions/{sessionId}/answer-keys",
+      "request_body": "none",
+      "response_type": "ApiResponse<SessionAnswerKeysResponse>",
+      "allowed_roles": [
+        "STUDENT"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/student/SessionController.java:76",
+      "description": "Retrieve official answer keys and explanations after session submission"
+    },
+    {
+      "id": "API-073",
+      "controller": "TicketController",
+      "method": "POST",
+      "full_path": "/api/v1/tickets",
+      "request_body": "CreateTicketRequest",
+      "response_type": "ApiResponse<TicketResponse>",
+      "allowed_roles": [
+        "STUDENT"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/student/TicketController.java:25",
+      "description": "Submit question error report or feedback ticket"
+    },
+    {
+      "id": "API-074",
+      "controller": "SubjectController",
+      "method": "GET",
+      "full_path": "/api/v1/subjects",
+      "request_body": "none",
+      "response_type": "ApiResponse<List<SubjectResponse>>",
+      "allowed_roles": [
+        "PUBLIC"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/subject/SubjectController.java:26",
+      "description": "List all active examination subjects (Toán, Anh, Lí, Hóa, Sinh, Sử, Địa)"
+    },
+    {
+      "id": "API-075",
+      "controller": "SubjectController",
+      "method": "GET",
+      "full_path": "/api/v1/subjects/{subjectId}/topics",
+      "request_body": "none",
+      "response_type": "ApiResponse<List<TopicResponse>>",
+      "allowed_roles": [
+        "PUBLIC"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/subject/SubjectController.java:33",
+      "description": "List curriculum topics under a subject"
+    },
+    {
+      "id": "API-076",
+      "controller": "SubjectController",
+      "method": "GET",
+      "full_path": "/api/v1/subjects/{subjectId}/topics/{topicId}/subtopics",
+      "request_body": "none",
+      "response_type": "ApiResponse<List<SubtopicResponse>>",
+      "allowed_roles": [
+        "PUBLIC"
+      ],
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/subject/SubjectController.java:40",
+      "description": "List subtopics under a curriculum topic"
+    }
+  ],
+  "backend_jobs_and_integrations": [
+    {
+      "id": "JOB-001",
+      "name": "RefreshTokenCleanupService",
+      "type": "SCHEDULED_CRON",
+      "schedule": "0 0 3 * * *",
+      "description": "Nightly cron job at 03:00 AM daily to purge expired and old revoked (>7 days) JWT refresh tokens",
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/service/RefreshTokenCleanupService.java:20",
+      "environment_variables": []
+    },
+    {
+      "id": "JOB-002",
+      "name": "OpenAiCompatibleLlmClient",
+      "type": "EXTERNAL_INTEGRATION",
+      "protocol": "HTTP_REST_JSON",
+      "endpoint": "${LLM_BASE_URL}/chat/completions",
+      "description": "Pedagogical AI tutor explanation service for student exam review (/api/v1/ai/explain)",
+      "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/service/llm/OpenAiCompatibleLlmClient.java:22",
+      "environment_variables": [
+        "LLM_BASE_URL",
+        "LLM_API_KEY",
+        "LLM_MODEL"
+      ]
+    }
+  ],
+  "database_migrations": {
+    "ddl_auto_strategy": "validate",
+    "baseline_schema_file": "VSAT/vsat_database_schema.sql",
+    "baseline_tables": [
+      "users",
+      "refresh_tokens",
+      "subjects",
+      "topics",
+      "subtopics",
+      "question_groups",
+      "questions",
+      "question_options",
+      "question_versions",
+      "question_reviews",
+      "question_comments",
+      "exams",
+      "exam_questions",
+      "exam_sessions",
+      "session_answers",
+      "user_topic_stats",
+      "tickets",
+      "ticket_comments",
+      "import_batches",
+      "import_rows",
+      "wallets",
+      "packages",
+      "package_exams",
+      "transactions",
+      "user_exam_access",
+      "collaborator_assignments",
+      "notifications",
+      "audit_logs",
+      "system_configs"
+    ],
+    "incremental_migrations": [
+      {
+        "id": "MIG-001",
+        "file": "VSAT/vsat-compass-api/docs/sql/0001_create_tickets.sql",
+        "description": "Creates tickets table for error reporting and user feedback"
+      },
+      {
+        "id": "MIG-002",
+        "file": "VSAT/vsat-compass-api/docs/sql/0002_add_leaderboard_opt_in.sql",
+        "description": "Adds leaderboard_opt_in boolean column to users table"
+      },
+      {
+        "id": "MIG-003",
+        "file": "VSAT/vsat-compass-api/docs/sql/0003_add_vsat_domain_types.sql",
+        "description": "Declares PostgreSQL ENUMs and types for V-SAT 2026 question and scoring standards"
+      },
+      {
+        "id": "MIG-004",
+        "file": "VSAT/vsat-compass-api/docs/sql/0004_extend_questions_for_vsat.sql",
+        "description": "Alters questions table to add question_format, cognitive_level, raw_score"
+      },
+      {
+        "id": "MIG-005",
+        "file": "VSAT/vsat-compass-api/docs/sql/0005_create_vsat_question_tables.sql",
+        "description": "Creates question_true_false_items, question_matching_choices, question_matching_items, question_short_answer_keys"
+      },
+      {
+        "id": "MIG-006",
+        "file": "VSAT/vsat-compass-api/docs/sql/0006_create_vsat_scoring_and_sections.sql",
+        "description": "Creates scoring_profiles, exam_sections, exam_windows tables"
+      },
+      {
+        "id": "MIG-007",
+        "file": "VSAT/vsat-compass-api/docs/sql/0007_create_exam_blueprints_and_variants.sql",
+        "description": "Creates exam_blueprints, exam_blueprint_cells, exam_variants, exam_variant_questions tables"
+      },
+      {
+        "id": "MIG-008",
+        "file": "VSAT/vsat-compass-api/docs/sql/0008_backfill_legacy_data.sql",
+        "description": "Backfills legacy single-choice questions and existing exams into V-SAT structures"
+      },
+      {
+        "id": "MIG-009",
+        "file": "VSAT/vsat-compass-api/docs/sql/0009_add_vsat_constraints.sql",
+        "description": "Applies foreign keys, indexes, and check constraints for V-SAT schema integrity"
+      },
+      {
+        "id": "MIG-010",
+        "file": "VSAT/vsat-compass-api/docs/sql/0010_seed_vsat_blueprints.sql",
+        "description": "Seeds standardized V-SAT blueprint matrices (GDPT 2018) for Toán học, Tiếng Anh, Vật lí"
+      },
+      {
+        "id": "MIG-011",
+        "file": "VSAT/vsat-compass-api/docs/sql/0011_add_exam_window_title.sql",
+        "description": "Adds title column to exam_windows table"
+      }
+    ]
+  },
+  "web_admin_pages": [
+    {
+      "id": "WEB-001",
+      "route_or_tab": "dashboard",
+      "title": "Dashboard Tổng quan",
+      "component": "App (Dashboard Tab)",
+      "file_path": "web-admin/src/App.tsx:82",
+      "features": [
+        "Executive overview of platform activity",
+        "Live exam attempt counters",
+        "Score distribution metrics"
+      ]
+    },
+    {
+      "id": "WEB-002",
+      "route_or_tab": "exams",
+      "title": "Quản lý đề thi V-SAT 2026",
+      "component": "ExamList",
+      "file_path": "web-admin/src/pages/ExamList.tsx:1",
+      "features": [
+        "Browse all exams with status badges (DRAFT, PENDING_REVIEW, PUBLISHED, ARCHIVED, HIDDEN)",
+        "Subject and keyword search filter",
+        "Publish, hide, archive, discard draft actions",
+        "Quick navigation to Exam Creation Wizard"
+      ]
+    },
+    {
+      "id": "WEB-003",
+      "route_or_tab": "create-exam",
+      "title": "Tạo đề thi mới (Wizard 4 bước)",
+      "component": "CreateExamWizard",
+      "file_path": "web-admin/src/pages/ExamWizard/index.tsx:1",
+      "features": [
+        "Step 1 General: exam code, title, subject, duration (60/90m), difficulty, passing threshold",
+        "Step 2 Composition: matrix blueprint picker or manual question picker with live constraint validation",
+        "Step 3 Preview: question list preview with KaTeX rendering, reorder and delete questions",
+        "Step 4 Variants & Publish: generate randomized question variants (hoán vị) and one-click publish"
+      ]
+    },
+    {
+      "id": "WEB-004",
+      "route_or_tab": "blueprints",
+      "title": "Ma trận đề thi V-SAT",
+      "component": "BlueprintsPage",
+      "file_path": "web-admin/src/pages/Blueprints/index.tsx:1",
+      "features": [
+        "Inspect standard GDPT 2018 blueprint matrices for Math, English, Physics",
+        "Detailed matrix cell inspection across 4 question formats (True/False, MCQ, Matching, Short Answer)",
+        "One-click action to launch Exam Wizard seeded with chosen blueprint"
+      ]
+    },
+    {
+      "id": "WEB-005",
+      "route_or_tab": "schedules",
+      "title": "Ca thi & Lịch thi",
+      "component": "SchedulesPage",
+      "file_path": "web-admin/src/pages/Schedules/index.tsx:1",
+      "features": [
+        "Manage official examination windows (Ca thi & Lịch thi)",
+        "Create, update start/end datetime, and link target exam",
+        "Change status between UPCOMING, RUNNING, and CLOSED",
+        "Delete obsolete examination schedule windows"
+      ]
+    },
+    {
+      "id": "WEB-006",
+      "route_or_tab": "question-bank",
+      "title": "Ngân hàng câu hỏi V-SAT 2026",
+      "component": "QuestionBank",
+      "file_path": "web-admin/src/pages/QuestionBank/index.tsx:1",
+      "features": [
+        "Search and filter questions by subject, format, difficulty, cognitive level",
+        "Interactive question authoring modal (QuestionCreateModal)",
+        "KaTeX preview for math equations",
+        "Sub-items and answer key configuration"
+      ]
+    },
+    {
+      "id": "WEB-007",
+      "route_or_tab": "review-queue",
+      "title": "Hàng đợi duyệt câu hỏi V-SAT",
+      "component": "ReviewQueue",
+      "file_path": "web-admin/src/pages/ReviewQueue/index.tsx:1",
+      "features": [
+        "Triage collaborator-submitted questions awaiting review",
+        "One-click approve question to master bank",
+        "Request revision with detailed feedback comment",
+        "Reject question with reason"
+      ]
+    },
+    {
+      "id": "WEB-008",
+      "route_or_tab": "import-questions",
+      "title": "Import câu hỏi",
+      "component": "ImportQuestions",
+      "file_path": "web-admin/src/pages/ImportQuestions/index.tsx:1",
+      "features": [
+        "Upload Excel (.xlsx) file to bulk import questions",
+        "Download standardized template (vsat_question_import_template.xlsx)",
+        "Real-time validation error reporting with row-by-row diagnostics"
+      ]
+    },
+    {
+      "id": "WEB-009",
+      "route_or_tab": "settings",
+      "title": "Cấu hình hệ thống",
+      "component": "App (Settings Tab)",
+      "file_path": "web-admin/src/App.tsx:95",
+      "features": [
+        "V-SAT 150-point scoring rule references",
+        "Partial-credit progressive scoring standards for True/False sections",
+        "Backend API connection endpoint settings"
+      ]
+    },
+    {
+      "id": "WEB-010",
+      "route_or_tab": "shared-component",
+      "title": "MathView KaTeX Renderer",
+      "component": "MathView",
+      "file_path": "web-admin/src/components/MathView.tsx:1",
+      "features": [
+        "KaTeX equation parsing ($...$ inline, $$...$$ display, \\[...\\] blocks)",
+        "Dynamic math auto-render for administrative preview surfaces"
+      ]
+    }
+  ],
+  "android_screens_and_flows": [
+    {
+      "id": "AND-001",
+      "type": "Activity",
+      "name": "SplashActivity",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/SplashActivity.java:20",
+      "features": [
+        "Application launcher entry point",
+        "Stored token verification and role redirect to MainActivity or LoginActivity"
+      ]
+    },
+    {
+      "id": "AND-002",
+      "type": "Activity",
+      "name": "LoginActivity",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/auth/LoginActivity.java:22",
+      "features": [
+        "User authentication with email and password",
+        "EncryptedSharedPreferences token persistence"
+      ]
+    },
+    {
+      "id": "AND-003",
+      "type": "Activity",
+      "name": "RegisterActivity",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/auth/RegisterActivity.java:20",
+      "features": [
+        "Student registration form with validation and auto-login"
+      ]
+    },
+    {
+      "id": "AND-004",
+      "type": "Activity",
+      "name": "MainActivity",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/MainActivity.java:30",
+      "features": [
+        "Root student navigation container with BottomNavigationView",
+        "Hosts HomeFragment, ExamFragment, PracticeFragment, ProfileFragment",
+        "Admin and Collaborator mode switcher for privileged users"
+      ]
+    },
+    {
+      "id": "AND-005",
+      "type": "Fragment",
+      "name": "HomeFragment",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/home/HomeFragment.java:51",
+      "features": [
+        "Student dashboard with daily challenge streak",
+        "Subject shortcut chips and featured practice exams"
+      ]
+    },
+    {
+      "id": "AND-006",
+      "type": "Fragment",
+      "name": "ExamFragment",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/exam/ExamFragment.java:33",
+      "features": [
+        "Exam catalog search and subject filters",
+        "One-tap offline exam bundle download button",
+        "Downloaded status badge indicators"
+      ]
+    },
+    {
+      "id": "AND-007",
+      "type": "Activity",
+      "name": "ExamDetailActivity",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/exam/ExamDetailActivity.java:25",
+      "features": [
+        "Detailed exam syllabus and structure overview",
+        "Download offline bundle action",
+        "Start live exam session action"
+      ]
+    },
+    {
+      "id": "AND-008",
+      "type": "Activity",
+      "name": "DownloadedExamsActivity",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/exam/DownloadedExamsActivity.java:20",
+      "features": [
+        "Offline library of downloaded encrypted (.vsat) exams",
+        "Delete offline bundle and launch offline exam sessions"
+      ]
+    },
+    {
+      "id": "AND-009",
+      "type": "Activity",
+      "name": "ExamSessionActivity",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/exam/session/ExamSessionActivity.java:50",
+      "features": [
+        "Live exam taking interface with color-coded countdown timer",
+        "Question navigation grid modal (dialog_question_grid.xml)",
+        "KaTeX WebView rendering for complex STEM formulas",
+        "Support for 4 V-SAT formats: Single Choice, True/False sub-items, Matching, Short Answer",
+        "Submit confirmation and unsubmitted answers warning dialog",
+        "Offline session handling and local caching"
+      ]
+    },
+    {
+      "id": "AND-010",
+      "type": "Activity",
+      "name": "ExamResultActivity",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/exam/session/ExamResultActivity.java:30",
+      "features": [
+        "V-SAT 150-point score summary breakdown",
+        "Accuracy statistics, time taken, and review solutions action"
+      ]
+    },
+    {
+      "id": "AND-011",
+      "type": "Activity",
+      "name": "ExamReviewActivity",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/exam/session/ExamReviewActivity.java:45",
+      "features": [
+        "Full post-exam solution review with KaTeX rendering",
+        "AI Explanation integration dialog (showAiExplainDialog)",
+        "Question error reporting ticket dialog (showReportDialog)"
+      ]
+    },
+    {
+      "id": "AND-012",
+      "type": "Fragment",
+      "name": "PracticeFragment",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/practice/PracticeFragment.java:39",
+      "features": [
+        "Adaptive practice topic selection and difficulty preferences",
+        "Quick flashcard review launcher and weak topic drills"
+      ]
+    },
+    {
+      "id": "AND-013",
+      "type": "Activity",
+      "name": "PracticeSessionActivity",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/practice/PracticeSessionActivity.java:35",
+      "features": [
+        "Instant practice loop with immediate grading and explanations",
+        "KaTeX WebView formula rendering"
+      ]
+    },
+    {
+      "id": "AND-014",
+      "type": "Activity",
+      "name": "ExamHistoryActivity",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/history/ExamHistoryActivity.java:22",
+      "features": [
+        "Historical exam attempts, scores, and review navigation"
+      ]
+    },
+    {
+      "id": "AND-015",
+      "type": "Activity",
+      "name": "FlashcardReviewActivity",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/flashcards/FlashcardReviewActivity.java:25",
+      "features": [
+        "Leitner spaced repetition formula flashcard review",
+        "Card flip animation and self-assessed mastery tracking"
+      ]
+    },
+    {
+      "id": "AND-016",
+      "type": "Activity",
+      "name": "ProgressActivity",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/progress/ProgressActivity.java:25",
+      "features": [
+        "Personal analytics: accuracy per topic, weak points, study streaks"
+      ]
+    },
+    {
+      "id": "AND-017",
+      "type": "Fragment",
+      "name": "ProfileFragment",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/profile/ProfileFragment.java:50",
+      "features": [
+        "Student profile overview and streak achievements",
+        "Avatar picker using ActivityResultContracts.StartActivityForResult (image/*)",
+        "Edit profile and change password dialogs, logout confirmation"
+      ]
+    },
+    {
+      "id": "AND-018",
+      "type": "Activity",
+      "name": "SettingsActivity",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/settings/SettingsActivity.java:25",
+      "features": [
+        "Local daily reminder notification schedule and time picker",
+        "Streak reminder alerts toggle"
+      ]
+    },
+    {
+      "id": "AND-019",
+      "type": "Activity",
+      "name": "LeaderboardActivity",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/leaderboard/LeaderboardActivity.java:25",
+      "features": [
+        "Exam competitive leaderboard rankings",
+        "Student public leaderboard opt-in toggle"
+      ]
+    },
+    {
+      "id": "AND-020",
+      "type": "Activity",
+      "name": "AdminActivity",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/admin/AdminActivity.java:30",
+      "features": [
+        "Native Android Admin portal container",
+        "Hosts AdminDashboardFragment, AdminExamListFragment, AdminQuestionBankFragment, AdminUserManagementFragment"
+      ]
+    },
+    {
+      "id": "AND-021",
+      "type": "Fragment",
+      "name": "AdminDashboardFragment",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/admin/dashboard/AdminDashboardFragment.java:35",
+      "features": [
+        "Admin KPI statistics on Android (users, exams, question approval rates)"
+      ]
+    },
+    {
+      "id": "AND-022",
+      "type": "Fragment",
+      "name": "AdminExamListFragment",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/admin/exam/AdminExamListFragment.java:21",
+      "features": [
+        "Exam administration list with status filters and create exam launcher"
+      ]
+    },
+    {
+      "id": "AND-023",
+      "type": "Activity",
+      "name": "AdminCreateExamActivity",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/admin/exam/AdminCreateExamActivity.java:25",
+      "features": [
+        "Native Android form to create new draft exam"
+      ]
+    },
+    {
+      "id": "AND-024",
+      "type": "Activity",
+      "name": "AdminExamDetailActivity",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/admin/exam/AdminExamDetailActivity.java:30",
+      "features": [
+        "Admin exam question configuration, publish, and discard actions"
+      ]
+    },
+    {
+      "id": "AND-025",
+      "type": "Activity",
+      "name": "AdminQuestionPickerActivity",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/admin/exam/AdminQuestionPickerActivity.java:25",
+      "features": [
+        "Select approved questions from bank to attach to draft exam"
+      ]
+    },
+    {
+      "id": "AND-026",
+      "type": "Fragment",
+      "name": "AdminQuestionBankFragment",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/admin/questions/AdminQuestionBankFragment.java:33",
+      "features": [
+        "Question bank browser with review status tabs on Android"
+      ]
+    },
+    {
+      "id": "AND-027",
+      "type": "Activity",
+      "name": "AdminReviewQuestionActivity",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/admin/questions/AdminReviewQuestionActivity.java:30",
+      "features": [
+        "Admin question review interface with KaTeX math preview",
+        "Approve, request revision, and reject dialogs with comments"
+      ]
+    },
+    {
+      "id": "AND-028",
+      "type": "Fragment",
+      "name": "AdminUserManagementFragment",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/admin/users/AdminUserManagementFragment.java:25",
+      "features": [
+        "User role change dialog (STUDENT, COLLABORATOR, CONTENT_ADMIN, SUPER_ADMIN)",
+        "Lock and unlock user accounts"
+      ]
+    },
+    {
+      "id": "AND-029",
+      "type": "Activity",
+      "name": "AdminTicketActivity",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/admin/tickets/AdminTicketActivity.java:25",
+      "features": [
+        "Triage and resolve question error reports from students"
+      ]
+    },
+    {
+      "id": "AND-030",
+      "type": "Activity",
+      "name": "CollaboratorWorkspaceActivity",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/collaborator/CollaboratorWorkspaceActivity.java:25",
+      "features": [
+        "Collaborator workspace shell hosting question submissions list and authoring actions"
+      ]
+    },
+    {
+      "id": "AND-031",
+      "type": "Fragment",
+      "name": "CollaboratorQuestionListFragment",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/collaborator/CollaboratorQuestionListFragment.java:25",
+      "features": [
+        "Collaborator drafted, pending, and approved questions list"
+      ]
+    },
+    {
+      "id": "AND-032",
+      "type": "Activity",
+      "name": "CollaboratorCreateQuestionActivity",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/collaborator/CollaboratorCreateQuestionActivity.java:30",
+      "features": [
+        "Collaborator question creation form with format selectors (MCQ, True/False, Matching, Short Answer)",
+        "Question options and sub-items authoring"
+      ]
+    },
+    {
+      "id": "AND-033",
+      "type": "Activity",
+      "name": "CollaboratorQuestionDetailActivity",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/ui/collaborator/CollaboratorQuestionDetailActivity.java:30",
+      "features": [
+        "Collaborator question detail viewer, edit draft, submit for review, review feedback comments history"
+      ]
+    },
+    {
+      "id": "AND-034",
+      "type": "UtilityFlow",
+      "name": "KaTeXHelperFlow",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/util/KaTeXHelper.java:9",
+      "features": [
+        "KaTeX math equation detection and rendering via embedded WebView",
+        "Uses local asset bundle file:///android_asset/katex/",
+        "Transparent WebView with fallback to native TextView for plain strings"
+      ]
+    },
+    {
+      "id": "AND-035",
+      "type": "ArchitectureFlow",
+      "name": "OfflineExamBundleDownloadAndSubmitFlow",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/data/repository/OfflineExamRepository.java:35",
+      "features": [
+        "Download complete exam bundle via GET /api/v1/exams/{id}/download-bundle",
+        "Local AES-128-GCM encrypted persistence in .vsat files",
+        "Local offline examination session execution",
+        "Batch synchronization via POST /api/v1/sessions/{sessionId}/client-submit"
+      ]
+    }
+  ],
+  "android_workers_and_services": [
+    {
+      "id": "WRK-001",
+      "name": "DailyReminderWorker",
+      "class_type": "androidx.work.Worker",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/notification/DailyReminderWorker.java:19",
+      "trigger": "Periodic WorkManager trigger once per day at user-configured hour",
+      "notification_channel": "vsat_daily_reminder",
+      "description": "Sends customized study streak and daily practice challenge notification to student"
+    },
+    {
+      "id": "WRK-002",
+      "name": "OfflineExamSyncWorker",
+      "class_type": "androidx.work.Worker",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/sync/OfflineExamSyncWorker.java:20",
+      "trigger": "Network-constrained OneTimeWorkRequest (NetworkType.CONNECTED)",
+      "notification_channel": null,
+      "description": "Automatically synchronizes pending offline exam submissions when internet connection is restored"
+    },
+    {
+      "id": "WRK-003",
+      "name": "NotificationChannel_vsat_daily_reminder",
+      "class_type": "android.app.NotificationChannel",
+      "file_path": "app/src/main/java/com/example/v_sat_compass/notification/NotificationHelper.java:26",
+      "trigger": "Created on application startup via NotificationHelper.ensureChannel",
+      "notification_channel": "vsat_daily_reminder",
+      "description": "System notification channel for daily study reminder and streak alert notifications"
+    }
+  ],
+  "environment_and_toolchain": {
+    "host_os": "Windows 11 Home Single Language 10.0.26300",
+    "shell": "Git Bash (POSIX sh)",
+    "tools": {
+      "docker": {
+        "cli_path": "C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe",
+        "desktop_path": "C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe",
+        "version": "28.5.2"
+      },
+      "node": {
+        "executable_path": "C:\\Program Files\\nodejs\\node.exe",
+        "version": "v24.16.0"
+      },
+      "npm": {
+        "executable_path": "C:\\Program Files\\nodejs\\npm.cmd",
+        "version": "11.2.0"
+      },
+      "npx": {
+        "executable_path": "C:\\Program Files\\nodejs\\npx.cmd"
+      },
+      "jdk": {
+        "jbr_path": "C:\\Program Files\\Android\\Android Studio\\jbr",
+        "version": "JetBrains Runtime (JBR) 17/21 for Android Studio"
+      },
+      "android_sdk": {
+        "sdk_root": "C:\\Users\\PC\\AppData\\Local\\Android\\Sdk",
+        "adb_path": "C:\\Users\\PC\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+        "adb_version": "1.0.41 (Version 37.0.0-14910828)",
+        "emulator_path": "C:\\Users\\PC\\AppData\\Local\\Android\\Sdk\\emulator\\emulator.exe",
+        "avds": [
+          "Pixel_10_Pro"
+        ]
+      }
+    },
+    "services_and_ports": {
+      "backend_api": {
+        "host": "localhost",
+        "port": 18080,
+        "docker_container": "vsat-api",
+        "docker_internal_port": 8080,
+        "health_endpoint": "http://localhost:18080/api/v1/actuator/health",
+        "context_path": "/api/v1"
+      },
+      "database_postgresql": {
+        "host": "localhost",
+        "port": 5432,
+        "docker_container": "vsat-pg",
+        "database_name": "vsat_compass",
+        "default_username": "postgres"
+      },
+      "web_admin": {
+        "host": "localhost",
+        "port": 5173,
+        "url": "http://localhost:5173",
+        "dev_server": "Vite 5"
+      },
+      "android_emulator": {
+        "avd_name": "Pixel_10_Pro",
+        "adb_reverse_port": "tcp:18080 tcp:18080",
+        "app_package": "com.example.v_sat_compass",
+        "launcher_activity": "com.example.v_sat_compass/.ui.SplashActivity"
+      }
+    },
+    "legacy_test_and_script_directories_to_isolate": [
+      {
+        "path": "scripts/",
+        "description": "Legacy manual testing scripts (e2e-verify.mjs, test-blueprints-schedules.mjs, test-exam-windows.mjs, test-question-import.mjs, test-review-queue.mjs, run-project.ps1, stop-project.ps1, run-web-admin.ps1)"
+      },
+      {
+        "path": "VSAT/vsat-compass-api/docs/scripts/",
+        "description": "Legacy database seed and test scripts (seed_c1_2a_smoke.sql)"
+      },
+      {
+        "path": "docs/scripts/",
+        "description": "Documentation utility scripts"
+      },
+      {
+        "path": "docs/seed/",
+        "description": "Static seed documentation"
+      }
+    ]
+  }
+}

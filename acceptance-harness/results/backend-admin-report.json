@@ -1,0 +1,2284 @@
+{
+  "suite": "backend-admin-report",
+  "generatedAt": "2026-11-03T05:52:13.427Z",
+  "totalCases": 42,
+  "passedCount": 42,
+  "failedCount": 0,
+  "results": [
+    {
+      "id": "API-001",
+      "description": "AdminBlueprintController GET /api/v1/admin/blueprints",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 474,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated GET /api/v1/admin/blueprints must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on GET /api/v1/admin/blueprints must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on GET /api/v1/admin/blueprints must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": ""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-002",
+      "description": "AdminBlueprintController GET /api/v1/admin/blueprints/{id}",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 176,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated GET /api/v1/admin/blueprints/1 must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on GET /api/v1/admin/blueprints/1 must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on GET /api/v1/admin/blueprints/1 must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 1,
+          "expected": 1,
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 404,
+          "expected": 404,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-003",
+      "description": "AdminDashboardController GET /api/v1/admin/stats",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 198,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated GET /api/v1/admin/stats must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on GET /api/v1/admin/stats must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on GET /api/v1/admin/stats must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": ""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-004",
+      "description": "AdminExamController GET /api/v1/admin/exams",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 95,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated GET /api/v1/admin/exams must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on GET /api/v1/admin/exams must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on GET /api/v1/admin/exams must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-005",
+      "description": "AdminExamController GET /api/v1/admin/exams/{id}",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 170,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated GET /api/v1/admin/exams/2 must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on GET /api/v1/admin/exams/2 must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on GET /api/v1/admin/exams/2 must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 2,
+          "expected": 2,
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 404,
+          "expected": 404,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-006",
+      "description": "AdminExamController POST /api/v1/admin/exams",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 312,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated POST /api/v1/admin/exams must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on POST /api/v1/admin/exams must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on POST /api/v1/admin/exams must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 201,
+          "expected": 201,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "ADM_CR_EX_117968",
+          "expected": "ADM_CR_EX_117968",
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "1",
+          "expected": "1",
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-007",
+      "description": "AdminExamController PUT /api/v1/admin/exams/{id}",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 177,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated PUT /api/v1/admin/exams/4 must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on PUT /api/v1/admin/exams/4 must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on PUT /api/v1/admin/exams/4 must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "Tiêu đề cập nhật API-007",
+          "expected": "Tiêu đề cập nhật API-007",
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 404,
+          "expected": 404,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-008",
+      "description": "AdminExamController DELETE /api/v1/admin/exams/{examId}",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 283,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated DELETE /api/v1/admin/exams/6 must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on DELETE /api/v1/admin/exams/6 must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on DELETE /api/v1/admin/exams/6 must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "0",
+          "expected": "0",
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 404,
+          "expected": 404,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-009",
+      "description": "AdminExamController POST /api/v1/admin/exams/{examId}/questions",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 555,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated POST /api/v1/admin/exams/8/questions must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on POST /api/v1/admin/exams/8/questions must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on POST /api/v1/admin/exams/8/questions must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "1",
+          "expected": "1",
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-010",
+      "description": "AdminExamController DELETE /api/v1/admin/exams/{examId}/questions/{questionId}",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 667,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated DELETE /api/v1/admin/exams/10/questions/7 must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on DELETE /api/v1/admin/exams/10/questions/7 must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on DELETE /api/v1/admin/exams/10/questions/7 must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "0",
+          "expected": "0",
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 404,
+          "expected": 404,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-011",
+      "description": "AdminExamController PUT /api/v1/admin/exams/{examId}/questions/reorder",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 853,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated PUT /api/v1/admin/exams/12/questions/reorder must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on PUT /api/v1/admin/exams/12/questions/reorder must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on PUT /api/v1/admin/exams/12/questions/reorder must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-012",
+      "description": "AdminExamController POST /api/v1/admin/exams/{examId}/submit-review",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 163,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated POST /api/v1/admin/exams/14/submit-review must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on POST /api/v1/admin/exams/14/submit-review must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on POST /api/v1/admin/exams/14/submit-review must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "PENDING_REVIEW",
+          "expected": "PENDING_REVIEW",
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 409,
+          "expected": 409,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-013",
+      "description": "AdminExamController POST /api/v1/admin/exams/{examId}/publish",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 624,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated POST /api/v1/admin/exams/16/publish must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on POST /api/v1/admin/exams/16/publish must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on POST /api/v1/admin/exams/16/publish must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "CONTENT_ADMIN on SUPER_ADMIN-only POST /api/v1/admin/exams/16/publish must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "PUBLISHED",
+          "expected": "PUBLISHED",
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 404,
+          "expected": 404,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-014",
+      "description": "AdminExamController POST /api/v1/admin/exams/{examId}/hide",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 564,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated POST /api/v1/admin/exams/18/hide must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on POST /api/v1/admin/exams/18/hide must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on POST /api/v1/admin/exams/18/hide must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "HIDDEN",
+          "expected": "HIDDEN",
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 404,
+          "expected": 404,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-015",
+      "description": "AdminExamController POST /api/v1/admin/exams/{examId}/archive",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 583,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated POST /api/v1/admin/exams/20/archive must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on POST /api/v1/admin/exams/20/archive must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on POST /api/v1/admin/exams/20/archive must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "ARCHIVED",
+          "expected": "ARCHIVED",
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 404,
+          "expected": 404,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-016",
+      "description": "AdminExamController POST /api/v1/admin/exams/{examId}/reject-review",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 513,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated POST /api/v1/admin/exams/22/reject-review must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on POST /api/v1/admin/exams/22/reject-review must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on POST /api/v1/admin/exams/22/reject-review must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "DRAFT",
+          "expected": "DRAFT",
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 404,
+          "expected": 404,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-017",
+      "description": "AdminExamController POST /api/v1/admin/exams/{examId}/return-to-draft",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 519,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated POST /api/v1/admin/exams/24/return-to-draft must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on POST /api/v1/admin/exams/24/return-to-draft must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on POST /api/v1/admin/exams/24/return-to-draft must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "DRAFT",
+          "expected": "DRAFT",
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 404,
+          "expected": 404,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-018",
+      "description": "AdminExamController GET /api/v1/admin/exams/{examId}/questions",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 691,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated GET /api/v1/admin/exams/26/questions must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on GET /api/v1/admin/exams/26/questions must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on GET /api/v1/admin/exams/26/questions must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": ""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-019",
+      "description": "AdminExamController GET /api/v1/admin/exams/{examId}/variants",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 171,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated GET /api/v1/admin/exams/28/variants must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on GET /api/v1/admin/exams/28/variants must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on GET /api/v1/admin/exams/28/variants must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 404,
+          "expected": 404,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-020",
+      "description": "AdminExamController POST /api/v1/admin/exams/{examId}/variants/generate",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 161,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated POST /api/v1/admin/exams/30/variants/generate must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on POST /api/v1/admin/exams/30/variants/generate must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on POST /api/v1/admin/exams/30/variants/generate must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 4,
+          "expected": 4,
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 404,
+          "expected": 404,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-021",
+      "description": "AdminExamController POST /api/v1/admin/exams/generate-by-matrix",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 435,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated POST /api/v1/admin/exams/generate-by-matrix must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on POST /api/v1/admin/exams/generate-by-matrix must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on POST /api/v1/admin/exams/generate-by-matrix must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": ""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-022",
+      "description": "AdminExamController POST /api/v1/admin/exams/{examId}/generate-by-matrix",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 332,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated POST /api/v1/admin/exams/32/generate-by-matrix must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on POST /api/v1/admin/exams/32/generate-by-matrix must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on POST /api/v1/admin/exams/32/generate-by-matrix must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 32,
+          "expected": 32,
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 404,
+          "expected": 404,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-023",
+      "description": "AdminExamWindowController GET /api/v1/admin/exam-windows",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 418,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated GET /api/v1/admin/exam-windows must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on GET /api/v1/admin/exam-windows must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on GET /api/v1/admin/exam-windows must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-024",
+      "description": "AdminExamWindowController GET /api/v1/admin/exam-windows/{id}",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 401,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated GET /api/v1/admin/exam-windows/5 must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on GET /api/v1/admin/exam-windows/5 must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on GET /api/v1/admin/exam-windows/5 must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 5,
+          "expected": 5,
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 404,
+          "expected": 404,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-025",
+      "description": "AdminExamWindowController POST /api/v1/admin/exam-windows",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 311,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated POST /api/v1/admin/exam-windows must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on POST /api/v1/admin/exam-windows must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on POST /api/v1/admin/exam-windows must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 201,
+          "expected": 201,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "WIN_CR_126417",
+          "expected": "WIN_CR_126417",
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "1",
+          "expected": "1",
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-026",
+      "description": "AdminExamWindowController PUT /api/v1/admin/exam-windows/{id}",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 424,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated PUT /api/v1/admin/exam-windows/7 must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on PUT /api/v1/admin/exam-windows/7 must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on PUT /api/v1/admin/exam-windows/7 must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "Tiêu đề cập nhật API-026",
+          "expected": "Tiêu đề cập nhật API-026",
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 404,
+          "expected": 404,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-027",
+      "description": "AdminExamWindowController PATCH /api/v1/admin/exam-windows/{id}/status",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 491,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated PATCH /api/v1/admin/exam-windows/9/status?status=RUNNING must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on PATCH /api/v1/admin/exam-windows/9/status?status=RUNNING must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on PATCH /api/v1/admin/exam-windows/9/status?status=RUNNING must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "RUNNING",
+          "expected": "RUNNING",
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-028",
+      "description": "AdminExamWindowController DELETE /api/v1/admin/exam-windows/{id}",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 527,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated DELETE /api/v1/admin/exam-windows/11 must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on DELETE /api/v1/admin/exam-windows/11 must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on DELETE /api/v1/admin/exam-windows/11 must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "0",
+          "expected": "0",
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 404,
+          "expected": 404,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-029",
+      "description": "AdminQuestionController GET /api/v1/admin/questions",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 40,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated GET /api/v1/admin/questions?status=PENDING_REVIEW must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on GET /api/v1/admin/questions?status=PENDING_REVIEW must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on GET /api/v1/admin/questions?status=PENDING_REVIEW must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-030",
+      "description": "AdminQuestionController GET /api/v1/admin/questions/picker",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 37,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated GET /api/v1/admin/questions/picker must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on GET /api/v1/admin/questions/picker must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on GET /api/v1/admin/questions/picker must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-031",
+      "description": "AdminQuestionController GET /api/v1/admin/questions/{id}",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 308,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated GET /api/v1/admin/questions/25 must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on GET /api/v1/admin/questions/25 must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on GET /api/v1/admin/questions/25 must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 25,
+          "expected": 25,
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 404,
+          "expected": 404,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-032",
+      "description": "AdminQuestionController POST /api/v1/admin/questions/{id}/approve",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 289,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated POST /api/v1/admin/questions/27/approve must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on POST /api/v1/admin/questions/27/approve must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on POST /api/v1/admin/questions/27/approve must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "APPROVED",
+          "expected": "APPROVED",
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 404,
+          "expected": 404,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-033",
+      "description": "AdminQuestionController POST /api/v1/admin/questions/{id}/request-revision",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 548,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated POST /api/v1/admin/questions/29/request-revision must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on POST /api/v1/admin/questions/29/request-revision must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on POST /api/v1/admin/questions/29/request-revision must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "NEEDS_REVISION",
+          "expected": "NEEDS_REVISION",
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-034",
+      "description": "AdminQuestionController POST /api/v1/admin/questions/{id}/reject",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 558,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated POST /api/v1/admin/questions/31/reject must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on POST /api/v1/admin/questions/31/reject must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on POST /api/v1/admin/questions/31/reject must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "ARCHIVED",
+          "expected": "ARCHIVED",
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-035",
+      "description": "AdminQuestionController GET /api/v1/admin/questions/import/template",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 1244,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated GET /api/v1/admin/questions/import/template must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on GET /api/v1/admin/questions/import/template must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on GET /api/v1/admin/questions/import/template must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 405,
+          "expected": 405,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-036",
+      "description": "AdminQuestionController POST /api/v1/admin/questions/import",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 202,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated POST /api/v1/admin/questions/import?dryRun=true must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on POST /api/v1/admin/questions/import?dryRun=true must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on POST /api/v1/admin/questions/import?dryRun=true must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-037",
+      "description": "AdminTicketController GET /api/v1/admin/tickets",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 266,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated GET /api/v1/admin/tickets must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on GET /api/v1/admin/tickets must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on GET /api/v1/admin/tickets must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-038",
+      "description": "AdminTicketController PATCH /api/v1/admin/tickets/{id}",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 408,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated PATCH /api/v1/admin/tickets/1 must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on PATCH /api/v1/admin/tickets/1 must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on PATCH /api/v1/admin/tickets/1 must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "IN_PROGRESS",
+          "expected": "IN_PROGRESS",
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "Tiếp nhận xử lý API-038",
+          "expected": "Tiếp nhận xử lý API-038",
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 404,
+          "expected": 404,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-039",
+      "description": "AdminUserController GET /api/v1/admin/users",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 156,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated GET /api/v1/admin/users must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on GET /api/v1/admin/users must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on GET /api/v1/admin/users must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "CONTENT_ADMIN on SUPER_ADMIN-only GET /api/v1/admin/users must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-040",
+      "description": "AdminUserController PATCH /api/v1/admin/users/{id}/role",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 488,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated PATCH /api/v1/admin/users/5/role must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on PATCH /api/v1/admin/users/5/role must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on PATCH /api/v1/admin/users/5/role must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "CONTENT_ADMIN on SUPER_ADMIN-only PATCH /api/v1/admin/users/5/role must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "COLLABORATOR",
+          "expected": "COLLABORATOR",
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "COLLABORATOR",
+          "expected": "COLLABORATOR",
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-041",
+      "description": "AdminUserController PATCH /api/v1/admin/users/{id}/lock",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 445,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated PATCH /api/v1/admin/users/5/lock must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on PATCH /api/v1/admin/users/5/lock must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on PATCH /api/v1/admin/users/5/lock must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "CONTENT_ADMIN on SUPER_ADMIN-only PATCH /api/v1/admin/users/5/lock must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "LOCKED",
+          "expected": "LOCKED",
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    },
+    {
+      "id": "API-042",
+      "description": "AdminUserController PATCH /api/v1/admin/users/{id}/unlock",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 405,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "Unauthenticated PATCH /api/v1/admin/users/5/unlock must return 401"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "STUDENT role on PATCH /api/v1/admin/users/5/unlock must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "COLLABORATOR role on PATCH /api/v1/admin/users/5/unlock must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "CONTENT_ADMIN on SUPER_ADMIN-only PATCH /api/v1/admin/users/5/unlock must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": ""
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "ACTIVE",
+          "expected": "ACTIVE",
+          "message": ""
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 404,
+          "expected": 404,
+          "message": ""
+        }
+      ],
+      "evidence": {},
+      "error": null
+    }
+  ]
+}

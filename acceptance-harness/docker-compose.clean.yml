@@ -1,0 +1,18 @@
+services:
+  vsat-clean-pg:
+    image: postgres:16-alpine
+    container_name: vsat-clean-pg
+    ports:
+      - "127.0.0.1:55432:5432"
+    environment:
+      POSTGRES_DB: vsat_compass_acceptance
+      POSTGRES_USER: vsat_clean
+      POSTGRES_PASSWORD: vsat_clean_pass
+    tmpfs:
+      - /var/lib/postgresql/data:rw,noexec,nosuid,size=512m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vsat_clean -d vsat_compass_acceptance"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    restart: "no"

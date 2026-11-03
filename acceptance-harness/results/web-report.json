@@ -1,0 +1,435 @@
+{
+  "suite": "web-report",
+  "generatedAt": "2026-11-03T06:28:35.002Z",
+  "totalCases": 10,
+  "passedCount": 10,
+  "failedCount": 0,
+  "results": [
+    {
+      "id": "WEB-001",
+      "description": "Login & Dashboard Overview (KPI Metrics, Executive Summary)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 5367,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Page header must display Dashboard Tổng quan"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Center executive dashboard card must be rendered"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Dashboard description explains score distribution"
+        }
+      ],
+      "evidence": {
+        "dashboard": {
+          "h1": "Dashboard Tổng quan",
+          "cardTitle": "Trung tâm Điều hành V-SAT Compass",
+          "bodyTextSnippet": "Theo dõi số lượng ca thi trực tuyến, tổng số học sinh đang thi và tỷ lệ phân hóa"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "WEB-002",
+      "description": "Exam Management List (Search Filters, Status Badges, Discard Draft)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 836,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Header must indicate exam management"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Search input field for exams must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Filter dropdowns for subject and status must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Search filter query must be reflected in input"
+        }
+      ],
+      "evidence": {
+        "examList": {
+          "header": "Quản lý đề thi",
+          "searchInputExists": true,
+          "subjectSelectExists": true
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "WEB-003",
+      "description": "Create Exam Wizard (4 Steps: General -> Composition -> Preview -> Variants & Publish)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 872,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Wizard header title must match"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Wizard starts at Step 1/4 (General info)"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Exam input fields must exist in Step 1"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Wizard transitions to Step 2/4 (Composition)"
+        }
+      ],
+      "evidence": {
+        "wizard": {
+          "header": "Tạo đề thi chuẩn V-SAT 2026",
+          "step1Verified": true,
+          "step2Verified": true
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "WEB-004",
+      "description": "Exam Matrix Blueprints (GDPT 2018 Specs, 4 Formats, Matrix Cells)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 426,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Blueprints page title must match"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Must document 25 questions and 150 score specification"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Copy JSON button must be present on blueprints view"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Action button to launch Exam Wizard seeded with blueprint must exist"
+        }
+      ],
+      "evidence": {
+        "blueprints": {
+          "title": "grid_view\nKhung Ma trận Khảo thí V-SAT 2026",
+          "hasCopyButton": true,
+          "hasCreateExamButton": true
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "WEB-005",
+      "description": "Examination Schedules & Windows (Create, Status Lifecycle, Delete Window)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 850,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Schedules header must match"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Create schedule window button must be present"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Schedule creation modal must display window code and name inputs"
+        }
+      ],
+      "evidence": {
+        "schedules": {
+          "header": "pending_actions\nCa thi & Lịch thi (Exam Windows)",
+          "hasCreateButton": true,
+          "modalOpened": true
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "WEB-006",
+      "description": "Question Bank & Authoring (Subject Filters, Question Types, KaTeX Math Engine)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 414,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Question bank header title must match"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "KaTeX integration badge must be visible"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Filters for subject, question type, and status must be present"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Add question button must be present"
+        }
+      ],
+      "evidence": {
+        "questionBank": {
+          "title": "Ngân hàng câu hỏi V-SAT 2026",
+          "badgeText": true,
+          "hasFilters": true,
+          "hasAddQuestionBtn": true
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "WEB-007",
+      "description": "Question Review Queue (Triage Collaborator Submissions, Approve, Revision, Reject)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 419,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Review queue title must match"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Review status filter dropdown must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Review queue must present triage status categories"
+        }
+      ],
+      "evidence": {
+        "reviewQueue": {
+          "header": "Hàng đợi duyệt câu hỏi V-SAT",
+          "statusFilterExists": true,
+          "hasTriageConcepts": true
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "WEB-008",
+      "description": "Excel Question Import (Template Download, Valid XLSX Buffer In-Memory, Import Result)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 836,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Import page header must match"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Template download button must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "File input element must be present in the import UI"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "In-memory Excel generator must produce valid zip/xlsx buffer"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "File input change event successfully dispatched"
+        }
+      ],
+      "evidence": {
+        "importQuestions": {
+          "header": "cloud_upload\nImport câu hỏi từ file Excel (.xlsx)",
+          "hasDownloadTemplateBtn": true,
+          "generatedXlsxSize": 2741,
+          "fileUploadSimulated": true
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "WEB-009",
+      "description": "System Settings & Scoring Standards (150 Raw Points, Partial Credit Rule, Role Badges)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 414,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Settings page title must match"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Scoring standard section must be present"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Scoring documentation mentions 150 points and True/False rule"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Sidebar footer must display CONTENT_ADMIN role"
+        }
+      ],
+      "evidence": {
+        "settings": {
+          "header": "Cấu hình & Quy chuẩn",
+          "cardTitle": "Quy chuẩn Điểm số & Chấm thi",
+          "bodyTextSnippet": "Cấu hình thang điểm 150 điểm thô, quy tắc tính điểm lũy tiến Đúng/Sai và kết nối",
+          "hasContentAdminBadge": true
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "WEB-010",
+      "description": "MathView KaTeX Renderer (Inline, Display, and Block Math Equations without Syntax Errors)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 2,
+      "assertions": [
+        {
+          "name": "assertFalse",
+          "passed": true,
+          "actual": false,
+          "expected": false,
+          "message": "KaTeX equations must not produce .katex-error rendering failures"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "KaTeX HTML elements must be parsed and validated"
+        }
+      ],
+      "evidence": {
+        "katex": {
+          "directKaTeX": false,
+          "elementCount": 0,
+          "hasKatexHtml": true,
+          "hasError": false
+        }
+      },
+      "error": null
+    }
+  ]
+}
