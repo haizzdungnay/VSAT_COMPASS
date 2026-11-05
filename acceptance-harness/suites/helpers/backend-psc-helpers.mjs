@@ -11,24 +11,28 @@ function resolveJavaBinary(binName) {
   const isWin = process.platform === 'win32';
   const exe = isWin ? `${binName}.exe` : binName;
 
-  if (process.env.JAVA_HOME) {
-    const candidate = resolve(process.env.JAVA_HOME, 'bin', exe);
-    if (existsSync(candidate)) return candidate;
-  }
-  const defaults = isWin
+  const candidates = isWin
     ? [
         `C:/Program Files/Android/Android Studio1/jbr/bin/${exe}`,
+        process.env.JAVA_HOME ? resolve(process.env.JAVA_HOME, 'bin', exe) : null,
         `C:/Program Files/Android/Android Studio/jbr/bin/${exe}`,
         `C:/Program Files/Java/jdk-21/bin/${exe}`,
         `C:/Program Files/Eclipse Adoptium/jdk-21/bin/${exe}`
-      ]
+      ].filter(Boolean)
     : [
+        process.env.JAVA_HOME ? resolve(process.env.JAVA_HOME, 'bin', exe) : null,
         `/usr/lib/jvm/temurin-21-jdk-amd64/bin/${exe}`,
         `/usr/lib/jvm/java-21-openjdk-amd64/bin/${exe}`,
         `/usr/bin/${exe}`
-      ];
-  for (const c of defaults) {
-    if (existsSync(c)) return c;
+      ].filter(Boolean);
+
+  for (const c of candidates) {
+    if (existsSync(c)) {
+      const probe = spawnSync(c, ['-version'], { stdio: 'pipe' });
+      if (probe.status === 0) {
+        return c;
+      }
+    }
   }
   return exe;
 }
@@ -79,11 +83,14 @@ export const sharedState = {
 };
 
 export async function setLlmMockMode(mode = 'normal') {
-  const llmBaseUrl = process.env.LLM_BASE_URL || 'http://127.0.0.1:18081';
-  const resp = await fetch(`${llmBaseUrl}/__control/mode`, {
+  const rawBase = (process.env.LLM_BASE_URL || 'http://127.0.0.1:18081')
+    .replace(/\/v1\/?$/, '')
+    .replace(/\/+$/, '');
+  const resp = await fetch(`${rawBase}/__control/mode`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mode })
+    body: JSON.stringify({ mode }),
+    signal: AbortSignal.timeout(5000)
   });
   if (!resp.ok) {
     throw new Error(`Failed to set LLM mock mode to ${mode}: HTTP ${resp.status}`);

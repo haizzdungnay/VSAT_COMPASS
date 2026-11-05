@@ -550,8 +550,20 @@ registerCase('API-071', 'GET /sessions/{sessionId}/questions/{questionId} - Fetc
   assertTrue(Boolean(questionContent), 'Question text is present');
 });
 
-registerCase('API-072', 'GET /sessions/{sessionId}/answer-keys - Retrieve answer keys after submission', async ({ apiCall }) => {
-  const sId = sharedState.createdSessionId; // Completed in API-070
+registerCase('API-072', 'GET /sessions/{sessionId}/answer-keys - Retrieve answer keys after submission', async ({ apiCall, queryDb }) => {
+  let sId = sharedState.createdSessionId; // Completed in API-070
+  if (!sId) {
+    const fixtures = getFixtureIds(queryDb);
+    const startRes = await apiCall('/sessions/start', {
+      method: 'POST',
+      body: { examId: fixtures.examId, mode: 'MOCK_EXAM' }
+    }, 'STUDENT');
+    sId = startRes.json?.data?.id;
+    if (sId) {
+      await apiCall(`/sessions/${sId}/submit`, { method: 'POST' }, 'STUDENT');
+      sharedState.createdSessionId = sId;
+    }
+  }
   const res = await apiCall(`/sessions/${sId}/answer-keys`, {}, 'STUDENT');
 
   assertStatus(res.status, 200, 'Answer keys retrieval must return HTTP 200');

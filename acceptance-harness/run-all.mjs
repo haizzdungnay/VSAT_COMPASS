@@ -4,7 +4,6 @@ import { existsSync } from 'node:fs';
 import { resolve, join, delimiter } from 'node:path';
 import { runSafetyPreflight } from './safety-preflight.mjs';
 import { bootstrapDatabase } from './db-bootstrap.mjs';
-import { startLlmMock } from './stubs/llm-mock-server.mjs';
 import { evaluateVerdict } from './verdict-gate.mjs';
 
 const HARNESS_DIR = import.meta.dirname;
@@ -12,32 +11,34 @@ const REPO_ROOT = resolve(HARNESS_DIR, '..');
 const BACKEND_DIR = resolve(REPO_ROOT, 'VSAT/vsat-compass-api');
 const IS_WIN = process.platform === 'win32';
 
-let llmServerInstance = null;
+let llmProcess = null;
 let backendProcess = null;
 
 export function resolveJbrHome() {
   const isWin = process.platform === 'win32';
   const javaExe = isWin ? 'bin/java.exe' : 'bin/java';
 
-  if (process.env.JAVA_HOME && existsSync(join(process.env.JAVA_HOME, javaExe))) {
-    return process.env.JAVA_HOME;
-  }
-
   const candidates = isWin
     ? [
         'C:\\Program Files\\Android\\Android Studio1\\jbr',
+        process.env.JAVA_HOME,
         'C:\\Program Files\\Android\\Android Studio\\jbr',
         'C:\\Program Files\\Java\\jdk-21',
         'C:\\Program Files\\Eclipse Adoptium\\jdk-21'
-      ]
+      ].filter(Boolean)
     : [
+        process.env.JAVA_HOME,
         '/usr/lib/jvm/temurin-21-jdk-amd64',
         '/usr/lib/jvm/java-21-openjdk-amd64'
-      ];
+      ].filter(Boolean);
 
   for (const c of candidates) {
-    if (existsSync(c) && existsSync(join(c, javaExe))) {
-      return c;
+    const fullExe = join(c, javaExe);
+    if (existsSync(c) && existsSync(fullExe)) {
+      const probe = spawnSync(fullExe, ['-version'], { stdio: 'pipe' });
+      if (probe.status === 0) {
+        return c;
+      }
     }
   }
   return process.env.JAVA_HOME || null;
@@ -104,8 +105,9 @@ async function ensureBackendRunning() {
   }
 
   console.log('[RUN-ALL] Spawning Backend Spring Boot with clean-room acceptance configuration...');
-  const gradlewCmd = IS_WIN ? resolve(BACKEND_DIR, 'gradlew.bat') : resolve(BACKEND_DIR, 'gradlew');
+  const gradlewCmd = IS_WIN ? '.\\gradlew.bat' : './gradlew';
   const jbrHome = resolveJbrHome();
+  console.log(`[RUN-ALL] Resolved JDK/JBR home: ${jbrHome || 'system default'}`);
 
   const env = {
     ...process.env,
@@ -120,13 +122,25 @@ async function ensureBackendRunning() {
     DATABASE_URL: 'jdbc:postgresql://127.0.0.1:55432/vsat_compass_acceptance',
     DATABASE_USERNAME: 'vsat_clean',
     DATABASE_PASSWORD: 'vsat_clean_pass',
-    JWT_SECRET: 'cleanroom_acceptance_dummy_jwt_secret_must_be_256_bits_long_key_12345',
+    JWT_SECRET: 'dnNhdGNvbXBhc3Mtc3VwZXItc2VjcmV0LWp3dC1rZXktMjU2Yml0LXByb2R1Y3Rpb24tMjAyNC12c2F0',
     LLM_BASE_URL: 'http://127.0.0.1:18081',
     LLM_API_KEY: 'cleanroom-dummy-key',
     LLM_MODEL: 'qwen2.5-math-7b'
   };
 
-  backendProcess = spawn(gradlewCmd, ['bootRun', '--no-daemon'], {
+  const gradleArgs = [
+    'bootRun',
+    '--no-daemon',
+    '-Dspring.profiles.active=dev',
+    '-Dserver.port=18080',
+    '-Dspring.datasource.url=jdbc:postgresql://127.0.0.1:55432/vsat_compass_acceptance',
+    '-Dspring.datasource.username=vsat_clean',
+    '-Dspring.datasource.password=vsat_clean_pass',
+    '-Dapp.jwt.secret=dnNhdGNvbXBhc3Mtc3VwZXItc2VjcmV0LWp3dC1rZXktMjU2Yml0LXByb2R1Y3Rpb24tMjAyNC12c2F0',
+    '-Dapp.llm.base-url=http://127.0.0.1:18081'
+  ];
+
+  backendProcess = spawn(gradlewCmd, gradleArgs, {
     cwd: BACKEND_DIR,
     env,
     stdio: 'pipe',
@@ -139,7 +153,7 @@ async function ensureBackendRunning() {
     }
   });
   backendProcess.stderr?.on('data', chunk => {
-    if (process.env.DEBUG_BACKEND) {
+    if (process.env.DEBUG_BACKEND || process.env.CI) {
       process.stderr.write(`[BACKEND ERR] ${chunk}`);
     }
   });
@@ -159,23 +173,27 @@ async function runSuiteFile(suitePath) {
   }
 
   console.log(`\n[RUN-ALL] Executing suite: ${suitePath}...`);
-  const proc = spawnSync(process.execPath, [fullPath], {
-    cwd: HARNESS_DIR,
-    stdio: 'inherit'
+  return new Promise(resolveSuite => {
+    const proc = spawn(process.execPath, [fullPath], {
+      cwd: HARNESS_DIR,
+      stdio: 'inherit',
+      env: process.env
+    });
+    proc.on('close', code => {
+      resolveSuite({ exitCode: code });
+    });
   });
-
-  return { exitCode: proc.status };
 }
 
 async function cleanup(options = {}) {
   console.log('\n[RUN-ALL] Step 8: Tearing down acceptance harness resources...');
 
-  if (llmServerInstance) {
+  if (llmProcess) {
     try {
-      llmServerInstance.close();
-      console.log(' - LLM mock server closed.');
+      llmProcess.kill();
+      console.log(' - LLM mock server process terminated.');
     } catch (e) {
-      console.warn(` - Warning closing LLM server: ${e.message}`);
+      console.warn(` - Warning terminating LLM server: ${e.message}`);
     }
   }
 
@@ -217,7 +235,11 @@ async function main() {
 
     // 4. Start LLM Mock Server
     console.log('\n[RUN-ALL] Step 4: Starting LLM Mock Server on port 18081...');
-    llmServerInstance = await startLlmMock(18081);
+    const mockScript = resolve(HARNESS_DIR, 'stubs', 'llm-mock-server.mjs');
+    llmProcess = spawn(process.execPath, [mockScript], {
+      env: { ...process.env, LLM_MOCK_PORT: '18081', LLM_MOCK_HOST: '0.0.0.0' },
+      stdio: 'pipe'
+    });
     const llmReady = await waitForHttp('http://127.0.0.1:18081/health', 5000, 500);
     if (!llmReady) {
       throw new Error('LLM Mock Server failed healthcheck');
@@ -231,13 +253,16 @@ async function main() {
 
     // 6. Run Suites
     console.log('\n[RUN-ALL] Step 6: Executing test suites...');
-    const suites = [
-      'suites/backend-admin.mjs',
-      'suites/backend-public-student-collab.mjs',
-      'suites/run-web-suite.mjs',
-      'suites/android-student-suite.mjs',
-      'suites/android-roles-workers-suite.mjs'
-    ];
+    const suiteArgIdx = process.argv.indexOf('--suite');
+    const suites = suiteArgIdx !== -1 && process.argv[suiteArgIdx + 1]
+      ? [process.argv[suiteArgIdx + 1]]
+      : [
+          'suites/backend-admin.mjs',
+          'suites/backend-public-student-collab.mjs',
+          'suites/run-web-suite.mjs',
+          'suites/android-student-suite.mjs',
+          'suites/android-roles-workers-suite.mjs'
+        ];
 
     for (const suite of suites) {
       await runSuiteFile(suite);

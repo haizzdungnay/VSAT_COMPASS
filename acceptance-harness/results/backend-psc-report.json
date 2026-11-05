@@ -1,16 +1,16 @@
 {
   "suite": "backend-psc-report",
-  "generatedAt": "2026-11-03T05:52:21.723Z",
+  "generatedAt": "2026-11-05T08:53:27.542Z",
   "totalCases": 36,
-  "passedCount": 36,
-  "failedCount": 0,
+  "passedCount": 34,
+  "failedCount": 2,
   "results": [
     {
       "id": "API-043",
       "description": "GET / - Public API system status and entry info",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 45,
+      "durationMs": 69,
       "assertions": [
         {
           "name": "assertStatus",
@@ -67,7 +67,7 @@
       "description": "POST /auth/register - Register new student account",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 82,
+      "durationMs": 389,
       "assertions": [
         {
           "name": "assertStatus",
@@ -114,7 +114,7 @@
       "description": "POST /auth/login - Authenticate user and issue JWT token pair",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 66,
+      "durationMs": 106,
       "assertions": [
         {
           "name": "assertStatus",
@@ -161,7 +161,7 @@
       "description": "POST /auth/refresh - Refresh access token using valid refresh token",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 23,
+      "durationMs": 29,
       "assertions": [
         {
           "name": "assertStatus",
@@ -207,7 +207,7 @@
       "description": "POST /auth/logout - Revoke refresh token and terminate session",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 8,
+      "durationMs": 19,
       "assertions": [
         {
           "name": "assertStatus",
@@ -232,7 +232,7 @@
       "description": "GET /auth/me - Authenticated user profile and RBAC enforcement",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 88,
+      "durationMs": 138,
       "assertions": [
         {
           "name": "assertStatus",
@@ -301,7 +301,7 @@
       "description": "PUT /auth/me - Update authenticated user personal profile",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 89,
+      "durationMs": 100,
       "assertions": [
         {
           "name": "assertStatus",
@@ -333,7 +333,7 @@
       "description": "PUT /auth/me/password - Change user password and verify credentials",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 199,
+      "durationMs": 244,
       "assertions": [
         {
           "name": "assertStatus",
@@ -365,7 +365,7 @@
       "description": "GET /auth/me/leaderboard - Get leaderboard opt-in state",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 32,
+      "durationMs": 39,
       "assertions": [
         {
           "name": "assertStatus",
@@ -397,7 +397,7 @@
       "description": "PATCH /auth/me/leaderboard - Update leaderboard opt-in preference",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 15,
+      "durationMs": 20,
       "assertions": [
         {
           "name": "assertStatus",
@@ -429,7 +429,7 @@
       "description": "POST /collaborator/questions - Create authoring question draft and enforce RBAC",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 985,
+      "durationMs": 1252,
       "assertions": [
         {
           "name": "assertStatus",
@@ -495,7 +495,7 @@
       "description": "GET /collaborator/questions - List collaborator questions and RBAC",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 16,
+      "durationMs": 36,
       "assertions": [
         {
           "name": "assertStatus",
@@ -534,7 +534,7 @@
       "description": "GET /collaborator/questions/{id} - Get collaborator question detail and RBAC",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 18,
+      "durationMs": 27,
       "assertions": [
         {
           "name": "assertTrue",
@@ -567,8 +567,8 @@
         {
           "name": "assertEqual",
           "passed": true,
-          "actual": 49,
-          "expected": 49,
+          "actual": 5,
+          "expected": 5,
           "message": "Returned question ID matches"
         }
       ],
@@ -580,7 +580,7 @@
       "description": "PUT /collaborator/questions/{id} - Update draft question and RBAC",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 44,
+      "durationMs": 60,
       "assertions": [
         {
           "name": "assertStatus",
@@ -612,7 +612,7 @@
       "description": "POST /collaborator/questions/{id}/submit-for-review - Submit question for admin review",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 18,
+      "durationMs": 25,
       "assertions": [
         {
           "name": "assertStatus",
@@ -651,7 +651,7 @@
       "description": "GET /exams - Browse published exams catalog",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 11,
+      "durationMs": 21,
       "assertions": [
         {
           "name": "assertStatus",
@@ -690,7 +690,7 @@
       "description": "GET /exams/{id} - Get public overview of published exam",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 9,
+      "durationMs": 13,
       "assertions": [
         {
           "name": "assertStatus",
@@ -743,9 +743,9 @@
     {
       "id": "API-060",
       "description": "POST /ai/explain - Generate AI pedagogical explanation with LaTeX",
-      "status": "PASSED",
-      "attempts": 1,
-      "durationMs": 73,
+      "status": "FAILED",
+      "attempts": 2,
+      "durationMs": 137,
       "assertions": [
         {
           "name": "assertStatus",
@@ -763,49 +763,21 @@
         },
         {
           "name": "assertStatus",
-          "passed": true,
-          "actual": 200,
+          "passed": false,
+          "actual": 503,
           "expected": 200,
           "message": "AI explanation must return HTTP 200"
-        },
-        {
-          "name": "assertTrue",
-          "passed": true,
-          "actual": true,
-          "expected": true,
-          "message": "AI explain success must be true"
-        },
-        {
-          "name": "assertHasKeys",
-          "passed": true,
-          "actual": [
-            "questionId",
-            "explanation",
-            "cached"
-          ],
-          "expected": [
-            "questionId",
-            "explanation"
-          ],
-          "message": ""
-        },
-        {
-          "name": "assertTrue",
-          "passed": true,
-          "actual": true,
-          "expected": true,
-          "message": "Explanation must not be empty"
         }
       ],
       "evidence": {},
-      "error": null
+      "error": "Assertion \"assertStatus\" FAILED: expected 200, got 503 (AI explanation must return HTTP 200)"
     },
     {
       "id": "API-061",
       "description": "GET /exams/{id}/download-bundle - Download offline exam bundle and enforce RBAC",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 33,
+      "durationMs": 52,
       "assertions": [
         {
           "name": "assertStatus",
@@ -882,7 +854,7 @@
       "description": "GET /leaderboard - Get top ranked students and enforce RBAC",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 14,
+      "durationMs": 24,
       "assertions": [
         {
           "name": "assertStatus",
@@ -921,7 +893,7 @@
       "description": "GET /my-stats/topics - Student performance metrics by syllabus topic",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 17,
+      "durationMs": 23,
       "assertions": [
         {
           "name": "assertStatus",
@@ -953,7 +925,7 @@
       "description": "GET /my-stats/weak-topics - Weakest syllabus topics identification",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 9,
+      "durationMs": 14,
       "assertions": [
         {
           "name": "assertStatus",
@@ -985,7 +957,7 @@
       "description": "GET /practice/questions - Fetch randomized practice questions and RBAC",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 25,
+      "durationMs": 36,
       "assertions": [
         {
           "name": "assertStatus",
@@ -1024,7 +996,7 @@
       "description": "POST /practice/grade - Instantly grade submitted practice answer",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 20,
+      "durationMs": 25,
       "assertions": [
         {
           "name": "assertStatus",
@@ -1079,7 +1051,7 @@
       "description": "POST /sessions/start - Start official exam attempt session",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 16,
+      "durationMs": 22,
       "assertions": [
         {
           "name": "assertStatus",
@@ -1131,7 +1103,7 @@
       "description": "POST /sessions/{sessionId}/client-submit - Submit offline-completed session batch",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 47,
+      "durationMs": 57,
       "assertions": [
         {
           "name": "assertStatus",
@@ -1163,7 +1135,7 @@
       "description": "POST /sessions/{sessionId}/answers - Save individual answer in live session",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 33,
+      "durationMs": 38,
       "assertions": [
         {
           "name": "assertStatus",
@@ -1188,7 +1160,7 @@
       "description": "POST /sessions/{sessionId}/submit - Finalize live exam session and score",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 17,
+      "durationMs": 20,
       "assertions": [
         {
           "name": "assertStatus",
@@ -1227,7 +1199,7 @@
       "description": "GET /sessions/{sessionId}/questions/{questionId} - Fetch in-session question content",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 29,
+      "durationMs": 32,
       "assertions": [
         {
           "name": "assertStatus",
@@ -1266,7 +1238,7 @@
       "description": "GET /sessions/{sessionId}/answer-keys - Retrieve answer keys after submission",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 27,
+      "durationMs": 31,
       "assertions": [
         {
           "name": "assertStatus",
@@ -1312,7 +1284,7 @@
       "description": "POST /tickets - Submit student feedback / error report ticket and enforce RBAC",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 18,
+      "durationMs": 25,
       "assertions": [
         {
           "name": "assertStatus",
@@ -1370,7 +1342,7 @@
       "description": "GET /subjects - List active examination subjects",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 9,
+      "durationMs": 11,
       "assertions": [
         {
           "name": "assertStatus",
@@ -1416,7 +1388,7 @@
       "description": "GET /subjects/{subjectId}/topics - List curriculum topics under a subject",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 10,
+      "durationMs": 15,
       "assertions": [
         {
           "name": "assertStatus",
@@ -1455,7 +1427,7 @@
       "description": "GET /subjects/{subjectId}/topics/{topicId}/subtopics - List subtopics under topic",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 16,
+      "durationMs": 19,
       "assertions": [
         {
           "name": "assertStatus",
@@ -1494,7 +1466,7 @@
       "description": "RefreshTokenCleanupService - Purge expired tokens via clean-room JVM trigger",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 1281,
+      "durationMs": 1433,
       "assertions": [
         {
           "name": "assertEqual",
@@ -1538,41 +1510,20 @@
     {
       "id": "JOB-002",
       "description": "OpenAiCompatibleLlmClient - AI explanation integration and error fallback handling",
-      "status": "PASSED",
-      "attempts": 1,
-      "durationMs": 40,
+      "status": "FAILED",
+      "attempts": 2,
+      "durationMs": 69,
       "assertions": [
         {
           "name": "assertStatus",
-          "passed": true,
-          "actual": 200,
+          "passed": false,
+          "actual": 503,
           "expected": 200,
           "message": "Normal LLM mock mode returns HTTP 200"
-        },
-        {
-          "name": "assertTrue",
-          "passed": true,
-          "actual": true,
-          "expected": true,
-          "message": "Explanation is returned in normal mode"
-        },
-        {
-          "name": "assertStatus",
-          "passed": true,
-          "actual": 503,
-          "expected": 503,
-          "message": "AI provider error triggers HTTP 503 SERVICE_UNAVAILABLE"
-        },
-        {
-          "name": "assertFalse",
-          "passed": true,
-          "actual": false,
-          "expected": false,
-          "message": "Error response success is false"
         }
       ],
       "evidence": {},
-      "error": null
+      "error": "Assertion \"assertStatus\" FAILED: expected 200, got 503 (Normal LLM mock mode returns HTTP 200)"
     }
   ]
 }

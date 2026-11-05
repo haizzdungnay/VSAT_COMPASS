@@ -153,7 +153,8 @@ export async function getAuthToken(role = 'STUDENT') {
       email: creds.email,
       password: creds.password,
       deviceInfo: `AcceptanceHarness/${upperRole}`
-    })
+    }),
+    signal: AbortSignal.timeout(15000)
   });
 
   if (!resp.ok) {
@@ -199,7 +200,8 @@ export async function apiCall(endpointPath, options = {}, role = null) {
   const resp = await fetch(fullUrl, {
     method: options.method || 'GET',
     headers,
-    body
+    body,
+    signal: AbortSignal.timeout(options.timeoutMs || 20000)
   });
   const durationMs = Date.now() - startMs;
 

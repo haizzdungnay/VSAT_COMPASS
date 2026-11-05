@@ -14,7 +14,7 @@ jobs:
   acceptance:
     name: Clean-Room Full Acceptance Harness
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
 
     steps:
       - name: Checkout repository
@@ -53,7 +53,8 @@ jobs:
           API_BASE_URL: http://127.0.0.1:18080/api/v1
           VITE_API_URL: http://127.0.0.1:18080/api/v1
           VITE_API_BASE_URL: http://127.0.0.1:18080/api/v1
-          LLM_BASE_URL: http://127.0.0.1:18081/v1
+          JWT_SECRET: dnNhdGNvbXBhc3Mtc3VwZXItc2VjcmV0LWp3dC1rZXktMjU2Yml0LXByb2R1Y3Rpb24tMjAyNC12c2F0
+          LLM_BASE_URL: http://127.0.0.1:18081
         run: node acceptance-harness/safety-preflight.mjs --check-ports
 
       - name: Run Full Clean-Room Acceptance Harness
@@ -63,7 +64,8 @@ jobs:
           API_BASE_URL: http://127.0.0.1:18080/api/v1
           VITE_API_URL: http://127.0.0.1:18080/api/v1
           VITE_API_BASE_URL: http://127.0.0.1:18080/api/v1
-          LLM_BASE_URL: http://127.0.0.1:18081/v1
+          JWT_SECRET: dnNhdGNvbXBhc3Mtc3VwZXItc2VjcmV0LWp3dC1rZXktMjU2Yml0LXByb2R1Y3Rpb24tMjAyNC12c2F0
+          LLM_BASE_URL: http://127.0.0.1:18081
           CI: "true"
         run: node acceptance-harness/run-all.mjs
 

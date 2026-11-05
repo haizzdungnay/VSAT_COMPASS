@@ -2,7 +2,7 @@
 import http from 'node:http';
 
 const PORT = parseInt(process.env.LLM_MOCK_PORT || '18081', 10);
-const HOST = '127.0.0.1';
+const HOST = process.env.LLM_MOCK_HOST || '0.0.0.0';
 
 let currentMode = 'normal'; // 'normal' | 'error' | 'timeout'
 const requestLog = [];
@@ -56,7 +56,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   // 1. Health check
-  if (method === 'GET' && path === '/health') {
+  if (method === 'GET' && (path === '/health' || path === '/v1/health')) {
     return jsonResponse(res, 200, {
       status: 'UP',
       service: 'llm-mock-server',
@@ -66,7 +66,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   // 2. Control endpoint to inspect or switch behavior
-  if (path === '/__control/mode') {
+  if (path === '/__control/mode' || path === '/v1/__control/mode') {
     if (method === 'GET') {
       return jsonResponse(res, 200, { mode: currentMode, totalRequests: requestLog.length });
     }
@@ -80,7 +80,7 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  if (method === 'GET' && path === '/__control/history') {
+  if (method === 'GET' && (path === '/__control/history' || path === '/v1/__control/history')) {
     return jsonResponse(res, 200, { history: requestLog.slice(-50) });
   }
 
