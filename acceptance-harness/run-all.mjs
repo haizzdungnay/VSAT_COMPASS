@@ -137,6 +137,10 @@ async function ensureBackendRunning() {
     '-Dspring.datasource.username=vsat_clean',
     '-Dspring.datasource.password=vsat_clean_pass',
     '-Dapp.jwt.secret=dnNhdGNvbXBhc3Mtc3VwZXItc2VjcmV0LWp3dC1rZXktMjU2Yml0LXByb2R1Y3Rpb24tMjAyNC12c2F0',
+    '-DJWT_SECRET=dnNhdGNvbXBhc3Mtc3VwZXItc2VjcmV0LWp3dC1rZXktMjU2Yml0LXByb2R1Y3Rpb24tMjAyNC12c2F0',
+    '-DLLM_BASE_URL=http://127.0.0.1:18081',
+    '-DLLM_API_KEY=cleanroom-dummy-key',
+    '-DLLM_MODEL=qwen2.5-math-7b',
     '-Dapp.llm.base-url=http://127.0.0.1:18081'
   ];
 

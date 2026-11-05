@@ -68,6 +68,7 @@ tasks.named('test') {
 
 // Load .env file and pass to bootRun
 bootRun {
+    systemProperties = System.properties
     ['.env', '.env.local'].each { envFileName ->
         def envFile = file(envFileName)
         if (envFile.exists()) {
