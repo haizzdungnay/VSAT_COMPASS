@@ -4,6 +4,7 @@ import com.vsatcompass.api.entity.enums.Difficulty;
 import com.vsatcompass.api.entity.enums.QuestionStatus;
 import com.vsatcompass.api.entity.enums.QuestionType;
 import jakarta.persistence.*;
+import jakarta.persistence.Version;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -78,6 +79,10 @@ public class Question {
 
     @Column(name = "version", nullable = false)
     private Integer version;
+
+    @Version
+    @Column(name = "lock_version", nullable = false)
+    private Integer lockVersion;
 
     @Column(name = "order_in_group")
     private Integer orderInGroup;

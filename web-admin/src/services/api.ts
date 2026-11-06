@@ -1112,3 +1112,332 @@ export async function deleteSchedule(id: number): Promise<void> {
     throw new Error(err?.message || "Loi xoa ca thi (" + res.status + ")");
   }
 }
+
+// -------------------------------------------------------------
+// User Management Endpoints (Super Admin)
+// -------------------------------------------------------------
+
+export type UserRole = 'STUDENT' | 'COLLABORATOR' | 'CONTENT_ADMIN' | 'SUPER_ADMIN';
+export type UserStatus = 'ACTIVE' | 'LOCKED' | 'SUSPENDED' | 'DEACTIVATED';
+
+export interface UserSummaryItem {
+  id: number;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  role: UserRole;
+  status: UserStatus;
+  avatar_url: string | null;
+  created_at: string;
+  last_login_at: string | null;
+}
+
+export interface UserPageResult {
+  content: UserSummaryItem[];
+  totalElements: number;
+  totalPages: number;
+  page: number;
+  size: number;
+}
+
+export const fallbackUsers: UserSummaryItem[] = [
+  {
+    id: 1,
+    full_name: 'Super Admin V-SAT',
+    email: 'admin@vsat.com',
+    phone: '0901234567',
+    role: 'SUPER_ADMIN',
+    status: 'ACTIVE',
+    avatar_url: null,
+    created_at: '2026-01-01T00:00:00Z',
+    last_login_at: '2026-11-06T08:00:00Z'
+  },
+  {
+    id: 2,
+    full_name: 'Biên tập viên Khảo thí',
+    email: 'content.admin@vsat.com',
+    phone: '0902345678',
+    role: 'CONTENT_ADMIN',
+    status: 'ACTIVE',
+    avatar_url: null,
+    created_at: '2026-02-15T10:00:00Z',
+    last_login_at: '2026-11-05T14:30:00Z'
+  },
+  {
+    id: 3,
+    full_name: 'Cộng tác viên Ra đề GDPT 2018',
+    email: 'collab@vsat.com',
+    phone: '0903456789',
+    role: 'COLLABORATOR',
+    status: 'ACTIVE',
+    avatar_url: null,
+    created_at: '2026-03-20T09:00:00Z',
+    last_login_at: '2026-11-04T16:00:00Z'
+  },
+  {
+    id: 4,
+    full_name: 'Thí sinh Trần Văn Bảo',
+    email: 'student.bao@gmail.com',
+    phone: '0904567890',
+    role: 'STUDENT',
+    status: 'ACTIVE',
+    avatar_url: null,
+    created_at: '2026-04-10T11:00:00Z',
+    last_login_at: '2026-11-06T07:15:00Z'
+  },
+  {
+    id: 5,
+    full_name: 'Thí sinh Lê Hoàng Nam (Vi phạm)',
+    email: 'student.nam@gmail.com',
+    phone: '0905678901',
+    role: 'STUDENT',
+    status: 'LOCKED',
+    avatar_url: null,
+    created_at: '2026-05-01T08:00:00Z',
+    last_login_at: '2026-05-02T09:00:00Z'
+  }
+];
+
+export async function fetchUsers(params?: {
+  role?: string;
+  status?: string;
+  keyword?: string;
+  page?: number;
+  size?: number;
+}): Promise<UserPageResult> {
+  const query = new URLSearchParams();
+  if (params?.role && params.role !== 'ALL') query.append('role', params.role);
+  if (params?.status && params.status !== 'ALL') query.append('status', params.status);
+  if (params?.keyword && params.keyword.trim()) query.append('keyword', params.keyword.trim());
+  query.append('page', (params?.page ?? 0).toString());
+  query.append('size', (params?.size ?? 50).toString());
+
+  try {
+    const res = await authenticatedFetch(`${BASE_URL}/admin/users?${query.toString()}`);
+    if (res.ok) {
+      const json = await res.json();
+      const pageData = json.data;
+      if (pageData && Array.isArray(pageData.content)) {
+        return {
+          content: pageData.content,
+          totalElements: pageData.totalElements ?? pageData.content.length,
+          totalPages: pageData.totalPages ?? 1,
+          page: pageData.number ?? (params?.page ?? 0),
+          size: pageData.size ?? (params?.size ?? 50)
+        };
+      }
+    }
+    if (res.status === 403) {
+      throw new Error('403 Forbidden: Tài khoản hiện tại không có quyền SUPER_ADMIN');
+    }
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || err?.message || `Lỗi tải danh sách người dùng (${res.status})`);
+  } catch (err: any) {
+    if (err?.message?.includes('403') || err?.message?.includes('SUPER_ADMIN')) {
+      throw err;
+    }
+    console.warn('[fetchUsers] Backend unavailable, using local fallback:', err);
+    let list = [...fallbackUsers];
+    if (params?.role && params.role !== 'ALL') {
+      list = list.filter(u => u.role === params.role);
+    }
+    if (params?.status && params.status !== 'ALL') {
+      list = list.filter(u => u.status === params.status);
+    }
+    if (params?.keyword && params.keyword.trim()) {
+      const kw = params.keyword.trim().toLowerCase();
+      list = list.filter(u =>
+        u.full_name.toLowerCase().includes(kw) ||
+        u.email.toLowerCase().includes(kw) ||
+        (u.phone && u.phone.includes(kw))
+      );
+    }
+    return {
+      content: list,
+      totalElements: list.length,
+      totalPages: 1,
+      page: 0,
+      size: 50
+    };
+  }
+}
+
+export async function lockUser(id: number): Promise<{ ok: boolean; message?: string }> {
+  try {
+    const res = await authenticatedFetch(`${BASE_URL}/admin/users/${id}/lock`, {
+      method: 'PATCH'
+    });
+    if (res.ok) {
+      const json = await res.json().catch(() => null);
+      return { ok: true, message: json?.message || 'Đã khoá tài khoản' };
+    }
+    const err = await res.json().catch(() => ({}));
+    const msg = err?.error?.message || err?.message || (res.status === 403 ? 'Chỉ SUPER_ADMIN mới có quyền khóa tài khoản' : `Khóa tài khoản thất bại (${res.status})`);
+    return { ok: false, message: msg };
+  } catch (e: any) {
+    return { ok: false, message: e?.message || 'Lỗi kết nối máy chủ' };
+  }
+}
+
+export async function unlockUser(id: number): Promise<{ ok: boolean; message?: string }> {
+  try {
+    const res = await authenticatedFetch(`${BASE_URL}/admin/users/${id}/unlock`, {
+      method: 'PATCH'
+    });
+    if (res.ok) {
+      const json = await res.json().catch(() => null);
+      return { ok: true, message: json?.message || 'Đã mở khoá tài khoản' };
+    }
+    const err = await res.json().catch(() => ({}));
+    const msg = err?.error?.message || err?.message || (res.status === 403 ? 'Chỉ SUPER_ADMIN mới có quyền mở khóa tài khoản' : `Mở khóa thất bại (${res.status})`);
+    return { ok: false, message: msg };
+  } catch (e: any) {
+    return { ok: false, message: e?.message || 'Lỗi kết nối máy chủ' };
+  }
+}
+
+export async function updateUserRole(id: number, role: UserRole): Promise<{ ok: boolean; data?: UserSummaryItem; message?: string }> {
+  try {
+    const res = await authenticatedFetch(`${BASE_URL}/admin/users/${id}/role`, {
+      method: 'PATCH',
+      body: JSON.stringify({ role })
+    });
+    if (res.ok) {
+      const json = await res.json();
+      return { ok: true, data: json?.data, message: 'Cập nhật vai trò thành công' };
+    }
+    const err = await res.json().catch(() => ({}));
+    const msg = err?.error?.message || err?.message || (
+      res.status === 403
+        ? 'Chỉ SUPER_ADMIN mới có quyền thay đổi vai trò người dùng'
+        : res.status === 409
+        ? 'Xung đột: Không thể hạ quyền Super Admin cuối cùng'
+        : `Cập nhật vai trò thất bại (${res.status})`
+    );
+    return { ok: false, message: msg };
+  } catch (e: any) {
+    return { ok: false, message: e?.message || 'Lỗi kết nối máy chủ' };
+  }
+}
+
+// -------------------------------------------------------------
+// Ticket Management Endpoints (Content & Super Admin)
+// -------------------------------------------------------------
+
+export type TicketStatus = 'OPEN' | 'IN_PROGRESS' | 'CLOSED';
+
+export interface TicketItem {
+  id: number;
+  questionId: number | null;
+  reporterUserId: number;
+  message: string;
+  status: TicketStatus;
+  resolverNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TicketPageResult {
+  content: TicketItem[];
+  totalElements: number;
+  totalPages: number;
+  page: number;
+  size: number;
+}
+
+export const fallbackTickets: TicketItem[] = [
+  {
+    id: 1,
+    questionId: 1,
+    reporterUserId: 4,
+    message: 'Câu hỏi có dấu nhầm lẫn ở đạo hàm: $f\'(x) = 3x^2 - 6x$, đề bài ghi $+6x$ ở dòng giải thích đầu tiên.',
+    status: 'OPEN',
+    resolverNote: null,
+    createdAt: '2026-11-05T09:15:00Z',
+    updatedAt: '2026-11-05T09:15:00Z'
+  },
+  {
+    id: 2,
+    questionId: 2,
+    reporterUserId: 4,
+    message: 'Tích phân từng phần đặt $u = 2x+1$, đáp án đúng là $e + 1$ nhưng key chấm hiển thị B.',
+    status: 'IN_PROGRESS',
+    resolverNote: 'Đang kiểm tra lại key đáp án trên hệ thống chấm tự động.',
+    createdAt: '2026-11-04T14:20:00Z',
+    updatedAt: '2026-11-04T15:00:00Z'
+  },
+  {
+    id: 3,
+    questionId: null,
+    reporterUserId: 5,
+    message: 'Giao diện phòng thi bị giật lag khi chuyển giữa các câu hỏi hiển thị công thức toán KaTeX.',
+    status: 'CLOSED',
+    resolverNote: 'Đã tối ưu lại bundle KaTeX và giảm thiểu re-render trên client.',
+    createdAt: '2026-11-01T10:00:00Z',
+    updatedAt: '2026-11-02T08:30:00Z'
+  }
+];
+
+export async function fetchTickets(params?: {
+  status?: string;
+  page?: number;
+  size?: number;
+}): Promise<TicketPageResult> {
+  const query = new URLSearchParams();
+  if (params?.status && params.status !== 'ALL') query.append('status', params.status);
+  query.append('page', (params?.page ?? 0).toString());
+  query.append('size', (params?.size ?? 50).toString());
+
+  try {
+    const res = await authenticatedFetch(`${BASE_URL}/admin/tickets?${query.toString()}`);
+    if (res.ok) {
+      const json = await res.json();
+      const pageData = json.data;
+      if (pageData && Array.isArray(pageData.content)) {
+        return {
+          content: pageData.content,
+          totalElements: pageData.totalElements ?? pageData.content.length,
+          totalPages: pageData.totalPages ?? 1,
+          page: pageData.number ?? (params?.page ?? 0),
+          size: pageData.size ?? (params?.size ?? 50)
+        };
+      }
+    }
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || err?.message || `Lỗi tải danh sách ticket (${res.status})`);
+  } catch (err: any) {
+    console.warn('[fetchTickets] Backend unavailable, using local fallback:', err);
+    let list = [...fallbackTickets];
+    if (params?.status && params.status !== 'ALL') {
+      list = list.filter(t => t.status === params.status);
+    }
+    return {
+      content: list,
+      totalElements: list.length,
+      totalPages: 1,
+      page: 0,
+      size: 50
+    };
+  }
+}
+
+export async function updateTicket(
+  id: number,
+  payload: { status: TicketStatus; resolverNote?: string }
+): Promise<{ ok: boolean; data?: TicketItem; message?: string }> {
+  try {
+    const res = await authenticatedFetch(`${BASE_URL}/admin/tickets/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      const json = await res.json();
+      return { ok: true, data: json?.data, message: 'Cập nhật ticket thành công' };
+    }
+    const err = await res.json().catch(() => ({}));
+    const msg = err?.error?.message || err?.message || `Cập nhật ticket thất bại (${res.status})`;
+    return { ok: false, message: msg };
+  } catch (e: any) {
+    return { ok: false, message: e?.message || 'Lỗi kết nối máy chủ' };
+  }
+}

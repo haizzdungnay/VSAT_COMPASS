@@ -8,6 +8,8 @@ import { ReviewQueue } from './pages/ReviewQueue';
 import { ImportQuestions } from './pages/ImportQuestions';
 import { BlueprintsPage } from './pages/Blueprints';
 import { SchedulesPage } from './pages/Schedules';
+import { UsersPage } from './pages/Users';
+import { TicketsPage } from './pages/Tickets';
 import type { BlueprintItem } from './types/exam';
 
 export const App: React.FC = () => {
@@ -30,6 +32,8 @@ export const App: React.FC = () => {
     'question-bank': 'Ngân hàng câu hỏi V-SAT 2026',
     'review-queue': 'Hàng đợi duyệt câu hỏi V-SAT',
     'import-questions': 'Import câu hỏi',
+    users: 'Quản lý người dùng',
+    tickets: 'Báo lỗi & Phản hồi (Ticket)',
     settings: 'Cấu hình hệ thống'
   };
 
@@ -77,6 +81,14 @@ export const App: React.FC = () => {
 
           {currentTab === 'schedules' && (
             <SchedulesPage />
+          )}
+
+          {currentTab === 'users' && (
+            <UsersPage />
+          )}
+
+          {currentTab === 'tickets' && (
+            <TicketsPage />
           )}
 
           {currentTab === 'dashboard' && (

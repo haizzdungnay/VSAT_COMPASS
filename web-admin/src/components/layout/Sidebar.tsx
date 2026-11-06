@@ -148,6 +148,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onSelectTab }) => 
             </div>
             <nav className="space-y-0.5">
               <button
+                onClick={() => onSelectTab('users')}
+                className={`w-full flex items-center gap-space-md px-space-sm py-2 rounded-lg font-label-md transition-colors ${
+                  currentTab === 'users'
+                    ? 'bg-primary-container text-on-primary font-medium shadow-sm'
+                    : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]">manage_accounts</span>
+                <span>Quản lý người dùng</span>
+              </button>
+              <button
+                onClick={() => onSelectTab('tickets')}
+                className={`w-full flex items-center gap-space-md px-space-sm py-2 rounded-lg font-label-md transition-colors ${
+                  currentTab === 'tickets'
+                    ? 'bg-primary-container text-on-primary font-medium shadow-sm'
+                    : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]">support_agent</span>
+                <span>Báo lỗi (Ticket)</span>
+              </button>
+              <button
                 onClick={() => onSelectTab('settings')}
                 className={`w-full flex items-center gap-space-md px-space-sm py-2 rounded-lg font-label-md transition-colors ${
                   currentTab === 'settings'

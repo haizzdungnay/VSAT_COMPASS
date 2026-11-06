@@ -11,6 +11,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -87,6 +88,10 @@ public class Exam {
 
     @Column(name = "version", nullable = false)
     private Integer version;
+
+    @Version
+    @Column(name = "lock_version", nullable = false)
+    private Integer lockVersion;
 
     @Column(name = "total_attempts", nullable = false)
     private Integer totalAttempts;

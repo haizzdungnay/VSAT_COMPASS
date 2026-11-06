@@ -4,6 +4,12 @@ spring:
   profiles:
     active: dev
 
+  # Flyway Migration
+  flyway:
+    enabled: ${FLYWAY_ENABLED:true}
+    baseline-on-migrate: true
+    baseline-version: 11
+
   # JPA / Hibernate
   jpa:
     hibernate:
