@@ -43,6 +43,7 @@
         <activity android:name=".ui.history.ExamHistoryActivity"       android:exported="false" />
         <activity android:name=".ui.flashcards.FlashcardReviewActivity" android:exported="false" />
         <activity android:name=".ui.progress.ProgressActivity"          android:exported="false" />
+        <activity android:name=".ui.admission.AdmissionPredictorActivity" android:exported="false" android:label="Dự đoán trúng tuyển" />
 
         <!-- ── Admin Mode ── -->
         <activity

@@ -95,6 +95,7 @@ public class SecurityConfig {
                 .requestMatchers("/auth/login", "/auth/register", "/auth/refresh", "/auth/logout").permitAll()
                 .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers(HttpMethod.GET, "/subjects/**").permitAll()
+                .requestMatchers("/admissions/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/exams/*/download-bundle").hasRole("STUDENT")
                 .requestMatchers(HttpMethod.GET, "/exams", "/exams/**").permitAll()
                 .requestMatchers("/practice/**").hasRole("STUDENT")

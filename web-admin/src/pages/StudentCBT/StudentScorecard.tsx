@@ -12,6 +12,7 @@ import {
   fallbackSessionQuestions
 } from '../../services/api';
 import { MathView } from '../../components/MathView';
+import { AdmissionPredictorWidget } from './AdmissionPredictorWidget';
 
 interface StudentScorecardProps {
   session: StudentSessionInfo;
@@ -131,6 +132,10 @@ export const StudentScorecard: React.FC<StudentScorecardProps> = ({
   const percentDisplay = session.scorePercentage !== undefined ? Number(session.scorePercentage).toFixed(1) : '75.0';
   const correctCount = session.correctCount ?? Math.round(questionIds.length * 0.75);
 
+  const estimated3SubjectScore = session.rawScore !== undefined
+    ? Math.min(450, Math.round(session.rawScore * 3 * 10) / 10)
+    : (session.score !== undefined ? Math.round((session.score / 10) * 450) : 315);
+
   return (
     <div className="p-margin max-w-5xl mx-auto space-y-8 pb-16">
       {/* Top Banner Card: Exam Result Scorecard */}
@@ -199,6 +204,13 @@ export const StudentScorecard: React.FC<StudentScorecardProps> = ({
           </div>
         </div>
       </div>
+
+      {/* P2: Admission Predictor Widget */}
+      <AdmissionPredictorWidget
+        initialScore={estimated3SubjectScore}
+        title="Dự đoán Trúng tuyển Đại học từ Kết quả Bài thi"
+        subtitle={`Điểm V-SAT vừa hoàn thành quy đổi 3 môn (${estimated3SubjectScore.toFixed(1)}/450). Hệ thống tự động phân loại xác suất trúng tuyển vào các trường HUB, UEL, CTU, UFM, HCMUS, SGU theo 3 mức An toàn, Phù hợp và Rủi ro.`}
+      />
 
       {/* Detailed Review Section */}
       <div className="space-y-4">
