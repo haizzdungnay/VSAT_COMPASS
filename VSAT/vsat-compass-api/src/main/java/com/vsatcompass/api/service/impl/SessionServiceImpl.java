@@ -29,6 +29,7 @@ import com.vsatcompass.api.repository.SessionAnswerRepository;
 import com.vsatcompass.api.service.SessionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -368,6 +369,7 @@ public class SessionServiceImpl implements SessionService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "leaderboard", allEntries = true)
     public SessionResponse.SessionInfo serverSubmit(Long userId, Long sessionId) {
         ExamSession session = examSessionRepository.findById(sessionId)
                 .orElseThrow(() -> AppException.notFound("ExamSession", sessionId));
@@ -443,6 +445,7 @@ public class SessionServiceImpl implements SessionService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "leaderboard", allEntries = true)
     public SessionResponse.SessionInfo clientSubmit(Long userId, Long sessionId, SessionRequest.ClientSubmit request) {
         // Find session — must exist
         ExamSession session = examSessionRepository.findById(sessionId)

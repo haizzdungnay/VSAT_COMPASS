@@ -20,6 +20,7 @@ import com.vsatcompass.api.repository.QuestionRepository;
 import com.vsatcompass.api.service.ExamService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -47,6 +48,7 @@ public class ExamServiceImpl implements ExamService {
     private final QuestionGroupRepository questionGroupRepository;
 
     @Override
+    @Cacheable(value = "publicExams", key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
     public Page<ExamSummaryResponse> listPublishedFreeExams(Pageable pageable) {
         return examRepository
                 .findByStatusAndPricingType(ExamStatus.PUBLISHED, ExamPricingType.FREE, pageable)
@@ -54,6 +56,7 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
+    @Cacheable(value = "publicExamDetail", key = "#id")
     public ExamDetailResponse getPublicExam(Long id) {
         Exam exam = examRepository
                 .findByIdAndStatusAndPricingType(id, ExamStatus.PUBLISHED, ExamPricingType.FREE)
@@ -62,6 +65,7 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
+    @Cacheable(value = "publicExamBundle", key = "#id")
     public ExamDownloadBundleResponse getDownloadBundle(Long id) {
         Exam exam = examRepository
                 .findByIdAndStatusAndPricingType(id, ExamStatus.PUBLISHED, ExamPricingType.FREE)

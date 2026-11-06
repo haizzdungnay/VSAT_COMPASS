@@ -28,6 +28,7 @@ import com.vsatcompass.api.service.AdminExamService;
 import com.vsatcompass.api.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -87,6 +88,7 @@ public class AdminExamServiceImpl implements AdminExamService {
     // ---------- CREATE ----------
     @Override
     @Transactional
+    @CacheEvict(value = {"publicExams", "publicExamDetail", "publicExamBundle"}, allEntries = true)
     public AdminExamResponse createExam(Long currentUserId, AdminExamCreateRequest req) {
         validateExamCode(req.getExamCode());
         validateFreeOnlyPricing(req.getPricingType(), req.getPrice());
@@ -125,6 +127,7 @@ public class AdminExamServiceImpl implements AdminExamService {
     // ---------- UPDATE ----------
     @Override
     @Transactional
+    @CacheEvict(value = {"publicExams", "publicExamDetail", "publicExamBundle"}, allEntries = true)
     public AdminExamResponse updateExam(Long id, AdminExamUpdateRequest req) {
         Exam exam = examRepository.findById(id)
                 .orElseThrow(() -> AppException.notFound("Exam", id));
@@ -165,6 +168,7 @@ public class AdminExamServiceImpl implements AdminExamService {
     // ---------- DISCARD ----------
     @Override
     @Transactional
+    @CacheEvict(value = {"publicExams", "publicExamDetail", "publicExamBundle"}, allEntries = true)
     public void discardDraftExam(Long examId) {
         Exam exam = loadExam(examId);
         requireStatus(exam, ExamStatus.DRAFT, "discard draft exam");
@@ -176,6 +180,7 @@ public class AdminExamServiceImpl implements AdminExamService {
     // ---------- COMPOSITION ----------
     @Override
     @Transactional
+    @CacheEvict(value = {"publicExams", "publicExamDetail", "publicExamBundle"}, allEntries = true)
     public AdminExamResponse addQuestion(Long examId, Long questionId) {
         Exam exam = loadExam(examId);
         requireDraftCompositionState(exam, "add questions to");
@@ -204,6 +209,7 @@ public class AdminExamServiceImpl implements AdminExamService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"publicExams", "publicExamDetail", "publicExamBundle"}, allEntries = true)
     public AdminExamResponse removeQuestion(Long examId, Long questionId) {
         Exam exam = loadExam(examId);
         requireDraftCompositionState(exam, "remove questions from");
@@ -222,6 +228,7 @@ public class AdminExamServiceImpl implements AdminExamService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"publicExams", "publicExamDetail", "publicExamBundle"}, allEntries = true)
     public AdminExamResponse reorderQuestions(Long examId, List<Long> questionIds) {
         Exam exam = loadExam(examId);
         requireDraftCompositionState(exam, "reorder questions in");
@@ -242,6 +249,7 @@ public class AdminExamServiceImpl implements AdminExamService {
     // ---------- WORKFLOW ----------
     @Override
     @Transactional
+    @CacheEvict(value = {"publicExams", "publicExamDetail", "publicExamBundle"}, allEntries = true)
     public AdminExamResponse submitReview(Long examId) {
         Exam exam = loadExam(examId);
         requireStatus(exam, ExamStatus.DRAFT, "submit exam for review");
@@ -254,6 +262,7 @@ public class AdminExamServiceImpl implements AdminExamService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"publicExams", "publicExamDetail", "publicExamBundle"}, allEntries = true)
     public AdminExamResponse publish(Long currentUserId, Long examId) {
         Exam exam = loadExam(examId);
         if (exam.getStatus() != ExamStatus.PENDING_REVIEW
@@ -274,6 +283,7 @@ public class AdminExamServiceImpl implements AdminExamService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"publicExams", "publicExamDetail", "publicExamBundle"}, allEntries = true)
     public AdminExamResponse hide(Long examId) {
         Exam exam = loadExam(examId);
         requireStatus(exam, ExamStatus.PUBLISHED, "hide exam");
@@ -286,6 +296,7 @@ public class AdminExamServiceImpl implements AdminExamService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"publicExams", "publicExamDetail", "publicExamBundle"}, allEntries = true)
     public AdminExamResponse archive(Long examId) {
         Exam exam = loadExam(examId);
         if (exam.getStatus() != ExamStatus.PUBLISHED && exam.getStatus() != ExamStatus.HIDDEN) {
@@ -301,6 +312,7 @@ public class AdminExamServiceImpl implements AdminExamService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"publicExams", "publicExamDetail", "publicExamBundle"}, allEntries = true)
     public AdminExamResponse rejectReview(Long examId) {
         Exam exam = loadExam(examId);
         requireStatus(exam, ExamStatus.PENDING_REVIEW, "reject exam review");
@@ -313,6 +325,7 @@ public class AdminExamServiceImpl implements AdminExamService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"publicExams", "publicExamDetail", "publicExamBundle"}, allEntries = true)
     public AdminExamResponse returnToDraft(Long examId) {
         Exam exam = loadExam(examId);
         requireStatus(exam, ExamStatus.HIDDEN, "return exam to draft");
@@ -380,6 +393,7 @@ public class AdminExamServiceImpl implements AdminExamService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"publicExams", "publicExamDetail", "publicExamBundle"}, allEntries = true)
     public List<ExamVariantResponse> generateVariants(Long examId, GenerateVariantsRequest req) {
         Exam exam = loadExam(examId);
         int count = req.getVariantCount() != null ? req.getVariantCount() : 4;
@@ -406,6 +420,7 @@ public class AdminExamServiceImpl implements AdminExamService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"publicExams", "publicExamDetail", "publicExamBundle"}, allEntries = true)
     public MatrixGenerateResponse generateByMatrix(GenerateByMatrixRequest req) {
         Long currentUserId = SecurityUtils.getCurrentUserId();
         AdminExamCreateRequest createReq = req.getExam();
@@ -426,6 +441,7 @@ public class AdminExamServiceImpl implements AdminExamService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"publicExams", "publicExamDetail", "publicExamBundle"}, allEntries = true)
     public MatrixGenerateResponse generateByMatrixForExam(Long examId, GenerateByMatrixRequest req) {
         Exam exam = loadExam(examId);
         List<Question> candidates = questionRepository.findAll().stream()

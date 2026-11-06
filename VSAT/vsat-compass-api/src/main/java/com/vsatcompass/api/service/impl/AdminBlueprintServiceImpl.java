@@ -9,6 +9,7 @@ import com.vsatcompass.api.exception.AppException;
 import com.vsatcompass.api.repository.SubjectRepository;
 import com.vsatcompass.api.service.AdminBlueprintService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,7 @@ public class AdminBlueprintServiceImpl implements AdminBlueprintService {
     private final SubjectRepository subjectRepository;
 
     @Override
+    @Cacheable(value = "blueprints", key = "#subjectId != null ? #subjectId : 'ALL'")
     public List<BlueprintResponse> listBlueprints(Long subjectId) {
         List<Subject> subjects = subjectRepository.findAll();
         List<BlueprintResponse> result = new ArrayList<>();
@@ -38,6 +40,7 @@ public class AdminBlueprintServiceImpl implements AdminBlueprintService {
     }
 
     @Override
+    @Cacheable(value = "blueprintDetail", key = "#id")
     public BlueprintResponse getBlueprint(Long id) {
         Subject subject = subjectRepository.findById(id)
                 .orElseThrow(() -> AppException.notFound("Blueprint", id));

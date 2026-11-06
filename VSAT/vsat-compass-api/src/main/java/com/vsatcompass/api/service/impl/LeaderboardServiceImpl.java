@@ -9,6 +9,8 @@ import com.vsatcompass.api.repository.UserRepository;
 import com.vsatcompass.api.repository.UserScoreAggregate;
 import com.vsatcompass.api.service.LeaderboardService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +31,7 @@ public class LeaderboardServiceImpl implements LeaderboardService {
     private final UserRepository userRepository;
 
     @Override
+    @Cacheable(value = "leaderboard", key = "#limit")
     public List<LeaderboardEntryResponse> getTop(int limit) {
         int boundedLimit = Math.max(1, Math.min(limit, 100));
 
@@ -93,6 +96,7 @@ public class LeaderboardServiceImpl implements LeaderboardService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "leaderboard", allEntries = true)
     public LeaderboardMeResponse setOptIn(Long userId, boolean optIn) {
         User user = requireUser(userId);
         user.setLeaderboardOptIn(optIn);
