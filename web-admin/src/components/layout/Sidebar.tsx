@@ -26,6 +26,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onSelectTab }) => 
 
         {/* Navigation Sections */}
         <div className="flex-1 overflow-y-auto px-space-md py-space-md space-y-space-md">
+          {/* Học sinh - CBT */}
+          <div className="space-y-space-xs">
+            <div className="px-space-sm font-label-sm text-[10px] uppercase text-outline font-bold tracking-wider">
+              Khảo sát năng lực
+            </div>
+            <nav className="space-y-0.5">
+              <button
+                onClick={() => onSelectTab('student-lobby')}
+                className={`w-full flex items-center gap-space-md px-space-sm py-2 rounded-lg font-label-md transition-colors ${
+                  currentTab === 'student-lobby'
+                    ? 'bg-primary-container text-on-primary font-medium shadow-sm'
+                    : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]">computer</span>
+                <span>Cổng thi trực tuyến (CBT)</span>
+              </button>
+            </nav>
+          </div>
+
           {/* Tổng quan */}
           <div className="space-y-space-xs">
             <div className="px-space-sm font-label-sm text-[10px] uppercase text-outline font-bold tracking-wider">

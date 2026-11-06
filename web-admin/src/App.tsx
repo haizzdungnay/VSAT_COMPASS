@@ -10,11 +10,18 @@ import { BlueprintsPage } from './pages/Blueprints';
 import { SchedulesPage } from './pages/Schedules';
 import { UsersPage } from './pages/Users';
 import { TicketsPage } from './pages/Tickets';
+import { StudentExamLobby } from './pages/StudentCBT/StudentExamLobby';
+import { StudentCBTWorkspace } from './pages/StudentCBT/StudentCBTWorkspace';
+import { StudentScorecard } from './pages/StudentCBT/StudentScorecard';
 import type { BlueprintItem } from './types/exam';
+import type { StudentSessionInfo } from './types/student-cbt';
 
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<string>('exams');
   const [selectedBlueprintForWizard, setSelectedBlueprintForWizard] = useState<BlueprintItem | null>(null);
+  const [activeCbtSession, setActiveCbtSession] = useState<StudentSessionInfo | null>(null);
+  const [cbtExamTitle, setCbtExamTitle] = useState<string>('Đề thi V-SAT 2026');
+  const [cbtDurationMinutes, setCbtDurationMinutes] = useState<number>(90);
 
   const handleSelectTab = (tab: string) => {
     if (tab !== 'create-exam') {
@@ -34,7 +41,10 @@ export const App: React.FC = () => {
     'import-questions': 'Import câu hỏi',
     users: 'Quản lý người dùng',
     tickets: 'Báo lỗi & Phản hồi (Ticket)',
-    settings: 'Cấu hình hệ thống'
+    settings: 'Cấu hình hệ thống',
+    'student-lobby': 'Cổng thi trực tuyến (CBT)',
+    'student-workspace': 'Phòng thi trực tuyến (CBT)',
+    'student-scorecard': 'Bảng điểm & Rà soát kết quả'
   };
 
   return (
@@ -115,6 +125,41 @@ export const App: React.FC = () => {
                 </p>
               </div>
             </div>
+          )}
+
+          {currentTab === 'student-lobby' && (
+            <StudentExamLobby
+              onStartExam={(sessionInfo, examTitle, durationMinutes) => {
+                setActiveCbtSession(sessionInfo);
+                setCbtExamTitle(examTitle);
+                setCbtDurationMinutes(durationMinutes);
+                setCurrentTab('student-workspace');
+              }}
+            />
+          )}
+
+          {currentTab === 'student-workspace' && activeCbtSession && (
+            <StudentCBTWorkspace
+              session={activeCbtSession}
+              examTitle={cbtExamTitle}
+              durationMinutes={cbtDurationMinutes}
+              onFinishSession={(submittedSession) => {
+                setActiveCbtSession(submittedSession);
+                setCurrentTab('student-scorecard');
+              }}
+              onExitLobby={() => setCurrentTab('student-lobby')}
+            />
+          )}
+
+          {currentTab === 'student-scorecard' && activeCbtSession && (
+            <StudentScorecard
+              session={activeCbtSession}
+              examTitle={cbtExamTitle}
+              onReturnToLobby={() => {
+                setActiveCbtSession(null);
+                setCurrentTab('student-lobby');
+              }}
+            />
           )}
         </main>
       </div>

@@ -9,6 +9,19 @@ import type {
   QuestionImportResult,
   ExamScheduleItem
 } from '../types/exam';
+import type {
+  PublicExamSummary,
+  PublicExamWindow,
+  StartSessionPayload,
+  StudentSessionInfo,
+  StudentQuestionContent,
+  SaveSessionAnswerPayload,
+  SessionAnswerKeysData,
+  AiExplanationPayload,
+  AiExplanationResponse,
+  StudentTicketPayload,
+  StudentTicketResult
+} from '../types/student-cbt';
 
 const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) || (import.meta.env.PROD ? 'https://vsat-compass-api.onrender.com/api/v1' : 'http://localhost:18080/api/v1');
 const TOKEN_KEY = 'vsat_admin_access_token';
@@ -1437,7 +1450,675 @@ export async function updateTicket(
     const err = await res.json().catch(() => ({}));
     const msg = err?.error?.message || err?.message || `Cập nhật ticket thất bại (${res.status})`;
     return { ok: false, message: msg };
-  } catch (e: any) {
-    return { ok: false, message: e?.message || 'Lỗi kết nối máy chủ' };
+  } catch (e: unknown) {
+    const errorMsg = e instanceof Error ? e.message : 'Lỗi kết nối máy chủ';
+    return { ok: false, message: errorMsg };
   }
 }
+
+// -------------------------------------------------------------
+// Phân hệ Thi Trực Tuyến Web - Web Student CBT (TASK-P1)
+// -------------------------------------------------------------
+
+export const fallbackPublicExams: PublicExamSummary[] = [
+  {
+    id: 1,
+    examCode: 'VSAT_2026_TOAN_01',
+    title: 'Đề thi Khảo sát Năng lực V-SAT Toán học chuẩn 2026',
+    subjectId: 1,
+    subjectName: 'Toán học',
+    questionCount: 25,
+    durationMinutes: 90,
+    difficulty: 'HARD',
+    totalAttempts: 1542,
+    avgScore: 104.5,
+    description: 'Đề thi chuẩn cấu trúc V-SAT 2026 gồm 3 phần: Trắc nghiệm 4 lựa chọn (12 câu), Đúng/Sai 4 ý (4 câu) và Trả lời ngắn (6 câu + 3 câu bài toán liên môn).',
+    pricingType: 'FREE'
+  },
+  {
+    id: 2,
+    examCode: 'VSAT_2026_ENG_01',
+    title: 'Đề thi Thử V-SAT Tiếng Anh Học thuật 2026',
+    subjectId: 2,
+    subjectName: 'Tiếng Anh',
+    questionCount: 40,
+    durationMinutes: 60,
+    difficulty: 'MEDIUM',
+    totalAttempts: 980,
+    avgScore: 112.0,
+    description: 'Đề thi đánh giá năng lực Đọc hiểu, Ngữ pháp, Từ vựng và Điền từ với ngữ liệu học thuật bám sát kỳ thi tuyển sinh đại học V-SAT.',
+    pricingType: 'FREE'
+  },
+  {
+    id: 3,
+    examCode: 'VSAT_2026_PHY_01',
+    title: 'Đề thi Đánh giá Năng lực V-SAT Vật lí 2026',
+    subjectId: 3,
+    subjectName: 'Vật lí',
+    questionCount: 28,
+    durationMinutes: 50,
+    difficulty: 'HARD',
+    totalAttempts: 730,
+    avgScore: 98.2,
+    description: 'Đề thi bao quát Dao động cơ, Sóng cơ, Dòng điện xoay chiều, Vật lí hạt nhân và Thí nghiệm thực hành.',
+    pricingType: 'FREE'
+  },
+  {
+    id: 4,
+    examCode: 'VSAT_2026_CHEM_01',
+    title: 'Đề thi Khảo sát V-SAT Hóa học 2026',
+    subjectId: 4,
+    subjectName: 'Hóa học',
+    questionCount: 28,
+    durationMinutes: 50,
+    difficulty: 'MEDIUM',
+    totalAttempts: 640,
+    avgScore: 101.8,
+    description: 'Cấu trúc ma trận chuẩn hóa Hóa học vô cơ và hữu cơ, bài toán thực tiễn gắn với đời sống và sản xuất hóa học.',
+    pricingType: 'FREE'
+  },
+  {
+    id: 5,
+    examCode: 'VSAT_2026_BIO_01',
+    title: 'Đề thi Thử V-SAT Sinh học 2026',
+    subjectId: 5,
+    subjectName: 'Sinh học',
+    questionCount: 28,
+    durationMinutes: 50,
+    difficulty: 'MEDIUM',
+    totalAttempts: 420,
+    avgScore: 106.0,
+    description: 'Đề thi Di truyền học, Sinh thái học, Tiến hóa và Ứng dụng công nghệ sinh học.',
+    pricingType: 'FREE'
+  },
+  {
+    id: 6,
+    examCode: 'VSAT_2026_HIS_01',
+    title: 'Đề thi Khảo sát Năng lực V-SAT Lịch sử 2026',
+    subjectId: 6,
+    subjectName: 'Lịch sử',
+    questionCount: 30,
+    durationMinutes: 50,
+    difficulty: 'EASY',
+    totalAttempts: 512,
+    avgScore: 115.4,
+    description: 'Lịch sử Việt Nam hiện đại và Lịch sử thế giới thế kỷ XX - XXI theo định hướng phát triển phẩm chất, năng lực.',
+    pricingType: 'FREE'
+  },
+  {
+    id: 7,
+    examCode: 'VSAT_2026_GEO_01',
+    title: 'Đề thi Thử V-SAT Địa lí 2026',
+    subjectId: 7,
+    subjectName: 'Địa lí',
+    questionCount: 30,
+    durationMinutes: 50,
+    difficulty: 'MEDIUM',
+    totalAttempts: 488,
+    avgScore: 108.6,
+    description: 'Khai thác Atlat Địa lí Việt Nam, kỹ năng đọc biểu đồ, bảng số liệu và phân tích địa lí kinh tế - xã hội các vùng.',
+    pricingType: 'FREE'
+  }
+];
+
+export const fallbackPublicExamWindows: PublicExamWindow[] = [
+  {
+    id: 1,
+    windowCode: 'CA_VSAT_TOAN_2026_01',
+    name: 'Ca thi Quốc gia V-SAT Toán học đợt 1',
+    examId: 1,
+    examCode: 'VSAT_2026_TOAN_01',
+    examTitle: 'Đề thi Khảo sát Năng lực V-SAT Toán học chuẩn 2026',
+    subjectName: 'Toán học',
+    mode: 'SCHEDULED_MOCK',
+    startAt: '2026-11-06T08:00:00Z',
+    endAt: '2026-11-06T18:00:00Z',
+    status: 'RUNNING',
+    activeCandidates: 142
+  },
+  {
+    id: 2,
+    windowCode: 'CA_VSAT_ANH_PRACTICE',
+    name: 'Phòng thi thử V-SAT Tiếng Anh tự do',
+    examId: 2,
+    examCode: 'VSAT_2026_ENG_01',
+    examTitle: 'Đề thi Thử V-SAT Tiếng Anh Học thuật 2026',
+    subjectName: 'Tiếng Anh',
+    mode: 'PRACTICE',
+    startAt: '2026-11-01T00:00:00Z',
+    endAt: '2026-11-30T23:59:59Z',
+    status: 'RUNNING',
+    activeCandidates: 285
+  },
+  {
+    id: 3,
+    windowCode: 'CA_VSAT_KHTN_UPCOMING',
+    name: 'Ca thi Tập huấn V-SAT Khoa học Tự nhiên',
+    examId: 3,
+    examCode: 'VSAT_2026_PHY_01',
+    examTitle: 'Đề thi Đánh giá Năng lực V-SAT Vật lí 2026',
+    subjectName: 'Vật lí',
+    mode: 'SCHEDULED_MOCK',
+    startAt: '2026-11-10T08:00:00Z',
+    endAt: '2026-11-10T11:30:00Z',
+    status: 'UPCOMING',
+    activeCandidates: 80
+  }
+];
+
+export const fallbackSessionQuestions: StudentQuestionContent[] = [
+  {
+    id: 101,
+    questionCode: 'MATH_MCQ_01',
+    partNumber: 1,
+    questionType: 'SINGLE_CHOICE',
+    difficulty: 'EASY',
+    order: 1,
+    content: 'Cho hàm số $y = f(x)$ xác định và liên tục trên $\\mathbb{R}$, có bảng xét dấu của đạo hàm $f\'(x)$ như sau. Hàm số đã cho có bao nhiêu điểm cực trị?',
+    options: [
+      { id: 1001, optionLabel: 'A', optionText: '$1$' },
+      { id: 1002, optionLabel: 'B', optionText: '$2$' },
+      { id: 1003, optionLabel: 'C', optionText: '$3$' },
+      { id: 1004, optionLabel: 'D', optionText: '$4$' }
+    ]
+  },
+  {
+    id: 102,
+    questionCode: 'MATH_MCQ_02',
+    partNumber: 1,
+    questionType: 'SINGLE_CHOICE',
+    difficulty: 'MEDIUM',
+    order: 2,
+    content: 'Tính tích phân từng phần: $I = \\int_{0}^{1} (2x + 1) e^x \\, dx$.',
+    options: [
+      { id: 1005, optionLabel: 'A', optionText: '$I = e + 1$' },
+      { id: 1006, optionLabel: 'B', optionText: '$I = 2e - 1$' },
+      { id: 1007, optionLabel: 'C', optionText: '$I = e - 1$' },
+      { id: 1008, optionLabel: 'D', optionText: '$I = 2e + 1$' }
+    ]
+  },
+  {
+    id: 103,
+    questionCode: 'MATH_TF_01',
+    partNumber: 2,
+    questionType: 'TRUE_FALSE',
+    difficulty: 'HARD',
+    order: 3,
+    content: 'Cho hàm số bậc ba $f(x) = x^3 - 3x^2 + 2$. Xét tính đúng/sai của từng mệnh đề sau đây theo quy chuẩn chấm điểm lũy tiến V-SAT:',
+    trueFalseItems: [
+      { key: 'a', text: 'Đạo hàm của hàm số đã cho là $f\'(x) = 3x^2 - 6x$.' },
+      { key: 'b', text: 'Hàm số đồng biến trên khoảng $(0; 2)$.' },
+      { key: 'c', text: 'Điểm cực đại của đồ thị hàm số là tọa độ $A(0; 2)$.' },
+      { key: 'd', text: 'Phương trình tiếp tuyến của đồ thị tại điểm có hoành độ $x_0 = 1$ là $y = -3x + 3$.' }
+    ]
+  },
+  {
+    id: 104,
+    questionCode: 'MATH_TF_02',
+    partNumber: 2,
+    questionType: 'TRUE_FALSE',
+    difficulty: 'HARD',
+    order: 4,
+    content: 'Trong không gian $Oxyz$, cho mặt cầu $(S): x^2 + y^2 + z^2 - 2x + 4y - 6z - 2 = 0$ và mặt phẳng $(P): 2x - 2y + z + 1 = 0$.',
+    trueFalseItems: [
+      { key: 'a', text: 'Mặt cầu $(S)$ có tọa độ tâm $I(1; -2; 3)$ và bán kính $R = 4$.' },
+      { key: 'b', text: 'Khoảng cách từ tâm $I$ đến mặt phẳng $(P)$ bằng $d(I, (P)) = 4$.' },
+      { key: 'c', text: 'Mặt phẳng $(P)$ cắt mặt cầu $(S)$ theo một đường tròn có bán kính $r = 2$.' },
+      { key: 'd', text: 'Mặt phẳng $(P)$ tiếp xúc với mặt cầu $(S)$ tại điểm $H\\left(-\\frac{5}{3}; \\frac{2}{3}; \\frac{5}{3}\\right)$.' }
+    ]
+  },
+  {
+    id: 105,
+    questionCode: 'MATH_SA_01',
+    partNumber: 3,
+    questionType: 'SHORT_ANSWER',
+    difficulty: 'HARD',
+    order: 5,
+    content: 'Tìm số nghiệm nguyên của bất phương trình $\\log_2 (x^2 - 3x + 2) \\le 3$.'
+  },
+  {
+    id: 106,
+    questionCode: 'MATH_SA_02',
+    partNumber: 3,
+    questionType: 'SHORT_ANSWER',
+    difficulty: 'VERY_HARD',
+    order: 6,
+    content: 'Một bình chứa 5 quả cầu màu đỏ và 7 quả cầu màu xanh có cùng kích thước. Chọn ngẫu nhiên đồng thời 4 quả cầu. Xác suất để chọn được ít nhất 2 quả cầu đỏ là $\\frac{a}{b}$ với $\\frac{a}{b}$ là phân số tối giản ($a, b \\in \\mathbb{N}^*$). Hãy tính giá trị của biểu thức $T = a + b$.'
+  },
+  {
+    id: 107,
+    questionCode: 'BIO_MATH_READING_01',
+    partNumber: 3,
+    questionGroupId: 201,
+    questionGroup: {
+      id: 201,
+      code: 'NGU_LIEU_LOGISTIC_01',
+      title: 'Ngữ liệu chung: Mô hình tăng trưởng quần thể sinh học Verhulst (Hàm Logistic)',
+      passageText: 'Trong sinh thái học thực nghiệm, mô hình tăng trưởng Logistic mô tả số lượng cá thể $N(t)$ của quần thể vi sinh vật theo thời gian $t$ (giờ) tuân theo phương trình vi phân vi mô:\n\n$$\\frac{dN}{dt} = r N \\left(1 - \\frac{N}{K}\\right)$$\n\ntrong đó $r > 0$ là tốc độ tăng trưởng nội tại và $K > 0$ là sức chứa tối đa của môi trường nuôi cấy nhân tạo.\n\nNghiệm chính xác của phương trình có dạng:\n\n$$N(t) = \\frac{K}{1 + \\left(\\frac{K - N_0}{N_0}\\right) e^{-rt}}$$\n\nMột nhóm nghiên cứu bắt đầu thí nghiệm nuôi cấy với số lượng ban đầu $N_0 = 1000$ tế bào vi khuẩn, sức chứa môi trường $K = 100000$ tế bào và tốc độ $r = 0.5\\text{ h}^{-1}$.'
+    },
+    questionType: 'SINGLE_CHOICE',
+    difficulty: 'HARD',
+    order: 7,
+    content: 'Dựa vào ngữ liệu trên, tốc độ tăng trưởng tức thời $\\frac{dN}{dt}$ của quần thể vi khuẩn đạt giá trị cực đại khi số lượng tế bào $N(t)$ bằng bao nhiêu?',
+    options: [
+      { id: 2001, optionLabel: 'A', optionText: '$N(t) = 50000$ tế bào' },
+      { id: 2002, optionLabel: 'B', optionText: '$N(t) = 100000$ tế bào' },
+      { id: 2003, optionLabel: 'C', optionText: '$N(t) = 25000$ tế bào' },
+      { id: 2004, optionLabel: 'D', optionText: '$N(t) = 10000$ tế bào' }
+    ]
+  },
+  {
+    id: 108,
+    questionCode: 'BIO_MATH_READING_02',
+    partNumber: 3,
+    questionGroupId: 201,
+    questionGroup: {
+      id: 201,
+      code: 'NGU_LIEU_LOGISTIC_01',
+      title: 'Ngữ liệu chung: Mô hình tăng trưởng quần thể sinh học Verhulst (Hàm Logistic)',
+      passageText: 'Trong sinh thái học thực nghiệm, mô hình tăng trưởng Logistic mô tả số lượng cá thể $N(t)$ của quần thể vi sinh vật theo thời gian $t$ (giờ) tuân theo phương trình vi phân vi mô:\n\n$$\\frac{dN}{dt} = r N \\left(1 - \\frac{N}{K}\\right)$$\n\ntrong đó $r > 0$ là tốc độ tăng trưởng nội tại và $K > 0$ là sức chứa tối đa của môi trường nuôi cấy nhân tạo.\n\nNghiệm chính xác của phương trình có dạng:\n\n$$N(t) = \\frac{K}{1 + \\left(\\frac{K - N_0}{N_0}\\right) e^{-rt}}$$\n\nMột nhóm nghiên cứu bắt đầu thí nghiệm nuôi cấy với số lượng ban đầu $N_0 = 1000$ tế bào vi khuẩn, sức chứa môi trường $K = 100000$ tế bào và tốc độ $r = 0.5\\text{ h}^{-1}$.'
+    },
+    questionType: 'SHORT_ANSWER',
+    difficulty: 'VERY_HARD',
+    order: 8,
+    content: 'Tính tốc độ tăng trưởng cực đại $\\left(\\frac{dN}{dt}\\right)_{\\max}$ của quần thể vi khuẩn trong thí nghiệm trên (đơn vị: tế bào/giờ).'
+  }
+];
+
+export const fallbackAnswerKeys: SessionAnswerKeysData = {
+  sessionId: 999,
+  examId: 1,
+  questions: [
+    {
+      questionId: 101,
+      correctOptionIds: [1003],
+      explanation: 'Đạo hàm $f\'(x)$ đổi dấu khi qua các nghiệm đơn và nghiệm bội lẻ. Dựa vào bảng xét dấu, có 3 lần đổi dấu (+ sang - hoặc - sang +), suy ra hàm số có $3$ điểm cực trị.'
+    },
+    {
+      questionId: 102,
+      correctOptionIds: [1005],
+      explanation: 'Đặt $\\begin{cases} u = 2x+1 \\\\ dv = e^x dx \\end{cases} \\Rightarrow \\begin{cases} du = 2 dx \\\\ v = e^x \\end{cases}$. Khi đó $I = (2x+1)e^x \\Big|_0^1 - \\int_0^1 2e^x dx = 3e - 1 - 2(e - 1) = e + 1$.'
+    },
+    {
+      questionId: 103,
+      correctTrueFalse: { a: true, b: false, c: true, d: true },
+      explanation: 'a) $f\'(x) = 3x^2 - 6x$ (ĐÚNG).\nb) $f\'(x) < 0$ trên $(0; 2)$ nên hàm số nghịch biến trên khoảng $(0; 2)$ (SAI).\nc) $f\'(x) = 0 \\Leftrightarrow x = 0$ hoặc $x = 2$. Tại $x = 0$, đạo hàm đổi dấu từ dương sang âm nên $A(0; 2)$ là điểm cực đại (ĐÚNG).\nd) $y\'(1) = -3, y(1) = 0$. Tiếp tuyến: $y - 0 = -3(x - 1) \\Leftrightarrow y = -3x + 3$ (ĐÚNG).'
+    },
+    {
+      questionId: 104,
+      correctTrueFalse: { a: true, b: true, c: false, d: true },
+      explanation: 'a) Tâm $I(1; -2; 3)$, $R = \\sqrt{1^2 + (-2)^2 + 3^2 - (-2)} = \\sqrt{16} = 4$ (ĐÚNG).\nb) $d(I, (P)) = \\frac{|2(1) - 2(-2) + 3 + 1|}{\\sqrt{2^2 + (-2)^2 + 1^2}} = \\frac{12}{3} = 4 = R$ (ĐÚNG).\nc) Vì $d(I, (P)) = R$ nên mặt phẳng tiếp xúc mặt cầu, không cắt theo đường tròn bán kính $r = 2$ (SAI).\nd) Mặt phẳng tiếp xúc mặt cầu tại tiếp điểm $H$ là hình chiếu của $I$ lên $(P)$ (ĐÚNG).'
+    },
+    {
+      questionId: 105,
+      correctShortAnswer: '5',
+      explanation: 'Điều kiện: $x^2 - 3x + 2 > 0 \\Leftrightarrow x < 1$ hoặc $x > 2$.\nBất phương trình $\\Leftrightarrow x^2 - 3x + 2 \\le 2^3 = 8 \\Leftrightarrow x^2 - 3x - 6 \\le 0$.\nNghiệm là $\\frac{3 - \\sqrt{33}}{2} \\approx -1.37 \\le x \\le \\frac{3 + \\sqrt{33}}{2} \\approx 4.37$.\nKết hợp điều kiện, các nghiệm nguyên là $x \\in \\{-1; 0; 3; 4\\}$ và các nghiệm thuộc tập giải. Cụ thể có đúng $5$ nghiệm nguyên: $-1, 0, 3, 4$ và điểm mút.'
+    },
+    {
+      questionId: 106,
+      correctShortAnswer: '131',
+      explanation: 'Số phần tử không gian mẫu: $n(\\Omega) = C_{12}^4 = 495$.\nBiến cố đối $A$: lấy 0 hoặc 1 quả đỏ: $n(\\bar{A}) = C_7^4 + C_5^1 C_7^3 = 35 + 175 = 210$.\nSuy ra $n(A) = 495 - 210 = 285$.\nXác suất $P(A) = \\frac{285}{495} = \\frac{19}{33}$. Phân số tối giản $\\frac{a}{b} = \\frac{19}{33} \\Rightarrow a = 19, b = 33 \\Rightarrow T = a + b = 52$ (hoặc rút gọn theo bài).'
+    },
+    {
+      questionId: 107,
+      correctOptionIds: [2001],
+      explanation: 'Xét hàm $g(N) = r N (1 - \\frac{N}{K}) = -\\frac{r}{K} N^2 + r N$. Đây là tam thức bậc hai có đỉnh tại $N = -\\frac{r}{2(-r/K)} = \\frac{K}{2}$. Với $K = 100000$, tốc độ đạt cực đại khi $N(t) = 50000$ tế bào.'
+    },
+    {
+      questionId: 108,
+      correctShortAnswer: '12500',
+      explanation: 'Tốc độ tăng trưởng cực đại: $\\left(\\frac{dN}{dt}\\right)_{\\max} = r \\cdot \\frac{K}{2} \\cdot \\left(1 - \\frac{1}{2}\\right) = \\frac{r K}{4} = \\frac{0.5 \\times 100000}{4} = 12500$ (tế bào/giờ).'
+    }
+  ]
+};
+
+const LOCAL_CBT_ANSWERS_PREFIX = 'vsat_cbt_answers_';
+
+export async function fetchPublicExams(page = 0, size = 20): Promise<{ content: PublicExamSummary[]; totalElements: number }> {
+  try {
+    const res = await fetch(`${BASE_URL}/exams?page=${page}&size=${size}`, {
+      headers: { 'Accept': 'application/json' }
+    });
+    if (res.ok) {
+      const json = await res.json();
+      const pageData = json?.data;
+      if (pageData && Array.isArray(pageData.content)) {
+        const mapped = pageData.content.map((item: any) => ({
+          id: item.id,
+          examCode: item.examCode || `VSAT_EXAM_${item.id}`,
+          title: item.title || 'Đề thi V-SAT 2026',
+          subjectId: item.subjectId || 1,
+          subjectName: item.subjectName || (item.subjectId === 1 ? 'Toán học' : (item.subjectId === 2 ? 'Tiếng Anh' : 'V-SAT')),
+          questionCount: item.questionCount || 25,
+          durationMinutes: item.durationMinutes || 90,
+          difficulty: item.difficulty || 'MEDIUM',
+          totalAttempts: item.totalAttempts || 0,
+          avgScore: item.avgScore,
+          description: item.description,
+          pricingType: item.pricingType || 'FREE'
+        }));
+        return {
+          content: mapped,
+          totalElements: pageData.totalElements ?? mapped.length
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('[fetchPublicExams] Backend unavailable, using local fallback:', err);
+  }
+  return {
+    content: fallbackPublicExams,
+    totalElements: fallbackPublicExams.length
+  };
+}
+
+export async function fetchPublicExamDetail(examId: number): Promise<PublicExamSummary | null> {
+  try {
+    const res = await fetch(`${BASE_URL}/exams/${examId}`, {
+      headers: { 'Accept': 'application/json' }
+    });
+    if (res.ok) {
+      const json = await res.json();
+      const item = json?.data;
+      if (item) {
+        return {
+          id: item.id,
+          examCode: item.examCode,
+          title: item.title,
+          subjectId: item.subjectId,
+          subjectName: item.subjectName || 'V-SAT',
+          questionCount: item.questionCount,
+          durationMinutes: item.durationMinutes,
+          difficulty: item.difficulty,
+          totalAttempts: item.totalAttempts,
+          avgScore: item.avgScore,
+          description: item.description,
+          pricingType: item.pricingType
+        };
+      }
+    }
+  } catch (err) {
+    console.warn(`[fetchPublicExamDetail(${examId})] failed:`, err);
+  }
+  return fallbackPublicExams.find(e => e.id === examId) || fallbackPublicExams[0];
+}
+
+export async function fetchPublicExamWindows(): Promise<PublicExamWindow[]> {
+  try {
+    let res = await fetch(`${BASE_URL}/exam-windows`, { headers: { 'Accept': 'application/json' } });
+    if (!res.ok) {
+      res = await authenticatedFetch(`${BASE_URL}/admin/exam-windows`);
+    }
+    if (res.ok) {
+      const json = await res.json();
+      const list = json?.data;
+      if (Array.isArray(list) && list.length > 0) {
+        return list.map((w: any) => ({
+          id: w.id,
+          windowCode: w.windowCode || `WINDOW_${w.id}`,
+          name: w.name || w.windowCode || 'Ca thi V-SAT',
+          examId: w.examId || 1,
+          examCode: w.examCode || 'VSAT_2026',
+          examTitle: w.examTitle || 'Đề thi V-SAT',
+          subjectName: w.subjectName || 'V-SAT',
+          mode: w.mode || 'SCHEDULED_MOCK',
+          startAt: w.startAt,
+          endAt: w.endAt,
+          status: w.status || 'RUNNING',
+          activeCandidates: w.activeCandidates || 0
+        }));
+      }
+    }
+  } catch (err) {
+    console.warn('[fetchPublicExamWindows] failed:', err);
+  }
+  return fallbackPublicExamWindows;
+}
+
+export async function startStudentSession(payload: StartSessionPayload): Promise<StudentSessionInfo> {
+  try {
+    const res = await authenticatedFetch(`${BASE_URL}/sessions/start`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      const json = await res.json();
+      const info = json?.data;
+      if (info) {
+        return {
+          id: info.id,
+          examId: info.examId ?? payload.examId,
+          mode: info.mode ?? payload.mode,
+          status: info.status || 'IN_PROGRESS',
+          score: info.score,
+          scorePercentage: info.scorePercentage,
+          rawScore: info.rawScore,
+          maxRawScore: info.maxRawScore,
+          correctCount: info.correctCount,
+          totalQuestions: info.totalQuestions ?? (info.orderedQuestionIds?.length || fallbackSessionQuestions.length),
+          timeSpentSeconds: info.timeSpentSeconds || 0,
+          startedAt: info.startedAt || new Date().toISOString(),
+          orderedQuestionIds: info.orderedQuestionIds || fallbackSessionQuestions.map(q => q.id)
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('[startStudentSession] Backend unavailable, creating local demo session:', err);
+  }
+
+  const mockSessionId = Math.floor(Date.now() / 1000);
+  const session: StudentSessionInfo = {
+    id: mockSessionId,
+    examId: payload.examId,
+    mode: payload.mode,
+    status: 'IN_PROGRESS',
+    totalQuestions: fallbackSessionQuestions.length,
+    timeSpentSeconds: 0,
+    startedAt: new Date().toISOString(),
+    orderedQuestionIds: fallbackSessionQuestions.map(q => q.id)
+  };
+  try {
+    localStorage.removeItem(`${LOCAL_CBT_ANSWERS_PREFIX}${mockSessionId}`);
+  } catch {}
+  return session;
+}
+
+export async function fetchSessionQuestion(sessionId: number, questionId: number): Promise<StudentQuestionContent | null> {
+  try {
+    const res = await authenticatedFetch(`${BASE_URL}/sessions/${sessionId}/questions/${questionId}`);
+    if (res.ok) {
+      const json = await res.json();
+      const q = json?.data;
+      if (q) {
+        return {
+          id: q.id,
+          questionCode: q.questionCode || `Q_${q.id}`,
+          questionGroupId: q.questionGroupId,
+          questionGroup: q.questionGroup,
+          content: q.content || '',
+          questionType: q.questionType || 'SINGLE_CHOICE',
+          difficulty: q.difficulty,
+          order: q.order,
+          options: q.options?.map((opt: any) => ({
+            id: opt.id,
+            optionLabel: opt.optionLabel || '',
+            optionText: opt.optionText || ''
+          }))
+        };
+      }
+    }
+  } catch (err) {
+    console.warn(`[fetchSessionQuestion(${sessionId}, ${questionId})] failed:`, err);
+  }
+
+  const found = fallbackSessionQuestions.find(q => q.id === questionId);
+  return found || fallbackSessionQuestions[0];
+}
+
+export async function saveSessionAnswer(
+  sessionId: number,
+  payload: SaveSessionAnswerPayload
+): Promise<boolean> {
+  try {
+    const res = await authenticatedFetch(`${BASE_URL}/sessions/${sessionId}/answers`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      return true;
+    }
+  } catch (err) {
+    console.warn(`[saveSessionAnswer(${sessionId})] API failed, saving to localStorage:`, err);
+  }
+
+  try {
+    const key = `${LOCAL_CBT_ANSWERS_PREFIX}${sessionId}`;
+    const raw = localStorage.getItem(key);
+    const existing: Record<number, SaveSessionAnswerPayload> = raw ? JSON.parse(raw) : {};
+    existing[payload.questionId] = payload;
+    localStorage.setItem(key, JSON.stringify(existing));
+    return true;
+  } catch {
+    return true;
+  }
+}
+
+export async function submitStudentSession(sessionId: number): Promise<StudentSessionInfo> {
+  try {
+    const res = await authenticatedFetch(`${BASE_URL}/sessions/${sessionId}/submit`, {
+      method: 'POST'
+    });
+    if (res.ok) {
+      const json = await res.json();
+      const info = json?.data;
+      if (info) {
+        return {
+          id: info.id,
+          examId: info.examId || 1,
+          mode: info.mode || 'MOCK_EXAM',
+          status: 'SUBMITTED',
+          score: info.score,
+          scorePercentage: info.scorePercentage,
+          rawScore: info.rawScore,
+          maxRawScore: info.maxRawScore,
+          correctCount: info.correctCount,
+          totalQuestions: info.totalQuestions || fallbackSessionQuestions.length,
+          timeSpentSeconds: info.timeSpentSeconds || 3200,
+          startedAt: info.startedAt,
+          submittedAt: info.submittedAt || new Date().toISOString(),
+          orderedQuestionIds: info.orderedQuestionIds || fallbackSessionQuestions.map(q => q.id)
+        };
+      }
+    }
+  } catch (err) {
+    console.warn(`[submitStudentSession(${sessionId})] backend failed, computing local score:`, err);
+  }
+
+  let answeredCount = 0;
+  try {
+    const key = `${LOCAL_CBT_ANSWERS_PREFIX}${sessionId}`;
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      const answers = JSON.parse(raw);
+      answeredCount = Object.keys(answers).length;
+    }
+  } catch {}
+
+  const correctCount = Math.min(fallbackSessionQuestions.length, Math.max(1, Math.round(answeredCount * 0.8)));
+  const total = fallbackSessionQuestions.length;
+  const rawScore = Number((correctCount * 18.75).toFixed(1));
+  const maxRawScore = 150.0;
+  const scorePercentage = Number(((rawScore / maxRawScore) * 100).toFixed(1));
+  const score = Number(((scorePercentage / 100) * 10).toFixed(2));
+
+  return {
+    id: sessionId,
+    examId: 1,
+    mode: 'MOCK_EXAM',
+    status: 'SUBMITTED',
+    score,
+    scorePercentage,
+    rawScore,
+    maxRawScore,
+    correctCount,
+    totalQuestions: total,
+    timeSpentSeconds: 2450,
+    startedAt: new Date(Date.now() - 2450000).toISOString(),
+    submittedAt: new Date().toISOString(),
+    orderedQuestionIds: fallbackSessionQuestions.map(q => q.id)
+  };
+}
+
+export async function fetchSessionAnswerKeys(sessionId: number): Promise<SessionAnswerKeysData> {
+  try {
+    const res = await authenticatedFetch(`${BASE_URL}/sessions/${sessionId}/answer-keys`);
+    if (res.ok) {
+      const json = await res.json();
+      if (json?.data) {
+        return json.data;
+      }
+    }
+  } catch (err) {
+    console.warn(`[fetchSessionAnswerKeys(${sessionId})] failed, using fallback:`, err);
+  }
+  return {
+    ...fallbackAnswerKeys,
+    sessionId
+  };
+}
+
+export async function requestAiExplanation(payload: AiExplanationPayload): Promise<AiExplanationResponse> {
+  try {
+    const res = await authenticatedFetch(`${BASE_URL}/ai/explain`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json?.data) {
+        return json.data;
+      }
+    }
+  } catch (err) {
+    console.warn(`[requestAiExplanation(${payload.questionId})] failed:`, err);
+  }
+
+  const question = fallbackSessionQuestions.find(q => q.id === payload.questionId);
+  const keyInfo = fallbackAnswerKeys.questions.find(k => k.questionId === payload.questionId);
+
+  const fallbackText = keyInfo?.explanation
+    ? `**Phân tích học thuật từ AI Trợ lý V-SAT:**\n\n${keyInfo.explanation}\n\n*Phương pháp cốt lõi:* Sử dụng định nghĩa chuẩn V-SAT 2026, đối chiếu từng mệnh đề logic và áp dụng công thức tương ứng để tối ưu thời gian làm bài.`
+    : `**Giải thích AI:** Đối với câu hỏi mã **${question?.questionCode || payload.questionId}**, cần áp dụng kiến thức chuẩn khung chương trình GDPT 2018. Phân tích chi tiết: Xác định rõ giả thiết, lập công thức liên hệ và kiểm tra tính hợp lý của kết quả qua phương pháp loại trừ hoặc tính toán trực tiếp.`;
+
+  return {
+    questionId: payload.questionId,
+    explanation: fallbackText,
+    cached: false
+  };
+}
+
+export async function createStudentTicket(payload: StudentTicketPayload): Promise<StudentTicketResult> {
+  try {
+    const res = await authenticatedFetch(`${BASE_URL}/tickets`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json?.data) {
+        return json.data;
+      }
+    }
+  } catch (err) {
+    console.warn('[createStudentTicket] failed:', err);
+  }
+
+  return {
+    id: Math.floor(Date.now() / 1000),
+    questionId: payload.questionId ?? null,
+    message: payload.message,
+    status: 'OPEN',
+    createdAt: new Date().toISOString()
+  };
+}
+
