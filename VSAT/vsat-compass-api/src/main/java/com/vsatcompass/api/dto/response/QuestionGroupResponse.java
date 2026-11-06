@@ -17,4 +17,7 @@ public class QuestionGroupResponse {
     private String passageText;
     private String passageHtml;
     private String imageUrl;
+    private String audioUrl;
+    private Integer audioDurationSec;
+    private Integer maxPlays;
 }

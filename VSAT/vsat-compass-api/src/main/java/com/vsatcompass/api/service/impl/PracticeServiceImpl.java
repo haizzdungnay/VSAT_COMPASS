@@ -95,6 +95,9 @@ public class PracticeServiceImpl implements PracticeService {
                 .passageText(g.getPassageText())
                 .passageHtml(g.getPassageHtml())
                 .imageUrl(g.getImageUrl())
+                .audioUrl(g.getAudioUrl())
+                .audioDurationSec(g.getAudioDurationSec())
+                .maxPlays(g.getMaxPlays() != null ? g.getMaxPlays() : 2)
                 .build();
     }
     private SessionQuestionContentResponse toQuestionContent(Question question) {

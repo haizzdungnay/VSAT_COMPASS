@@ -30,6 +30,8 @@ public class QuestionImportItemDto {
     private String correctAnswer;
     private String explanation;
     private String tags;
+    private String audioUrl;
+    private Integer maxPlays;
     private boolean valid;
     private String error;
 }

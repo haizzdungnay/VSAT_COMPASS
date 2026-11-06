@@ -24,6 +24,15 @@ public class QuestionGroup {
     @SerializedName("imageUrl")
     private String imageUrl;
 
+    @SerializedName("audioUrl")
+    private String audioUrl;
+
+    @SerializedName("audioDurationSec")
+    private Integer audioDurationSec;
+
+    @SerializedName("maxPlays")
+    private Integer maxPlays = 2;
+
     public QuestionGroup() {}
 
     public QuestionGroup(Long id, String code, String title, String passageText) {
@@ -31,6 +40,17 @@ public class QuestionGroup {
         this.code = code;
         this.title = title;
         this.passageText = passageText;
+    }
+
+    public QuestionGroup(Long id, String code, String title, String passageText,
+                         String audioUrl, Integer audioDurationSec, Integer maxPlays) {
+        this.id = id;
+        this.code = code;
+        this.title = title;
+        this.passageText = passageText;
+        this.audioUrl = audioUrl;
+        this.audioDurationSec = audioDurationSec;
+        this.maxPlays = maxPlays != null ? maxPlays : 2;
     }
 
     public Long getId() { return id; }
@@ -53,4 +73,13 @@ public class QuestionGroup {
 
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
+    public String getAudioUrl() { return audioUrl; }
+    public void setAudioUrl(String audioUrl) { this.audioUrl = audioUrl; }
+
+    public Integer getAudioDurationSec() { return audioDurationSec; }
+    public void setAudioDurationSec(Integer audioDurationSec) { this.audioDurationSec = audioDurationSec; }
+
+    public Integer getMaxPlays() { return maxPlays != null ? maxPlays : 2; }
+    public void setMaxPlays(Integer maxPlays) { this.maxPlays = maxPlays != null ? maxPlays : 2; }
 }

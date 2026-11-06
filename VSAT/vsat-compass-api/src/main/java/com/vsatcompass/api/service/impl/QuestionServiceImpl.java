@@ -397,6 +397,9 @@ public class QuestionServiceImpl implements QuestionService {
                 .passageText(g.getPassageText())
                 .passageHtml(g.getPassageHtml())
                 .imageUrl(g.getImageUrl())
+                .audioUrl(g.getAudioUrl())
+                .audioDurationSec(g.getAudioDurationSec())
+                .maxPlays(g.getMaxPlays() != null ? g.getMaxPlays() : 2)
                 .build();
     }
 

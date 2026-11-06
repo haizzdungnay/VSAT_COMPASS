@@ -304,22 +304,61 @@ public class OfflineExamRepository {
         });
     }
 
+    public static byte[] encryptMediaBytes(byte[] data) throws IOException, GeneralSecurityException {
+        if (data == null) return new byte[0];
+        byte[] iv = new byte[12];
+        new SecureRandom().nextBytes(iv);
+
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        SecretKeySpec keySpec = new SecretKeySpec(AES_KEY_BYTES, "AES");
+        GCMParameterSpec gcmSpec = new GCMParameterSpec(128, iv);
+        cipher.init(Cipher.ENCRYPT_MODE, keySpec, gcmSpec);
+
+        byte[] cipherText = cipher.doFinal(data);
+
+        byte[] result = new byte[MAGIC_HEADER.length + iv.length + cipherText.length];
+        System.arraycopy(MAGIC_HEADER, 0, result, 0, MAGIC_HEADER.length);
+        System.arraycopy(iv, 0, result, MAGIC_HEADER.length, iv.length);
+        System.arraycopy(cipherText, 0, result, MAGIC_HEADER.length + iv.length, cipherText.length);
+        return result;
+    }
+
+    public static byte[] decryptMediaBytes(byte[] encryptedBytes) throws IOException, GeneralSecurityException {
+        if (encryptedBytes == null || encryptedBytes.length == 0) return new byte[0];
+
+        if (!startsWith(encryptedBytes, MAGIC_HEADER)) {
+            throw new IOException("Invalid media bundle: missing VSAT\\x02 magic header");
+        }
+        if (encryptedBytes.length < MAGIC_HEADER.length + 12 + 16) {
+            throw new IOException("Corrupted AES-GCM bundle: truncated file (< 33 bytes)");
+        }
+
+        byte[] iv = new byte[12];
+        System.arraycopy(encryptedBytes, MAGIC_HEADER.length, iv, 0, 12);
+        int cipherOffset = MAGIC_HEADER.length + 12;
+        int cipherLen = encryptedBytes.length - cipherOffset;
+
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        SecretKeySpec keySpec = new SecretKeySpec(AES_KEY_BYTES, "AES");
+        GCMParameterSpec gcmSpec = new GCMParameterSpec(128, iv);
+        cipher.init(Cipher.DECRYPT_MODE, keySpec, gcmSpec);
+
+        return cipher.doFinal(encryptedBytes, cipherOffset, cipherLen);
+    }
+
+    public byte[] encryptMedia(byte[] data) throws IOException, GeneralSecurityException {
+        return encryptMediaBytes(data);
+    }
+
+    public byte[] decryptMedia(byte[] encryptedBytes) throws IOException, GeneralSecurityException {
+        return decryptMediaBytes(encryptedBytes);
+    }
+
     private void writeEncryptedFile(Context context, File file, byte[] data) throws IOException {
         try {
-            byte[] iv = new byte[12];
-            new SecureRandom().nextBytes(iv);
-
-            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-            SecretKeySpec keySpec = new SecretKeySpec(AES_KEY_BYTES, "AES");
-            GCMParameterSpec gcmSpec = new GCMParameterSpec(128, iv);
-            cipher.init(Cipher.ENCRYPT_MODE, keySpec, gcmSpec);
-
-            byte[] cipherText = cipher.doFinal(data);
-
+            byte[] encrypted = encryptMediaBytes(data);
             try (FileOutputStream fos = new FileOutputStream(file)) {
-                fos.write(MAGIC_HEADER);
-                fos.write(iv);
-                fos.write(cipherText);
+                fos.write(encrypted);
                 fos.flush();
             }
         } catch (GeneralSecurityException e) {
@@ -340,21 +379,8 @@ public class OfflineExamRepository {
         }
 
         if (startsWith(fileBytes, MAGIC_HEADER)) {
-            if (fileBytes.length < MAGIC_HEADER.length + 12 + 16) {
-                throw new IOException("Corrupted AES-GCM bundle: truncated file (< 33 bytes)");
-            }
             try {
-                byte[] iv = new byte[12];
-                System.arraycopy(fileBytes, MAGIC_HEADER.length, iv, 0, 12);
-                int cipherOffset = MAGIC_HEADER.length + 12;
-                int cipherLen = fileBytes.length - cipherOffset;
-
-                Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-                SecretKeySpec keySpec = new SecretKeySpec(AES_KEY_BYTES, "AES");
-                GCMParameterSpec gcmSpec = new GCMParameterSpec(128, iv);
-                cipher.init(Cipher.DECRYPT_MODE, keySpec, gcmSpec);
-
-                return new DecryptedResult(cipher.doFinal(fileBytes, cipherOffset, cipherLen), false);
+                return new DecryptedResult(decryptMediaBytes(fileBytes), false);
             } catch (GeneralSecurityException e) {
                 throw new IOException("Failed to decrypt AES-GCM bundle: auth tag verification failed", e);
             }

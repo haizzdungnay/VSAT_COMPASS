@@ -88,7 +88,7 @@ public class QuestionImportServiceImpl implements QuestionImportService {
                     "Group Code", "Subject ID/Code", "Group Title", "Passage Text",
                     "Topic ID/Code", "Subtopic ID", "Difficulty (NB/TH/VD/VDC)", "Question Type",
                     "Question Text", "Option A", "Option B", "Option C", "Option D",
-                    "Correct Answer (A/B/C/D)", "Explanation"
+                    "Correct Answer (A/B/C/D)", "Explanation", "Audio URL", "Max Plays"
             };
             Row headerRow2 = sheet2.createRow(0);
             for (int i = 0; i < headers2.length; i++) {
@@ -220,6 +220,8 @@ public class QuestionImportServiceImpl implements QuestionImportService {
                                 .title(item.getGroupTitle() != null ? item.getGroupTitle() : groupCode)
                                 .passageText(item.getPassageText())
                                 .passageHtml(item.getPassageText())
+                                .audioUrl(item.getAudioUrl())
+                                .maxPlays(item.getMaxPlays() != null ? item.getMaxPlays() : 2)
                                 .createdBy(currentUserId)
                                 .build();
                         group = questionGroupRepository.save(group);
@@ -322,6 +324,24 @@ public class QuestionImportServiceImpl implements QuestionImportService {
             String correctRaw = getCellString(row.getCell(13));
             String explanation = getCellString(row.getCell(14));
 
+            String audioUrl = null;
+            if (row.getCell(15) != null) {
+                String val = getCellString(row.getCell(15)).trim();
+                if (!val.isBlank()) {
+                    audioUrl = val;
+                }
+            }
+
+            Integer maxPlays = 2;
+            if (row.getCell(16) != null) {
+                String val = getCellString(row.getCell(16)).trim();
+                if (!val.isBlank()) {
+                    try {
+                        maxPlays = Integer.parseInt(val);
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+
             QuestionImportItemDto item = QuestionImportItemDto.builder()
                     .sheetName(sheetName)
                     .rowNumber(rowNumber)
@@ -332,6 +352,8 @@ public class QuestionImportServiceImpl implements QuestionImportService {
                     .options(List.of(optA, optB, optC, optD))
                     .correctAnswer(correctRaw)
                     .explanation(explanation)
+                    .audioUrl(audioUrl)
+                    .maxPlays(maxPlays)
                     .valid(true)
                     .build();
 

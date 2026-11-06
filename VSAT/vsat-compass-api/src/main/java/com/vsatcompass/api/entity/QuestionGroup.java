@@ -38,6 +38,16 @@ public class QuestionGroup {
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 
+    @Column(name = "audio_url", length = 500)
+    private String audioUrl;
+
+    @Column(name = "audio_duration_sec")
+    private Integer audioDurationSec;
+
+    @Column(name = "max_plays", nullable = false)
+    @Builder.Default
+    private Integer maxPlays = 2;
+
     @Column(name = "created_by")
     private Long createdBy;
 
