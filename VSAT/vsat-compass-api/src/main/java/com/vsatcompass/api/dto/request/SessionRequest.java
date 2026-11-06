@@ -77,4 +77,14 @@ public class SessionRequest {
             private Map<String, Object> answerPayload;
         }
     }
+
+    @Data
+    public static class RecordViolation {
+        @NotBlank(message = "violationType không được để trống")
+        private String violationType;
+
+        private String details;
+
+        private String timestamp;
+    }
 }

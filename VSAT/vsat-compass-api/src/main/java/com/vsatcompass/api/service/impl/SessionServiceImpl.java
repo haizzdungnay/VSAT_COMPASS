@@ -178,6 +178,63 @@ public class SessionServiceImpl implements SessionService {
 
     @Override
     @Transactional
+    public SessionResponse.ViolationResult recordViolation(
+            Long userId,
+            Long sessionId,
+            SessionRequest.RecordViolation request
+    ) {
+        ExamSession session = loadOwnedSession(sessionId, userId);
+
+        int newCount = (session.getViolationCount() != null ? session.getViolationCount() : 0) + 1;
+        session.setViolationCount(newCount);
+
+        Map<String, Object> logEntry = new HashMap<>();
+        logEntry.put("violationType", request.getViolationType());
+        if (request.getDetails() != null) {
+            logEntry.put("details", request.getDetails());
+        }
+        logEntry.put("timestamp", request.getTimestamp() != null ? request.getTimestamp() : OffsetDateTime.now().toString());
+        logEntry.put("recordedAt", OffsetDateTime.now().toString());
+
+        List<Map<String, Object>> logs = session.getProctoringLogs();
+        if (logs == null) {
+            logs = new ArrayList<>();
+        } else {
+            logs = new ArrayList<>(logs);
+        }
+        logs.add(logEntry);
+        session.setProctoringLogs(logs);
+
+        session = examSessionRepository.save(session);
+
+        log.warn("Proctoring violation recorded: session={} user={} type={} count={}",
+                sessionId, userId, request.getViolationType(), newCount);
+
+        if (newCount >= 3 && session.getStatus() == SessionStatus.IN_PROGRESS) {
+            log.warn("Session {} reached violation limit ({} >= 3). Auto-submitting...", sessionId, newCount);
+            SessionResponse.SessionInfo submitted = serverSubmit(userId, sessionId);
+            return SessionResponse.ViolationResult.builder()
+                    .sessionId(sessionId)
+                    .violationCount(newCount)
+                    .maxViolations(3)
+                    .autoSubmitted(true)
+                    .sessionStatus(submitted.getStatus())
+                    .score(submitted.getScore())
+                    .build();
+        }
+
+        return SessionResponse.ViolationResult.builder()
+                .sessionId(sessionId)
+                .violationCount(newCount)
+                .maxViolations(3)
+                .autoSubmitted(false)
+                .sessionStatus(session.getStatus().name())
+                .score(session.getScore())
+                .build();
+    }
+
+    @Override
+    @Transactional
     public void submitAnswer(Long userId, Long sessionId, SessionRequest.SubmitAnswer request) {
         ExamSession session = examSessionRepository.findById(sessionId)
                 .orElseThrow(() -> AppException.notFound("ExamSession", sessionId));
@@ -652,6 +709,9 @@ public class SessionServiceImpl implements SessionService {
                 .passageText(g.getPassageText())
                 .passageHtml(g.getPassageHtml())
                 .imageUrl(g.getImageUrl())
+                .audioUrl(g.getAudioUrl())
+                .audioDurationSec(g.getAudioDurationSec())
+                .maxPlays(g.getMaxPlays() != null ? g.getMaxPlays() : 2)
                 .build();
     }
     private QuestionOptionContentResponse toOptionContent(QuestionOption option) {

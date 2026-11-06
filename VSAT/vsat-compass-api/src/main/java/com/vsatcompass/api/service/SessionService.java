@@ -33,4 +33,10 @@ public interface SessionService {
             Long sessionId,
             Long currentUserId
     );
+
+    SessionResponse.ViolationResult recordViolation(
+            Long userId,
+            Long sessionId,
+            SessionRequest.RecordViolation request
+    );
 }

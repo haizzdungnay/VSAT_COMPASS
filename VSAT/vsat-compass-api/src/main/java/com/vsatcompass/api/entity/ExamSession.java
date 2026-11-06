@@ -10,6 +10,9 @@ import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @Entity
 @Table(name = "exam_sessions")
@@ -87,6 +90,15 @@ public class ExamSession {
 
     @Column(name = "exam_window_id")
     private Long examWindowId;
+
+    @Column(name = "violation_count", nullable = false)
+    @Builder.Default
+    private Integer violationCount = 0;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "proctoring_logs", columnDefinition = "jsonb")
+    @Builder.Default
+    private List<Map<String, Object>> proctoringLogs = new ArrayList<>();
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

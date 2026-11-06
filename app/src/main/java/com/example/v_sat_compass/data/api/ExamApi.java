@@ -47,6 +47,12 @@ public interface ExamApi {
     @POST("sessions/{sessionId}/submit")
     Call<ApiResponse<ExamSession>> submitSession(@Path("sessionId") Long sessionId);
 
+    @POST("sessions/{sessionId}/violations")
+    Call<ApiResponse<Map<String, Object>>> reportViolation(
+            @Path("sessionId") Long sessionId,
+            @Body Map<String, Object> body
+    );
+
     // Client-side processing: send only the final calculated result (no per-answer calls)
     @POST("sessions/{sessionId}/client-submit")
     Call<ApiResponse<ExamSession>> submitClientResult(

@@ -82,4 +82,14 @@ public class SessionController {
                 sessionService.getAnswerKeysForSession(sessionId, userId);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
+
+    @PostMapping("/{sessionId}/violations")
+    @Operation(summary = "P4-01: Ghi nhận vi phạm giám sát thi (Anti-cheat proctoring violation)")
+    public ResponseEntity<ApiResponse<SessionResponse.ViolationResult>> recordViolation(
+            @PathVariable Long sessionId,
+            @Valid @RequestBody SessionRequest.RecordViolation request) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        SessionResponse.ViolationResult result = sessionService.recordViolation(userId, sessionId, request);
+        return ResponseEntity.ok(ApiResponse.success(result, "Ghi nhận vi phạm thành công"));
+    }
 }

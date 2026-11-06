@@ -68,6 +68,9 @@ export interface QuestionGroupContent {
   title?: string;
   passageText?: string;
   passageHtml?: string;
+  audioUrl?: string | null;
+  audioDurationSec?: number | null;
+  maxPlays?: number | null;
 }
 
 export interface StudentTrueFalseItem {
@@ -87,6 +90,9 @@ export interface StudentQuestionContent {
   options?: QuestionOption[];
   trueFalseItems?: StudentTrueFalseItem[];
   partNumber?: 1 | 2 | 3;
+  audioUrl?: string | null;
+  audioDurationSec?: number | null;
+  maxPlays?: number | null;
 }
 
 export interface SaveSessionAnswerPayload {
@@ -143,3 +149,54 @@ export interface QuestionStudentState {
   isSaved: boolean;
   timeSpentSeconds: number;
 }
+
+// -------------------------------------------------------------
+// P2: Admission Prediction Types (Issue #15)
+// -------------------------------------------------------------
+export type AdmissionTier = 'SAFE' | 'FIT' | 'RISK';
+
+export interface AdmissionPredictionRequest {
+  totalScore: number;
+  subjectCombo?: string; // 'ALL' | 'A00' | 'A01' | 'D01' | 'B00' | 'C00'
+  universityCode?: string;
+  region?: string;
+}
+
+export interface AdmissionPredictionItem {
+  id?: number;
+  universityCode: string;
+  universityName: string;
+  majorCode: string;
+  majorName: string;
+  subjectCombo: string;
+  year: number;
+  cutoffScore: number;
+  delta: number;
+  tier: AdmissionTier;
+  notes?: string | null;
+}
+
+export interface AdmissionPredictionResponse {
+  totalScore: number;
+  subjectCombo?: string;
+  items: AdmissionPredictionItem[];
+  safeCount: number;
+  fitCount: number;
+  riskCount: number;
+}
+
+// -------------------------------------------------------------
+// P4: Proctoring & Violation Types (Issue #17)
+// -------------------------------------------------------------
+export interface SessionViolationPayload {
+  violationType: 'FOCUS_LOST' | 'APP_BACKGROUNDED' | 'FULLSCREEN_EXITED' | 'TAB_SWITCHED' | string;
+  details?: string;
+}
+
+export interface SessionViolationResponse {
+  sessionId: number;
+  violationCount: number;
+  autoSubmitted: boolean;
+  message: string;
+}
+

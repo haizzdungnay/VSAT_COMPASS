@@ -20,7 +20,12 @@ import type {
   AiExplanationPayload,
   AiExplanationResponse,
   StudentTicketPayload,
-  StudentTicketResult
+  StudentTicketResult,
+  AdmissionPredictionRequest,
+  AdmissionPredictionItem,
+  AdmissionPredictionResponse,
+  SessionViolationPayload,
+  SessionViolationResponse
 } from '../types/student-cbt';
 
 const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) || (import.meta.env.PROD ? 'https://vsat-compass-api.onrender.com/api/v1' : 'http://localhost:18080/api/v1');
@@ -1722,6 +1727,34 @@ export const fallbackSessionQuestions: StudentQuestionContent[] = [
     difficulty: 'VERY_HARD',
     order: 8,
     content: 'Tính tốc độ tăng trưởng cực đại $\\left(\\frac{dN}{dt}\\right)_{\\max}$ của quần thể vi khuẩn trong thí nghiệm trên (đơn vị: tế bào/giờ).'
+  },
+  {
+    id: 109,
+    questionCode: 'ENG_LISTENING_PART1_01',
+    partNumber: 1,
+    questionGroupId: 202,
+    questionGroup: {
+      id: 202,
+      code: 'ENG_AUDIO_GRP_01',
+      title: 'Phần thi Nghe Tiếng Anh: Hội thoại Hướng nghiệp Đại học & Tuyển sinh V-SAT',
+      passageText: 'Listen to a short conversation between an academic advisor and a high school student discussing university majors and answer the following question.\n\n*Chú ý: Bạn được nghe tối đa 2 lần. Không thể tua âm thanh trong khi làm bài thi chuẩn hóa.*',
+      audioUrl: 'https://cdn.freesound.org/previews/vsat_listening_demo_dialogue.mp3',
+      audioDurationSec: 42,
+      maxPlays: 2
+    },
+    audioUrl: 'https://cdn.freesound.org/previews/vsat_listening_demo_dialogue.mp3',
+    audioDurationSec: 42,
+    maxPlays: 2,
+    questionType: 'SINGLE_CHOICE',
+    difficulty: 'MEDIUM',
+    order: 9,
+    content: 'According to the conversation, what major is the student most interested in applying for via V-SAT examination?',
+    options: [
+      { id: 2005, optionLabel: 'A', optionText: 'Information Technology and Artificial Intelligence' },
+      { id: 2006, optionLabel: 'B', optionText: 'International Commercial Law' },
+      { id: 2007, optionLabel: 'C', optionText: 'Financial Technology (Fintech)' },
+      { id: 2008, optionLabel: 'D', optionText: 'Biotechnology and Environment' }
+    ]
   }
 ];
 
@@ -1768,6 +1801,11 @@ export const fallbackAnswerKeys: SessionAnswerKeysData = {
       questionId: 108,
       correctShortAnswer: '12500',
       explanation: 'Tốc độ tăng trưởng cực đại: $\\left(\\frac{dN}{dt}\\right)_{\\max} = r \\cdot \\frac{K}{2} \\cdot \\left(1 - \\frac{1}{2}\\right) = \\frac{r K}{4} = \\frac{0.5 \\times 100000}{4} = 12500$ (tế bào/giờ).'
+    },
+    {
+      questionId: 109,
+      correctOptionIds: [2007],
+      explanation: 'Trong đoạn hội thoại, thí sinh bày tỏ rõ mong muốn: "I am specifically keen on Financial Technology because it blends computer science with banking." Do đó phương án C (Financial Technology) là đáp án chính xác.'
     }
   ]
 };
@@ -1939,6 +1977,11 @@ export async function fetchSessionQuestion(sessionId: number, questionId: number
           questionType: q.questionType || 'SINGLE_CHOICE',
           difficulty: q.difficulty,
           order: q.order,
+          partNumber: q.partNumber,
+          audioUrl: q.audioUrl || q.questionGroup?.audioUrl || null,
+          audioDurationSec: q.audioDurationSec || q.questionGroup?.audioDurationSec || null,
+          maxPlays: q.maxPlays || q.questionGroup?.maxPlays || 2,
+          trueFalseItems: q.trueFalseItems,
           options: q.options?.map((opt: any) => ({
             id: opt.id,
             optionLabel: opt.optionLabel || '',
@@ -2121,4 +2164,188 @@ export async function createStudentTicket(payload: StudentTicketPayload): Promis
     createdAt: new Date().toISOString()
   };
 }
+
+// -------------------------------------------------------------
+// P2: Dự đoán Trúng tuyển Đại học (Issue #15)
+// -------------------------------------------------------------
+
+export const fallbackAdmissionBenchmarks: Array<{
+  id: number;
+  universityCode: string;
+  universityName: string;
+  majorCode: string;
+  majorName: string;
+  subjectCombo: string;
+  year: number;
+  cutoffScore: number;
+  notes?: string;
+}> = [
+  // HUB - Trường ĐH Ngân hàng TP.HCM
+  { id: 1, universityCode: 'HUB', universityName: 'Trường Đại học Ngân hàng TP.HCM', majorCode: '7340201', majorName: 'Tài chính - Ngân hàng', subjectCombo: 'A00', year: 2025, cutoffScore: 305.0, notes: 'Thang điểm V-SAT 3 môn (450 điểm)' },
+  { id: 2, universityCode: 'HUB', universityName: 'Trường Đại học Ngân hàng TP.HCM', majorCode: '7340201', majorName: 'Tài chính - Ngân hàng', subjectCombo: 'A01', year: 2025, cutoffScore: 305.0, notes: 'Thang điểm V-SAT 3 môn (450 điểm)' },
+  { id: 3, universityCode: 'HUB', universityName: 'Trường Đại học Ngân hàng TP.HCM', majorCode: '7340201', majorName: 'Tài chính - Ngân hàng', subjectCombo: 'D01', year: 2025, cutoffScore: 310.0, notes: 'Thang điểm V-SAT 3 môn (450 điểm)' },
+  { id: 4, universityCode: 'HUB', universityName: 'Trường Đại học Ngân hàng TP.HCM', majorCode: '7340101', majorName: 'Quản trị kinh doanh', subjectCombo: 'A00', year: 2025, cutoffScore: 300.0 },
+  { id: 5, universityCode: 'HUB', universityName: 'Trường Đại học Ngân hàng TP.HCM', majorCode: '7340101', majorName: 'Quản trị kinh doanh', subjectCombo: 'D01', year: 2025, cutoffScore: 305.0 },
+  { id: 6, universityCode: 'HUB', universityName: 'Trường Đại học Ngân hàng TP.HCM', majorCode: '7480201', majorName: 'Công nghệ thông tin', subjectCombo: 'A00', year: 2025, cutoffScore: 315.0 },
+  { id: 7, universityCode: 'HUB', universityName: 'Trường Đại học Ngân hàng TP.HCM', majorCode: '7480201', majorName: 'Công nghệ thông tin', subjectCombo: 'A01', year: 2025, cutoffScore: 315.0 },
+  { id: 8, universityCode: 'HUB', universityName: 'Trường Đại học Ngân hàng TP.HCM', majorCode: '7380101', majorName: 'Luật kinh tế', subjectCombo: 'D01', year: 2025, cutoffScore: 295.0 },
+
+  // UEL - Trường ĐH Kinh tế - Luật (ĐHQG-HCM)
+  { id: 9, universityCode: 'UEL', universityName: 'Trường ĐH Kinh tế - Luật (ĐHQG-HCM)', majorCode: '7340205', majorName: 'Công nghệ tài chính (Fintech)', subjectCombo: 'A00', year: 2025, cutoffScore: 345.0 },
+  { id: 10, universityCode: 'UEL', universityName: 'Trường ĐH Kinh tế - Luật (ĐHQG-HCM)', majorCode: '7340205', majorName: 'Công nghệ tài chính (Fintech)', subjectCombo: 'A01', year: 2025, cutoffScore: 345.0 },
+  { id: 11, universityCode: 'UEL', universityName: 'Trường ĐH Kinh tế - Luật (ĐHQG-HCM)', majorCode: '7310101', majorName: 'Kinh tế quốc tế', subjectCombo: 'D01', year: 2025, cutoffScore: 350.0 },
+  { id: 12, universityCode: 'UEL', universityName: 'Trường ĐH Kinh tế - Luật (ĐHQG-HCM)', majorCode: '7380107', majorName: 'Luật thương mại quốc tế', subjectCombo: 'D01', year: 2025, cutoffScore: 335.0 },
+  { id: 13, universityCode: 'UEL', universityName: 'Trường ĐH Kinh tế - Luật (ĐHQG-HCM)', majorCode: '7480104', majorName: 'Hệ thống thông tin quản lý', subjectCombo: 'A00', year: 2025, cutoffScore: 330.0 },
+
+  // CTU - Trường ĐH Cần Thơ
+  { id: 14, universityCode: 'CTU', universityName: 'Trường Đại học Cần Thơ', majorCode: '7480201', majorName: 'Công nghệ thông tin', subjectCombo: 'A00', year: 2025, cutoffScore: 290.0 },
+  { id: 15, universityCode: 'CTU', universityName: 'Trường Đại học Cần Thơ', majorCode: '7480201', majorName: 'Công nghệ thông tin', subjectCombo: 'A01', year: 2025, cutoffScore: 290.0 },
+  { id: 16, universityCode: 'CTU', universityName: 'Trường Đại học Cần Thơ', majorCode: '7340101', majorName: 'Quản trị kinh doanh', subjectCombo: 'D01', year: 2025, cutoffScore: 275.0 },
+  { id: 17, universityCode: 'CTU', universityName: 'Trường Đại học Cần Thơ', majorCode: '7520114', majorName: 'Kỹ thuật cơ điện tử', subjectCombo: 'A00', year: 2025, cutoffScore: 260.0 },
+  { id: 18, universityCode: 'CTU', universityName: 'Trường Đại học Cần Thơ', majorCode: '7420201', majorName: 'Công nghệ sinh học', subjectCombo: 'B00', year: 2025, cutoffScore: 250.0 },
+
+  // UFM - Trường ĐH Tài chính - Marketing
+  { id: 19, universityCode: 'UFM', universityName: 'Trường Đại học Tài chính - Marketing', majorCode: '7340115', majorName: 'Marketing', subjectCombo: 'A00', year: 2025, cutoffScore: 300.0 },
+  { id: 20, universityCode: 'UFM', universityName: 'Trường Đại học Tài chính - Marketing', majorCode: '7340115', majorName: 'Marketing', subjectCombo: 'D01', year: 2025, cutoffScore: 305.0 },
+  { id: 21, universityCode: 'UFM', universityName: 'Trường Đại học Tài chính - Marketing', majorCode: '7340201', majorName: 'Tài chính - Ngân hàng', subjectCombo: 'A01', year: 2025, cutoffScore: 285.0 },
+  { id: 22, universityCode: 'UFM', universityName: 'Trường Đại học Tài chính - Marketing', majorCode: '7340301', majorName: 'Kế toán', subjectCombo: 'A00', year: 2025, cutoffScore: 280.0 },
+  { id: 23, universityCode: 'UFM', universityName: 'Trường Đại học Tài chính - Marketing', majorCode: '7810103', majorName: 'Quản trị dịch vụ du lịch & lữ hành', subjectCombo: 'C00', year: 2025, cutoffScore: 270.0 },
+
+  // HCMUS - Trường ĐH Khoa học Tự nhiên (ĐHQG-HCM)
+  { id: 24, universityCode: 'HCMUS', universityName: 'Trường ĐH Khoa học Tự nhiên (ĐHQG-HCM)', majorCode: '7480101', majorName: 'Khoa học máy tính (Chương trình tiên tiến)', subjectCombo: 'A00', year: 2025, cutoffScore: 360.0 },
+  { id: 25, universityCode: 'HCMUS', universityName: 'Trường ĐH Khoa học Tự nhiên (ĐHQG-HCM)', majorCode: '7480101', majorName: 'Khoa học máy tính (Chương trình tiên tiến)', subjectCombo: 'A01', year: 2025, cutoffScore: 360.0 },
+  { id: 26, universityCode: 'HCMUS', universityName: 'Trường ĐH Khoa học Tự nhiên (ĐHQG-HCM)', majorCode: '7480201', majorName: 'Công nghệ thông tin', subjectCombo: 'A00', year: 2025, cutoffScore: 350.0 },
+  { id: 27, universityCode: 'HCMUS', universityName: 'Trường ĐH Khoa học Tự nhiên (ĐHQG-HCM)', majorCode: '7460112', majorName: 'Khoa học dữ liệu', subjectCombo: 'A01', year: 2025, cutoffScore: 340.0 },
+  { id: 28, universityCode: 'HCMUS', universityName: 'Trường ĐH Khoa học Tự nhiên (ĐHQG-HCM)', majorCode: '7440112', majorName: 'Hóa học', subjectCombo: 'B00', year: 2025, cutoffScore: 295.0 },
+
+  // SGU - Trường Đại học Sài Gòn
+  { id: 29, universityCode: 'SGU', universityName: 'Trường Đại học Sài Gòn', majorCode: '7480201', majorName: 'Công nghệ thông tin', subjectCombo: 'A00', year: 2025, cutoffScore: 310.0 },
+  { id: 30, universityCode: 'SGU', universityName: 'Trường Đại học Sài Gòn', majorCode: '7480201', majorName: 'Công nghệ thông tin', subjectCombo: 'A01', year: 2025, cutoffScore: 310.0 },
+  { id: 31, universityCode: 'SGU', universityName: 'Trường Đại học Sài Gòn', majorCode: '7140217', majorName: 'Sư phạm Ngữ văn', subjectCombo: 'C00', year: 2025, cutoffScore: 325.0 },
+  { id: 32, universityCode: 'SGU', universityName: 'Trường Đại học Sài Gòn', majorCode: '7340101', majorName: 'Quản trị kinh doanh', subjectCombo: 'D01', year: 2025, cutoffScore: 295.0 },
+  { id: 33, universityCode: 'SGU', universityName: 'Trường Đại học Sài Gòn', majorCode: '7220201', majorName: 'Ngôn ngữ Anh', subjectCombo: 'D01', year: 2025, cutoffScore: 305.0 }
+];
+
+export async function predictUniversityAdmission(
+  payload: AdmissionPredictionRequest
+): Promise<AdmissionPredictionResponse> {
+  try {
+    const res = await authenticatedFetch(`${BASE_URL}/admissions/predict`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json?.data) {
+        return json.data;
+      }
+    }
+  } catch (err) {
+    console.warn('[predictUniversityAdmission] API failed, computing offline prediction:', err);
+  }
+
+  // Client-side exact formula computation
+  const targetCombo = payload.subjectCombo && payload.subjectCombo !== 'ALL'
+    ? payload.subjectCombo
+    : undefined;
+
+  let candidates = fallbackAdmissionBenchmarks;
+  if (targetCombo) {
+    candidates = candidates.filter(b => b.subjectCombo === targetCombo);
+  }
+  if (payload.universityCode && payload.universityCode !== 'ALL') {
+    candidates = candidates.filter(b => b.universityCode === payload.universityCode);
+  }
+
+  const items: AdmissionPredictionItem[] = candidates.map(b => {
+    const delta = Number((payload.totalScore - b.cutoffScore).toFixed(1));
+    let tier: 'SAFE' | 'FIT' | 'RISK';
+    // SAFE: Điểm >= Điểm chuẩn + 15.0
+    // FIT: Điểm chuẩn - 10.0 đến < Điểm chuẩn + 15.0
+    // RISK: Điểm < Điểm chuẩn - 10.0
+    if (delta >= 15.0) {
+      tier = 'SAFE';
+    } else if (delta >= -10.0) {
+      tier = 'FIT';
+    } else {
+      tier = 'RISK';
+    }
+
+    return {
+      id: b.id,
+      universityCode: b.universityCode,
+      universityName: b.universityName,
+      majorCode: b.majorCode,
+      majorName: b.majorName,
+      subjectCombo: b.subjectCombo,
+      year: b.year,
+      cutoffScore: b.cutoffScore,
+      delta,
+      tier,
+      notes: b.notes
+    };
+  });
+
+  const safeCount = items.filter(i => i.tier === 'SAFE').length;
+  const fitCount = items.filter(i => i.tier === 'FIT').length;
+  const riskCount = items.filter(i => i.tier === 'RISK').length;
+
+  return {
+    totalScore: payload.totalScore,
+    subjectCombo: payload.subjectCombo,
+    items,
+    safeCount,
+    fitCount,
+    riskCount
+  };
+}
+
+// -------------------------------------------------------------
+// P4: Giám sát Chống Gian lận / Proctoring (Issue #17)
+// -------------------------------------------------------------
+
+const LOCAL_SESSION_VIOLATIONS_PREFIX = 'vsat_session_violations_';
+
+export async function reportSessionViolation(
+  sessionId: number,
+  payload: SessionViolationPayload
+): Promise<SessionViolationResponse> {
+  try {
+    const res = await authenticatedFetch(`${BASE_URL}/sessions/${sessionId}/violations`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json?.data) {
+        return json.data;
+      }
+    }
+  } catch (err) {
+    console.warn(`[reportSessionViolation(${sessionId})] failed, using local proctor tracker:`, err);
+  }
+
+  // Local fallback tracker
+  let currentViolations = 0;
+  try {
+    const key = `${LOCAL_SESSION_VIOLATIONS_PREFIX}${sessionId}`;
+    const stored = localStorage.getItem(key);
+    currentViolations = stored ? parseInt(stored, 10) : 0;
+    currentViolations += 1;
+    localStorage.setItem(key, String(currentViolations));
+  } catch {
+    currentViolations = Math.max(1, currentViolations + 1);
+  }
+
+  const autoSubmitted = currentViolations >= 3;
+  return {
+    sessionId,
+    violationCount: currentViolations,
+    autoSubmitted,
+    message: autoSubmitted
+      ? `Cảnh báo nghiêm trọng: Đã ghi nhận ${currentViolations}/3 lần vi phạm quy chế thi. Hệ thống tự động thu bài cưỡng chế!`
+      : `Cảnh báo vi phạm quy chế thi (${currentViolations}/3): ${payload.details || payload.violationType}`
+  };
+}
+
 

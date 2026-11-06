@@ -29,12 +29,14 @@ import com.example.v_sat_compass.data.model.ExamSession;
 import com.example.v_sat_compass.data.model.Question;
 import com.example.v_sat_compass.data.model.session.QuestionOptionContentResponse;
 import com.example.v_sat_compass.data.model.session.SessionQuestionContentResponse;
+import com.example.v_sat_compass.data.model.proctoring.ProctoringViolationType;
 import com.example.v_sat_compass.data.repository.ExamHistoryRepository;
 import com.example.v_sat_compass.data.repository.GamificationRepository;
 import com.example.v_sat_compass.data.repository.OfflineExamRepository;
 import com.example.v_sat_compass.data.repository.OfflineExamSyncRepository;
 import com.example.v_sat_compass.data.repository.SessionContentRepository;
 import com.example.v_sat_compass.databinding.ActivityExamSessionBinding;
+import com.example.v_sat_compass.util.ProctoringMonitor;
 import com.example.v_sat_compass.util.UserRoleHelper;
 import com.google.android.material.card.MaterialCardView;
 import com.google.gson.Gson;
@@ -70,6 +72,7 @@ public class ExamSessionActivity extends AppCompatActivity {
     private ExamApi examApi;
     private SessionContentRepository sessionContentRepository;
     private OfflineExamRepository offlineExamRepository;
+    private ProctoringMonitor proctoringMonitor;
 
     private Long sessionId;
     private long examId;
@@ -125,6 +128,17 @@ public class ExamSessionActivity extends AppCompatActivity {
         examSubject = getIntent().getStringExtra("exam_subject");
         durationMinutes = getIntent().getIntExtra("duration_minutes", 60);
         totalQuestions = getIntent().getIntExtra("total_questions", 0);
+
+        String examMode = getIntent().getStringExtra("exam_mode");
+        boolean isScheduledMock = "SCHEDULED_MOCK".equalsIgnoreCase(examMode)
+                || (examTitle != null && examTitle.toUpperCase().contains("SCHEDULED_MOCK"));
+        proctoringMonitor = new ProctoringMonitor(isScheduledMock);
+        if (isScheduledMock && getWindow() != null) {
+            getWindow().setFlags(
+                    android.view.WindowManager.LayoutParams.FLAG_SECURE,
+                    android.view.WindowManager.LayoutParams.FLAG_SECURE
+            );
+        }
 
         String displayTitle = examTitle != null ? examTitle : "Đề thi";
         binding.tvExamTitle.setText(displayTitle);
@@ -1668,6 +1682,72 @@ public class ExamSessionActivity extends AppCompatActivity {
     // super.onBackPressed() intentionally not called — back press shows exam exit dialog
     public void onBackPressed() {
         confirmExit();
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (proctoringMonitor != null && proctoringMonitor.isProctoringActive() && !isFinishing()) {
+            if (!hasFocus) {
+                handleProctoringViolation(
+                        ProctoringViolationType.FOCUS_LOST,
+                        "Mất tiêu điểm cửa sổ thi"
+                );
+            }
+        }
+    }
+
+    @Override
+    public void onMultiWindowModeChanged(boolean isInMultiWindowMode, android.content.res.Configuration newConfig) {
+        super.onMultiWindowModeChanged(isInMultiWindowMode, newConfig);
+        if (isInMultiWindowMode && proctoringMonitor != null && proctoringMonitor.isProctoringActive() && !isFinishing()) {
+            handleProctoringViolation(
+                    ProctoringViolationType.MULTI_WINDOW_DETECTED,
+                    "Phát hiện mở đa cửa sổ chia đôi màn hình"
+            );
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (proctoringMonitor != null && proctoringMonitor.isProctoringActive() && !isFinishing()) {
+            handleProctoringViolation(
+                    ProctoringViolationType.APP_BACKGROUNDED,
+                    "Rời khỏi ứng dụng khi đang làm bài thi"
+            );
+        }
+    }
+
+    private void handleProctoringViolation(ProctoringViolationType type, String reason) {
+        if (proctoringMonitor == null) return;
+        int count = proctoringMonitor.recordViolation(type, reason);
+        if (hasRemoteSession && sessionId != null) {
+            Map<String, Object> body = new HashMap<>();
+            body.put("violationType", type.name());
+            body.put("reason", reason);
+            body.put("violationCount", count);
+            examApi.reportViolation(sessionId, body).enqueue(new Callback<ApiResponse<Map<String, Object>>>() {
+                @Override public void onResponse(Call<ApiResponse<Map<String, Object>>> call, Response<ApiResponse<Map<String, Object>>> response) {}
+                @Override public void onFailure(Call<ApiResponse<Map<String, Object>>> call, Throwable t) {}
+            });
+        }
+        if (proctoringMonitor.shouldAutoSubmit()) {
+            Toast.makeText(this, "Vi phạm giám sát quá số lần quy định (" + count + "/"
+                    + ProctoringMonitor.MAX_VIOLATIONS + "). Hệ thống tự động thu bài!", Toast.LENGTH_LONG).show();
+            submitExam();
+        } else {
+            Toast.makeText(this, "Cảnh báo vi phạm (" + count + "/"
+                    + ProctoringMonitor.MAX_VIOLATIONS + "): " + reason, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public ProctoringMonitor getProctoringMonitor() {
+        return proctoringMonitor;
+    }
+
+    public boolean isProctoringActive() {
+        return proctoringMonitor != null && proctoringMonitor.isProctoringActive();
     }
 
     @Override

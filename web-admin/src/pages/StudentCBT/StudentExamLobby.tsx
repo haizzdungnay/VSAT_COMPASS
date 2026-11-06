@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import type { PublicExamSummary, PublicExamWindow, StudentSessionInfo, StudentExamMode } from '../../types/student-cbt';
 import { fetchPublicExams, fetchPublicExamWindows, startStudentSession } from '../../services/api';
+import { AdmissionPredictorWidget } from './AdmissionPredictorWidget';
 
 interface StudentExamLobbyProps {
   onStartExam: (sessionInfo: StudentSessionInfo, examTitle: string, durationMinutes: number) => void;
@@ -23,6 +24,7 @@ export const StudentExamLobby: React.FC<StudentExamLobbyProps> = ({ onStartExam 
   const [selectedSubject, setSelectedSubject] = useState<string>('Tất cả');
   const [loading, setLoading] = useState<boolean>(true);
   const [startingId, setStartingId] = useState<number | null>(null);
+  const [isProctoringEnabled, setIsProctoringEnabled] = useState<boolean>(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -53,9 +55,10 @@ export const StudentExamLobby: React.FC<StudentExamLobbyProps> = ({ onStartExam 
   const handleStartExam = async (exam: PublicExamSummary, mode: StudentExamMode = 'MOCK_EXAM', examWindowId?: number) => {
     try {
       setStartingId(exam.id);
+      const effectiveMode: StudentExamMode = (mode === 'MOCK_EXAM' && isProctoringEnabled) ? 'SCHEDULED_MOCK' : mode;
       const session = await startStudentSession({
         examId: exam.id,
-        mode,
+        mode: effectiveMode,
         totalQuestions: exam.questionCount,
         examWindowId
       });
@@ -130,6 +133,51 @@ export const StudentExamLobby: React.FC<StudentExamLobbyProps> = ({ onStartExam 
             Chuẩn hóa 6-9 câu • Tối đa 3.0-4.5 điểm thô
           </div>
         </div>
+      </div>
+
+      {/* P4: Proctoring Mode Setting Bar */}
+      <div className={`p-4 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+        isProctoringEnabled
+          ? 'bg-rose-50/80 border-rose-300 text-rose-950 shadow-xs'
+          : 'bg-surface-container-lowest border-outline-variant/30 text-on-surface'
+      }`}>
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+            isProctoringEnabled ? 'bg-rose-600 text-white' : 'bg-surface-container-high text-outline'
+          }`}>
+            <span className="material-symbols-outlined text-[22px]">
+              {isProctoringEnabled ? 'security' : 'shield'}
+            </span>
+          </div>
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-sm">Chế độ Giám sát Thi Chống Gian lận (Proctoring Mode)</span>
+              {isProctoringEnabled && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-200 text-rose-800">
+                  ĐANG BẬT
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-on-surface-variant">
+              Bắt buộc toàn màn hình, ghi nhận vi phạm khi chuyển tab hoặc mất tiêu điểm, tự động nộp bài khi vi phạm 3 lần (quy chuẩn SCHEDULED_MOCK).
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setIsProctoringEnabled(prev => !prev)}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 flex-shrink-0 ${
+            isProctoringEnabled
+              ? 'bg-rose-600 text-white hover:bg-rose-700 shadow-sm'
+              : 'bg-surface-container-high text-on-surface hover:bg-surface-container-highest border border-outline-variant/40'
+          }`}
+        >
+          <span className="material-symbols-outlined text-[18px]">
+            {isProctoringEnabled ? 'check_circle' : 'toggle_off'}
+          </span>
+          <span>{isProctoringEnabled ? 'Giám sát: BẬT' : 'Bật chế độ Giám sát'}</span>
+        </button>
       </div>
 
       {/* Ca thi sắp & đang diễn ra */}
@@ -308,6 +356,13 @@ export const StudentExamLobby: React.FC<StudentExamLobbyProps> = ({ onStartExam 
           </div>
         )}
       </div>
+
+      {/* P2: Admission Predictor Section */}
+      <AdmissionPredictorWidget
+        initialScore={320}
+        title="Dự đoán Trúng tuyển Đại học theo Điểm V-SAT (Admission Engine)"
+        subtitle="Học sinh có thể thử nhập điểm V-SAT ước tính để kiểm tra cơ hội trúng tuyển vào các trường ĐH Ngân hàng (HUB), Kinh tế - Luật (UEL), Cần Thơ (CTU), Tài chính - Marketing (UFM), KHTN (HCMUS), Sài Gòn (SGU)."
+      />
     </div>
   );
 };
