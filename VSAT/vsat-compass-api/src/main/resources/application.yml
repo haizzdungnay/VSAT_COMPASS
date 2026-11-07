@@ -70,6 +70,9 @@ management:
   endpoint:
     health:
       show-details: never
+  health:
+    redis:
+      enabled: ${REDIS_HEALTH_ENABLED:false}
 
 # Logging (default)
 logging:
