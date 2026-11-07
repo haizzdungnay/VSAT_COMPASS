@@ -141,7 +141,8 @@ async function ensureBackendRunning() {
     '-DLLM_BASE_URL=http://127.0.0.1:18081',
     '-DLLM_API_KEY=cleanroom-dummy-key',
     '-DLLM_MODEL=qwen2.5-math-7b',
-    '-Dapp.llm.base-url=http://127.0.0.1:18081'
+    '-Dapp.llm.base-url=http://127.0.0.1:18081',
+    '-Dmanagement.health.redis.enabled=false'
   ];
 
   backendProcess = spawn(gradlewCmd, gradleArgs, {
@@ -270,6 +271,15 @@ async function main() {
 
     for (const suite of suites) {
       await runSuiteFile(suite);
+    }
+
+    // Step 6b: Phase 1 & 2 Features E2E Check
+    if (suiteArgIdx === -1 || suites.includes('suites/phase2-features-check.mjs')) {
+      console.log('\n[RUN-ALL] Step 6b: Executing Phase 1 & 2 Features E2E check...');
+      const phase2Result = await runSuiteFile('suites/phase2-features-check.mjs');
+      if (phase2Result && phase2Result.exitCode && phase2Result.exitCode !== 0) {
+        throw new Error(`Phase 2 features check failed with exit code ${phase2Result.exitCode}`);
+      }
     }
 
     // 7. Verdict Gate Evaluation

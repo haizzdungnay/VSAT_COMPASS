@@ -38,9 +38,9 @@ Phase 3: Linux Home Server Cutover (Chặng 0 -> 7 theo docs/LINUX_HOME_SERVER_R
 
 ---
 
-## SECTION 1: PHASE 1 — XỬ LÝ NỢ KỸ THUẬT (TECHNICAL DEBT TD-1 .. TD-4)
+## SECTION 1: PHASE 1 — XỬ LÝ NỢ KỸ THUẬT (TECHNICAL DEBT TD-1 .. TD-4) [x] ĐÃ HOÀN THÀNH (commit 5567aae)
 
-### TD-1: Dọn dẹp Git Working Tree, Đồng bộ Tag & Xóa Branch Backup
+### TD-1: Dọn dẹp Git Working Tree, Đồng bộ Tag & Xóa Branch Backup [x]
 1. **Phân tách và commit working tree đang dở dang**:
    - *Cảnh báo*: Không dùng lệnh `git add -u` gộp chung.
    - Nhóm 1 (Tài liệu báo cáo cũ): 3 file `.docx` bị xóa unstaged (`Bao_cao_cuoi_ky_VSAT_Compass_Final*.docx`). Commit: `chore(docs): remove obsolete final docx reports`.
@@ -52,7 +52,7 @@ Phase 3: Linux Home Server Cutover (Chặng 0 -> 7 theo docs/LINUX_HOME_SERVER_R
    - Branch `backup-pre-batch-2b-20260430` (tạo ngày 2026-04-30, hạn giữ đến 2026-06-01) đã hết thời hạn lưu trữ.
    - Thực hiện xóa: `git branch -D backup-pre-batch-2b-20260430` và `git push origin --delete backup-pre-batch-2b-20260430`.
 
-### TD-2: Tích hợp Flyway Migration vào Backend API
+### TD-2: Tích hợp Flyway Migration vào Backend API [x]
 1. **Đường dẫn dữ liệu SQL thực tế**:
    - 11 file migration nằm tại: `VSAT/vsat-compass-api/docs/sql/0001_*.sql` đến `0011_*.sql` (thư mục `docs/sql/` ở root không tồn tại).
 2. **Khai báo dependencies trong `VSAT/vsat-compass-api/build.gradle`**:
@@ -74,7 +74,7 @@ Phase 3: Linux Home Server Cutover (Chặng 0 -> 7 theo docs/LINUX_HOME_SERVER_R
      ```
    - Chạy test kiểm chứng: `./gradlew test` đảm bảo DB in-memory H2 hoặc PostgreSQL test container chạy trơn tru qua toàn bộ 11 scripts.
 
-### TD-3: Hoàn thiện 2 Module còn thiếu trên Web Admin (`web-admin/`)
+### TD-3: Hoàn thiện 2 Module còn thiếu trên Web Admin (`web-admin/`) [x]
 1. **Module 1: User Management (`web-admin/src/pages/Users/index.tsx`)**:
    - Backend endpoint đã có: `AdminUserController.java:28-75` (`GET /api/v1/admin/users`, `PATCH /api/v1/admin/users/{id}/role`, `PATCH /api/v1/admin/users/{id}/lock`, `PATCH /api/v1/admin/users/{id}/unlock`). Android đã chạy ổn định tại `AdminUserManagementFragment.java:25`.
    - Bổ sung API client trong `web-admin/src/services/api.ts`: `fetchAdminUsers`, `updateUserRole`, `lockUserAccount`, `unlockUserAccount`.
@@ -86,7 +86,7 @@ Phase 3: Linux Home Server Cutover (Chặng 0 -> 7 theo docs/LINUX_HOME_SERVER_R
    - Xây dựng UI: Danh sách ticket báo lỗi câu hỏi từ học viên; bộ lọc trạng thái (`OPEN`, `IN_PROGRESS`, `RESOLVED`, `REJECTED`); render nội dung câu hỏi bị báo lỗi qua component `<MathView />` (KaTeX); khung nhập phản hồi xử lý của admin.
    - Thêm tab `tickets` vào `Sidebar.tsx` và `App.tsx`.
 
-### TD-4: Kiểm soát Đồng thời (@Version Optimistic Locking)
+### TD-4: Kiểm soát Đồng thời (@Version Optimistic Locking) [x]
 1. **Thiết kế kỹ thuật**: Áp dụng Option C trong `docs/design/DESIGN_EXAM_VERSION.md:47-50` (dùng trường `lock_version` độc lập, tránh xung đột với số phiên bản nghiệp vụ hiển thị cho người dùng).
 2. **Migration cơ sở dữ liệu (`V12__add_lock_version.sql`)**:
    ```sql
@@ -101,9 +101,9 @@ Phase 3: Linux Home Server Cutover (Chặng 0 -> 7 theo docs/LINUX_HOME_SERVER_R
 
 ---
 
-## SECTION 2: PHASE 2 — CHI TIẾT 5 ĐỀ XUẤT TÍNH NĂNG MỚI (PROPOSALS P1 .. P5)
+## SECTION 2: PHASE 2 — CHI TIẾT 5 ĐỀ XUẤT TÍNH NĂNG MỚI (PROPOSALS P1 .. P5) [x] ĐÃ HOÀN THÀNH
 
-### Đề xuất 1 (P1): Phân hệ Thi Trực Tuyến trên Máy tính (Web Student CBT)
+### Đề xuất 1 (P1): Phân hệ Thi Trực Tuyến trên Máy tính (Web Student CBT) [x] (commit d0e65e5)
 1. **Kiến trúc Giao diện**: Mở rộng trong `web-admin/` (hoặc switch layout theo vai trò `STUDENT` sau khi xác thực JWT tại `App.tsx`).
 2. **Ba màn hình bắt buộc**:
    - **`StudentExamLobby`**: Tải danh sách đề thi tự do (`GET /api/v1/exams`) và ca thi tập trung (`GET /api/v1/exam-windows`), kiểm tra thời gian mở ca, nút "Bắt đầu làm bài".
@@ -119,7 +119,7 @@ Phase 3: Linux Home Server Cutover (Chặng 0 -> 7 theo docs/LINUX_HOME_SERVER_R
      - Xem lại chi tiết từng câu kèm lời giải mẫu; nút "Nhờ AI giải thích" gọi `POST /api/v1/ai/explain`.
      - Nút "Báo lỗi câu hỏi" mở modal gửi ticket trực tiếp qua `POST /api/v1/tickets`.
 
-### Đề xuất 2 (P2): Dự đoán Trúng tuyển Đại học (Admission Matching Engine)
+### Đề xuất 2 (P2): Dự đoán Trúng tuyển Đại học (Admission Matching Engine) [x] (commit a966b38)
 1. **Migration cơ sở dữ liệu (`V13__create_admission_benchmarks.sql`)**:
    ```sql
    CREATE TABLE universities (
@@ -151,7 +151,7 @@ Phase 3: Linux Home Server Cutover (Chặng 0 -> 7 theo docs/LINUX_HOME_SERVER_R
    - Android (`AdmissionPredictorActivity.java`): Màn hình chọn tổ hợp xét tuyển, lọc theo trường/khu vực, danh sách ngành chia 3 tab màu trực quan (Xanh/Vàng/Đỏ).
    - Web CBT: Tích hợp widget dự đoán ngay trên trang Dashboard của học viên.
 
-### Đề xuất 3 (P3): Hỗ trợ Âm thanh / Listening cho Môn Tiếng Anh
+### Đề xuất 3 (P3): Hỗ trợ Âm thanh / Listening cho Môn Tiếng Anh [x] (commit fe0e789)
 1. **Migration cơ sở dữ liệu (`V14__add_audio_to_question_groups.sql`)**:
    ```sql
    ALTER TABLE question_groups
@@ -169,7 +169,7 @@ Phase 3: Linux Home Server Cutover (Chặng 0 -> 7 theo docs/LINUX_HOME_SERVER_R
    - Tích hợp AndroidX `Media3 ExoPlayer` trong `ExamSessionActivity.java` và `ExamReviewActivity.java`.
    - Mở rộng `OfflineExamRepository.java:312-315`: Tải file audio về máy, mã hóa và lưu trữ offline cùng chuẩn **AES-128-GCM** với header `VSAT\x02`.
 
-### Đề xuất 4 (P4): Chế độ Giám sát Thi Chống Gian lận (Anti-Cheating / Proctoring Mode)
+### Đề xuất 4 (P4): Chế độ Giám sát Thi Chống Gian lận (Anti-Cheating / Proctoring Mode) [x] (commit 310f00f)
 1. **Khái niệm nghiệp vụ**: Kích hoạt tự động khi ca thi có `mode = 'SCHEDULED_MOCK'` (đã khai báo tại `ExamWindow.java:39`).
 2. **Migration cơ sở dữ liệu (`V15__add_session_proctoring.sql`)**:
    ```sql
@@ -187,7 +187,7 @@ Phase 3: Linux Home Server Cutover (Chặng 0 -> 7 theo docs/LINUX_HOME_SERVER_R
 5. **Web CBT**:
    - Bắt buộc vào chế độ toàn màn hình (`requestFullscreen()`); lắng nghe sự kiện `visibilitychange` và `window.onblur` để ghi nhận vi phạm rời khỏi bài thi.
 
-### Đề xuất 5 (P5): Tối ưu Bộ nhớ Đệm (Redis Cache) & Connection Pooling
+### Đề xuất 5 (P5): Tối ưu Bộ nhớ Đệm (Redis Cache) & Connection Pooling [x] (commit e317eee)
 1. **Tối ưu Connection Pooling (HikariCP)**:
    - File cấu hình `VSAT/vsat-compass-api/src/main/resources/application.yml:78-79,101-106` hiện đang cố định `maximum-pool-size: 5` (dành cho Neon Cloud).
    - Tham số hóa biến môi trường: `maximum-pool-size: ${DB_POOL_MAX_SIZE:5}`. Khi triển khai trên Linux Home Server (PostgreSQL 17 cục bộ), nâng giá trị lên `25`.
@@ -216,9 +216,17 @@ Phase 3: Linux Home Server Cutover (Chặng 0 -> 7 theo docs/LINUX_HOME_SERVER_R
 
 ---
 
-## SECTION 3: PHASE 3 — TRIỂN KHAI LINUX HOME SERVER
+## SECTION 3: PHASE 3 — TRIỂN KHAI LINUX HOME SERVER (GÓI PRE-LINUX INFRASTRUCTURE SẴN SÀNG) [x]
 
-*Thực hiện nghiêm ngặt theo 8 chặng chi tiết đã được biên soạn tại:*
+*Đã hoàn thiện đóng gói toàn bộ artifacts Pre-Linux Infrastructure:*
+- `docker-compose.prod.yml`: PostgreSQL 17 + Redis 7 LRU + Spring Boot API + Web Admin SPA
+- `.env.prod.example`: Cấu hình an toàn cho môi trường Linux Home Server
+- `ops/scripts/run-migrations.sh`: Kiểm tra PostgreSQL connection & xác nhận bảng `flyway_schema_history`
+- `ops/scripts/backup-db.sh`: Sao lưu tự động nén gzip, lưu 14 ngày, sync Rclone & bot Telegram
+- `ops/scripts/health-monitor.sh`: Giám sát Actuator Health, CPU, RAM, Disk, tự động restart container
+- `ops/scripts/smoke-test.sh`: Kiểm thử khói toàn diện 5/5 endpoints sau deploy
+
+*Lộ trình triển khai chi tiết 8 chặng tại:*
 [`docs/LINUX_HOME_SERVER_ROADMAP.md`](./LINUX_HOME_SERVER_ROADMAP.md)
 
 1. **Chặng 0 - 1**: Cài Ubuntu Server 24.04 LTS, cấu hình BIOS Auto Power On, mask `sleep.target`, mạng tĩnh `192.168.1.240`, SSH Port `2222`, kích hoạt UFW.
