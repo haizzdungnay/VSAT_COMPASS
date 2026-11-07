@@ -30,5 +30,6 @@ public class AdminExamSummaryResponse {
     private BigDecimal price;
     private ExamStatus status;
     private Integer version;
+    private Integer lockVersion;
     private OffsetDateTime updatedAt;
 }

@@ -26,6 +26,7 @@ export interface ExamItem {
   tags?: string;
   totalAttempts?: number;
   avgScore?: number;
+  lockVersion?: number;
   updatedAt?: string;
 }
 
@@ -74,6 +75,8 @@ export interface QuestionGroupItem {
   passageText?: string;
   passageHtml?: string;
   imageUrl?: string;
+  audioUrl?: string;
+  maxPlays?: number;
 }
 
 export interface FullQuestionItem {
@@ -92,6 +95,7 @@ export interface FullQuestionItem {
   explanation?: string;
   status: QuestionStatus;
   rawPoints?: number;
+  lockVersion?: number;
   updatedAt?: string;
   trueFalseItems?: Array<{ key: string; text: string; isCorrect: boolean }>;
   options?: Array<{ label: string; text: string; isCorrect: boolean }>;

@@ -18,6 +18,13 @@ export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, onClose, onS
   const [explanation, setExplanation] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Nhóm ngữ liệu / bài nghe Audio (Question Group)
+  const [hasGroup, setHasGroup] = useState(false);
+  const [groupTitle, setGroupTitle] = useState('');
+  const [passageText, setPassageText] = useState('');
+  const [audioUrl, setAudioUrl] = useState('');
+  const [maxPlays, setMaxPlays] = useState<number>(2);
+
   // Dạng 1: Đúng/Sai (4 ý a, b, c, d)
   const [tfItems, setTfItems] = useState([
     { key: 'a', text: '', isCorrect: true },
@@ -64,6 +71,14 @@ export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, onClose, onS
         1: 'Toán học', 2: 'Tiếng Anh', 3: 'Vật lí', 4: 'Hóa học', 5: 'Sinh học', 6: 'Lịch sử', 7: 'Địa lí'
       };
 
+      const questionGroup = hasGroup ? {
+        id: Date.now() % 100000,
+        title: groupTitle || undefined,
+        passageText: passageText || undefined,
+        audioUrl: audioUrl.trim() || undefined,
+        maxPlays: maxPlays > 0 ? maxPlays : 2
+      } : undefined;
+
       const newQ: Partial<FullQuestionItem> = {
         subjectId,
         subjectName: subjectNameMap[subjectId] || 'Toán học',
@@ -74,6 +89,7 @@ export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, onClose, onS
         explanation,
         status: 'APPROVED',
         rawPoints: 6.0,
+        questionGroup,
         trueFalseItems: questionType === 'TRUE_FALSE' ? tfItems : undefined,
         options: questionType === 'SINGLE_CHOICE' ? mcqOptions : undefined,
         matchingPairs: questionType === 'MATCHING' ? matchingPairs : undefined,
@@ -167,6 +183,77 @@ export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, onClose, onS
                 <option value="VERY_HARD">Rất khó (VERY_HARD)</option>
               </select>
             </div>
+          </div>
+
+          {/* Question Group / Stimulus / Audio Optional Section */}
+          <div className="p-4 rounded-xl bg-surface-container-low border border-outline-variant/30 space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 cursor-pointer font-label-md text-on-surface font-semibold">
+                <input
+                  type="checkbox"
+                  checked={hasGroup}
+                  onChange={(e) => setHasGroup(e.target.checked)}
+                  className="rounded border-outline-variant/40 text-primary focus:ring-primary h-4 w-4"
+                />
+                <span>Câu hỏi có ngữ liệu nhóm / bài đọc / file nghe Tiếng Anh (Question Group)</span>
+              </label>
+              {hasGroup && (
+                <span className="text-[11px] text-primary font-medium">Hỗ trợ Audio Listening V-SAT</span>
+              )}
+            </div>
+
+            {hasGroup && (
+              <div className="space-y-3 pt-2 border-t border-outline-variant/20">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="font-label-sm text-outline">Tiêu đề ngữ liệu chung</label>
+                    <input
+                      type="text"
+                      value={groupTitle}
+                      onChange={(e) => setGroupTitle(e.target.value)}
+                      placeholder="VD: Part 1 - Short Conversations"
+                      className="w-full h-8 px-2 text-body-sm bg-surface-container-lowest rounded border border-outline-variant/40"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-label-sm text-outline">URL file nghe Tiếng Anh (Audio URL)</label>
+                    <input
+                      type="url"
+                      value={audioUrl}
+                      onChange={(e) => setAudioUrl(e.target.value)}
+                      placeholder="https://example.com/audio/listening-part1.mp3"
+                      className="w-full h-8 px-2 text-body-sm bg-surface-container-lowest rounded border border-outline-variant/40 font-mono text-[12px]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="font-label-sm text-outline">Số lượt nghe tối đa (maxPlays, mặc định: 2)</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={10}
+                      value={maxPlays}
+                      onChange={(e) => setMaxPlays(Math.max(1, parseInt(e.target.value) || 2))}
+                      className="w-full h-8 px-2 text-body-sm bg-surface-container-lowest rounded border border-outline-variant/40 font-mono"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-label-sm text-outline">Đoạn văn đọc hiểu chung (Passage Text, tùy chọn)</label>
+                    <textarea
+                      rows={2}
+                      value={passageText}
+                      onChange={(e) => setPassageText(e.target.value)}
+                      placeholder="Nội dung bài đọc chung..."
+                      className="w-full p-2 text-body-sm bg-surface-container-lowest rounded border border-outline-variant/40"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Question Text with Live KaTeX Preview */}

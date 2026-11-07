@@ -66,6 +66,7 @@ public class QuestionServiceImpl implements QuestionService {
             if (!req.getSubjectId().equals(group.getSubjectId())) {
                 throw AppException.badRequest("Question group subject must match question subject");
             }
+            updateGroupAudioFields(group, req.resolveAudioUrl(), req.resolveAudioDurationSec(), req.resolveMaxPlays());
         }
         validateOptionsForType(req.getQuestionType(),
                 req.getOptions().stream().map(o -> o.getIsCorrect()).toList(),
@@ -126,6 +127,10 @@ public class QuestionServiceImpl implements QuestionService {
 
         enforceWriteAccess(currentUserId, currentUserRole, q);
 
+        if (req.getLockVersion() != null && !req.getLockVersion().equals(q.getLockVersion())) {
+            throw new org.springframework.orm.ObjectOptimisticLockingFailureException(Question.class, q.getId());
+        }
+
         if (!canEdit(q.getStatus())) {
             throw new AppException(HttpStatus.CONFLICT, "INVALID_STATE",
                     "Cannot edit question in status " + q.getStatus()
@@ -143,14 +148,18 @@ public class QuestionServiceImpl implements QuestionService {
             q.setSubtopicId(newSubtopicId);
         }
 
-        if (req.getQuestionGroupId() != null) {
-            Long effectiveSubjectId = req.getSubjectId() != null ? req.getSubjectId() : q.getSubjectId();
-            QuestionGroup group = questionGroupRepository.findById(req.getQuestionGroupId())
-                    .orElseThrow(() -> AppException.notFound("QuestionGroup", req.getQuestionGroupId()));
-            if (!effectiveSubjectId.equals(group.getSubjectId())) {
-                throw AppException.badRequest("Question group subject must match question subject");
+        Long effectiveGroupId = req.getQuestionGroupId() != null ? req.getQuestionGroupId() : q.getQuestionGroupId();
+        if (effectiveGroupId != null) {
+            QuestionGroup group = questionGroupRepository.findById(effectiveGroupId)
+                    .orElseThrow(() -> AppException.notFound("QuestionGroup", effectiveGroupId));
+            if (req.getQuestionGroupId() != null) {
+                Long effectiveSubjectId = req.getSubjectId() != null ? req.getSubjectId() : q.getSubjectId();
+                if (!effectiveSubjectId.equals(group.getSubjectId())) {
+                    throw AppException.badRequest("Question group subject must match question subject");
+                }
+                q.setQuestionGroupId(req.getQuestionGroupId());
             }
-            q.setQuestionGroupId(req.getQuestionGroupId());
+            updateGroupAudioFields(group, req.resolveAudioUrl(), req.resolveAudioDurationSec(), req.resolveMaxPlays());
         }
         if (req.getDifficulty() != null) q.setDifficulty(req.getDifficulty());
         boolean questionTypeChanged = req.getQuestionType() != null;
@@ -433,6 +442,7 @@ public class QuestionServiceImpl implements QuestionService {
                 .tags(q.getTags())
                 .status(q.getStatus())
                 .version(q.getVersion())
+                .lockVersion(q.getLockVersion())
                 .createdBy(q.getCreatedBy())
                 .reviewedBy(q.getReviewedBy())
                 .createdAt(q.getCreatedAt())
@@ -507,5 +517,24 @@ public class QuestionServiceImpl implements QuestionService {
                 .versionReviewed(r.getVersionReviewed())
                 .createdAt(r.getCreatedAt())
                 .build();
+    }
+
+    private void updateGroupAudioFields(QuestionGroup group, String audioUrl, Integer audioDurationSec, Integer maxPlays) {
+        boolean updated = false;
+        if (audioUrl != null) {
+            group.setAudioUrl(audioUrl);
+            updated = true;
+        }
+        if (audioDurationSec != null) {
+            group.setAudioDurationSec(audioDurationSec);
+            updated = true;
+        }
+        if (maxPlays != null) {
+            group.setMaxPlays(maxPlays);
+            updated = true;
+        }
+        if (updated) {
+            questionGroupRepository.save(group);
+        }
     }
 }

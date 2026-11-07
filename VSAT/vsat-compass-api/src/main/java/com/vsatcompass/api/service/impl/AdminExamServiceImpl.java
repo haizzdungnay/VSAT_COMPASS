@@ -132,6 +132,10 @@ public class AdminExamServiceImpl implements AdminExamService {
         Exam exam = examRepository.findById(id)
                 .orElseThrow(() -> AppException.notFound("Exam", id));
 
+        if (req.getLockVersion() != null && !req.getLockVersion().equals(exam.getLockVersion())) {
+            throw new org.springframework.orm.ObjectOptimisticLockingFailureException(Exam.class, exam.getId());
+        }
+
         if (!isMetadataEditable(exam.getStatus())) {
             throw new AppException(HttpStatus.CONFLICT, "INVALID_STATE",
                     "Cannot edit exam metadata in status " + exam.getStatus()
@@ -630,6 +634,7 @@ public class AdminExamServiceImpl implements AdminExamService {
                 .price(exam.getPrice())
                 .status(exam.getStatus())
                 .version(exam.getVersion())
+                .lockVersion(exam.getLockVersion())
                 .updatedAt(exam.getUpdatedAt())
                 .build();
     }
@@ -656,6 +661,7 @@ public class AdminExamServiceImpl implements AdminExamService {
                 .tags(exam.getTags())
                 .publishDate(exam.getPublishDate())
                 .version(exam.getVersion())
+                .lockVersion(exam.getLockVersion())
                 .createdBy(exam.getCreatedBy())
                 .reviewedBy(exam.getReviewedBy())
                 .createdAt(exam.getCreatedAt())

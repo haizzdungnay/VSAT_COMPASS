@@ -37,6 +37,7 @@ public class QuestionResponse {
     private String tags;
     private QuestionStatus status;
     private Integer version;
+    private Integer lockVersion;
     private Long createdBy;
     private Long reviewedBy;
     private OffsetDateTime createdAt;

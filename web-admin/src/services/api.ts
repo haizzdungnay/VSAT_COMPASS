@@ -431,7 +431,7 @@ export async function createExam(exam: Partial<ExamDetail>): Promise<ExamDetail>
 
 export async function updateExam(id: number, exam: Partial<ExamDetail>): Promise<void> {
   try {
-    await authenticatedFetch(`${BASE_URL}/admin/exams/${id}`, {
+    const res = await authenticatedFetch(`${BASE_URL}/admin/exams/${id}`, {
       method: 'PUT',
       body: JSON.stringify({
         title: exam.title,
@@ -439,11 +439,19 @@ export async function updateExam(id: number, exam: Partial<ExamDetail>): Promise
         description: exam.description,
         durationMinutes: exam.durationMinutes,
         difficulty: exam.difficulty,
-        tags: exam.tags
+        tags: exam.tags,
+        lockVersion: exam.lockVersion
       })
     });
+    if (res.status === 409) {
+      const errJson = await res.json().catch(() => ({}));
+      const message = errJson?.error?.message || 'Xung đột chỉnh sửa đồng thời (CONCURRENT_MODIFICATION). Đề thi đã được người khác cập nhật trước đó, vui lòng tải lại trang.';
+      alert(message);
+      throw new Error(message);
+    }
   } catch (err) {
     console.warn(`updateExam(${id}) failed:`, err);
+    throw err;
   }
 }
 
@@ -669,7 +677,9 @@ export async function createBankQuestion(q: Partial<FullQuestionItem>): Promise<
     questionType: q.questionType || 'SINGLE_CHOICE',
     questionText: q.questionText || '',
     explanation: q.explanation || '',
-    options
+    options,
+    questionGroup: q.questionGroup,
+    lockVersion: q.lockVersion
   };
 
   try {
@@ -684,8 +694,15 @@ export async function createBankQuestion(q: Partial<FullQuestionItem>): Promise<
         ...q,
         id: created.id,
         questionCode: created.questionCode,
-        status: created.status || 'DRAFT'
+        status: created.status || 'DRAFT',
+        lockVersion: created.lockVersion || 1
       } as FullQuestionItem;
+    }
+    if (res.status === 409) {
+      const errJson = await res.json().catch(() => ({}));
+      const message = errJson?.error?.message || 'Xung đột chỉnh sửa đồng thời (CONCURRENT_MODIFICATION).';
+      alert(message);
+      throw new Error(message);
     }
   } catch (err) {
     console.warn('createBankQuestion failed, saving locally:', err);
@@ -696,8 +713,43 @@ export async function createBankQuestion(q: Partial<FullQuestionItem>): Promise<
     id: Date.now() % 100000,
     questionCode: `Q_${Date.now() % 10000}`,
     status: 'APPROVED',
+    lockVersion: 1,
     updatedAt: '06/10/2026'
   } as FullQuestionItem;
+}
+
+export async function updateBankQuestion(id: number, q: Partial<FullQuestionItem>): Promise<FullQuestionItem | null> {
+  const payload = {
+    subjectId: q.subjectId,
+    topicId: q.topicId,
+    difficulty: q.difficulty,
+    questionType: q.questionType,
+    questionText: q.questionText,
+    explanation: q.explanation,
+    questionGroup: q.questionGroup,
+    lockVersion: q.lockVersion
+  };
+
+  try {
+    const res = await authenticatedFetch(`${BASE_URL}/admin/questions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      const json = await res.json();
+      return json.data as FullQuestionItem;
+    }
+    if (res.status === 409) {
+      const errJson = await res.json().catch(() => ({}));
+      const message = errJson?.error?.message || 'Xung đột chỉnh sửa đồng thời (CONCURRENT_MODIFICATION). Câu hỏi đã được thay đổi bởi phiên làm việc khác, vui lòng tải lại trang.';
+      alert(message);
+      throw new Error(message);
+    }
+  } catch (err) {
+    console.warn(`updateBankQuestion(${id}) failed:`, err);
+    throw err;
+  }
+  return null;
 }
 
 // -------------------------------------------------------------

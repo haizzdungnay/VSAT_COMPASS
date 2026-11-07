@@ -60,10 +60,50 @@ public class CreateQuestionRequest {
     @Size(max = 500)
     private String tags;
 
+    @Size(max = 500)
+    private String audioUrl;
+
+    private Integer audioDurationSec;
+
+    private Integer maxPlays;
+
+    @Valid
+    private QuestionGroupInput questionGroup;
+
     @NotEmpty(message = "options required (>=2 for SINGLE_CHOICE/MULTIPLE_CHOICE/TRUE_FALSE)")
     @Size(min = 2, max = 10, message = "options must have 2 to 10 entries")
     @Valid
     private List<OptionInput> options;
+
+    public String resolveAudioUrl() {
+        if (audioUrl != null) return audioUrl;
+        if (questionGroup != null) return questionGroup.getAudioUrl();
+        return null;
+    }
+
+    public Integer resolveAudioDurationSec() {
+        if (audioDurationSec != null) return audioDurationSec;
+        if (questionGroup != null) return questionGroup.getAudioDurationSec();
+        return null;
+    }
+
+    public Integer resolveMaxPlays() {
+        if (maxPlays != null) return maxPlays;
+        if (questionGroup != null) return questionGroup.getMaxPlays();
+        return null;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class QuestionGroupInput {
+        @Size(max = 500)
+        private String audioUrl;
+        private Integer audioDurationSec;
+        private Integer maxPlays;
+    }
 
     @Getter
     @Setter

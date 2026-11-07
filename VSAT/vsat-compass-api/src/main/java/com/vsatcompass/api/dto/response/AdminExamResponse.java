@@ -34,6 +34,7 @@ public class AdminExamResponse {
     private String tags;
     private OffsetDateTime publishDate;
     private Integer version;
+    private Integer lockVersion;
     private Long createdBy;
     private Long reviewedBy;
     private OffsetDateTime createdAt;

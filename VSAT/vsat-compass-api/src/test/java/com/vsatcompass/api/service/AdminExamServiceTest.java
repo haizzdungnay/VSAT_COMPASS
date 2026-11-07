@@ -1205,7 +1205,7 @@ class AdminExamServiceTest {
                         "id", "examCode", "title", "subjectId", "subjectCode",
                         "description", "questionCount", "durationMinutes", "difficulty",
                         "pricingType", "price", "status", "tags", "publishDate",
-                        "version", "createdBy", "reviewedBy", "createdAt", "updatedAt");
+                        "version", "lockVersion", "createdBy", "reviewedBy", "createdAt", "updatedAt");
     }
 
     @Test

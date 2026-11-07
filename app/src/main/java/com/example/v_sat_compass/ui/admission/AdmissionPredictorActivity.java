@@ -27,6 +27,8 @@ import java.util.Locale;
  */
 public class AdmissionPredictorActivity extends AppCompatActivity {
 
+    public static final String EXTRA_INITIAL_SCORE = "vsat_score";
+
     private ActivityAdmissionPredictorBinding binding;
     private AdmissionPredictionAdapter adapter;
     private List<AdmissionBenchmarkItem> benchmarks;
@@ -39,7 +41,20 @@ public class AdmissionPredictorActivity extends AppCompatActivity {
         binding = ActivityAdmissionPredictorBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        benchmarks = AdmissionPredictorEngine.getDefaultBenchmarks();
+        List<AdmissionBenchmarkItem> rawBenchmarks = AdmissionPredictorEngine.getDefaultBenchmarks();
+        benchmarks = new ArrayList<>();
+        for (AdmissionBenchmarkItem b : rawBenchmarks) {
+            double cutoff = b.getCutoffScore() != null ? b.getCutoffScore() : 0.0;
+            // Quy đổi sang chuẩn 3 môn (thang 450: 150đ x 3)
+            if (cutoff <= 150.0) {
+                cutoff = cutoff * 3.0;
+            }
+            benchmarks.add(new AdmissionBenchmarkItem(
+                    b.getId(), b.getUniversityCode(), b.getUniversityName(),
+                    b.getRegion(), b.getMajorCode(), b.getMajorName(),
+                    b.getSubjectCombo(), b.getYear(), cutoff, b.getNotes()
+            ));
+        }
 
         setupUI();
         initSpinners();
@@ -53,7 +68,24 @@ public class AdmissionPredictorActivity extends AppCompatActivity {
         binding.rvPredictions.setLayoutManager(new LinearLayoutManager(this));
         binding.rvPredictions.setAdapter(adapter);
 
-        double initialScore = getIntent().getDoubleExtra("vsat_score", 100.0);
+        double initialScore = 315.0;
+        if (getIntent().hasExtra(EXTRA_INITIAL_SCORE)) {
+            initialScore = getIntent().getDoubleExtra(EXTRA_INITIAL_SCORE, 315.0);
+        } else if (getIntent().hasExtra("EXTRA_INITIAL_SCORE")) {
+            initialScore = getIntent().getDoubleExtra("EXTRA_INITIAL_SCORE", 315.0);
+        } else if (getIntent().hasExtra("initial_score")) {
+            initialScore = getIntent().getDoubleExtra("initial_score", 315.0);
+        }
+
+        // Tự quy đổi sang thang 450 tổng 3 môn nếu điểm đang ở thang 150 hoặc 10
+        if (initialScore > 0 && initialScore <= 10.0) {
+            initialScore = initialScore * 45.0;
+        } else if (initialScore > 10.0 && initialScore <= 150.0) {
+            initialScore = initialScore * 3.0;
+        }
+        if (initialScore > 450.0) {
+            initialScore = 450.0;
+        }
         binding.etVsatScore.setText(String.format(Locale.getDefault(), "%.1f", initialScore));
 
         binding.btnPredict.setOnClickListener(v -> performPrediction());
@@ -89,7 +121,7 @@ public class AdmissionPredictorActivity extends AppCompatActivity {
                 ? binding.etVsatScore.getText().toString().trim()
                 : "";
 
-        double score = 100.0;
+        double score = 300.0;
         if (!scoreStr.isEmpty()) {
             try {
                 score = Double.parseDouble(scoreStr);
@@ -97,6 +129,16 @@ public class AdmissionPredictorActivity extends AppCompatActivity {
                 Toast.makeText(this, "Vui lòng nhập điểm số hợp lệ", Toast.LENGTH_SHORT).show();
                 return;
             }
+        }
+
+        // Tự quy đổi sang thang 450 tổng 3 môn nếu điểm đang ở thang 150 hoặc 10
+        if (score > 0 && score <= 10.0) {
+            score = score * 45.0;
+        } else if (score > 10.0 && score <= 150.0) {
+            score = score * 3.0;
+        }
+        if (score > 450.0) {
+            score = 450.0;
         }
 
         String combo = binding.spinnerSubjectCombo.getSelectedItem() != null

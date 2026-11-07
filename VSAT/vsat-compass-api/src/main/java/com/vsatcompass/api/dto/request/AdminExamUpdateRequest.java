@@ -40,4 +40,6 @@ public class AdminExamUpdateRequest {
 
     @Size(max = 500)
     private String tags;
+
+    private Integer lockVersion;
 }

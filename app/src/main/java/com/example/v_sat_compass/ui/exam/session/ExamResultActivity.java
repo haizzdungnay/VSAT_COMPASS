@@ -15,6 +15,7 @@ import com.example.v_sat_compass.data.model.ScoreConstants;
 import com.example.v_sat_compass.data.model.TopicStatsResponse;
 import com.example.v_sat_compass.data.repository.StudentStatsRepository;
 import com.example.v_sat_compass.databinding.ActivityExamResultBinding;
+import com.example.v_sat_compass.ui.admission.AdmissionPredictorActivity;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
@@ -61,6 +62,7 @@ public class ExamResultActivity extends AppCompatActivity {
         binding.btnBack.setOnClickListener(v -> finish());
         binding.btnBackToList.setOnClickListener(v -> finish());
         binding.btnViewDetail.setOnClickListener(v -> openReview());
+        binding.btnPredictAdmission.setOnClickListener(v -> openAdmissionPredictor(score));
 
         renderSubjectResult(examSubject, correct, total, (int) Math.round(score));
         loadWeakTopics();
@@ -77,6 +79,15 @@ public class ExamResultActivity extends AppCompatActivity {
         Intent intent = new Intent(this, ExamReviewActivity.class);
         intent.putExtra(ExamReviewActivity.EXTRA_EXAM_ID, examId);
         intent.putExtra(ExamReviewActivity.EXTRA_SELECTED_ANSWERS_JSON, selectedAnswersJson);
+        startActivity(intent);
+    }
+
+    private void openAdmissionPredictor(double scorePercentage) {
+        Intent intent = new Intent(this, AdmissionPredictorActivity.class);
+        // Quy đổi điểm sang thang 450 (tổng 3 môn V-SAT: 150 x 3)
+        double estimated450 = Math.min(450.0, Math.max(0.0, (scorePercentage / 100.0) * 450.0));
+        intent.putExtra(AdmissionPredictorActivity.EXTRA_INITIAL_SCORE, estimated450);
+        intent.putExtra("vsat_score", estimated450);
         startActivity(intent);
     }
 

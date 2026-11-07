@@ -35,11 +35,14 @@ import com.example.v_sat_compass.data.repository.GamificationRepository;
 import com.example.v_sat_compass.data.repository.OfflineExamRepository;
 import com.example.v_sat_compass.data.repository.OfflineExamSyncRepository;
 import com.example.v_sat_compass.data.repository.SessionContentRepository;
+import com.example.v_sat_compass.data.model.QuestionGroup;
 import com.example.v_sat_compass.databinding.ActivityExamSessionBinding;
+import com.example.v_sat_compass.util.AudioPlayLimiter;
 import com.example.v_sat_compass.util.ProctoringMonitor;
 import com.example.v_sat_compass.util.UserRoleHelper;
 import com.google.android.material.card.MaterialCardView;
 import com.google.gson.Gson;
+import android.media.MediaPlayer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -98,6 +101,10 @@ public class ExamSessionActivity extends AppCompatActivity {
 
     private CountDownTimer timer;
     private long sessionStartMillis;
+    private AudioPlayLimiter audioPlayLimiter;
+    private MediaPlayer audioPlayer;
+    private Long currentAudioGroupId = null;
+    private boolean isAudioPlaying = false;
 
     // Colors for option cards
     private int colorDefault;
@@ -117,6 +124,7 @@ public class ExamSessionActivity extends AppCompatActivity {
         examApi = ApiClient.getClient().create(ExamApi.class);
         sessionContentRepository = new SessionContentRepository();
         offlineExamRepository = OfflineExamRepository.getInstance();
+        audioPlayLimiter = new AudioPlayLimiter();
 
         colorDefault = Color.WHITE;
         colorSelected = ContextCompat.getColor(this, R.color.answer_selected);
@@ -1049,6 +1057,7 @@ public class ExamSessionActivity extends AppCompatActivity {
 
 
     private void bindPassageWidget(com.example.v_sat_compass.data.model.QuestionGroup group) {
+        bindAudioPlayer(group);
         if (group != null && (group.getTitle() != null || group.getPassageText() != null)) {
             binding.cardPassage.setVisibility(View.VISIBLE);
             String title = group.getTitle() != null && !group.getTitle().trim().isEmpty()
@@ -1059,6 +1068,131 @@ public class ExamSessionActivity extends AppCompatActivity {
             com.example.v_sat_compass.util.KaTeXHelper.renderOrText(binding.wvPassageMath, binding.tvPassageText, text);
         } else {
             binding.cardPassage.setVisibility(View.GONE);
+        }
+    }
+
+    private void bindAudioPlayer(QuestionGroup group) {
+        if (group != null && group.getAudioUrl() != null && !group.getAudioUrl().trim().isEmpty()) {
+            binding.layoutAudioPlayer.setVisibility(View.VISIBLE);
+            long groupId = group.getId() != null ? group.getId() : (long) group.getAudioUrl().hashCode();
+            int maxPlays = group.getMaxPlays() != null ? group.getMaxPlays() : AudioPlayLimiter.DEFAULT_MAX_PLAYS;
+            if (audioPlayLimiter != null) {
+                audioPlayLimiter.setGroupMaxPlays(groupId, maxPlays);
+            }
+
+            if (currentAudioGroupId != null && !currentAudioGroupId.equals(groupId)) {
+                stopAudioPlayback();
+            }
+            currentAudioGroupId = groupId;
+            updateAudioPlayerUI(groupId, group.getAudioUrl());
+        } else {
+            binding.layoutAudioPlayer.setVisibility(View.GONE);
+            if (currentAudioGroupId != null) {
+                stopAudioPlayback();
+                currentAudioGroupId = null;
+            }
+        }
+    }
+
+    private void updateAudioPlayerUI(long groupId, String audioUrl) {
+        int remaining = audioPlayLimiter != null ? audioPlayLimiter.getRemainingPlays(groupId) : 0;
+        int max = audioPlayLimiter != null ? audioPlayLimiter.getMaxPlays(groupId) : AudioPlayLimiter.DEFAULT_MAX_PLAYS;
+        binding.tvAudioRemainingPlays.setText("Lượt nghe còn lại: " + remaining + "/" + max);
+
+        if (remaining <= 0 && !isAudioPlaying) {
+            binding.btnAudioPlayPause.setEnabled(false);
+            binding.btnAudioPlayPause.setText("Hết lượt nghe");
+        } else {
+            binding.btnAudioPlayPause.setEnabled(true);
+            binding.btnAudioPlayPause.setText(isAudioPlaying ? "Tạm dừng" : "Nghe Audio");
+        }
+
+        binding.btnAudioPlayPause.setOnClickListener(v -> handleAudioPlayPause(groupId, audioUrl));
+    }
+
+    private void stopAudioPlayback() {
+        if (audioPlayer != null) {
+            try {
+                if (audioPlayer.isPlaying()) {
+                    audioPlayer.stop();
+                }
+                audioPlayer.reset();
+            } catch (Exception ignored) {}
+            isAudioPlaying = false;
+            if (binding.btnAudioPlayPause != null) {
+                binding.btnAudioPlayPause.setText("Nghe Audio");
+            }
+        }
+    }
+
+    private void handleAudioPlayPause(long groupId, String audioUrl) {
+        if (isAudioPlaying) {
+            if (audioPlayer != null) {
+                try {
+                    audioPlayer.pause();
+                } catch (Exception ignored) {}
+            }
+            isAudioPlaying = false;
+            binding.btnAudioPlayPause.setText("Tiếp tục");
+        } else {
+            if (audioPlayer != null && currentAudioGroupId != null && currentAudioGroupId.equals(groupId)) {
+                try {
+                    audioPlayer.start();
+                    isAudioPlaying = true;
+                    binding.btnAudioPlayPause.setText("Tạm dừng");
+                    return;
+                } catch (Exception ignored) {}
+            }
+
+            if (audioPlayLimiter != null && !audioPlayLimiter.canPlay(groupId)) {
+                binding.btnAudioPlayPause.setEnabled(false);
+                binding.btnAudioPlayPause.setText("Hết lượt nghe");
+                return;
+            }
+
+            if (audioPlayLimiter != null) {
+                audioPlayLimiter.recordPlay(groupId);
+            }
+            int remaining = audioPlayLimiter != null ? audioPlayLimiter.getRemainingPlays(groupId) : 0;
+            int max = audioPlayLimiter != null ? audioPlayLimiter.getMaxPlays(groupId) : AudioPlayLimiter.DEFAULT_MAX_PLAYS;
+            binding.tvAudioRemainingPlays.setText("Lượt nghe còn lại: " + remaining + "/" + max);
+
+            if (audioPlayer != null) {
+                try {
+                    audioPlayer.release();
+                } catch (Exception ignored) {}
+            }
+            audioPlayer = new MediaPlayer();
+            try {
+                audioPlayer.setDataSource(audioUrl);
+                audioPlayer.setOnPreparedListener(mp -> {
+                    mp.start();
+                    isAudioPlaying = true;
+                    binding.btnAudioPlayPause.setText("Tạm dừng");
+                });
+                audioPlayer.setOnCompletionListener(mp -> {
+                    isAudioPlaying = false;
+                    int rem = audioPlayLimiter != null ? audioPlayLimiter.getRemainingPlays(groupId) : 0;
+                    int m = audioPlayLimiter != null ? audioPlayLimiter.getMaxPlays(groupId) : AudioPlayLimiter.DEFAULT_MAX_PLAYS;
+                    binding.tvAudioRemainingPlays.setText("Lượt nghe còn lại: " + rem + "/" + m);
+                    if (rem <= 0) {
+                        binding.btnAudioPlayPause.setEnabled(false);
+                        binding.btnAudioPlayPause.setText("Hết lượt nghe");
+                    } else {
+                        binding.btnAudioPlayPause.setEnabled(true);
+                        binding.btnAudioPlayPause.setText("Nghe lại");
+                    }
+                });
+                audioPlayer.setOnErrorListener((mp, what, extra) -> {
+                    isAudioPlaying = false;
+                    binding.btnAudioPlayPause.setText("Lỗi phát audio");
+                    return true;
+                });
+                audioPlayer.prepareAsync();
+            } catch (Exception e) {
+                isAudioPlaying = false;
+                binding.btnAudioPlayPause.setText("Lỗi phát audio");
+            }
         }
     }
 
@@ -1754,5 +1888,14 @@ public class ExamSessionActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         if (timer != null) timer.cancel();
+        if (audioPlayer != null) {
+            try {
+                if (audioPlayer.isPlaying()) {
+                    audioPlayer.stop();
+                }
+                audioPlayer.release();
+            } catch (Exception ignored) {}
+            audioPlayer = null;
+        }
     }
 }
