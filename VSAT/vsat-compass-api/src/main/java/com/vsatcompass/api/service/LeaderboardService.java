@@ -10,6 +10,9 @@ public interface LeaderboardService {
     /** Public leaderboard: top-N opt-in users, ordered by total score desc. */
     List<LeaderboardEntryResponse> getTop(int limit);
 
+    /** Public leaderboard filtered by subject: top-N opt-in users, ordered by total score desc. */
+    List<LeaderboardEntryResponse> getSubjectLeaderboard(Long subjectId, int limit);
+
     /** Current user's opt-in state + their own row (if they have any score). */
     LeaderboardMeResponse getMe(Long userId);
 

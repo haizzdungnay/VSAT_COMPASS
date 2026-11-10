@@ -2,7 +2,10 @@ package com.vsatcompass.api.config;
 
 import org.springframework.boot.autoconfigure.cache.RedisCacheManagerBuilderCustomizer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.cache.annotation.CachingConfigurer;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.interceptor.CacheErrorHandler;
+import org.springframework.cache.interceptor.LoggingCacheErrorHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -11,7 +14,7 @@ import java.time.Duration;
 
 @Configuration
 @EnableCaching
-public class CacheConfig {
+public class CacheConfig implements CachingConfigurer {
 
     public static final String CACHE_LEADERBOARD = "leaderboard";
     public static final String CACHE_BLUEPRINTS = "blueprints";
@@ -24,9 +27,11 @@ public class CacheConfig {
     @ConditionalOnClass(RedisCacheManagerBuilderCustomizer.class)
     public RedisCacheManagerBuilderCustomizer redisCacheManagerBuilderCustomizer() {
         return builder -> {
-            RedisCacheConfiguration defaultTtl60s = RedisCacheConfiguration.defaultCacheConfig()
+            RedisCacheConfiguration baseConfig = RedisCacheConfiguration
+                    .defaultCacheConfig(getClass().getClassLoader());
+            RedisCacheConfiguration defaultTtl60s = baseConfig
                     .entryTtl(Duration.ofSeconds(60));
-            RedisCacheConfiguration ttl1h = RedisCacheConfiguration.defaultCacheConfig()
+            RedisCacheConfiguration ttl1h = baseConfig
                     .entryTtl(Duration.ofHours(1));
 
             builder
@@ -37,5 +42,10 @@ public class CacheConfig {
                     .withCacheConfiguration(CACHE_PUBLIC_EXAM_DETAIL, defaultTtl60s)
                     .withCacheConfiguration(CACHE_PUBLIC_EXAM_BUNDLE, defaultTtl60s);
         };
+    }
+
+    @Override
+    public CacheErrorHandler errorHandler() {
+        return new LoggingCacheErrorHandler();
     }
 }

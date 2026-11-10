@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 public class QuestionOptionContentResponse {
 
     private Long id;
+    private String optionLabel;
     private String content;
     private Integer order;
 }

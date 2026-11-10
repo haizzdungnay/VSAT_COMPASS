@@ -272,7 +272,7 @@ public class AdminExamWindowServiceImpl implements AdminExamWindowService {
             OffsetDateTime now = OffsetDateTime.now();
             if (w.getStartAt() != null && now.isBefore(w.getStartAt())) {
                 computedStatus = "UPCOMING";
-            } else if (w.getEndAt() != null && now.isAfter(w.getEndAt())) {
+            } else if (w.getEndAt() != null && !w.getEndAt().isAfter(now)) {
                 computedStatus = "CLOSED";
             } else {
                 computedStatus = "RUNNING";

@@ -12,6 +12,7 @@ import {
   reportSessionViolation
 } from '../../services/api';
 import { MathView } from '../../components/MathView';
+import { MatchingQuestionPanel } from './MatchingQuestionPanel';
 
 interface StudentCBTWorkspaceProps {
   session: StudentSessionInfo;
@@ -29,6 +30,7 @@ interface LocalAnswerState {
 }
 
 interface ListeningAudioPlayerProps {
+  audioKey?: string;
   audioUrl: string;
   durationSec?: number | null;
   maxPlays?: number | null;
@@ -37,6 +39,7 @@ interface ListeningAudioPlayerProps {
 }
 
 const ListeningAudioPlayer: React.FC<ListeningAudioPlayerProps> = ({
+  audioKey,
   audioUrl,
   durationSec = 120,
   maxPlays = 2,
@@ -118,6 +121,7 @@ const ListeningAudioPlayer: React.FC<ListeningAudioPlayerProps> = ({
     <div className="p-4 rounded-xl border border-primary/30 bg-primary/5 space-y-3">
       <audio
         ref={audioRef}
+        key={audioKey || audioUrl}
         src={audioUrl}
         onTimeUpdate={handleTimeUpdate}
         onSeeking={handleSeeking}
@@ -225,12 +229,29 @@ export const StudentCBTWorkspace: React.FC<StudentCBTWorkspaceProps> = ({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [showSubmitModal, setShowSubmitModal] = useState<boolean>(false);
 
-  // Audio Listening Play Counts
-  const [audioPlayCounts, setAudioPlayCounts] = useState<Record<number, number>>({});
-  const handleIncrementAudioPlay = useCallback((qId: number) => {
+  // Audio Listening Play Counts (persisted in sessionStorage)
+  // ponytail: client sessionStorage tracking; upgrade path is server-side play counter
+  const audioStorageKey = `vsat_audio_plays_${session.id}`;
+  const [audioPlayCounts, setAudioPlayCounts] = useState<Record<string, number>>(() => {
+    try {
+      const raw = sessionStorage.getItem(`vsat_audio_plays_${session.id}`);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(audioStorageKey, JSON.stringify(audioPlayCounts));
+    } catch {}
+  }, [audioStorageKey, audioPlayCounts]);
+
+  const handleIncrementAudioPlay = useCallback((key: string) => {
+    if (!key) return;
     setAudioPlayCounts(prev => ({
       ...prev,
-      [qId]: (prev[qId] || 0) + 1
+      [key]: (prev[key] || 0) + 1
     }));
   }, []);
 
@@ -252,6 +273,9 @@ export const StudentCBTWorkspace: React.FC<StudentCBTWorkspaceProps> = ({
   const currentQuestion = questionCache[currentQId] || null;
   const currentAnswer = answers[currentQId] || { bookmarked: false, isDirty: false };
   const loadingQuestion = !questionCache[currentQId];
+  const audioKey = currentQuestion?.questionGroup?.id
+    ? `g:${currentQuestion.questionGroup.id}`
+    : (currentQuestion ? `q:${currentQuestion.id}` : '');
 
   // 1. Web Worker Timer
   const handleSubmitExamRef = useRef<() => void>(() => {});
@@ -338,10 +362,11 @@ export const StudentCBTWorkspace: React.FC<StudentCBTWorkspaceProps> = ({
     const targetState = state || answersRef.current[qId];
     if (!targetState) return;
 
+    const hasPayloadContent = targetState.answerPayload && Object.keys(targetState.answerPayload).length > 0;
     const payload: SaveSessionAnswerPayload = {
       questionId: qId,
       selectedOptionId: targetState.selectedOptionId,
-      answerPayload: targetState.answerPayload,
+      answerPayload: hasPayloadContent ? targetState.answerPayload : undefined,
       bookmarked: targetState.bookmarked,
       timeSpentSeconds: 15
     };
@@ -513,6 +538,22 @@ export const StudentCBTWorkspace: React.FC<StudentCBTWorkspaceProps> = ({
     setAnswers(prev => ({ ...prev, [currentQId]: updated }));
   };
 
+  const handleMatchingChange = (nextMatching: Record<string, string>) => {
+    const hasPairs = Object.values(nextMatching).some(
+      v => typeof v === 'string' && v.trim().length > 0
+    );
+    const updated: LocalAnswerState = {
+      ...currentAnswer,
+      answerPayload: nextMatching,
+      isDirty: hasPairs
+    };
+    setAnswers(prev => ({ ...prev, [currentQId]: updated }));
+    if (hasPairs) {
+      persistAnswer(currentQId, updated);
+    }
+    // ponytail: backend rejects empty answerPayload
+  };
+
   const handleToggleBookmark = () => {
     const updated: LocalAnswerState = {
       ...currentAnswer,
@@ -604,7 +645,9 @@ export const StudentCBTWorkspace: React.FC<StudentCBTWorkspaceProps> = ({
       if (typeof ans.answerPayload.value === 'string') {
         return ans.answerPayload.value.trim().length > 0;
       }
-      return Object.keys(ans.answerPayload).length > 0;
+      return Object.values(ans.answerPayload).some(val =>
+        typeof val === 'string' ? val.trim().length > 0 : val !== undefined && val !== null
+      );
     }
     return false;
   };
@@ -761,6 +804,8 @@ export const StudentCBTWorkspace: React.FC<StudentCBTWorkspaceProps> = ({
                       ? 'Trắc nghiệm 4 lựa chọn'
                       : currentQuestion.questionType === 'TRUE_FALSE'
                       ? 'Đúng / Sai 4 ý'
+                      : currentQuestion.questionType === 'MATCHING'
+                      ? 'Ghép hợp (Cột A - B)'
                       : 'Trả lời ngắn'}
                   </span>
                 </div>
@@ -770,8 +815,12 @@ export const StudentCBTWorkspace: React.FC<StudentCBTWorkspaceProps> = ({
                   <kbd className="px-1.5 py-0.5 rounded bg-surface-container-high border text-on-surface">←</kbd>
                   <kbd className="px-1.5 py-0.5 rounded bg-surface-container-high border text-on-surface">→</kbd>
                   <span>Chuyển câu</span>
-                  <kbd className="px-1.5 py-0.5 rounded bg-surface-container-high border text-on-surface">1..4</kbd>
-                  <span>Chọn A-D</span>
+                  {currentQuestion.questionType === 'SINGLE_CHOICE' && (
+                    <>
+                      <kbd className="px-1.5 py-0.5 rounded bg-surface-container-high border text-on-surface">1..4</kbd>
+                      <span>Chọn A-D</span>
+                    </>
+                  )}
                   <kbd className="px-1.5 py-0.5 rounded bg-surface-container-high border text-on-surface">F</kbd>
                   <span>Cờ</span>
                 </div>
@@ -790,12 +839,13 @@ export const StudentCBTWorkspace: React.FC<StudentCBTWorkspaceProps> = ({
                     {/* Listening Audio Player for Group (P3) */}
                     {(currentQuestion.audioUrl || currentQuestion.questionGroup.audioUrl) && (
                       <ListeningAudioPlayer
-                        key={`audio-grp-${currentQuestion.id}`}
+                        key={audioKey}
+                        audioKey={audioKey}
                         audioUrl={currentQuestion.audioUrl || currentQuestion.questionGroup.audioUrl || ''}
                         durationSec={currentQuestion.audioDurationSec || currentQuestion.questionGroup.audioDurationSec}
                         maxPlays={currentQuestion.maxPlays || currentQuestion.questionGroup.maxPlays}
-                        playCount={audioPlayCounts[currentQuestion.id] || 0}
-                        onIncrementPlay={() => handleIncrementAudioPlay(currentQuestion.id)}
+                        playCount={audioPlayCounts[audioKey] || 0}
+                        onIncrementPlay={() => handleIncrementAudioPlay(audioKey)}
                       />
                     )}
 
@@ -819,12 +869,13 @@ export const StudentCBTWorkspace: React.FC<StudentCBTWorkspaceProps> = ({
                   {/* Listening Audio Player for Single Question (P3) */}
                   {currentQuestion.audioUrl && (
                     <ListeningAudioPlayer
-                      key={`audio-single-${currentQuestion.id}`}
+                      key={audioKey}
+                      audioKey={audioKey}
                       audioUrl={currentQuestion.audioUrl}
                       durationSec={currentQuestion.audioDurationSec}
                       maxPlays={currentQuestion.maxPlays}
-                      playCount={audioPlayCounts[currentQuestion.id] || 0}
-                      onIncrementPlay={() => handleIncrementAudioPlay(currentQuestion.id)}
+                      playCount={audioPlayCounts[audioKey] || 0}
+                      onIncrementPlay={() => handleIncrementAudioPlay(audioKey)}
                     />
                   )}
 
@@ -1134,7 +1185,7 @@ export const StudentCBTWorkspace: React.FC<StudentCBTWorkspaceProps> = ({
       return (
         <div className="space-y-3 pt-2">
           <div className="text-xs text-outline italic">
-            Quy chuẩn chấm lũy tiến: Đúng 1 ý (0.1đ), 2 ý (0.25đ), 3 ý (0.5đ), 4 ý (1.0đ)
+            Quy chuẩn chấm lũy tiến V-SAT: Đúng 1 ý (1đ), 2 ý (2đ), 3 ý (3đ), 4 ý (6đ)
           </div>
 
           <div className="divide-y divide-outline-variant/30 border border-outline-variant/40 rounded-xl overflow-hidden bg-surface-container-lowest">
@@ -1182,7 +1233,19 @@ export const StudentCBTWorkspace: React.FC<StudentCBTWorkspaceProps> = ({
       );
     }
 
-    // 3. SHORT_ANSWER
+    // 3. MATCHING
+    if (currentQuestion.questionType === 'MATCHING') {
+      const matchingPayload = (currentAnswer.answerPayload as Record<string, string>) || {};
+      return (
+        <MatchingQuestionPanel
+          question={currentQuestion}
+          matchingPayload={matchingPayload}
+          onChangeMatching={handleMatchingChange}
+        />
+      );
+    }
+
+    // 4. SHORT_ANSWER
     const shortVal = (currentAnswer.answerPayload?.value as string) || '';
 
     return (

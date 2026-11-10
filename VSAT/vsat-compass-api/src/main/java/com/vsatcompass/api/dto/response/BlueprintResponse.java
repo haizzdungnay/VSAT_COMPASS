@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -15,7 +16,9 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BlueprintResponse {
+public class BlueprintResponse implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private Long id;
     private String code;
     private String name;
@@ -31,7 +34,9 @@ public class BlueprintResponse {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class BlueprintCellResponse {
+    public static class BlueprintCellResponse implements Serializable {
+        private static final long serialVersionUID = 1L;
+
         private Long id;
         private Long topicId;
         private String topicName;

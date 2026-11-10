@@ -27,8 +27,12 @@ public class LeaderboardController {
     @PreAuthorize("hasRole('STUDENT')")
     @Operation(summary = "F9.2: Top học viên opt-in, sắp xếp theo tổng điểm bài thi")
     public ResponseEntity<ApiResponse<List<LeaderboardEntryResponse>>> top(
-            @RequestParam(defaultValue = "20") int limit
+            @RequestParam(defaultValue = "20") int limit,
+            @RequestParam(required = false) Long subjectId
     ) {
-        return ResponseEntity.ok(ApiResponse.success(leaderboardService.getTop(limit)));
+        List<LeaderboardEntryResponse> response = subjectId != null
+                ? leaderboardService.getSubjectLeaderboard(subjectId, limit)
+                : leaderboardService.getTop(limit);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

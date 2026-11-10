@@ -88,49 +88,86 @@ export const StudentExamLobby: React.FC<StudentExamLobbyProps> = ({ onStartExam 
             Cổng Thi & Khảo Sát Năng Lực V-SAT 2026
           </h1>
           <p className="text-on-primary/90 text-sm md:text-base leading-relaxed">
-            Môi trường thi chuẩn hóa theo quy định tuyển sinh đại học của Bộ Giáo dục & Đào tạo. Đồng hồ Web Worker độc lập, tự động lưu câu trả lời mỗi 15 giây và chấm điểm phân hóa 3 phần.
+            Môi trường thi chuẩn hóa theo quy định tuyển sinh đại học của Bộ Giáo dục & Đào tạo. Đồng hồ Web Worker độc lập, tự động lưu câu trả lời mỗi 15 giây và chấm điểm phân hóa 4 phần chuẩn V-SAT 2026.
           </p>
         </div>
       </div>
 
-      {/* V-SAT Standard Structure Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/30 space-y-2 shadow-sm">
-          <div className="flex items-center gap-2 text-primary font-bold text-sm">
-            <span className="material-symbols-outlined text-[20px]">format_list_bulleted</span>
-            <span>Phần 1: Trắc nghiệm 4 lựa chọn</span>
+      {/* V-SAT Standard Structure Overview (4 Parts - 25 Questions - 150 Raw Score) */}
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[18px]">verified</span>
+            <span>Cấu trúc đề thi chuẩn V-SAT 2026 (4 phần — 25 câu — 150 điểm thô)</span>
           </div>
-          <p className="text-xs text-on-surface-variant">
-            Chọn 1 đáp án chính xác trong số 4 phương án A, B, C, D. Nhận 0.25 điểm cho mỗi câu trả lời đúng.
-          </p>
-          <div className="text-[11px] font-semibold text-primary-fixed-dim">
-            Chuẩn hóa 12 câu • Tối đa 3.0 điểm thô
-          </div>
+          <span className="text-xs text-outline font-medium">
+            Thời gian làm bài chuẩn: Toán 90 phút; Vật lí, Hóa học, Sinh học, Lịch sử, Địa lí, Tiếng Anh 60 phút
+          </span>
         </div>
 
-        <div className="p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/30 space-y-2 shadow-sm">
-          <div className="flex items-center gap-2 text-primary font-bold text-sm">
-            <span className="material-symbols-outlined text-[20px]">check_circle</span>
-            <span>Phần 2: Đúng / Sai 4 ý (a-b-c-d)</span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Phần I: Đúng / Sai */}
+          <div className="p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/30 space-y-2 shadow-sm flex flex-col justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-primary font-bold text-sm">
+                <span className="material-symbols-outlined text-[20px]">check_circle</span>
+                <span>Phần I: Đúng / Sai</span>
+              </div>
+              <p className="text-xs text-on-surface-variant leading-relaxed">
+                9 câu (36 ý a, b, c, d). Đánh giá tính đúng/sai từng mệnh đề độc lập. Điểm lũy tiến: đúng 1 ý (1đ), 2 ý (2đ), 3 ý (3đ), 4 ý (6đ).
+              </p>
+            </div>
+            <div className="text-[11px] font-semibold text-primary-fixed-dim pt-2 border-t border-outline-variant/20">
+              9 câu • 36 ý • Tối đa 54 điểm
+            </div>
           </div>
-          <p className="text-xs text-on-surface-variant">
-            Đánh giá tính đúng/sai của 4 mệnh đề độc lập. Điểm số lũy tiến theo số ý đúng: 1 ý (0.1đ), 2 ý (0.25đ), 3 ý (0.5đ), 4 ý (1.0đ).
-          </p>
-          <div className="text-[11px] font-semibold text-primary-fixed-dim">
-            Chuẩn hóa 4 câu • Tối đa 4.0 điểm thô
-          </div>
-        </div>
 
-        <div className="p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/30 space-y-2 shadow-sm">
-          <div className="flex items-center gap-2 text-primary font-bold text-sm">
-            <span className="material-symbols-outlined text-[20px]">edit_note</span>
-            <span>Phần 3: Trả lời ngắn</span>
+          {/* Phần II: Trắc nghiệm 4 lựa chọn */}
+          <div className="p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/30 space-y-2 shadow-sm flex flex-col justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-primary font-bold text-sm">
+                <span className="material-symbols-outlined text-[20px]">format_list_bulleted</span>
+                <span>Phần II: Trắc nghiệm 4 lựa chọn</span>
+              </div>
+              <p className="text-xs text-on-surface-variant leading-relaxed">
+                6 câu hỏi trắc nghiệm (A, B, C, D). Chọn duy nhất 1 phương án chính xác. Mỗi câu trả lời đúng nhận trọn vẹn 6 điểm.
+              </p>
+            </div>
+            <div className="text-[11px] font-semibold text-primary-fixed-dim pt-2 border-t border-outline-variant/20">
+              6 câu • 6 điểm/câu • Tối đa 36 điểm
+            </div>
           </div>
-          <p className="text-xs text-on-surface-variant">
-            Thí sinh tự tính toán và nhập đáp số dưới dạng số nguyên hoặc số thập phân. Nhận 0.5 điểm cho mỗi câu trả lời chính xác.
-          </p>
-          <div className="text-[11px] font-semibold text-primary-fixed-dim">
-            Chuẩn hóa 6-9 câu • Tối đa 3.0-4.5 điểm thô
+
+          {/* Phần III: Ghép hợp Cột A - B */}
+          <div className="p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/30 space-y-2 shadow-sm flex flex-col justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-primary font-bold text-sm">
+                <span className="material-symbols-outlined text-[20px]">sync_alt</span>
+                <span>Phần III: Ghép hợp (Cột A - B)</span>
+              </div>
+              <p className="text-xs text-on-surface-variant leading-relaxed">
+                5 câu ghép nối. Mỗi câu gồm 4 mệnh đề ở Cột A ghép với 6 lựa chọn A–F ở Cột B (có 2 phương án nhiễu). Nhận 1.5 điểm/cặp đúng.
+              </p>
+            </div>
+            <div className="text-[11px] font-semibold text-primary-fixed-dim pt-2 border-t border-outline-variant/20">
+              5 câu • Tối đa 6đ/câu • Tối đa 30 điểm
+            </div>
+          </div>
+
+          {/* Phần IV: Trả lời ngắn */}
+          <div className="p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/30 space-y-2 shadow-sm flex flex-col justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-primary font-bold text-sm">
+                <span className="material-symbols-outlined text-[20px]">edit_note</span>
+                <span>Phần IV: Trả lời ngắn / Điền đáp án</span>
+              </div>
+              <p className="text-xs text-on-surface-variant leading-relaxed">
+                5 câu điền kết quả. Thí sinh tự tính toán và nhập đáp số dưới dạng số nguyên hoặc số thập phân. Nhận 6 điểm cho mỗi câu chính xác.
+              </p>
+            </div>
+            <div className="text-[11px] font-semibold text-primary-fixed-dim pt-2 border-t border-outline-variant/20">
+              5 câu • 6 điểm/câu • Tối đa 30 điểm
+            </div>
           </div>
         </div>
       </div>
@@ -314,7 +351,7 @@ export const StudentExamLobby: React.FC<StudentExamLobbyProps> = ({ onStartExam 
                   </h3>
 
                   <p className="text-xs text-on-surface-variant line-clamp-2">
-                    {exam.description || 'Đề thi khảo sát năng lực V-SAT bám sát cấu trúc 3 phần với câu hỏi thực tế và bài toán liên môn.'}
+                    {exam.description || 'Đề thi khảo sát năng lực V-SAT bám sát cấu trúc 4 phần với câu hỏi thực tế và bài toán liên môn.'}
                   </p>
 
                   {/* Badges metadata */}

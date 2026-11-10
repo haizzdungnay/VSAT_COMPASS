@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.io.Serializable;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -17,7 +18,9 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ExamDownloadBundleResponse {
+public class ExamDownloadBundleResponse implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private Long id;
     private String examCode;
@@ -39,7 +42,9 @@ public class ExamDownloadBundleResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
-    public static class QuestionBundleItem {
+    public static class QuestionBundleItem implements Serializable {
+        private static final long serialVersionUID = 1L;
+
         private Long id;
         private String questionCode;
         private Long subjectId;
@@ -65,7 +70,9 @@ public class ExamDownloadBundleResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
-    public static class OptionBundleItem {
+    public static class OptionBundleItem implements Serializable {
+        private static final long serialVersionUID = 1L;
+
         private Long id;
         private String optionLabel;
         private String optionText;

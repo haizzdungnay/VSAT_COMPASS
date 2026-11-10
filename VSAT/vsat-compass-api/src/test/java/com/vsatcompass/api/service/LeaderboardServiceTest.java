@@ -17,6 +17,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 
 import java.math.BigDecimal;
@@ -28,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -110,6 +112,65 @@ class LeaderboardServiceTest {
         List<LeaderboardEntryResponse> result = leaderboardService.getTop(20);
         assertThat(result).isEmpty();
         verify(userRepository, never()).findAllById(any());
+    }
+
+    @Test
+    @DisplayName("getSubjectLeaderboard: lọc theo subjectId, chỉ user opt-in xuất hiện, sắp xếp điểm giảm dần")
+    void getSubjectLeaderboard_filtersBySubjectAndOptIn_sortedByScoreDesc() {
+        User alpha = user(1L, "Alpha", true);
+        User beta  = user(2L, "Beta",  true);
+        User gamma = user(3L, "Gamma", false); // opt-out -> must be hidden
+
+        when(examSessionRepository.aggregateScoresByUserAndSubject(eq(10L), any(Pageable.class))).thenReturn(List.of(
+                aggregate(1L, "900", 3),
+                aggregate(2L, "750", 2),
+                aggregate(3L, "1200", 5)
+        ));
+        when(userRepository.findAllById(any())).thenReturn(List.of(alpha, beta, gamma));
+
+        List<LeaderboardEntryResponse> result = leaderboardService.getSubjectLeaderboard(10L, 20);
+
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).getUserId()).isEqualTo(1L);
+        assertThat(result.get(0).getRank()).isEqualTo(1);
+        assertThat(result.get(0).getTotalScore()).isEqualTo(900L);
+        assertThat(result.get(0).getDisplayName()).isEqualTo("Alpha");
+        assertThat(result.get(1).getUserId()).isEqualTo(2L);
+        assertThat(result.get(1).getRank()).isEqualTo(2);
+        assertThat(result.get(1).getTotalScore()).isEqualTo(750L);
+        assertThat(result.get(1).getDisplayName()).isEqualTo("Beta");
+        // Gamma (opt-out, score 1200) MUST NOT appear
+        assertThat(result).extracting(LeaderboardEntryResponse::getUserId).doesNotContain(3L);
+        verify(examSessionRepository).aggregateScoresByUserAndSubject(eq(10L), any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("getSubjectLeaderboard: môn không có submission -> trả list rỗng")
+    void getSubjectLeaderboard_noSubmissions_returnsEmpty() {
+        when(examSessionRepository.aggregateScoresByUserAndSubject(eq(99L), any(Pageable.class)))
+                .thenReturn(List.of());
+
+        List<LeaderboardEntryResponse> result = leaderboardService.getSubjectLeaderboard(99L, 20);
+
+        assertThat(result).isEmpty();
+        verify(userRepository, never()).findAllById(any());
+    }
+
+    @Test
+    @DisplayName("getSubjectLeaderboard: subjectId=null -> gọi aggregateScoresByUser (fallback)")
+    void getSubjectLeaderboard_nullSubjectId_fallsBackToGetTop() {
+        User alpha = user(1L, "Alpha", true);
+        when(examSessionRepository.aggregateScoresByUser()).thenReturn(List.of(
+                aggregate(1L, "500", 1)
+        ));
+        when(userRepository.findAllById(any())).thenReturn(List.of(alpha));
+
+        List<LeaderboardEntryResponse> result = leaderboardService.getSubjectLeaderboard(null, 10);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getUserId()).isEqualTo(1L);
+        verify(examSessionRepository).aggregateScoresByUser();
+        verify(examSessionRepository, never()).aggregateScoresByUserAndSubject(any(), any());
     }
 
     @Test

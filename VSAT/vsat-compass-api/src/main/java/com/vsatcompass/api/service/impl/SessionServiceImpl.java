@@ -11,6 +11,7 @@ import com.vsatcompass.api.entity.ExamQuestion;
 import com.vsatcompass.api.entity.ExamSession;
 import com.vsatcompass.api.entity.Question;
 import com.vsatcompass.api.entity.QuestionGroup;
+import com.vsatcompass.api.entity.QuestionMatchingChoice;
 import com.vsatcompass.api.entity.QuestionOption;
 import com.vsatcompass.api.entity.SessionAnswer;
 import com.vsatcompass.api.entity.enums.QuestionType;
@@ -23,12 +24,14 @@ import com.vsatcompass.api.repository.QuestionGroupRepository;
 import com.vsatcompass.api.entity.ExamWindow;
 import com.vsatcompass.api.entity.enums.ExamDeliveryMode;
 import com.vsatcompass.api.repository.ExamWindowRepository;
+import com.vsatcompass.api.repository.QuestionMatchingChoiceRepository;
 import com.vsatcompass.api.repository.QuestionOptionRepository;
 import com.vsatcompass.api.repository.QuestionRepository;
 import com.vsatcompass.api.repository.SessionAnswerRepository;
 import com.vsatcompass.api.service.SessionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +41,7 @@ import java.math.RoundingMode;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -54,6 +58,9 @@ public class SessionServiceImpl implements SessionService {
     private final SessionAnswerRepository sessionAnswerRepository;
     private final QuestionGroupRepository questionGroupRepository;
     private final ExamWindowRepository examWindowRepository;
+
+    @Autowired(required = false)
+    private QuestionMatchingChoiceRepository questionMatchingChoiceRepository;
 
     @Override
     @Transactional
@@ -124,7 +131,10 @@ public class SessionServiceImpl implements SessionService {
             Long currentUserId
     ) {
         ExamSession session = loadOwnedSession(sessionId, currentUserId);
-        requireStatus(session, SessionStatus.IN_PROGRESS);
+        if (session.getStatus() != SessionStatus.IN_PROGRESS && session.getStatus() != SessionStatus.SUBMITTED) {
+            throw AppException.badRequest(
+                    "Session must be IN_PROGRESS or SUBMITTED (current: " + session.getStatus() + ")");
+        }
 
         ExamQuestion examQuestion = findExamQuestion(session.getExamId(), questionId);
         Question question = questionRepository.findById(questionId)
@@ -132,8 +142,22 @@ public class SessionServiceImpl implements SessionService {
         List<QuestionOptionContentResponse> options = questionOptionRepository
                 .findByQuestionIdOrderByDisplayOrderAscIdAsc(questionId)
                 .stream()
-                .map(this::toOptionContent)
+                .map(opt -> toOptionContent(opt, question.getQuestionType()))
                 .toList();
+
+        List<SessionQuestionContentResponse.MatchingChoiceDto> matchingChoices = null;
+        if (question.getQuestionType() == QuestionType.MATCHING && questionMatchingChoiceRepository != null) {
+            List<QuestionMatchingChoice> foundChoices = questionMatchingChoiceRepository
+                    .findByQuestionIdOrderByDisplayOrderAsc(questionId);
+            if (foundChoices != null && !foundChoices.isEmpty()) {
+                matchingChoices = foundChoices.stream()
+                        .map(choice -> SessionQuestionContentResponse.MatchingChoiceDto.builder()
+                                .key(choice.getChoiceKey())
+                                .text(choice.getChoiceText())
+                                .build())
+                        .toList();
+            }
+        }
 
         QuestionGroupResponse group = null;
         if (question.getQuestionGroupId() != null) {
@@ -151,6 +175,7 @@ public class SessionServiceImpl implements SessionService {
                 .difficulty(question.getDifficulty())
                 .order(examQuestion.getQuestionOrder())
                 .options(options)
+                .matchingChoices(matchingChoices)
                 .build();
     }
 
@@ -310,27 +335,33 @@ public class SessionServiceImpl implements SessionService {
                     rawPoints = BigDecimal.valueOf(pts);
                 }
                 case MATCHING -> {
-                    int matched = 0;
-                    int total = options.isEmpty() ? payload.size() : options.size();
-                    if (total == 0) total = 4;
+                    if (options == null || options.isEmpty()) {
+                        correctSubitems = 0;
+                        totalSubitems = 0;
+                        isCorrect = false;
+                        rawPoints = BigDecimal.ZERO;
+                    } else {
+                        int matchedCount = 0;
+                        int total = options.size();
 
-                    for (QuestionOption opt : options) {
-                        String key = opt.getOptionLabel() != null ? opt.getOptionLabel().trim() : "";
-                        Object userVal = payload.get(key);
-                        if (userVal != null && opt.getOptionText() != null) {
-                            String userStr = String.valueOf(userVal).trim();
-                            if (isMatchingChoiceEqual(opt.getOptionText(), userStr)) {
-                                matched++;
+                        for (QuestionOption opt : options) {
+                            String key = opt.getOptionLabel() != null ? opt.getOptionLabel().trim() : "";
+                            Object userVal = payload.get(key);
+                            if (userVal != null && opt.getOptionText() != null) {
+                                String userStr = String.valueOf(userVal).trim();
+                                if (isMatchingChoiceEqual(opt.getOptionText(), userStr)) {
+                                    matchedCount++;
+                                }
                             }
                         }
+                        if (matchedCount > total) {
+                            matchedCount = total;
+                        }
+                        correctSubitems = matchedCount;
+                        totalSubitems = total;
+                        isCorrect = (matchedCount == total && total > 0);
+                        rawPoints = BigDecimal.valueOf(matchedCount * 1.5);
                     }
-                    if (options.isEmpty()) {
-                        matched = payload.size();
-                    }
-                    correctSubitems = matched;
-                    totalSubitems = total;
-                    isCorrect = (matched == total && total > 0);
-                    rawPoints = BigDecimal.valueOf(matched * 1.5);
                 }
                 case SHORT_ANSWER -> {
                     Object val = payload.get("value");
@@ -608,18 +639,107 @@ public class SessionServiceImpl implements SessionService {
 
     private boolean isMatchingChoiceEqual(String optionText, String userChoice) {
         if (optionText == null || userChoice == null) return false;
-        String cleanOpt = optionText.trim().toUpperCase();
-        String cleanUser = userChoice.trim().toUpperCase();
-        if (cleanOpt.equals(cleanUser)) return true;
-        if (cleanOpt.contains("⇄")) {
-            String rightSide = cleanOpt.substring(cleanOpt.indexOf("⇄") + 1).trim();
-            return rightSide.contains(cleanUser);
+        String rawExpected = optionText.trim();
+        if (rawExpected.contains("⇄")) {
+            rawExpected = rawExpected.substring(rawExpected.indexOf("⇄") + 1).trim();
+        } else if (rawExpected.contains("->")) {
+            rawExpected = rawExpected.substring(rawExpected.indexOf("->") + 2).trim();
         }
-        if (cleanOpt.contains("->")) {
-            String rightSide = cleanOpt.substring(cleanOpt.indexOf("->") + 2).trim();
-            return rightSide.contains(cleanUser);
+
+        if (rawExpected.contains(":")) {
+            rawExpected = rawExpected.substring(rawExpected.lastIndexOf(":") + 1).trim();
         }
-        return cleanOpt.contains(cleanUser);
+
+        return rawExpected.equalsIgnoreCase(userChoice.trim());
+    }
+
+    private String extractMatchingChoiceKey(String optionText) {
+        if (optionText == null) return "";
+        String raw = optionText.trim();
+        if (raw.contains("⇄")) {
+            raw = raw.substring(raw.indexOf("⇄") + 1).trim();
+        } else if (raw.contains("->")) {
+            raw = raw.substring(raw.indexOf("->") + 2).trim();
+        }
+        if (raw.contains(":")) {
+            raw = raw.substring(raw.lastIndexOf(":") + 1).trim();
+        }
+        return raw;
+    }
+
+    private QuestionOptionContentResponse toOptionContent(QuestionOption option, QuestionType questionType) {
+        String content = option.getOptionText();
+        if (questionType == QuestionType.MATCHING && content != null && content.contains("⇄")) {
+            int idx = content.indexOf("⇄");
+            content = content.substring(0, idx).trim();
+        }
+
+        return QuestionOptionContentResponse.builder()
+                .id(option.getId())
+                .optionLabel(option.getOptionLabel())
+                .content(content)
+                .order(option.getDisplayOrder())
+                .build();
+    }
+
+    private QuestionAnswerKeyResponse toAnswerKey(ExamQuestion examQuestion) {
+        Long questionId = examQuestion.getQuestionId();
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> AppException.notFound("Question", questionId));
+        List<QuestionOption> options = questionOptionRepository
+                .findByQuestionIdOrderByDisplayOrderAscIdAsc(questionId);
+
+        List<Long> correctOptionIds = options.stream()
+                .filter(option -> Boolean.TRUE.equals(option.getIsCorrect()))
+                .map(QuestionOption::getId)
+                .toList();
+
+        Map<String, Boolean> correctTrueFalse = null;
+        String correctShortAnswer = null;
+        Map<String, String> correctMatching = null;
+
+        if (question.getQuestionType() != null) {
+            switch (question.getQuestionType()) {
+                case TRUE_FALSE -> {
+                    correctTrueFalse = new LinkedHashMap<>();
+                    for (int i = 0; i < options.size(); i++) {
+                        QuestionOption opt = options.get(i);
+                        String label = opt.getOptionLabel() != null && !opt.getOptionLabel().isBlank()
+                                ? opt.getOptionLabel().trim()
+                                : String.valueOf((char) ('a' + i));
+                        correctTrueFalse.put(label, Boolean.TRUE.equals(opt.getIsCorrect()));
+                    }
+                }
+                case SHORT_ANSWER -> {
+                    for (QuestionOption opt : options) {
+                        if (Boolean.TRUE.equals(opt.getIsCorrect()) || options.size() == 1) {
+                            correctShortAnswer = opt.getOptionText() != null ? opt.getOptionText().trim() : "";
+                            break;
+                        }
+                    }
+                }
+                case MATCHING -> {
+                    correctMatching = new LinkedHashMap<>();
+                    for (QuestionOption opt : options) {
+                        String label = opt.getOptionLabel() != null ? opt.getOptionLabel().trim() : "";
+                        String choiceKey = extractMatchingChoiceKey(opt.getOptionText());
+                        correctMatching.put(label, choiceKey);
+                    }
+                }
+                default -> {
+                    // SINGLE_CHOICE: covered by correctOptionIds
+                }
+            }
+        }
+
+        return QuestionAnswerKeyResponse.builder()
+                .questionId(questionId)
+                .correctOptionIds(correctOptionIds)
+                .explanation(question.getExplanation())
+                .correctTrueFalse(correctTrueFalse)
+                .correctShortAnswer(correctShortAnswer)
+                .correctMatching(correctMatching)
+                .build();
     }
 
     private boolean isShortAnswerEqual(String userStr, String expectedStr) {
@@ -712,31 +832,6 @@ public class SessionServiceImpl implements SessionService {
                 .audioUrl(g.getAudioUrl())
                 .audioDurationSec(g.getAudioDurationSec())
                 .maxPlays(g.getMaxPlays() != null ? g.getMaxPlays() : 2)
-                .build();
-    }
-    private QuestionOptionContentResponse toOptionContent(QuestionOption option) {
-        return QuestionOptionContentResponse.builder()
-                .id(option.getId())
-                .content(option.getOptionText())
-                .order(option.getDisplayOrder())
-                .build();
-    }
-
-    private QuestionAnswerKeyResponse toAnswerKey(ExamQuestion examQuestion) {
-        Long questionId = examQuestion.getQuestionId();
-        Question question = questionRepository.findById(questionId)
-                .orElseThrow(() -> AppException.notFound("Question", questionId));
-        List<Long> correctOptionIds = questionOptionRepository
-                .findByQuestionIdOrderByDisplayOrderAscIdAsc(questionId)
-                .stream()
-                .filter(option -> Boolean.TRUE.equals(option.getIsCorrect()))
-                .map(QuestionOption::getId)
-                .toList();
-
-        return QuestionAnswerKeyResponse.builder()
-                .questionId(questionId)
-                .correctOptionIds(correctOptionIds)
-                .explanation(question.getExplanation())
                 .build();
     }
 }
