@@ -11,6 +11,7 @@ import com.vsatcompass.api.service.LeaderboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,20 +34,38 @@ public class LeaderboardServiceImpl implements LeaderboardService {
     @Override
     @Cacheable(value = "leaderboard", key = "#limit")
     public List<LeaderboardEntryResponse> getTop(int limit) {
+        return buildRankedLeaderboard(examSessionRepository.aggregateScoresByUser(), limit);
+    }
+
+    @Override
+    @Cacheable(value = "leaderboard", key = "'subject:' + #subjectId + ':' + #limit")
+    public List<LeaderboardEntryResponse> getSubjectLeaderboard(Long subjectId, int limit) {
+        if (subjectId == null) {
+            return getTop(limit);
+        }
+        return buildRankedLeaderboard(
+                examSessionRepository.aggregateScoresByUserAndSubject(subjectId, Pageable.unpaged()),
+                limit
+        );
+    }
+
+    private List<LeaderboardEntryResponse> buildRankedLeaderboard(
+            List<UserScoreAggregate> aggregates,
+            int limit
+    ) {
         int boundedLimit = Math.max(1, Math.min(limit, 100));
 
-        Map<Long, UserScoreAggregate> aggregatesByUser = examSessionRepository
-                .aggregateScoresByUser()
+        if (aggregates == null || aggregates.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, UserScoreAggregate> aggregatesByUser = aggregates
                 .stream()
                 .collect(Collectors.toMap(
                         UserScoreAggregate::getUserId,
                         Function.identity(),
                         (a, b) -> a
                 ));
-
-        if (aggregatesByUser.isEmpty()) {
-            return List.of();
-        }
 
         List<User> optInUsers = userRepository.findAllById(aggregatesByUser.keySet())
                 .stream()

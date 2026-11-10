@@ -2,14 +2,16 @@ import React, { useEffect, useState, useMemo } from 'react';
 import type {
   StudentSessionInfo,
   StudentQuestionContent,
-  QuestionAnswerKeyItem
+  QuestionAnswerKeyItem,
+  SubmitAnswerPayload
 } from '../../types/student-cbt';
 import {
   fetchSessionAnswerKeys,
   fetchSessionQuestion,
   requestAiExplanation,
   createStudentTicket,
-  fallbackSessionQuestions
+  fallbackSessionQuestions,
+  getLocalSessionAnswers
 } from '../../services/api';
 import { MathView } from '../../components/MathView';
 import { AdmissionPredictorWidget } from './AdmissionPredictorWidget';
@@ -27,6 +29,7 @@ export const StudentScorecard: React.FC<StudentScorecardProps> = ({
 }) => {
   const [answerKeys, setAnswerKeys] = useState<QuestionAnswerKeyItem[]>([]);
   const [questions, setQuestions] = useState<StudentQuestionContent[]>([]);
+  const [studentAnswers, setStudentAnswers] = useState<Record<number, SubmitAnswerPayload>>({});
   const [loading, setLoading] = useState<boolean>(true);
 
   // AI explanation state: questionId -> { text, loading }
@@ -49,6 +52,7 @@ export const StudentScorecard: React.FC<StudentScorecardProps> = ({
 
   useEffect(() => {
     let isMounted = true;
+    setStudentAnswers(getLocalSessionAnswers(session.id));
 
     Promise.all([
       fetchSessionAnswerKeys(session.id),
@@ -239,6 +243,10 @@ export const StudentScorecard: React.FC<StudentScorecardProps> = ({
             {questions.map((q, idx) => {
               const keyInfo = answerKeys.find(k => k.questionId === q.id);
               const aiState = aiExplanations[q.id];
+              const userAns = studentAnswers[q.id];
+              const isFirstAudioInGroup = q.questionGroup?.id
+                ? questions.findIndex(item => item.questionGroup?.id === q.questionGroup?.id) === idx
+                : false;
 
               return (
                 <div
@@ -257,6 +265,8 @@ export const StudentScorecard: React.FC<StudentScorecardProps> = ({
                           ? 'Trắc nghiệm 4 lựa chọn'
                           : q.questionType === 'TRUE_FALSE'
                           ? 'Đúng / Sai 4 ý'
+                          : q.questionType === 'MATCHING'
+                          ? 'Ghép hợp (Cột A - B)'
                           : 'Trả lời ngắn'}
                       </span>
                     </div>
@@ -283,14 +293,35 @@ export const StudentScorecard: React.FC<StudentScorecardProps> = ({
 
                   {/* Passage snippet if question group exists */}
                   {q.questionGroup && (
-                    <div className="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/20 text-xs text-on-surface-variant space-y-1">
+                    <div className="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/20 text-xs text-on-surface-variant space-y-2">
                       <div className="font-bold text-primary flex items-center gap-1">
                         <span className="material-symbols-outlined text-[16px]">menu_book</span>
                         <span>{q.questionGroup.title || 'Ngữ liệu chung'}</span>
                       </div>
+                      {q.questionGroup.audioUrl && isFirstAudioInGroup && (
+                        <div className="pt-1">
+                          <audio
+                            controls
+                            preload="none"
+                            src={q.questionGroup.audioUrl}
+                            className="w-full h-9"
+                          />
+                        </div>
+                      )}
                       <div className="line-clamp-3">
                         <MathView content={q.questionGroup.passageText || ''} />
                       </div>
+                    </div>
+                  )}
+
+                  {!q.questionGroup && q.audioUrl && (
+                    <div className="p-3 rounded-xl bg-surface-container-low border border-outline-variant/20">
+                      <audio
+                        controls
+                        preload="none"
+                        src={q.audioUrl}
+                        className="w-full h-9"
+                      />
                     </div>
                   )}
 
@@ -299,38 +330,79 @@ export const StudentScorecard: React.FC<StudentScorecardProps> = ({
                     <MathView content={q.content} />
                   </div>
 
-                  {/* Question options or True/False items review */}
+                  {/* 1. SINGLE_CHOICE */}
                   {q.questionType === 'SINGLE_CHOICE' && q.options && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-                      {q.options.map(opt => {
-                        const isCorrectKey = keyInfo?.correctOptionIds?.includes(opt.id);
-                        return (
-                          <div
-                            key={opt.id}
-                            className={`p-3 rounded-xl border flex items-start gap-2.5 text-xs ${
-                              isCorrectKey
-                                ? 'bg-emerald-50 border-emerald-300 text-emerald-950 font-medium'
-                                : 'bg-surface-container-low border-outline-variant/30 text-on-surface'
-                            }`}
-                          >
-                            <span
-                              className={`w-6 h-6 rounded-md font-bold flex items-center justify-center flex-shrink-0 ${
-                                isCorrectKey
-                                  ? 'bg-emerald-600 text-white'
-                                  : 'bg-surface-container-high text-outline'
-                              }`}
+                    <div className="space-y-2.5 pt-1">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        {q.options.map(opt => {
+                          const isCorrectKey = keyInfo?.correctOptionIds?.includes(opt.id);
+                          const isSelectedByUser = userAns?.selectedOptionId === opt.id;
+
+                          let boxClass = 'bg-surface-container-low border-outline-variant/30 text-on-surface';
+                          let badgeClass = 'bg-surface-container-high text-outline';
+                          if (isCorrectKey) {
+                            boxClass = 'bg-emerald-50 border-emerald-400 text-emerald-950 font-medium';
+                            badgeClass = 'bg-emerald-600 text-white';
+                          } else if (isSelectedByUser) {
+                            boxClass = 'bg-rose-50 border-rose-400 text-rose-950 font-medium';
+                            badgeClass = 'bg-rose-600 text-white';
+                          }
+
+                          return (
+                            <div
+                              key={opt.id}
+                              className={`p-3 rounded-xl border flex items-start justify-between gap-2.5 text-xs ${boxClass}`}
                             >
-                              {opt.optionLabel}
-                            </span>
-                            <div className="pt-0.5 leading-relaxed">
-                              <MathView content={opt.optionText} />
+                              <div className="flex items-start gap-2.5">
+                                <span
+                                  className={`w-6 h-6 rounded-md font-bold flex items-center justify-center flex-shrink-0 ${badgeClass}`}
+                                >
+                                  {opt.optionLabel}
+                                </span>
+                                <div className="pt-0.5 leading-relaxed">
+                                  <MathView content={opt.optionText} />
+                                </div>
+                              </div>
+                              <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                                {isSelectedByUser && (
+                                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                    isCorrectKey ? 'bg-emerald-200 text-emerald-900' : 'bg-rose-200 text-rose-900'
+                                  }`}>
+                                    Bạn chọn
+                                  </span>
+                                )}
+                                {isCorrectKey && (
+                                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                    Đáp án đúng
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-outline px-1">
+                        <span>
+                          Bạn chọn:{' '}
+                          <strong className="text-on-surface">
+                            {q.options.find(o => o.id === userAns?.selectedOptionId)?.optionLabel || 'Chưa chọn'}
+                          </strong>
+                        </span>
+                        <span>•</span>
+                        <span>
+                          Đáp án đúng:{' '}
+                          <strong className="text-emerald-700">
+                            {q.options
+                              .filter(o => keyInfo?.correctOptionIds?.includes(o.id))
+                              .map(o => o.optionLabel)
+                              .join(', ') || 'Chưa có key'}
+                          </strong>
+                        </span>
+                      </div>
                     </div>
                   )}
 
+                  {/* 2. TRUE_FALSE */}
                   {q.questionType === 'TRUE_FALSE' && (
                     <div className="divide-y divide-outline-variant/20 border border-outline-variant/30 rounded-xl overflow-hidden bg-surface-container-low text-xs">
                       {(q.trueFalseItems || [
@@ -339,38 +411,143 @@ export const StudentScorecard: React.FC<StudentScorecardProps> = ({
                         { key: 'c', text: 'Mệnh đề c' },
                         { key: 'd', text: 'Mệnh đề d' }
                       ]).map(item => {
+                        const userVal = (userAns?.answerPayload as Record<string, boolean> | undefined)?.[item.key];
                         const correctVal = keyInfo?.correctTrueFalse?.[item.key];
+                        const isMatch = userVal !== undefined && correctVal !== undefined && userVal === correctVal;
+
                         return (
-                          <div key={item.key} className="p-3 flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-2">
+                          <div key={item.key} className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div className="flex items-start gap-2 flex-1">
                               <span className="font-bold text-outline">({item.key})</span>
                               <MathView content={item.text} />
                             </div>
-                            <span
-                              className={`px-2.5 py-0.5 rounded text-[11px] font-bold ${
-                                correctVal === true
-                                  ? 'bg-emerald-100 text-emerald-800'
-                                  : correctVal === false
-                                  ? 'bg-rose-100 text-rose-800'
-                                  : 'bg-surface-container-high text-outline'
-                              }`}
-                            >
-                              {correctVal === true ? 'ĐÚNG' : correctVal === false ? 'SAI' : 'CHƯA CÓ KEY'}
-                            </span>
+                            <div className="flex flex-wrap items-center gap-2 self-end sm:self-center flex-shrink-0">
+                              <span
+                                className={`px-2 py-0.5 rounded text-[11px] font-semibold ${
+                                  userVal === undefined
+                                    ? 'bg-surface-container-high text-outline'
+                                    : isMatch
+                                    ? 'bg-emerald-100 text-emerald-800'
+                                    : 'bg-rose-100 text-rose-800'
+                                }`}
+                              >
+                                Bạn chọn: {userVal === true ? 'Đúng' : userVal === false ? 'Sai' : 'Chưa chọn'}
+                              </span>
+                              <span
+                                className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                                  correctVal === true
+                                    ? 'bg-emerald-600 text-white'
+                                    : correctVal === false
+                                    ? 'bg-rose-600 text-white'
+                                    : 'bg-surface-container-high text-outline'
+                                }`}
+                              >
+                                Đáp án đúng: {correctVal === true ? 'ĐÚNG' : correctVal === false ? 'SAI' : 'CHƯA CÓ KEY'}
+                              </span>
+                            </div>
                           </div>
                         );
                       })}
                     </div>
                   )}
 
-                  {q.questionType === 'SHORT_ANSWER' && (
-                    <div className="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/20 flex items-center gap-3 text-xs">
-                      <span className="text-outline font-semibold">Đáp án chính thức:</span>
-                      <span className="font-mono font-bold text-sm text-emerald-800 px-2 py-0.5 rounded bg-emerald-100">
-                        {keyInfo?.correctShortAnswer || '12500'}
-                      </span>
+                  {/* 3. MATCHING */}
+                  {q.questionType === 'MATCHING' && (
+                    <div className="space-y-3 pt-1 text-xs">
+                      {q.matchingChoices && q.matchingChoices.length > 0 && (
+                        <div className="p-3 rounded-xl bg-surface-container-low border border-outline-variant/30 space-y-2">
+                          <div className="font-bold text-primary uppercase tracking-wide text-[11px]">
+                            Danh sách lựa chọn Cột B
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                            {q.matchingChoices.map(choice => (
+                              <div key={choice.key} className="flex items-start gap-2">
+                                <span className="px-1.5 py-0.5 rounded bg-surface-container-high font-bold text-on-surface">
+                                  {choice.key}
+                                </span>
+                                <span className="leading-relaxed">
+                                  <MathView content={choice.text} />
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="divide-y divide-outline-variant/20 border border-outline-variant/30 rounded-xl overflow-hidden bg-surface-container-low">
+                        {(q.options || []).map((opt, optIdx) => {
+                          const premiseKey = opt.optionLabel || String(optIdx + 1);
+                          const userMatching = (userAns?.answerPayload as Record<string, string> | undefined) || {};
+                          const userChoice = userMatching[premiseKey];
+                          const correctChoice = keyInfo?.correctMatching?.[premiseKey];
+                          const isMatch = Boolean(userChoice && correctChoice && userChoice === correctChoice);
+
+                          return (
+                            <div
+                              key={opt.id || premiseKey}
+                              className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                            >
+                              <div className="flex items-start gap-2 flex-1">
+                                <span className="font-bold text-primary">({premiseKey})</span>
+                                <MathView content={opt.optionText} />
+                              </div>
+                              <div className="flex flex-wrap items-center gap-2 self-end sm:self-center flex-shrink-0">
+                                <span
+                                  className={`px-2 py-0.5 rounded font-semibold ${
+                                    !userChoice
+                                      ? 'bg-surface-container-high text-outline'
+                                      : isMatch
+                                      ? 'bg-emerald-100 text-emerald-800'
+                                      : 'bg-rose-100 text-rose-800'
+                                  }`}
+                                >
+                                  Bạn chọn: {userChoice || 'Chưa chọn'}
+                                </span>
+                                <span className="px-2 py-0.5 rounded font-bold bg-emerald-600 text-white">
+                                  Đáp án đúng: {correctChoice || 'Chưa có key'}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
+
+                  {/* 4. SHORT_ANSWER */}
+                  {q.questionType === 'SHORT_ANSWER' && (() => {
+                    const rawVal = userAns?.answerPayload?.value;
+                    const userShort = typeof rawVal === 'string' ? rawVal.trim() : '';
+                    const correctShort = keyInfo?.correctShortAnswer || '';
+                    const isShortMatch = Boolean(
+                      userShort && correctShort && userShort.toLowerCase() === correctShort.trim().toLowerCase()
+                    );
+
+                    return (
+                      <div className="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/20 flex flex-wrap items-center gap-4 text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="text-outline font-semibold">Bạn trả lời:</span>
+                          <span
+                            className={`font-mono font-bold text-sm px-2.5 py-0.5 rounded ${
+                              !userShort
+                                ? 'bg-surface-container-high text-outline'
+                                : isShortMatch
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-rose-100 text-rose-800'
+                            }`}
+                          >
+                            {userShort || 'Chưa trả lời'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-outline font-semibold">Đáp án đúng:</span>
+                          <span className="font-mono font-bold text-sm text-emerald-800 px-2.5 py-0.5 rounded bg-emerald-100">
+                            {correctShort || 'Chưa có key'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Detailed explanation */}
                   {keyInfo?.explanation && (

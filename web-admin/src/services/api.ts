@@ -16,6 +16,7 @@ import type {
   StudentSessionInfo,
   StudentQuestionContent,
   SaveSessionAnswerPayload,
+  SubmitAnswerPayload,
   SessionAnswerKeysData,
   AiExplanationPayload,
   AiExplanationResponse,
@@ -1807,6 +1808,29 @@ export const fallbackSessionQuestions: StudentQuestionContent[] = [
       { id: 2007, optionLabel: 'C', optionText: 'Financial Technology (Fintech)' },
       { id: 2008, optionLabel: 'D', optionText: 'Biotechnology and Environment' }
     ]
+  },
+  {
+    id: 110,
+    questionCode: 'MATH_MATCH_01',
+    partNumber: 3,
+    questionType: 'MATCHING',
+    difficulty: 'HARD',
+    order: 10,
+    content: 'Ghép mỗi hàm số ở Cột A với một tính chất hoặc đặc trưng đồ thị tương ứng ở Cột B:',
+    options: [
+      { id: 3001, optionLabel: '1', optionText: 'Hàm số $y = x^3 - 3x$' },
+      { id: 3002, optionLabel: '2', optionText: 'Hàm số $y = \\frac{2x - 1}{x + 1}$' },
+      { id: 3003, optionLabel: '3', optionText: 'Hàm số $y = e^x$' },
+      { id: 3004, optionLabel: '4', optionText: 'Hàm số $y = \\ln(x)$' }
+    ],
+    matchingChoices: [
+      { key: 'A', text: 'Có hai điểm cực trị nằm về hai phía đối diện của trục tung' },
+      { key: 'B', text: 'Tập xác định $(0; +\\infty)$ và luôn đồng biến trên toàn bộ tập xác định' },
+      { key: 'C', text: 'Đồ thị có tiệm cận đứng $x = -1$ và tiệm cận ngang $y = 2$' },
+      { key: 'D', text: 'Hàm số chẵn, nhận trục tung làm trục đối xứng' },
+      { key: 'E', text: 'Có giá trị nhỏ nhất bằng $0$ trên toàn trục số thực $\\mathbb{R}$' },
+      { key: 'F', text: 'Có đạo hàm bằng chính nó trên tập xác định $\\mathbb{R}$' }
+    ]
   }
 ];
 
@@ -1858,6 +1882,11 @@ export const fallbackAnswerKeys: SessionAnswerKeysData = {
       questionId: 109,
       correctOptionIds: [2007],
       explanation: 'Trong đoạn hội thoại, thí sinh bày tỏ rõ mong muốn: "I am specifically keen on Financial Technology because it blends computer science with banking." Do đó phương án C (Financial Technology) là đáp án chính xác.'
+    },
+    {
+      questionId: 110,
+      correctMatching: { '1': 'A', '2': 'C', '3': 'F', '4': 'B' },
+      explanation: 'Ghép hợp Cột A - Cột B:\n- Mệnh đề 1 ghép A: $y = x^3 - 3x \\Rightarrow y\' = 3x^2 - 3 = 0 \\Leftrightarrow x = \\pm 1$. Hai điểm cực trị $(-1; 2)$ và $(1; -2)$ nằm về hai phía trục tung.\n- Mệnh đề 2 ghép C: Hàm số phân biến $y = \\frac{2x - 1}{x + 1}$ có TCĐ $x = -1$ và TCN $y = 2$.\n- Mệnh đề 3 ghép F: $(e^x)\' = e^x$, đạo hàm bằng chính nó trên $\\mathbb{R}$.\n- Mệnh đề 4 ghép B: $y = \\ln(x)$ có TXĐ $(0; +\\infty)$ và $y\' = \\frac{1}{x} > 0$, luôn đồng biến.'
     }
   ]
 };
@@ -2020,13 +2049,14 @@ export async function fetchSessionQuestion(sessionId: number, questionId: number
       const json = await res.json();
       const q = json?.data;
       if (q) {
+        const questionType = q.questionType || 'SINGLE_CHOICE';
         return {
           id: q.id,
           questionCode: q.questionCode || `Q_${q.id}`,
           questionGroupId: q.questionGroupId,
           questionGroup: q.questionGroup,
           content: q.content || '',
-          questionType: q.questionType || 'SINGLE_CHOICE',
+          questionType,
           difficulty: q.difficulty,
           order: q.order,
           partNumber: q.partNumber,
@@ -2034,11 +2064,26 @@ export async function fetchSessionQuestion(sessionId: number, questionId: number
           audioDurationSec: q.audioDurationSec || q.questionGroup?.audioDurationSec || null,
           maxPlays: q.maxPlays || q.questionGroup?.maxPlays || 2,
           trueFalseItems: q.trueFalseItems,
-          options: q.options?.map((opt: any) => ({
-            id: opt.id,
-            optionLabel: opt.optionLabel || '',
-            optionText: opt.optionText || ''
-          }))
+          matchingChoices: Array.isArray(q.matchingChoices) ? q.matchingChoices : undefined,
+          options: q.options?.map((opt: any, idx: number) => {
+            let defaultLabel = '';
+            if (questionType === 'MATCHING') {
+              defaultLabel = String(idx + 1);
+            } else if (questionType === 'TRUE_FALSE') {
+              defaultLabel = String.fromCharCode(97 + idx);
+            } else {
+              defaultLabel = String.fromCharCode(65 + idx);
+            }
+            const rawText = opt.optionText ?? opt.content ?? '';
+            const optionText = (questionType === 'MATCHING' && rawText.includes('⇄'))
+              ? rawText.split('⇄')[0].trim()
+              : rawText;
+            return {
+              id: opt.id ?? idx + 1,
+              optionLabel: opt.optionLabel || defaultLabel,
+              optionText
+            };
+          })
         };
       }
     }
@@ -2054,6 +2099,17 @@ export async function saveSessionAnswer(
   sessionId: number,
   payload: SaveSessionAnswerPayload
 ): Promise<boolean> {
+  // Luôn lưu câu trả lời của thí sinh vào localStorage
+  try {
+    const key = `${LOCAL_CBT_ANSWERS_PREFIX}${sessionId}`;
+    const raw = localStorage.getItem(key);
+    const existing: Record<number, SaveSessionAnswerPayload> = raw ? JSON.parse(raw) : {};
+    existing[payload.questionId] = payload;
+    localStorage.setItem(key, JSON.stringify(existing));
+  } catch (err) {
+    console.warn(`[saveSessionAnswer(${sessionId})] local storage write failed:`, err);
+  }
+
   try {
     const res = await authenticatedFetch(`${BASE_URL}/sessions/${sessionId}/answers`, {
       method: 'POST',
@@ -2063,18 +2119,20 @@ export async function saveSessionAnswer(
       return true;
     }
   } catch (err) {
-    console.warn(`[saveSessionAnswer(${sessionId})] API failed, saving to localStorage:`, err);
+    console.warn(`[saveSessionAnswer(${sessionId})] API failed, kept local state:`, err);
   }
 
+  return true;
+}
+
+// ponytail: local cache until GET /sessions/{id}/answers endpoint is wired
+export function getLocalSessionAnswers(sessionId: number): Record<number, SubmitAnswerPayload> {
   try {
     const key = `${LOCAL_CBT_ANSWERS_PREFIX}${sessionId}`;
     const raw = localStorage.getItem(key);
-    const existing: Record<number, SaveSessionAnswerPayload> = raw ? JSON.parse(raw) : {};
-    existing[payload.questionId] = payload;
-    localStorage.setItem(key, JSON.stringify(existing));
-    return true;
+    return raw ? JSON.parse(raw) : {};
   } catch {
-    return true;
+    return {};
   }
 }
 
@@ -2150,7 +2208,19 @@ export async function fetchSessionAnswerKeys(sessionId: number): Promise<Session
     if (res.ok) {
       const json = await res.json();
       if (json?.data) {
-        return json.data;
+        const rawQs = Array.isArray(json.data.questions) ? json.data.questions : [];
+        return {
+          sessionId: json.data.sessionId ?? sessionId,
+          examId: json.data.examId ?? 1,
+          questions: rawQs.map((q: any) => ({
+            questionId: q.questionId ?? q.id,
+            correctOptionIds: q.correctOptionIds,
+            correctTrueFalse: q.correctTrueFalse,
+            correctShortAnswer: q.correctShortAnswer,
+            correctMatching: q.correctMatching,
+            explanation: q.explanation
+          }))
+        };
       }
     }
   } catch (err) {
@@ -2161,6 +2231,8 @@ export async function fetchSessionAnswerKeys(sessionId: number): Promise<Session
     sessionId
   };
 }
+
+export const fetchExamAnswerKey = fetchSessionAnswerKeys;
 
 export async function requestAiExplanation(payload: AiExplanationPayload): Promise<AiExplanationResponse> {
   try {

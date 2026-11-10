@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.io.Serializable;
+
 /**
  * F9 — single row of the public leaderboard. Tied to a user that has explicitly
  * opted in (leaderboard_opt_in = true). We never include email/phone here.
@@ -16,7 +18,9 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class LeaderboardEntryResponse {
+public class LeaderboardEntryResponse implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /** 1-based rank, computed after sorting by total score desc. */
     private int rank;

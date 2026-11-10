@@ -26,4 +26,15 @@ public class SessionQuestionContentResponse {
     private Difficulty difficulty;
     private Integer order;
     private List<QuestionOptionContentResponse> options;
+    private List<MatchingChoiceDto> matchingChoices;
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class MatchingChoiceDto {
+        private String key;
+        private String text;
+    }
 }

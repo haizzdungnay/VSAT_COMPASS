@@ -2,6 +2,7 @@ package com.vsatcompass.api.repository;
 
 import com.vsatcompass.api.entity.ExamSession;
 import com.vsatcompass.api.entity.enums.SessionStatus;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -63,4 +64,20 @@ public interface ExamSessionRepository extends JpaRepository<ExamSession, Long> 
             GROUP BY user_id
             """, nativeQuery = true)
     List<UserScoreAggregate> aggregateScoresByUser();
+
+    @Query(value = """
+            SELECT es.user_id AS "userId",
+                   COALESCE(SUM(es.score), 0) AS "totalScore",
+                   COUNT(es.id) AS "examCount"
+            FROM exam_sessions es
+            JOIN exams e ON e.id = es.exam_id
+            WHERE es.status = 'SUBMITTED'
+              AND es.score IS NOT NULL
+              AND e.subject_id = :subjectId
+            GROUP BY es.user_id
+            """, nativeQuery = true)
+    List<UserScoreAggregate> aggregateScoresByUserAndSubject(
+            @Param("subjectId") Long subjectId,
+            Pageable pageable
+    );
 }

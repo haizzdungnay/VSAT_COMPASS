@@ -78,6 +78,11 @@ export interface StudentTrueFalseItem {
   text: string;
 }
 
+export interface StudentMatchingChoice {
+  key: string;
+  text: string;
+}
+
 export interface StudentQuestionContent {
   id: number;
   questionCode: string;
@@ -89,7 +94,8 @@ export interface StudentQuestionContent {
   order?: number;
   options?: QuestionOption[];
   trueFalseItems?: StudentTrueFalseItem[];
-  partNumber?: 1 | 2 | 3;
+  matchingChoices?: StudentMatchingChoice[];
+  partNumber?: 1 | 2 | 3 | 4;
   audioUrl?: string | null;
   audioDurationSec?: number | null;
   maxPlays?: number | null;
@@ -103,11 +109,14 @@ export interface SaveSessionAnswerPayload {
   timeSpentSeconds?: number;
 }
 
+export type SubmitAnswerPayload = SaveSessionAnswerPayload;
+
 export interface QuestionAnswerKeyItem {
   questionId: number;
   correctOptionIds?: number[];
   correctTrueFalse?: Record<string, boolean>;
   correctShortAnswer?: string;
+  correctMatching?: Record<string, string>;
   explanation?: string;
 }
 

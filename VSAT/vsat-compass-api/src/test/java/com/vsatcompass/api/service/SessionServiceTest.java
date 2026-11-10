@@ -1,6 +1,7 @@
 package com.vsatcompass.api.service;
 
 import com.vsatcompass.api.dto.request.SessionRequest;
+import com.vsatcompass.api.dto.response.QuestionAnswerKeyResponse;
 import com.vsatcompass.api.dto.response.QuestionOptionContentResponse;
 import com.vsatcompass.api.dto.response.SessionAnswerKeysResponse;
 import com.vsatcompass.api.dto.response.SessionQuestionContentResponse;
@@ -9,6 +10,7 @@ import com.vsatcompass.api.entity.ExamQuestion;
 import com.vsatcompass.api.entity.ExamSession;
 import com.vsatcompass.api.entity.Question;
 import com.vsatcompass.api.entity.QuestionGroup;
+import com.vsatcompass.api.entity.QuestionMatchingChoice;
 import com.vsatcompass.api.entity.QuestionOption;
 import com.vsatcompass.api.entity.enums.Difficulty;
 import com.vsatcompass.api.entity.enums.QuestionType;
@@ -17,6 +19,7 @@ import com.vsatcompass.api.entity.enums.SessionStatus;
 import com.vsatcompass.api.exception.AppException;
 import com.vsatcompass.api.repository.ExamQuestionRepository;
 import com.vsatcompass.api.repository.ExamSessionRepository;
+import com.vsatcompass.api.repository.QuestionMatchingChoiceRepository;
 import com.vsatcompass.api.repository.QuestionOptionRepository;
 import com.vsatcompass.api.repository.QuestionRepository;
 import com.vsatcompass.api.repository.QuestionGroupRepository;
@@ -32,6 +35,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -63,6 +67,7 @@ class SessionServiceTest {
     @Mock QuestionOptionRepository questionOptionRepository;
     @Mock SessionAnswerRepository sessionAnswerRepository;
     @Mock QuestionGroupRepository questionGroupRepository;
+    @Mock QuestionMatchingChoiceRepository questionMatchingChoiceRepository;
 
     @InjectMocks SessionServiceImpl sessionService;
 
@@ -77,6 +82,7 @@ class SessionServiceTest {
 
     @BeforeEach
     void setUp() {
+        ReflectionTestUtils.setField(sessionService, "questionMatchingChoiceRepository", questionMatchingChoiceRepository);
         inProgressSession = ExamSession.builder()
                 .id(SESSION_ID)
                 .userId(USER_ID)
@@ -471,9 +477,19 @@ class SessionServiceTest {
     }
 
     @Test
-    @DisplayName("getQuestionForSession: SUBMITTED session throws BAD_REQUEST")
-    void getQuestionForSession_submittedSession_throwsBadRequest() {
-        assertQuestionContentStatusRejected(SessionStatus.SUBMITTED);
+    @DisplayName("getQuestionForSession: SUBMITTED session is allowed")
+    void getQuestionForSession_submittedSession_allowed() {
+        inProgressSession.setStatus(SessionStatus.SUBMITTED);
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(EXAM_ID))
+                .thenReturn(List.of(examQuestion(QUESTION_ID, 1)));
+        when(questionRepository.findById(QUESTION_ID)).thenReturn(Optional.of(question(QUESTION_ID, "Exp")));
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(QUESTION_ID))
+                .thenReturn(List.of(option(301L, QUESTION_ID, true, 1)));
+
+        SessionQuestionContentResponse res = sessionService.getQuestionForSession(SESSION_ID, QUESTION_ID, USER_ID);
+        assertThat(res).isNotNull();
+        assertThat(res.getId()).isEqualTo(QUESTION_ID);
     }
 
     @Test
@@ -953,6 +969,178 @@ class SessionServiceTest {
         assertThat(saved.getCorrectSubitems()).isEqualTo(1);
         assertThat(saved.getIsCorrect()).isTrue();
         assertThat(saved.getRawPointsAwarded()).isEqualByComparingTo(BigDecimal.valueOf(6.0));
+    }
+
+    @Test
+    @DisplayName("getQuestionForSession: MATCHING question hides answer key after arrow and populates matchingChoices")
+    void getQuestionForSession_matchingQuestion_hidesAnswerKeyAndPopulatesChoices() {
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(EXAM_ID))
+                .thenReturn(List.of(examQuestion(QUESTION_ID, 1)));
+
+        Question matchQuestion = Question.builder()
+                .id(QUESTION_ID)
+                .questionCode("MATCH-002")
+                .questionType(QuestionType.MATCHING)
+                .questionText("Nối cột")
+                .build();
+        when(questionRepository.findById(QUESTION_ID)).thenReturn(Optional.of(matchQuestion));
+
+        List<QuestionOption> matchOptions = List.of(
+                QuestionOption.builder().id(201L).questionId(QUESTION_ID).optionLabel("1").optionText("Mệnh đề 1 ⇄ Cột 2: A").isCorrect(true).displayOrder(1).build(),
+                QuestionOption.builder().id(202L).questionId(QUESTION_ID).optionLabel("2").optionText("Mệnh đề 2 ⇄ B").isCorrect(true).displayOrder(2).build()
+        );
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(QUESTION_ID))
+                .thenReturn(matchOptions);
+
+        List<QuestionMatchingChoice> choices = List.of(
+                QuestionMatchingChoice.builder().id(10L).questionId(QUESTION_ID).choiceKey("A").choiceText("Lựa chọn A").displayOrder(1).build(),
+                QuestionMatchingChoice.builder().id(11L).questionId(QUESTION_ID).choiceKey("B").choiceText("Lựa chọn B").displayOrder(2).build()
+        );
+        when(questionMatchingChoiceRepository.findByQuestionIdOrderByDisplayOrderAsc(QUESTION_ID))
+                .thenReturn(choices);
+
+        SessionQuestionContentResponse res = sessionService.getQuestionForSession(SESSION_ID, QUESTION_ID, USER_ID);
+
+        assertThat(res.getOptions()).hasSize(2);
+        assertThat(res.getOptions().get(0).getContent()).isEqualTo("Mệnh đề 1");
+        assertThat(res.getOptions().get(0).getOptionLabel()).isEqualTo("1");
+        assertThat(res.getOptions().get(1).getContent()).isEqualTo("Mệnh đề 2");
+        assertThat(res.getOptions().get(1).getOptionLabel()).isEqualTo("2");
+
+        assertThat(res.getMatchingChoices()).hasSize(2);
+        assertThat(res.getMatchingChoices().get(0).getKey()).isEqualTo("A");
+        assertThat(res.getMatchingChoices().get(0).getText()).isEqualTo("Lựa chọn A");
+    }
+
+    @Test
+    @DisplayName("submitAnswer: MATCHING does not falsely match C in CỘT")
+    void submitAnswer_matchingPayload_doesNotFalselyMatchCInCot() {
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(EXAM_ID))
+                .thenReturn(List.of(examQuestion(QUESTION_ID, 1)));
+
+        Question matchQuestion = Question.builder()
+                .id(QUESTION_ID)
+                .questionCode("MATCH-003")
+                .questionType(QuestionType.MATCHING)
+                .build();
+        when(questionRepository.findById(QUESTION_ID)).thenReturn(Optional.of(matchQuestion));
+
+        List<QuestionOption> matchOptions = List.of(
+                QuestionOption.builder().id(201L).questionId(QUESTION_ID).optionLabel("1").optionText("Mệnh đề 1 ⇄ Cột 2: A").isCorrect(true).displayOrder(1).build()
+        );
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(QUESTION_ID))
+                .thenReturn(matchOptions);
+        when(sessionAnswerRepository.findBySessionIdAndQuestionId(SESSION_ID, QUESTION_ID))
+                .thenReturn(Optional.empty());
+        when(sessionAnswerRepository.countBySessionId(SESSION_ID)).thenReturn(1L);
+
+        SessionRequest.SubmitAnswer req = new SessionRequest.SubmitAnswer();
+        req.setQuestionId(QUESTION_ID);
+        // User answers "C", which used to match "CỘT" with contains(), but should be false now
+        req.setAnswerPayload(Map.of("1", "C"));
+
+        sessionService.submitAnswer(USER_ID, SESSION_ID, req);
+
+        ArgumentCaptor<SessionAnswer> cap = ArgumentCaptor.forClass(SessionAnswer.class);
+        verify(sessionAnswerRepository).save(cap.capture());
+        SessionAnswer saved = cap.getValue();
+        assertThat(saved.getCorrectSubitems()).isEqualTo(0);
+        assertThat(saved.getIsCorrect()).isFalse();
+        assertThat(saved.getRawPointsAwarded()).isEqualByComparingTo(BigDecimal.ZERO);
+    }
+
+    @Test
+    @DisplayName("submitAnswer: MATCHING with empty options awards 0 points")
+    void submitAnswer_matchingEmptyOptions_awardsZeroPoints() {
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(EXAM_ID))
+                .thenReturn(List.of(examQuestion(QUESTION_ID, 1)));
+
+        Question matchQuestion = Question.builder()
+                .id(QUESTION_ID)
+                .questionCode("MATCH-EMPTY")
+                .questionType(QuestionType.MATCHING)
+                .build();
+        when(questionRepository.findById(QUESTION_ID)).thenReturn(Optional.of(matchQuestion));
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(QUESTION_ID))
+                .thenReturn(Collections.emptyList());
+        when(sessionAnswerRepository.findBySessionIdAndQuestionId(SESSION_ID, QUESTION_ID))
+                .thenReturn(Optional.empty());
+        when(sessionAnswerRepository.countBySessionId(SESSION_ID)).thenReturn(1L);
+
+        SessionRequest.SubmitAnswer req = new SessionRequest.SubmitAnswer();
+        req.setQuestionId(QUESTION_ID);
+        req.setAnswerPayload(Map.of("1", "A", "2", "B"));
+
+        sessionService.submitAnswer(USER_ID, SESSION_ID, req);
+
+        ArgumentCaptor<SessionAnswer> cap = ArgumentCaptor.forClass(SessionAnswer.class);
+        verify(sessionAnswerRepository).save(cap.capture());
+        SessionAnswer saved = cap.getValue();
+        assertThat(saved.getCorrectSubitems()).isEqualTo(0);
+        assertThat(saved.getTotalSubitems()).isEqualTo(0);
+        assertThat(saved.getIsCorrect()).isFalse();
+        assertThat(saved.getRawPointsAwarded()).isEqualByComparingTo(BigDecimal.ZERO);
+    }
+
+    @Test
+    @DisplayName("getAnswerKeysForSession: populates correctTrueFalse, correctShortAnswer, and correctMatching")
+    void getAnswerKeysForSession_populatesAllAnswerKeyTypes() {
+        inProgressSession.setStatus(SessionStatus.SUBMITTED);
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+
+        Long tfQuestionId = 101L;
+        Long saQuestionId = 102L;
+        Long matchQuestionId = 103L;
+
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(EXAM_ID))
+                .thenReturn(List.of(
+                        examQuestion(tfQuestionId, 1),
+                        examQuestion(saQuestionId, 2),
+                        examQuestion(matchQuestionId, 3)
+                ));
+
+        Question tfQ = Question.builder().id(tfQuestionId).questionCode("TF-1").questionType(QuestionType.TRUE_FALSE).explanation("TF exp").build();
+        Question saQ = Question.builder().id(saQuestionId).questionCode("SA-1").questionType(QuestionType.SHORT_ANSWER).explanation("SA exp").build();
+        Question matchQ = Question.builder().id(matchQuestionId).questionCode("MATCH-1").questionType(QuestionType.MATCHING).explanation("Match exp").build();
+
+        when(questionRepository.findById(tfQuestionId)).thenReturn(Optional.of(tfQ));
+        when(questionRepository.findById(saQuestionId)).thenReturn(Optional.of(saQ));
+        when(questionRepository.findById(matchQuestionId)).thenReturn(Optional.of(matchQ));
+
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(tfQuestionId))
+                .thenReturn(List.of(
+                        QuestionOption.builder().id(1L).questionId(tfQuestionId).optionLabel("a").isCorrect(true).displayOrder(1).build(),
+                        QuestionOption.builder().id(2L).questionId(tfQuestionId).optionLabel("b").isCorrect(false).displayOrder(2).build()
+                ));
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(saQuestionId))
+                .thenReturn(List.of(
+                        QuestionOption.builder().id(3L).questionId(saQuestionId).optionLabel("Đáp án").optionText("42").isCorrect(true).displayOrder(1).build()
+                ));
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(matchQuestionId))
+                .thenReturn(List.of(
+                        QuestionOption.builder().id(4L).questionId(matchQuestionId).optionLabel("1").optionText("Ý 1 ⇄ Cột 2: B").isCorrect(true).displayOrder(1).build(),
+                        QuestionOption.builder().id(5L).questionId(matchQuestionId).optionLabel("2").optionText("Ý 2 ⇄ D").isCorrect(true).displayOrder(2).build()
+                ));
+
+        SessionAnswerKeysResponse response = sessionService.getAnswerKeysForSession(SESSION_ID, USER_ID);
+
+        assertThat(response.getQuestions()).hasSize(3);
+
+        QuestionAnswerKeyResponse tfRes = response.getQuestions().get(0);
+        assertThat(tfRes.getCorrectTrueFalse()).isNotNull();
+        assertThat(tfRes.getCorrectTrueFalse().get("a")).isTrue();
+        assertThat(tfRes.getCorrectTrueFalse().get("b")).isFalse();
+
+        QuestionAnswerKeyResponse saRes = response.getQuestions().get(1);
+        assertThat(saRes.getCorrectShortAnswer()).isEqualTo("42");
+
+        QuestionAnswerKeyResponse matchRes = response.getQuestions().get(2);
+        assertThat(matchRes.getCorrectMatching()).isNotNull();
+        assertThat(matchRes.getCorrectMatching().get("1")).isEqualTo("B");
+        assertThat(matchRes.getCorrectMatching().get("2")).isEqualTo("D");
     }
 
     private void assertQuestionContentStatusRejected(SessionStatus status) {
