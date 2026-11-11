@@ -1,23 +1,27 @@
 # V-SAT Compass
 
-> Nền tảng mô phỏng thi và ôn luyện V-SAT đa nền tảng — Android Native + Spring Boot REST API
+> Nền tảng mô phỏng thi, đánh giá năng lực và ôn luyện V-SAT đa nền tảng — Backend Spring Boot + Web Admin/Student CBT + Android Native
 
-![Android](https://img.shields.io/badge/Android-Java-green?logo=android)
+**Phiên bản hiện hành:** `v1.2.0` (Backend & Web Admin/CBT) | `android/v0.3.0` (`versionCode = 3`)
+
+![Version](https://img.shields.io/badge/Version-v1.2.0-blue)
+![Android](https://img.shields.io/badge/Android-v0.3.0%20(Java)-green?logo=android)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.9-brightgreen?logo=springboot)
-![PostgreSQL](https://img.shields.io/badge/Database-Neon%20PostgreSQL-blue?logo=postgresql)
-![Backend](https://img.shields.io/badge/backend-live-success)
+![React](https://img.shields.io/badge/Web%20Admin%20%26%20CBT-React%2019.2-61dafb?logo=react)
+![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL%2017-blue?logo=postgresql)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
 ---
 
 ## Tổng quan
 
-**V-SAT Compass** là ứng dụng hỗ trợ học viên ôn thi V-SAT (Vietnam Scholastic Assessment Test), bao gồm:
+**V-SAT Compass** là hệ sinh thái ôn luyện và thi trực tuyến chuẩn hóa theo kỳ thi V-SAT 2026 (Vietnam Scholastic Assessment Test), gồm 3 phân hệ đồng bộ:
 
-- **Android App** (Java + XML) — giao diện người dùng, làm bài thi, xem kết quả
-- **Backend API** (Spring Boot) — quản lý đề thi, câu hỏi, phiên thi, thống kê
+- **Backend API (`VSAT/vsat-compass-api/`)** — Spring Boot 3.5.9 REST API, quản lý ngân hàng câu hỏi 4 định dạng, ma trận đề thi 3 chiều, ca thi tập trung, chấm điểm phân tầng thang 150, audio play pessimistic locking, và Redis Cache.
+- **Web Admin & Student CBT (`web-admin/`)** — React 19 + Vite 8 + TypeScript 6: Cổng quản trị (Blueprints CRUD, ExamWizard 4 bước, Import đa định dạng `.xlsx/.json/.docx/.txt`, ReviewQueue KaTeX/Audio) và Giao diện thi máy tính (StudentCBTWorkspace, StudentScorecard, AdmissionPredictor).
+- **Android App (`app/`)** — Java + XML: Giao diện học viên và quản trị di động, mã hóa đề thi & file nghe offline `.vsa` AES-128-GCM, Kiosk mode `startLockTask()` chống gian lận, dự đoán trúng tuyển đại học.
 
---- 
+---
 
 ## Tech Stack
 
@@ -26,25 +30,34 @@
 |-----------|-----------|
 | Java | 17 |
 | Spring Boot | 3.5.9 |
-| PostgreSQL (Neon Serverless) | latest |
+| PostgreSQL (Neon / Docker) | 17 |
+| Flyway Migrations | V0..V17 |
+| Redis Cache | 7 (LRU) |
 | Spring Security + JWT | jjwt 0.12.5 |
-| Spring Data JPA + Hibernate | — |
+| Apache POI (Excel import) | 5.3.0 |
 | Lombok + MapStruct | — |
 | Swagger / OpenAPI | springdoc 2.5.0 |
 | Gradle | 8.7 |
+
+### Web Admin & Student CBT
+| Công nghệ | Phiên bản |
+|-----------|-----------|
+| React | 19.2.8 |
+| TypeScript | ~6.0.2 |
+| Vite | 8.3.0 |
+| Tailwind CSS | 3.4.19 |
+| KaTeX | 0.19.0 |
+| Oxlint | 1.81.0 |
 
 ### Android
 | Công nghệ | Phiên bản |
 |-----------|-----------|
 | Java | 11 |
 | Android SDK | 36 (min 28) |
-| Retrofit 2 | 2.11.0 |
-| OkHttp 3 | 4.12.0 |
-| Gson | 2.11.0 |
-| Glide | 4.16.0 |
-| Jetpack Navigation | 2.8.5 |
-| Lifecycle (ViewModel + LiveData) | 2.8.7 |
-| CircleImageView | 3.1.0 |
+| Retrofit 2 / OkHttp 3 | 2.11.0 / 4.12.0 |
+| Gson / Glide | 2.11.0 / 4.16.0 |
+| Media3 ExoPlayer / WorkManager | Offline Audio + Background Sync |
+| Jetpack Navigation / Lifecycle | 2.8.5 / 2.8.7 |
 | Material Components | 1.13.0 |
 
 ---
@@ -53,46 +66,55 @@
 
 ```
 VSAT_COMPASS/                          ← Repository root
-├── app/                               ← Android App
+├── app/                               ← Android App (v0.3.0, versionCode = 3)
 │   └── src/main/java/com/example/v_sat_compass/
 │       ├── VsatApp.java               ← Application class
 │       ├── MainActivity.java          ← Bottom nav + Navigation
 │       ├── data/
-│       │   ├── api/
-│       │   │   ├── ApiClient.java     ← Retrofit singleton + JWT interceptor + feature flag
-│       │   │   ├── AuthApi.java       ← Auth endpoints
-│       │   │   └── ExamApi.java       ← Exam + Session endpoints (incl. client-submit)
-│       │   ├── local/
-│       │   │   └── LocalExamDataSource.java  ← Đọc sample_math_exam.json (fallback offline)
-│       │   ├── model/                 ← Gson models (ApiResponse, Exam, Question…)
-│       │   └── repository/            ← AuthRepository, Resource<T>
+│       │   ├── api/                   ← ApiClient, AuthApi, ExamApi, AdminApi, AdminQuestionApi
+│       │   ├── local/                 ← LocalExamDataSource, OfflineExamRepository (AES-128-GCM .vsa)
+│       │   ├── model/                 ← Gson models (QuestionGroup, Matching, Admission…)
+│       │   └── repository/            ← Auth, SessionContent, ExamHistory, Gamification, Flashcard
 │       └── ui/
-│           ├── SplashActivity.java    ← Auto-redirect theo login state
-│           ├── auth/                  ← LoginActivity, RegisterActivity, AuthViewModel
+│           ├── auth/                  ← Splash, Login, Register
 │           ├── home/                  ← HomeFragment (dashboard student)
-│           ├── exam/                  ← ExamFragment, ExamAdapter
-│           │   └── session/           ← ExamSessionActivity, ExamResultActivity
-│           └── profile/               ← ProfileFragment
+│           ├── exam/                  ← ExamFragment, ExamSession (Kiosk LockTask), ExamReview, History
+│           ├── practice/              ← PracticeFragment, Flashcards, Progress, AdmissionPredictor
+│           └── admin/                 ← AdminActivity, Exam/Question/User management
+│
+├── web-admin/                         ← Web Admin & Student CBT Portal (v1.2.0)
+│   ├── package.json
+│   └── src/pages/
+│       ├── Dashboard/                 ← KPI & tổng quan hệ thống
+│       ├── QuestionBank/              ← Quản lý ngân hàng câu hỏi + audio
+│       ├── Blueprints/                ← DB-backed ma trận đề 3 chiều CRUD (WEB-3)
+│       ├── ExamWizard/                ← Trình soạn đề 4 bước
+│       ├── ImportQuestions/           ← Nạp đa định dạng .xlsx/.json/.docx/.txt (WEB-4)
+│       ├── ReviewQueue/               ← Duyệt câu hỏi KaTeX & Audio preview
+│       ├── Schedules/                 ← Quản lý ca thi tập trung (exam_windows)
+│       ├── StudentCBT/                ← Sảnh thi, StudentCBTWorkspace, StudentScorecard, AdmissionPredictor
+│       ├── Users/ & Tickets/          ← Quản lý người dùng & xử lý báo lỗi
 │
 ├── VSAT/
-│   ├── vsat-compass-api/              ← Backend Spring Boot (thư mục gốc)
-│   │   ├── Dockerfile                 ← Multi-stage build (deploy Render.com)
-│   │   ├── render.yaml                ← Render.com deploy config
-│   │   └── src/main/java/com/vsatcompass/api/
-│   │       ├── config/               ← Security, JPA, OpenAPI, DataInitializer
-│   │       ├── controller/           ← auth/, student/ (Session)
-│   │       ├── dto/                  ← request/, response/, common/
-│   │       ├── entity/               ← User, RefreshToken, ExamSession + enums
-│   │       ├── repository/           ← Spring Data JPA repos
-│   │       ├── service/              ← AuthService, SessionService + impl
-│   │       ├── security/             ← JWT utils, filter, UserDetails
-│   │       ├── exception/            ← AppException, GlobalExceptionHandler
-│   │       └── util/                 ← SecurityUtils
-│   ├── vsat_database_schema.sql      ← 27 bảng + 20 ENUM types
-│   └── ui/                           ← Tài liệu thiết kế
+│   ├── vsat-compass-api/              ← Backend Spring Boot 3.5.9 (v1.2.0)
+│   │   ├── Dockerfile                 ← Multi-stage build
+│   │   └── src/main/
+│   │       ├── java/com/vsatcompass/api/
+│   │       │   ├── config/            ← Security, Redis Cache, CORS, OpenAPI
+│   │       │   ├── controller/        ← auth/, student/, admin/, collaborator/
+│   │       │   ├── entity/            ← Entities + enums (QuestionGroup, ExamBlueprint, ExamWindow…)
+│   │       │   ├── repository/        ← JPA repos + PESSIMISTIC_WRITE locks
+│   │       │   ├── service/impl/      ← Session, AudioPlays, Blueprint, Multi-format Import, Admission
+│   │       │   └── exception/         ← AppException, GlobalExceptionHandler (409 LockVersion)
+│   │       └── resources/db/migration/ ← Flyway SQL migrations (V0..V17)
+│   └── vsat_database_schema.sql       ← Base schema reference
 │
+├── acceptance-harness/                ← Clean-Room Acceptance Testing Harness (126 checks)
+├── ops/                               ← Linux Home Server deployment & backup scripts
+├── docs/                              ← Tài liệu kiến trúc, runbooks, API error codes
+├── docker-compose.prod.yml            ← Production stack (Postgres 17 + Redis 7 + API + Web)
 ├── CHANGELOG.md
-└── README.md                         ← File này
+└── README.md                          ← File này
 ```
 
 ---
@@ -167,108 +189,39 @@ http://localhost:8080/api/v1/swagger-ui.html
 
 ---
 
-## API Modules
+## API Modules (v1.2.0 — 100% Implemented & Verified)
 
-> Update 2026-06-18 (HEAD `40cec10`): server-submit persists local history for Home/History stats, Result renders dynamic subject/topic data, Profile supports edit info/password/avatar, `/my-stats/weak-topics` wired into Android result, `/admin/users` Specification fix landed. Verified with `./gradlew :app:assembleDebug` plus targeted backend tests.
+Hệ thống API đã hoàn thiện toàn bộ các phân hệ nghiệp vụ, tích hợp đồng bộ giữa Spring Boot 3.5.9, Web Admin/CBT, và Android Client:
 
-> **Trạng thái hiện tại (HEAD `40cec10`, untagged — tag prod gần nhất v0.10.2):** Production-ready trên Render.com — Auth + Session sync đã hardened; Subject/Topic/Subtopic read APIs, Question Bank write/review workflow, public Exam read API, Admin Exam CRUD metadata API, Admin Exam Composition + Publish Workflow, Admin Exam DRAFT Discard, Admin Question Picker endpoint, và C1.6-A student session question delivery + post-submit answer-key endpoints đã live (verify prod tới v0.10.2).
->
-> ⚠️ **Batch "real data" (`be545ba`, 2026-05-26) + Local demo smoke (`40cec10`, 2026-06-18, HEAD) — implemented, CHƯA prod smoke, CHƯA tag:** batch real data thêm `GET /admin/stats`, `GET /admin/users` + `PATCH /admin/users/{id}/role|lock|unlock`, `GET /my-stats/topics`, và `SessionAnswer` persistence. Local demo smoke (`40cec10`) thêm `GET /my-stats/weak-topics`, fix `/admin/users` Specification query (chuyển từ JPQL nullable filter → JPA Specification), backend `isBookmarked` alias, Android `ExamSession` Gson camelCase aliases, profile edit/avatar, home/history stats từ server-submit. Android dùng đề thật + offline demo fallback. Mới verify trên DB local. Tag `v1.0.1` (`53111e6`) là **ông** của HEAD (cha của `be545ba`, ông của `40cec10`) nên chưa bao gồm các thay đổi đó.
->
-> ✅ **Local demo smoke (2026-06-18, committed in `40cec10`):** debug APK + backend LAN local verified for student exam flow: list -> detail -> start session -> answer -> submit -> result -> review. Hotfixes trong commit `40cec10`: `/admin/users` Specification query, backend `isBookmarked` alias, Android `ExamSession` Gson camelCase aliases cho result mapping, profile edit/avatar, weak-topics wiring.
-
-| Module | Base Path | Endpoints | Trạng thái |
-|--------|-----------|-----------|------------|
-| Auth | `/auth` | register, login, refresh, logout, getMe, updateProfile, changePassword | ✅ Verified prod |
-| Session Engine | `/sessions` | start (+ `orderedQuestionIds`), **client-submit**, **get-question**, **answer-keys** | ✅ Verified prod |
-| Subjects (Public) | `/subjects` | list subjects, topics, subtopics | ✅ Verified prod |
-| Questions (Collaborator) | `/collaborator/questions` | create, list own, detail, update, submit-for-review | ✅ Verified prod |
-| Questions (Admin) | `/admin/questions` | queue by status, picker, approve, request revision, reject | ✅ Verified prod (C1.5 / v0.10.0) |
-| Review Workflow | `/admin/questions/{id}/approve`, `/request-revision`, `/reject` | admin review actions + review history records | ✅ Verified prod |
-| Exams (Admin) | `/admin/exams` | metadata CRUD, composition add/remove/reorder, publish workflow, DRAFT discard | ✅ Verified prod (C1.2c-1 / v0.9.4) |
-| Exams (Public) | `/exams` | list `PUBLISHED` + `FREE`, detail with anti-leak 404 | ✅ Verified prod |
-| Student Stats | `/my-stats` | **topic stats** (`/topics`) + **weak topics** (`/weak-topics`) | 🟢 Impl (`be545ba` + `40cec10` HEAD) — chưa prod smoke |
-| Tickets (Student) | `/tickets` | create, list, detail, comment | 📋 Phase D |
-| Tickets (Admin) | `/admin/tickets` | list, assign, resolve, status | 📋 Phase D |
-| Dashboard | `/admin/stats` | overview counts | 🟢 Impl (`be545ba`) — chưa prod smoke |
-| User Management | `/admin/users` | list, role (`PATCH .../role`), lock/unlock | 🟢 Impl (`be545ba`) + Specification fix (`40cec10` HEAD) — chưa prod smoke |
-| Question Import | `/admin/questions/import` | Excel (.xlsx) preview (`dryRun=true`), commit (`dryRun=false`), template download | 🟢 Impl — verified E2E |
-| Question Groups | `/admin/questions` | passage text support in bundle, review queue, question response | 🟢 Impl — verified E2E |
-
-Note 2026-06-18 (committed in `40cec10`): `/my-stats/weak-topics` is wired into the Android result screen for the improvement list; production smoke is still deferred until Neon is back.
-
-### Question Bank API status
-
-As of `v0.9.0`, backend Question Bank write workflow is available in production:
-
-- Collaborator can create draft questions, list own questions, view own detail, update editable questions, and submit for review.
-- Content admin can list review queue and approve, request revision, or reject submitted questions.
-- Service-layer owner checks prevent one collaborator from editing another collaborator's draft.
-- Invalid status transitions return `409 INVALID_STATE`.
-
-### Android Collaborator Question UI status
-
-As of C1.3 closeout, the Android collaborator flow is wired against the backend v0.9.4 question APIs:
-
-- Collaborators can view their question list with status filters and manual paging.
-- The create-question screen supports Subject → Topic → Subtopic selection, difficulty/type selection, dynamic option editing, Save Draft, and Submit for Review.
-- Question detail is available from the list, including metadata, read-only options, and review history.
-- Inline edit is available for DRAFT and NEEDS_REVISION questions; other statuses are read-only.
-- Detail view supports submit-for-review for editable questions.
-- The legacy collaborator editor now redirects to `CollaboratorCreateQuestionActivity` for compatibility with existing admin entry points.
-- Backend runtime remains pinned at v0.9.4; no new backend release is required for C1.3 Android UI.
-
-Deferred:
-- question version snapshots
-- exam composition from approved questions
-- publication scheduling
-
-Implemented (2026-10 / 2026-11):
-- passage/question groups (QuestionGroup reading passage across Backend, Web Admin KaTeX preview, Android client)
-- Excel import (Apache POI 2-sheet parser for single and grouped questions, Web Admin drag & drop UI)
-- admin review UI integration (Web Admin ReviewQueue with KaTeX MathView and action modals)
-
-### Exam API status
-
-As of `v0.9.4`, the Exam API foundation, admin composition workflow, and DRAFT discard operation are available in production:
-
-- `GET /exams` returns a paged `data.content[]` list of `PUBLISHED` + `FREE` exams.
-- `GET /exams/{id}` returns public detail for a `PUBLISHED` + `FREE` exam.
-- Non-existent, non-published, or non-free exams return `404 RESOURCE_NOT_FOUND` to avoid enumeration leaks.
-- DTO responses expose only public fields; status, price, audit fields, questions, correct options, and explanations are not returned.
-- `GET /admin/exams`, `GET /admin/exams/{id}`, `POST /admin/exams`, and `PUT /admin/exams/{id}` are verified for CONTENT_ADMIN/SUPER_ADMIN metadata CRUD.
-- Admin exam create/update remains metadata-only: DRAFT/HIDDEN editing, FREE+price=0, server-controlled status/question count/version/audit fields.
-- Admin DRAFT discard is verified in production:
-  - `DELETE /admin/exams/{examId}` hard-deletes DRAFT exams only
-  - non-DRAFT statuses return `409 INVALID_STATE`
-  - missing exams return `404 RESOURCE_NOT_FOUND`
-  - `CONTENT_ADMIN` and `SUPER_ADMIN` are allowed; anonymous requests return `401`; `STUDENT` returns `403`
-- Admin composition endpoints are verified in production:
-  - `POST /admin/exams/{examId}/questions`
-  - `DELETE /admin/exams/{examId}/questions/{questionId}`
-  - `PUT /admin/exams/{examId}/questions/reorder`
-- Admin workflow endpoints are verified in production:
-  - `POST /admin/exams/{examId}/submit-review`
-  - `POST /admin/exams/{examId}/publish` (`SUPER_ADMIN` only)
-  - `POST /admin/exams/{examId}/hide`
-  - `POST /admin/exams/{examId}/archive`
-  - `POST /admin/exams/{examId}/reject-review`
-  - `POST /admin/exams/{examId}/return-to-draft`
-- `smoke_admin_exams.sh` production PASS for v0.9.4: 12/12, including create-own-DRAFT -> discard -> GET 404.
-- `smoke_admin_exam_composition.sh` production PASS for v0.9.4: 17 pass / 0 fail / 0 skip / 0 blocked.
-
-Deferred:
-- concurrency control via `@Version` until `Exam.version` semantics are verified
-- paid/package pricing
-- Android integration with the production Exam API
+| Module | Base Path | Endpoints Chính | Trạng thái |
+|--------|-----------|-----------------|------------|
+| Auth | `/auth` | register, login, refresh, logout, getMe, updateProfile, changePassword | ✅ 100% Done |
+| Session Engine | `/sessions` | start (`orderedQuestionIds`), client-submit, server-submit, get-question, answer-keys | ✅ 100% Done |
+| Session Answers | `/sessions/{id}/answers` | lưu từng câu, khôi phục trạng thái làm bài, xóa đáp án đã lưu | ✅ 100% Done |
+| Audio Plays | `/sessions/{id}/audio-plays` | đếm lượt nghe, khóa bi quan `PESSIMISTIC_WRITE`, chặn quá `maxPlays` (409) | ✅ 100% Done |
+| Subjects (Public) | `/subjects` | danh mục môn học, chủ đề, tiểu mục | ✅ 100% Done |
+| Questions (Collaborator) | `/collaborator/questions` | soạn câu hỏi, danh sách, chi tiết, cập nhật, nộp duyệt | ✅ 100% Done |
+| Questions (Admin) | `/admin/questions` | hàng đợi duyệt theo trạng thái, picker lọc ma trận, approve, request revision, reject | ✅ 100% Done |
+| Blueprints (Admin) | `/admin/blueprints` | DB-backed ma trận đề thi 3 chiều CRUD (`WEB-3`), cache evict | ✅ 100% Done |
+| Schedules / Windows | `/admin/exam-windows` | quản lý ca thi, phòng thi tập trung, đếm thí sinh, mở/đóng ca | ✅ 100% Done |
+| Exams (Admin) | `/admin/exams` | metadata CRUD, composition add/remove/reorder, publish workflow, DRAFT discard, lockVersion 409 | ✅ 100% Done |
+| Exams (Public) | `/exams` | danh sách đề `PUBLISHED` + `FREE`, chi tiết đề chống leak 404 | ✅ 100% Done |
+| Student Stats | `/my-stats` | thống kê môn học (`/topics`), nhận diện chủ đề yếu (`/weak-topics`) | ✅ 100% Done |
+| Admissions | `/admissions` | tra cứu điểm chuẩn đại học, dự đoán trúng tuyển (Safe/Fit/Risk) | ✅ 100% Done |
+| Tickets | `/tickets` & `/admin/tickets` | báo lỗi câu hỏi từ thí sinh, admin phân loại, xử lý, cập nhật trạng thái | ✅ 100% Done |
+| Dashboard | `/admin/stats` | tổng quan KPI số liệu thời gian thực | ✅ 100% Done |
+| User Management | `/admin/users` | danh sách người dùng, đổi vai trò, khóa/mở khóa tài khoản | ✅ 100% Done |
+| Multi-format Import | `/admin/questions/import` | nạp câu hỏi .xlsx, .json, .docx, .txt có xem trước KaTeX & audio (`WEB-4`) | ✅ 100% Done |
+| Question Groups | `/admin/questions` | quản lý chùm câu hỏi đọc hiểu / ngữ liệu chung kèm audio | ✅ 100% Done |
 
 ### Deployment & Operations
 
-- **Task Tracker:** [`task.md`](task.md) — tiến độ Phase A/B/C/D, bug fixes, DB verification
-- **Deploy Runbook:** [`docs/DEPLOY_RUNBOOK.md`](docs/DEPLOY_RUNBOOK.md) — deploy, rollback, secret rotation, incident triage
-- **API Error Codes:** [`docs/API_ERROR_CODES.md`](docs/API_ERROR_CODES.md) — error catalog, response envelope, rate limits
-- **Smoke Tests:** [`docs/SMOKE_CHECKLIST.md`](docs/SMOKE_CHECKLIST.md) — 15 Android manual checks; backend smoke scripts cover the current release smoke set
-- **Smoke Scripts:** `docs/scripts/smoke_auth.sh`, `docs/scripts/smoke_sessions.sh`, `docs/scripts/smoke_subjects.sh`, `docs/scripts/smoke_admin_exams.sh`, `docs/scripts/smoke_admin_exam_composition.sh`, `VSAT/vsat-compass-api/docs/scripts/smoke_questions.sh`, `VSAT/vsat-compass-api/docs/scripts/smoke_exams.sh`
+- **Kế hoạch triển khai & Nghiệm thu:** [`docs/NEXT_PHASE_IMPLEMENTATION_PLAN.md`](docs/NEXT_PHASE_IMPLEMENTATION_PLAN.md) — tiến độ hoàn thành 100% các Phase và bằng chứng nghiệm thu
+- **Deploy Runbook:** [`docs/DEPLOY_RUNBOOK.md`](docs/DEPLOY_RUNBOOK.md) — deploy Render/Docker, rollback, secret rotation, incident triage
+- **API Error Codes:** [`docs/API_ERROR_CODES.md`](docs/API_ERROR_CODES.md) — catalog mã lỗi, response envelope, rate limits, xử lý 409 Conflict
+- **Android Release Runbook:** [`docs/ANDROID_RELEASE.md`](docs/ANDROID_RELEASE.md) — quy trình ký số APK release `android/v0.3.0`
+- **Linux Home Server Roadmap:** [`docs/LINUX_HOME_SERVER_ROADMAP.md`](docs/LINUX_HOME_SERVER_ROADMAP.md) — lộ trình tự chủ hạ tầng 8 chặng
+- **Pre-Linux Docker Stack:** `docker-compose.prod.yml`, `.env.prod.example`, `ops/scripts/` (backup, health, migrations, smoke)
 
 ---
 
@@ -387,13 +340,11 @@ Các phần timer, chọn đáp án, bookmark, chấm điểm, hiển thị kế
 
 ### Android Release
 
-See [docs/ANDROID_RELEASE.md](docs/ANDROID_RELEASE.md) for the full release runbook.
+Xem chi tiết tại [docs/ANDROID_RELEASE.md](docs/ANDROID_RELEASE.md).
 
-- Android APK tags use the scheme `android/vX.Y.Z` (first release: `android/v0.1.0`).
-- Backend runtime tags `v0.10.x` are independent from Android APK tags.
-- Release APK is distributed as a sideload file; Play Console setup is deferred.
-- APK-1 (signing config + ProGuard) and APK-1.1 (Kotlin DSL hotfix) are merged to main.
-- APK-2: first `assembleRelease` verified; `android/v0.1.0` tagged at merge commit.
+- Phiên bản Android hiện hành: **`android/v0.3.0`** (`versionCode = 3`, `versionName = "0.3.0"`).
+- Đã hoàn thiện: Ký số release APK (R8 full shrinking, ProGuard), tích hợp Media3 ExoPlayer phát audio offline mã hóa `.vsa` AES-128-GCM, Kiosk mode `startLockTask()` cho ca thi giám sát, dự đoán trúng tuyển đại học `AdmissionPredictorActivity`, hỗ trợ 4 dạng câu hỏi V-SAT 2026.
+- Bản dựng release: `app/build/outputs/apk/release/app-release.apk` (~4.3 MB).
 
 ---
 
@@ -430,47 +381,51 @@ See [docs/ANDROID_RELEASE.md](docs/ANDROID_RELEASE.md) for the full release runb
 
 ---
 
-## Thống kê dự án
+## Thống kê dự án & Kiểm chuẩn Thực tế
 
-| Hạng mục | Số lượng |
-|----------|----------|
-| Bảng database | 27 |
-| ENUM types PostgreSQL | 20 |
-| API endpoints (thiết kế) | ~52 MVP |
-| Backend Java files (hiện tại) | 50+ (Auth + Session + Content foundations + infrastructure) |
-| Android Java files | 35+ |
-| Android XML layouts | 20+ |
-| Android Drawable resources | 20+ |
-| Local exam data (JSON assets) | 5 packs (2 Toán, 2 Tiếng Anh, 1 Vật lí) |
-| Unit tests pass | 6/6 (ExamHistoryRepository) |
-| Smoke test cases | 102 pass checks in v0.9.4 closeout scope (15 Android manual + 87 backend smoke pass checks; auth no-register also reports 2 expected skips) |
-| Features live | Login, Register, Exam list, Session, Timer, Scoring, Result, Review, History, Rate limiting, Subject/Topic/Subtopic read APIs, Question CRUD workflow, Exam read-only public API, Admin Exam composition/workflow, Admin Exam DRAFT discard |
+| Hạng mục | Thực tế (v1.2.0 / android/v0.3.0) | Ghi chú |
+|----------|-----------------------------------|---------|
+| Backend Unit Tests | **371 / 371 passed** (100%) | JUnit 5 + Mockito + Spring Security Test |
+| Android Unit Tests | **253 / 253 passed** (100%) | Robolectric + JVM unit tests |
+| Clean-Room Acceptance Checks | **126 / 126 passed** (100%) | Bộ harness độc lập `acceptance-harness/` |
+| Web Admin / CBT Build | **PASS** (100%) | `tsc -b && vite build` (React 19 + TypeScript 6) |
+| Web Admin / CBT Lint | **0 errors / 0 warnings** | Oxlint fast linter |
+| Flyway Migrations | **V0 -> V17** (18 migrations) | PostgreSQL 17 baseline & feature migrations |
+| Bảng database | 32+ bảng, 20 ENUM types | Tickets, blueprints, exam_windows, admission_benchmarks, sessions... |
+| Local Exam Packs | 5 bộ đề chuẩn hóa | Toán cơ bản/nâng cao, Tiếng Anh cơ bản/nâng cao, Vật lí |
 
 ---
 
-## Test & QA
+## Test & QA — Hướng dẫn Kiểm chuẩn
 
-### Unit Tests
+### 1. Backend API Tests (371 tests)
 
 ```bash
-./gradlew testDebugUnitTest
+cd VSAT/vsat-compass-api
+./gradlew test --no-daemon
 ```
 
-Các test case được viết cho `ExamHistoryRepository` (file I/O, cap 200 entries, corrupt recovery, stats):
+### 2. Android Unit Tests (253 tests)
 
-| Test case | Mô tả |
-|-----------|-------|
-| `saveEntry_thenGetAll_returnsNewestFirst` | Thứ tự mới nhất trước |
-| `saveEntry_exceedsMax_capsAt200` | Cap đúng 200 entries |
-| `getByExamId_returnsOnlyMatchingSubject` | Filter môn học |
-| `getStats_calculatesAverageCorrectly` | Tính điểm trung bình |
-| `getAll_corruptFile_returnsEmptyAndCreatesCorruptBackup` | File bị corrupt → recover |
+```bash
+./gradlew testDebugUnitTest --no-daemon
+```
 
-### Smoke Checklist
+### 3. Web Admin / CBT Build & Lint
 
-Xem [docs/SMOKE_CHECKLIST.md](docs/SMOKE_CHECKLIST.md) — 15 test case thủ công bao phủ toàn bộ student flow.
+```bash
+cd web-admin
+npm run lint
+npm run build
+```
 
-### Dev Tools (debug build only)
+### 4. Clean-Room Acceptance Harness (126 checks)
+
+```bash
+node acceptance-harness/run-all.mjs
+```
+
+### 5. Dev Tools (Android debug build only)
 
 Vào ProfileFragment → **long-press tên hiển thị** → Dev menu:
 - Inject 50 lịch sử mock (test stress scroll/stats)

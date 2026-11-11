@@ -1,12 +1,13 @@
 # Android Release Runbook
 
+> Phiên bản hiện hành: `android/v0.3.0` (`versionCode = 3`) | Backend & Web Admin: `v1.2.0`
+
 ## Scope
 
 - APK release track is **independent** from the backend runtime release track.
-- Backend tags use `v0.10.x`.
-- Android APK tags use `android/vX.Y.Z`.
-- First APK target is `android/v0.1.0`.
-- APK-1 only prepares release config; APK-2 performs release build verification.
+- Backend & Web Admin tags use `v1.2.0` (cycle `v1.x.x`).
+- Android APK tags use `android/vX.Y.Z` (hiện tại `android/v0.3.0`, `versionCode = 3`).
+- First APK target was `android/v0.1.0`; `android/v0.2.0` added production configs & Admission/Audio UI; `android/v0.3.0` completes offline audio `.vsa` AES-128-GCM & `startLockTask()` Kiosk mode.
 
 ---
 
@@ -103,11 +104,11 @@ app/build/outputs/apk/release/app-release.apk
 | Field | Convention |
 |-------|------------|
 | `versionCode` | Increments by 1 for each Android release |
-| `versionName` | Follows semver without prefix, e.g. `0.1.0` |
-| Git tag | `android/vX.Y.Z`, e.g. `android/v0.1.0` |
-| Backend tags | `v0.10.x` — remain separate from Android tags |
+| `versionName` | Follows semver without prefix, e.g. `0.3.0` |
+| Git tag | `android/vX.Y.Z`, e.g. `android/v0.3.0` |
+| Backend tags | `v1.2.0` — remain separate from Android tags |
 
-Current values: `versionCode=1`, `versionName="0.1.0"`.
+Current values: `versionCode=3`, `versionName="0.3.0"`.
 
 ---
 
@@ -134,4 +135,4 @@ adb install -r app/build/outputs/apk/release/app-release.apk
 Google Play Console internal testing track setup is **deferred** until the app reaches a
 feature-complete stage. This is not required for the first sideload APK distribution.
 
-See the project roadmap in `task.md` for the APK Release Track status.
+See the project roadmap in `docs/NEXT_PHASE_IMPLEMENTATION_PLAN.md` and `CHANGELOG.md` for the APK Release Track status.

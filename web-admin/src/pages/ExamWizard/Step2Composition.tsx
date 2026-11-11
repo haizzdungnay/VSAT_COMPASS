@@ -15,6 +15,8 @@ interface Step2Props {
   initialBlueprintId?: number;
 }
 
+const generateTempQuestionId = (): number => Date.now() % 100000;
+
 export const Step2Composition: React.FC<Step2Props> = ({ exam, onChange, initialBlueprintId }) => {
   const [mode, setMode] = useState<'MANUAL' | 'MATRIX'>(initialBlueprintId ? 'MATRIX' : 'MANUAL');
   const [selectedTopic, setSelectedTopic] = useState('ALL');
@@ -58,7 +60,7 @@ export const Step2Composition: React.FC<Step2Props> = ({ exam, onChange, initial
       await addQuestionToExam(exam.id, q.id);
     }
     const newDetail: ExamQuestionDetail = {
-      id: Date.now() % 100000,
+      id: generateTempQuestionId(),
       examId: exam.id,
       questionId: q.id,
       questionOrder: examQuestions.length + 1,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import type { FullQuestionItem, QuestionType, CognitiveLevel, DifficultyLevel } from '../../types/exam';
 import { createBankQuestion, updateBankQuestion, SUBJECTS, getSubjectNameById } from '../../services/api';
 import { MathView } from '../../components/MathView';
@@ -31,7 +31,7 @@ const DEFAULT_MATCHING_PAIRS = [
   { left: '4. ', right: 'D. ' }
 ];
 
-export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, onClose, onSuccess, initialData }) => {
+const QuestionCreateModalForm: React.FC<Omit<ModalProps, 'isOpen'>> = ({ onClose, onSuccess, initialData }) => {
   const isEditing = Boolean(initialData && initialData.id > 0);
 
   const [subjectId, setSubjectId] = useState<number>(initialData?.subjectId || 1);
@@ -81,48 +81,6 @@ export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, onClose, onS
       unit: ''
     }
   );
-
-  useEffect(() => {
-    if (!isOpen) return;
-    setConflictError(null);
-    if (initialData) {
-      setSubjectId(initialData.subjectId || 1);
-      setQuestionType(initialData.questionType || 'TRUE_FALSE');
-      setCognitiveLevel(initialData.cognitiveLevel || 'UNDERSTANDING');
-      setDifficulty(initialData.difficulty || 'MEDIUM');
-      setQuestionText(initialData.questionText || '');
-      setExplanation(initialData.explanation || '');
-      const aUrl = (initialData as any).audioUrl || initialData.questionGroup?.audioUrl || '';
-      const mPlays = (initialData as any).maxPlays || initialData.questionGroup?.maxPlays || 2;
-      setHasGroup(Boolean(initialData.questionGroup || aUrl));
-      setGroupTitle(initialData.questionGroup?.title || '');
-      setPassageText(initialData.questionGroup?.passageText || '');
-      setAudioUrl(aUrl);
-      setMaxPlays(mPlays);
-      setTfItems(initialData.trueFalseItems && initialData.trueFalseItems.length > 0 ? initialData.trueFalseItems : DEFAULT_TF_ITEMS);
-      setMcqOptions(initialData.options && initialData.options.length > 0 ? initialData.options : DEFAULT_MCQ_OPTIONS);
-      setMatchingPairs(initialData.matchingPairs && initialData.matchingPairs.length > 0 ? initialData.matchingPairs : DEFAULT_MATCHING_PAIRS);
-      setSaKey(initialData.shortAnswerKey || { acceptedAnswer: '', tolerance: 0, unit: '' });
-    } else {
-      setSubjectId(1);
-      setQuestionType('TRUE_FALSE');
-      setCognitiveLevel('UNDERSTANDING');
-      setDifficulty('MEDIUM');
-      setQuestionText('');
-      setExplanation('');
-      setHasGroup(false);
-      setGroupTitle('');
-      setPassageText('');
-      setAudioUrl('');
-      setMaxPlays(2);
-      setTfItems(DEFAULT_TF_ITEMS);
-      setMcqOptions(DEFAULT_MCQ_OPTIONS);
-      setMatchingPairs(DEFAULT_MATCHING_PAIRS);
-      setSaKey({ acceptedAnswer: '', tolerance: 0, unit: '' });
-    }
-  }, [initialData, isOpen]);
-
-  if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -619,4 +577,9 @@ export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, onClose, onS
       </div>
     </div>
   );
+};
+
+export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, ...props }) => {
+  if (!isOpen) return null;
+  return <QuestionCreateModalForm key={props.initialData?.id ?? 'new'} {...props} />;
 };
