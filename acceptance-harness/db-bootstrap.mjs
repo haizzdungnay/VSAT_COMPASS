@@ -403,7 +403,7 @@ export async function bootstrapDatabase() {
   // 1. Initial base schema
   runSqlFile('VSAT/vsat_database_schema.sql', 'Base Schema (vsat_database_schema.sql)');
 
-  // 2. Ordered migrations 0001 to 0011
+  // 2. Ordered migrations 0001 to 0017
   const migrations = [
     'VSAT/vsat-compass-api/docs/sql/0001_create_tickets.sql',
     'VSAT/vsat-compass-api/docs/sql/0002_add_leaderboard_opt_in.sql',
@@ -415,7 +415,13 @@ export async function bootstrapDatabase() {
     'VSAT/vsat-compass-api/docs/sql/0008_backfill_legacy_data.sql',
     'VSAT/vsat-compass-api/docs/sql/0009_add_vsat_constraints.sql',
     'VSAT/vsat-compass-api/docs/sql/0010_seed_vsat_blueprints.sql',
-    'VSAT/vsat-compass-api/docs/sql/0011_add_exam_window_title.sql'
+    'VSAT/vsat-compass-api/docs/sql/0011_add_exam_window_title.sql',
+    'VSAT/vsat-compass-api/src/main/resources/db/migration/V12__add_lock_version.sql',
+    'VSAT/vsat-compass-api/src/main/resources/db/migration/V13__create_admission_benchmarks.sql',
+    'VSAT/vsat-compass-api/src/main/resources/db/migration/V14__add_question_group_audio.sql',
+    'VSAT/vsat-compass-api/src/main/resources/db/migration/V15__add_proctoring_columns.sql',
+    'VSAT/vsat-compass-api/docs/sql/0016_add_session_audio_play_counts.sql',
+    'VSAT/vsat-compass-api/docs/sql/0017_add_blueprint_cells_json.sql'
   ];
 
   for (const mig of migrations) {

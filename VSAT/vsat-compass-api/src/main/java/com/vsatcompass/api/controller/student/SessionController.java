@@ -2,7 +2,9 @@ package com.vsatcompass.api.controller.student;
 
 import com.vsatcompass.api.dto.common.ApiResponse;
 import com.vsatcompass.api.dto.request.SessionRequest;
+import com.vsatcompass.api.dto.response.AudioPlayResponse;
 import com.vsatcompass.api.dto.response.SessionAnswerKeysResponse;
+import com.vsatcompass.api.dto.response.SessionAnswerResponse;
 import com.vsatcompass.api.dto.response.SessionQuestionContentResponse;
 import com.vsatcompass.api.dto.response.SessionResponse;
 import com.vsatcompass.api.service.SessionService;
@@ -14,6 +16,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/sessions")
@@ -91,5 +96,33 @@ public class SessionController {
         Long userId = SecurityUtils.getCurrentUserId();
         SessionResponse.ViolationResult result = sessionService.recordViolation(userId, sessionId, request);
         return ResponseEntity.ok(ApiResponse.success(result, "Ghi nhận vi phạm thành công"));
+    }
+
+    @GetMapping("/{sessionId}/answers")
+    @Operation(summary = "ES-07: Lấy danh sách câu trả lời trong phiên thi (sync client)")
+    public ResponseEntity<ApiResponse<List<SessionAnswerResponse>>> getSessionAnswers(
+            @PathVariable Long sessionId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        List<SessionAnswerResponse> result = sessionService.getSessionAnswers(sessionId, userId);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    @GetMapping("/{sessionId}/audio-plays")
+    @Operation(summary = "ES-08: Lấy số lượt đã nghe audio trong phiên thi")
+    public ResponseEntity<ApiResponse<Map<String, Integer>>> getAudioPlayCounts(
+            @PathVariable Long sessionId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        Map<String, Integer> result = sessionService.getAudioPlayCounts(sessionId, userId);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    @PostMapping("/{sessionId}/audio-plays")
+    @Operation(summary = "ES-09: Ghi nhận một lượt nghe audio")
+    public ResponseEntity<ApiResponse<AudioPlayResponse>> recordAudioPlay(
+            @PathVariable Long sessionId,
+            @Valid @RequestBody SessionRequest.RecordAudioPlay request) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        AudioPlayResponse result = sessionService.recordAudioPlay(sessionId, userId, request);
+        return ResponseEntity.ok(ApiResponse.success(result, "Ghi nhận lượt nghe thành công"));
     }
 }

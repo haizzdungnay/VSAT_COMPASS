@@ -10,6 +10,8 @@ export const ImportQuestions: React.FC = () => {
   const [previewResult, setPreviewResult] = useState<QuestionImportResult | null>(null);
   const [commitResult, setCommitResult] = useState<QuestionImportResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [showWordGuide, setShowWordGuide] = useState<boolean>(false);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -22,16 +24,51 @@ export const ImportQuestions: React.FC = () => {
     }
   };
 
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      setSelectedFile(file);
+      setPreviewResult(null);
+      setCommitResult(null);
+      setErrorMsg(null);
+    }
+  };
+
   const handleDownloadTemplate = async () => {
     try {
       setDownloadingTemplate(true);
       const blob = await downloadImportTemplate();
       triggerBlobDownload(blob, 'vsat_question_import_template.xlsx');
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Không thể tải file mẫu');
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Không thể tải file mẫu');
     } finally {
       setDownloadingTemplate(false);
     }
+  };
+
+  const handleDownloadJsonTemplate = () => {
+    const sampleJson = [
+      {
+        sheetName: "PHAN_I_DUNG_SAI",
+        rowNumber: 2,
+        groupCode: "GRP_ENG_L1",
+        groupTitle: "Bài nghe hội thoại 1",
+        passageText: "Ngữ liệu bài nghe tiếng Anh V-SAT...",
+        subjectCode: "ENG",
+        questionType: "TRUE_FALSE",
+        difficulty: "MEDIUM",
+        questionText: "Mệnh đề câu hỏi dựa trên bài nghe...",
+        options: ["Ý a đúng", "Ý b sai", "Ý c đúng", "Ý d sai"],
+        correctAnswer: "T,F,T,F",
+        explanation: "Giải thích chi tiết theo bài nghe",
+        audioUrl: "https://storage.vsatcompass.edu.vn/audio/eng_sample_01.mp3",
+        maxPlays: 2
+      }
+    ];
+    const blob = new Blob([JSON.stringify(sampleJson, null, 2)], { type: 'application/json' });
+    triggerBlobDownload(blob, 'vsat_question_import_template.json');
   };
 
   const handlePreview = async () => {
@@ -79,20 +116,81 @@ export const ImportQuestions: React.FC = () => {
             <span className="material-symbols-outlined text-primary text-[32px]">cloud_upload</span>
             Import câu hỏi từ file Excel (.xlsx)
           </h1>
-          <p className="text-body-md text-outline mt-1">
-            Hỗ trợ nhập hàng loạt câu hỏi đơn và chùm câu hỏi đọc hiểu / ngữ liệu chung kèm KaTeX.
+          <p className="text-body-md text-outline mt-1 flex items-center gap-2 flex-wrap">
+            <span>Hỗ trợ nhập hàng loạt câu hỏi đơn và chùm câu hỏi đọc hiểu / ngữ liệu chung kèm KaTeX.</span>
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-bold font-mono">
+              Hỗ trợ: .xlsx, .json, .docx, .txt
+            </span>
           </p>
         </div>
 
-        <button
-          onClick={handleDownloadTemplate}
-          disabled={downloadingTemplate}
-          className="flex items-center gap-2 px-4 py-2.5 bg-secondary-container text-on-secondary-container hover:bg-secondary-container/80 rounded-xl font-label-md font-medium transition-colors border border-outline-variant/20 shadow-sm"
-        >
-          <span className="material-symbols-outlined text-[20px]">download</span>
-          {downloadingTemplate ? 'Đang tải...' : 'Tải file Excel mẫu'}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={handleDownloadTemplate}
+            disabled={downloadingTemplate}
+            className="flex items-center gap-2 px-4 py-2.5 bg-secondary-container text-on-secondary-container hover:bg-secondary-container/80 rounded-xl font-label-md font-medium transition-colors border border-outline-variant/20 shadow-sm"
+          >
+            <span className="material-symbols-outlined text-[20px]">download</span>
+            {downloadingTemplate ? 'Đang tải...' : 'Tải file Excel mẫu'}
+          </button>
+
+          <button
+            onClick={handleDownloadJsonTemplate}
+            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface rounded-xl font-label-md font-medium transition-colors border border-outline-variant/20 shadow-sm"
+          >
+            <span className="material-symbols-outlined text-[18px]">data_object</span>
+            Tải mẫu JSON
+          </button>
+
+          <button
+            onClick={() => setShowWordGuide(!showWordGuide)}
+            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface rounded-xl font-label-md font-medium transition-colors border border-outline-variant/20 shadow-sm"
+          >
+            <span className="material-symbols-outlined text-[18px]">help_outline</span>
+            {showWordGuide ? 'Ẩn hướng dẫn Word' : 'Hướng dẫn Word / TXT'}
+          </button>
+        </div>
       </div>
+
+      {/* Word / TXT Format Guide */}
+      {showWordGuide && (
+        <div className="p-6 bg-surface-container-lowest border border-outline-variant/30 rounded-2xl space-y-3">
+          <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3">
+            <h3 className="font-headline-sm text-on-surface flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-[22px]">description</span>
+              Quy chuẩn định dạng file Word (.docx) & Plain Text (.txt)
+            </h3>
+            <button
+              onClick={() => setShowWordGuide(false)}
+              className="text-outline hover:text-on-surface text-sm"
+            >
+              Đóng
+            </button>
+          </div>
+          <p className="text-body-sm text-outline">
+            Hệ thống hỗ trợ parse tự động tài liệu Word hoặc Text định dạng theo cặp thẻ chuẩn V-SAT:
+          </p>
+          <pre className="p-4 rounded-xl bg-surface-container-low text-on-surface font-mono text-xs overflow-x-auto border border-outline-variant/30 leading-relaxed">
+{`[Q]
+[SUBJECT: ENG]
+[TOPIC: Listening Comprehension]
+[TYPE: SINGLE_CHOICE]
+[DIFFICULTY: MEDIUM]
+[AUDIO: https://storage.vsatcompass.edu.vn/audio/sample_01.mp3]
+[MAX_PLAYS: 2]
+[STEM: Listen to the conversation and answer the question: What is the main topic?]
+[OPTIONS]
+A. Environmental protection in modern cities
+B. Economic growth and industry development
+C. Scientific discovery in astronomy
+D. Healthcare system improvements
+[/OPTIONS]
+[ANSWER: A]
+[EXPLANATION: In the first passage, the speaker emphasizes urban green spaces.]
+[/Q]`}
+          </pre>
+        </div>
+      )}
 
       {/* Error Alert */}
       {errorMsg && (
@@ -132,27 +230,34 @@ export const ImportQuestions: React.FC = () => {
       {/* File Upload Box (shown when not yet committed) */}
       {!commitResult && (
         <div className="bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/30 space-y-4">
-          <h2 className="font-headline-sm text-on-surface">1. Chọn file Excel (.xlsx)</h2>
+          <h2 className="font-headline-sm text-on-surface">1. Chọn file đề thi (.xlsx, .json, .docx, .txt)</h2>
 
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-outline-variant/60 hover:border-primary/60 rounded-2xl p-8 text-center cursor-pointer transition-colors bg-surface-container-low/30 hover:bg-surface-container-low/60 flex flex-col items-center justify-center gap-2"
+            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-2 ${
+              isDragging
+                ? 'border-primary bg-primary/5'
+                : 'border-outline-variant/60 hover:border-primary/60 bg-surface-container-low/30 hover:bg-surface-container-low/60'
+            }`}
           >
             <input
               ref={fileInputRef}
               type="file"
-              accept=".xlsx"
+              accept=".xlsx,.json,.docx,.txt"
               onChange={handleFileChange}
               className="hidden"
             />
             <span className="material-symbols-outlined text-primary text-[48px]">upload_file</span>
             <div className="font-title-md text-on-surface">
-              {selectedFile ? selectedFile.name : 'Nhấp hoặc kéo thả file Excel vào đây'}
+              {selectedFile ? selectedFile.name : 'Nhấp hoặc kéo thả file (.xlsx, .json, .docx, .txt) vào đây'}
             </div>
             <div className="text-body-sm text-outline">
               {selectedFile
                 ? `Kích thước: ${(selectedFile.size / 1024).toFixed(1)} KB`
-                : 'Chỉ chấp nhận định dạng .xlsx có cấu trúc theo file mẫu'}
+                : 'Chấp nhận định dạng .xlsx, .json, .docx, hoặc .txt theo cấu trúc mẫu V-SAT'}
             </div>
           </div>
 
@@ -274,6 +379,17 @@ export const ImportQuestions: React.FC = () => {
                           <div className="p-2.5 rounded-lg bg-surface-container-low text-[12px] border border-outline-variant/20 italic text-outline max-h-24 overflow-y-auto">
                             <strong className="not-italic text-on-surface">Ngữ liệu chung: </strong>
                             <MathView content={item.passageText} />
+                          </div>
+                        )}
+                        {item.audioUrl && (
+                          <div className="flex items-center gap-2 p-2 rounded-lg bg-sky-500/10 border border-sky-500/30 text-sky-900 text-xs">
+                            <span className="material-symbols-outlined text-[16px] text-sky-600">volume_up</span>
+                            <span className="font-mono truncate max-w-[220px]" title={item.audioUrl}>
+                              {item.audioUrl}
+                            </span>
+                            <span className="ml-auto font-bold px-1.5 py-0.5 rounded bg-sky-200/60 text-sky-800 text-[10px]">
+                              Tối đa {item.maxPlays || 2} lượt nghe
+                            </span>
                           </div>
                         )}
                         <div className="font-medium text-on-surface">

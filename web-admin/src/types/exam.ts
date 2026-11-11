@@ -175,6 +175,8 @@ export interface QuestionImportItem {
   tags?: string;
   valid: boolean;
   error?: string;
+  audioUrl?: string;
+  maxPlays?: number;
 }
 
 export interface QuestionImportResult {

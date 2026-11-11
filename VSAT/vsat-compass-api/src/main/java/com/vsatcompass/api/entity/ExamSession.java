@@ -11,6 +11,7 @@ import org.hibernate.type.SqlTypes;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -99,6 +100,11 @@ public class ExamSession {
     @Column(name = "proctoring_logs", columnDefinition = "jsonb")
     @Builder.Default
     private List<Map<String, Object>> proctoringLogs = new ArrayList<>();
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "audio_play_counts", columnDefinition = "jsonb")
+    @Builder.Default
+    private Map<String, Integer> audioPlayCounts = new HashMap<>();
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

@@ -9,6 +9,7 @@
 3. [Section 2: Phase 2 — Chi tiết 5 Đề xuất Tính năng Mới (Proposals P1 .. P5)](#section-2-phase-2--chi-tiết-5-đề-xuất-tính-năng-mới-proposals-p1--p5)
 4. [Section 3: Phase 3 — Triển khai Linux Home Server](#section-3-phase-3--triển-khai-linux-home-server)
 5. [Section 4: Tiêu chuẩn Nghiệm thu Tự động (Verification & Acceptance Gates)](#section-4-tiêu-chuẩn-nghiệm-thu-tự-động-verification--acceptance-gates)
+6. [Section 5: Phase 4 — Vòng lặp Nâng cấp Tính năng (Feature Expansions & Hardening)](#section-5-phase-4--vòng-lặp-nâng-cấp-tính-năng-feature-expansions--hardening)
 
 ---
 
@@ -16,9 +17,9 @@
 
 ### 0.1. Trạng thái Baseline Hiện tại
 - **Android App (`app/`)**: 253/253 unit tests pass. Bản `release` APK đã ký tại `app/build/outputs/apk/release/app-release.apk` (dung lượng ~4.3 MB, bật R8 full shrinking & obfuscation).
-- **Backend API (`VSAT/vsat-compass-api/`)**: 298/298 unit tests pass. Spring Boot 3.5.9, Gradle build tool, Java 17 bytecode target (tương thích Java 21 runtime).
-- **Web Admin (`web-admin/`)**: React 19.2 + Vite 8.3 + TypeScript 6.0. Đã chạy thực tế 6 module: Blueprints (Ma trận 7 môn), ExamWizard (4 bước), QuestionBank, ReviewQueue (KaTeX math preview), ImportQuestions (Excel), Schedules (Ca thi).
-- **CI / Testing Harness**: Workflow `.github/workflows/auto-acceptance.yml` và bộ harness clean-room độc lập `acceptance-harness/` hỗ trợ đa nền tảng (Windows/Linux/macOS).
+- **Backend API (`VSAT/vsat-compass-api/`)**: 371/371 unit tests pass. Spring Boot 3.5.9, Gradle build tool, Java 17 bytecode target (tương thích Java 21 runtime).
+- **Web Admin & CBT (`web-admin/`)**: React 19.2 + Vite 8.3 + TypeScript 6.0. Đã chạy thực tế 8 module: Blueprints (CRUD DB), ExamWizard (4 bước), QuestionBank, ReviewQueue (KaTeX math preview), ImportQuestions (Đa định dạng .xlsx/.json/.docx/.txt), Schedules (Ca thi), StudentCBT (Thi online), Users & Tickets.
+- **CI / Testing Harness**: Workflow `.github/workflows/auto-acceptance.yml` và bộ harness clean-room độc lập `acceptance-harness/` đạt 126/126 checks passed (0 violations).
 
 ### 0.2. Ba Quy tắc Bắt buộc (Non-Negotiable Guardrails)
 1. **Quy trình nghiệm thu tự động**: Sử dụng skill `/auto-acceptance-loop` (vòng lặp 9 bước chuẩn phối hợp giữa Fable, Opus, Sonnet) cho các đợt phát triển lớn.
@@ -257,3 +258,41 @@ npm run build
 cd "E:\TuanDuong\lap trinh kiem com\Java\VSAT_COMPASS"
 node acceptance-harness/run-all.mjs
 ```
+
+---
+
+## SECTION 5: PHASE 4 — VÒNG LẶP NÂNG CẤP TÍNH NĂNG (FEATURE EXPANSIONS & HARDENING) [x] ĐÃ HOÀN THÀNH 100%
+
+### 5.1. Cụm 1 (`PR #26`, commit `08a65f1`) [x] 100%
+- Hỗ trợ đầy đủ dạng câu hỏi ghép hợp **V-SAT 2026 MATCHING** (`QuestionMatchingChoice`, bảng câu hỏi ghép hợp trên Web CBT `MatchingQuestionPanel.tsx`, chấm điểm và đáp án chi tiết trên `StudentScorecard`).
+- Lưu trữ bền vững thông tin ngữ liệu nghe (`audioUrl`, `audioDurationSec`, `maxPlays`) xuyên suốt API response và tải về offline.
+- Tối ưu hóa Redis cache serialization (`CacheConfig.java`) và kiểm thử đơn vị (`CacheConfigTest`, `LeaderboardServiceTest`, `SessionServiceTest`).
+
+### 5.2. Cụm 2 & 3 (`PR #27`, commit `9d30aee`) [x] 100%
+- Hoàn thiện các module **Web Admin**: Exam Wizard 4 bước (`Step1General`, `Step2Composition`, `Step3Preview`), tích hợp phát/kiểm tra Audio trong `QuestionBank`, `QuestionCreateModal`, `ReviewQueue`, và luồng xác thực `Login`, `Dashboard`, `Settings`.
+- Hoàn thiện **Android Client**: Lưu trữ và phát Audio offline (`OfflineExamRepository`, `ExamSessionActivity`, `ExamReviewActivity`) và khóa ghim màn hình `lockTask` cho ca thi giám sát.
+
+### 5.3. Vòng lặp 3 — Nhóm A: Đồng bộ Câu trả lời, Đếm Lượt nghe Audio & Phân tách Token [x] 100%
+- **A1 (Server-side Session Answers Sync & Clear)**:
+  - Bổ sung endpoint `GET /api/v1/sessions/{id}/answers` khôi phục trạng thái làm bài thí sinh qua `SessionAnswerResponse` (ẩn `isCorrect` và `rawPointsAwarded`).
+  - Hỗ trợ xóa câu trả lời đã lưu khi client gửi `selectedOptionId == null` và `answerPayload` rỗng, tự động cập nhật `answeredCount`.
+- **A2 (Audio Play Counter & Pessimistic Lock)**:
+  - Migration `V16__add_session_audio_play_counts.sql` bổ sung `audio_play_counts JSONB` trên `exam_sessions`.
+  - Khóa bi quan `@Lock(LockModeType.PESSIMISTIC_WRITE)` tại `ExamSessionRepository.findByIdForUpdate`.
+  - Cung cấp `GET /api/v1/sessions/{id}/audio-plays` và `POST /api/v1/sessions/{id}/audio-plays`; chặn vượt quá `maxPlays` bằng HTTP `409 Conflict`.
+- **A3 (Role-scoped JWT Storage)**:
+  - Phân tách JWT storage keys theo vai trò trên Web: `vsat_admin_access_token` (`ADMIN`) và `vsat_student_access_token` (`STUDENT`) kèm cơ chế fallback tương thích ngược.
+
+### 5.4. Vòng lặp 3 — Nhóm B: Blueprint DB CRUD (`WEB-3`) & Multi-format Question Import (`WEB-4`) [x] 100%
+- **B1 / `WEB-3` (Blueprint DB CRUD)**:
+  - Migration `V17__add_blueprint_cells_json.sql` thêm `cells_json JSONB` và seed ma trận chuẩn 7 môn thi V-SAT.
+  - Bổ sung `ExamBlueprint`, `ExamBlueprintRepository`, `BlueprintUpsertRequest`, và các endpoint `POST/PUT/DELETE /api/v1/admin/blueprints` kèm `@Caching` evict `blueprints`/`blueprintDetail`.
+  - Tích hợp Modal Tạo mới, Chỉnh sửa và Xóa ma trận trực tiếp trên `web-admin/src/pages/Blueprints/index.tsx`.
+- **B2 / `WEB-4` (Multi-format Question Import & Audio Preview)**:
+  - Mở rộng `QuestionImportServiceImpl` và giao diện `ImportQuestions/index.tsx` hỗ trợ 4 định dạng `.xlsx`, `.json`, `.docx`, `.txt`.
+  - Bổ sung parser dạng câu hỏi `MATCHING` và hiển thị cột xem trước audio (`audioUrl`, `maxPlays`) trong bảng preview trước khi lưu.
+
+### 5.5. Bằng chứng Nghiệm thu Vòng lặp 3
+- Xem chi tiết đối chiếu file/line và kết quả chạy tại: [`acceptance-harness/reports/loop3-groups-a-b-acceptance-report.md`](../acceptance-harness/reports/loop3-groups-a-b-acceptance-report.md).
+- Kết quả nghiệm thu: Backend JUnit **371/371 passed**, Web Admin `npm run build` **pass**, Clean-room Acceptance Harness **126/126 passed** (`ACCEPTED`).
+
