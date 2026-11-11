@@ -30,7 +30,7 @@ export const StudentScorecard: React.FC<StudentScorecardProps> = ({
 }) => {
   const [answerKeys, setAnswerKeys] = useState<QuestionAnswerKeyItem[]>([]);
   const [questions, setQuestions] = useState<StudentQuestionContent[]>([]);
-  const [studentAnswers, setStudentAnswers] = useState<Record<number, SubmitAnswerPayload>>({});
+  const [studentAnswers, setStudentAnswers] = useState<Record<number, SubmitAnswerPayload>>(() => getLocalSessionAnswers(session.id));
   const [loading, setLoading] = useState<boolean>(true);
 
   // AI explanation state: questionId -> { text, loading }
@@ -53,7 +53,6 @@ export const StudentScorecard: React.FC<StudentScorecardProps> = ({
 
   useEffect(() => {
     let isMounted = true;
-    setStudentAnswers(getLocalSessionAnswers(session.id));
 
     Promise.all([
       fetchSessionAnswerKeys(session.id),
@@ -67,6 +66,8 @@ export const StudentScorecard: React.FC<StudentScorecardProps> = ({
         setQuestions(validQs.length > 0 ? validQs : fallbackSessionQuestions);
         if (serverAnswers) {
           setStudentAnswers(serverAnswers);
+        } else {
+          setStudentAnswers(getLocalSessionAnswers(session.id));
         }
       })
       .catch((err: unknown) => {

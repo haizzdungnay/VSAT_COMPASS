@@ -1,6 +1,9 @@
 # KẾ HOẠCH TRIỂN KHAI GIAI ĐOẠN TIẾP THEO (NEXT PHASE IMPLEMENTATION PLAN)
 ## V-SAT COMPASS: TECHNICAL DEBT, 5 FEATURE PROPOSALS & HOME SERVER ALIGNMENT
 
+> Trạng thái: **ĐÃ HOÀN THÀNH 100%** (Toàn bộ Phase 1, Phase 2, Phase 3, Phase 4 — Nhóm A, B, C)
+> Phiên bản phát hành: **v1.2.0** (Backend & Web Admin/CBT) | **android/v0.3.0** (`versionCode = 3`)
+
 ---
 
 ## MỤC LỤC
@@ -16,9 +19,9 @@
 ## SECTION 0: HƯỚNG DẪN CHO PHIÊN LÀM VIỆC TIẾP THEO (SESSION HANDOFF & RULES)
 
 ### 0.1. Trạng thái Baseline Hiện tại
-- **Android App (`app/`)**: 253/253 unit tests pass. Bản `release` APK đã ký tại `app/build/outputs/apk/release/app-release.apk` (dung lượng ~4.3 MB, bật R8 full shrinking & obfuscation).
-- **Backend API (`VSAT/vsat-compass-api/`)**: 371/371 unit tests pass. Spring Boot 3.5.9, Gradle build tool, Java 17 bytecode target (tương thích Java 21 runtime).
-- **Web Admin & CBT (`web-admin/`)**: React 19.2 + Vite 8.3 + TypeScript 6.0. Đã chạy thực tế 8 module: Blueprints (CRUD DB), ExamWizard (4 bước), QuestionBank, ReviewQueue (KaTeX math preview), ImportQuestions (Đa định dạng .xlsx/.json/.docx/.txt), Schedules (Ca thi), StudentCBT (Thi online), Users & Tickets.
+- **Android App (`app/`)**: 253/253 unit tests pass. Bản `release` APK đã ký tại `app/build/outputs/apk/release/app-release.apk` (dung lượng ~4.3 MB, bật R8 full shrinking & obfuscation, phiên bản `android/v0.3.0`, `versionCode = 3`).
+- **Backend API (`VSAT/vsat-compass-api/`)**: 371/371 unit tests pass. Phiên bản `v1.2.0`, Spring Boot 3.5.9, Flyway `V0..V17`, Gradle build tool, Java 17 bytecode target (tương thích Java 21 runtime).
+- **Web Admin & CBT (`web-admin/`)**: Phiên bản `v1.2.0`, React 19.2 + Vite 8.3 + TypeScript 6.0. Đã chạy thực tế 8 module: Blueprints (CRUD DB), ExamWizard (4 bước), QuestionBank, ReviewQueue (KaTeX math preview), ImportQuestions (Đa định dạng .xlsx/.json/.docx/.txt), Schedules (Ca thi), StudentCBT (Thi online), Users & Tickets.
 - **CI / Testing Harness**: Workflow `.github/workflows/auto-acceptance.yml` và bộ harness clean-room độc lập `acceptance-harness/` đạt 126/126 checks passed (0 violations).
 
 ### 0.2. Ba Quy tắc Bắt buộc (Non-Negotiable Guardrails)
@@ -292,7 +295,7 @@ node acceptance-harness/run-all.mjs
   - Mở rộng `QuestionImportServiceImpl` và giao diện `ImportQuestions/index.tsx` hỗ trợ 4 định dạng `.xlsx`, `.json`, `.docx`, `.txt`.
   - Bổ sung parser dạng câu hỏi `MATCHING` và hiển thị cột xem trước audio (`audioUrl`, `maxPlays`) trong bảng preview trước khi lưu.
 
-### 5.5. Bằng chứng Nghiệm thu Vòng lặp 3
-- Xem chi tiết đối chiếu file/line và kết quả chạy tại: [`acceptance-harness/reports/loop3-groups-a-b-acceptance-report.md`](../acceptance-harness/reports/loop3-groups-a-b-acceptance-report.md).
-- Kết quả nghiệm thu: Backend JUnit **371/371 passed**, Web Admin `npm run build` **pass**, Clean-room Acceptance Harness **126/126 passed** (`ACCEPTED`).
+### 5.5. Nhóm C & Kết quả Nghiệm thu Tổng thể (`v1.2.0` / `android/v0.3.0`) [x] 100%
+- **Nhóm C (Docs Cleanup & Version Sync)**: Dọn dẹp toàn bộ báo cáo nháp và log tạm; đồng bộ chuẩn tài liệu hệ thống lên `v1.2.0` (Backend & Web Admin/CBT) và `android/v0.3.0` (`versionCode = 3`).
+- **Kết quả nghiệm thu**: Backend JUnit **371/371 passed**, Android unit tests **253/253 passed**, Web Admin `npm run build` **pass**, Clean-room Acceptance Harness **126/126 passed** (`ACCEPTED`).
 

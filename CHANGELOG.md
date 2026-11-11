@@ -1,8 +1,42 @@
 # V-SAT COMPASS — CHANGELOG
 
-## [Unreleased]
+## [1.2.0] / [android/v0.3.0] - 2026-11-11
 
-### Production Deployment Preparation & Environment Configuration (2026-11-02)
+### Tổng hợp Phát hành v1.2.0 (PR #26, #27, #30)
+
+**4 Dạng câu hỏi V-SAT 2026 Chuẩn hóa (PR #26):**
+- Hỗ trợ đầy đủ 4 dạng thức câu hỏi theo cấu trúc V-SAT 2026: Trắc nghiệm 4 lựa chọn (MCQ), Đúng/Sai 4 mệnh đề (TRUE_FALSE), Ghép hợp (MATCHING 4x6), và Trả lời ngắn điền số (SHORT_ANSWER).
+- Dạng câu hỏi ghép hợp `MATCHING`: Thêm cấu trúc `QuestionMatchingChoice`, bảng ghép hợp tương tác trên Web CBT (`MatchingQuestionPanel.tsx`), chấm điểm phân tầng (tiered scoring) trên backend và hiển thị kết quả chi tiết kèm giải thích trên `StudentScorecard`.
+
+**Lưu trữ & Mã hóa Audio Tiếng Anh (.vsa AES-128-GCM) (PR #26, #27):**
+- Ngữ liệu nghe tiếng Anh: Lưu trữ bền vững `audioUrl`, `audioDurationSec`, `maxPlays` xuyên suốt các DTO và entity `QuestionGroup`.
+- Web Admin & Web CBT: Tích hợp trình phát audio có kiểm soát (khóa tua seek-lock, đếm lượt nghe, cảnh báo khi hết lượt nghe).
+- Android Client: Tích hợp AndroidX `Media3 ExoPlayer`, mở rộng `OfflineExamRepository` hỗ trợ tải về và mã hóa file audio offline chuẩn **AES-128-GCM** (header `VSAT\x02`).
+
+**Chế độ Giám sát Chống Gian lận (Anti-Cheating Kiosk Mode) (PR #27):**
+- Android Client: Hỗ trợ chế độ thi có giám sát `SCHEDULED_MOCK`, kích hoạt `startLockTask()` ghim màn hình, bật `FLAG_SECURE` chặn quay/chụp màn hình, phát hiện sự kiện mất tiêu điểm `onWindowFocusChanged(false)`, chia đôi màn hình `isInMultiWindowMode()`, gửi log vi phạm về server.
+- Web CBT: Chế độ làm bài toàn màn hình bắt buộc (`requestFullscreen`), ghi nhận vi phạm khi chuyển tab (`visibilitychange`) hoặc mất tiêu điểm (`window.onblur`).
+
+**Đồng bộ Câu trả lời & Khóa bi quan Lượt nghe Audio Phía Server (PR #30 — Loop 3 Nhóm A):**
+- Bổ sung endpoint `GET /api/v1/sessions/{id}/answers` khôi phục chính xác trạng thái làm bài của thí sinh qua `SessionAnswerResponse`.
+- Cho phép xóa câu trả lời đã lưu khi client gửi `selectedOptionId == null` và `answerPayload` rỗng, tự động trừ và cập nhật `answeredCount`.
+- Migration `V16__add_session_audio_play_counts.sql` bổ sung `audio_play_counts JSONB` trên `exam_sessions`.
+- Khóa bi quan `@Lock(LockModeType.PESSIMISTIC_WRITE)` tại `ExamSessionRepository.findByIdForUpdate`.
+- Cung cấp `GET/POST /api/v1/sessions/{id}/audio-plays`, kiểm tra giới hạn lượt nghe nghiêm ngặt, chặn vượt `maxPlays` bằng HTTP `409 Conflict`.
+- Phân tách key lưu trữ JWT theo vai trò trên Web: `vsat_admin_access_token` (`ADMIN`) và `vsat_student_access_token` (`STUDENT`) kèm fallback tương thích ngược.
+
+**DB-Backed Blueprint CRUD `WEB-3` (PR #30 — Loop 3 Nhóm B):**
+- Migration `V17__add_blueprint_cells_json.sql` thêm cột `cells_json JSONB`, seed cấu trúc ma trận chuẩn 7 môn thi V-SAT.
+- Entity `ExamBlueprint`, `ExamBlueprintRepository`, `BlueprintUpsertRequest`, và các endpoints `POST/PUT/DELETE /api/v1/admin/blueprints` kèm `@Caching` evict cache `blueprints` & `blueprintDetail`.
+- Giao diện Web Admin `BlueprintsPage`: Tích hợp modal Tạo mới, Chỉnh sửa và Xóa ma trận đề thi trực tiếp trên giao diện.
+
+**Import Câu hỏi Đa Định dạng `WEB-4` (PR #30 — Loop 3 Nhóm B):**
+- Mở rộng `QuestionImportServiceImpl` và giao diện kéo thả `ImportQuestions/index.tsx` hỗ trợ nạp 4 định dạng: `.xlsx`, `.json`, `.docx`, `.txt`.
+- Bổ sung parser cho dạng câu hỏi `MATCHING` và hiển thị cột xem trước audio (`audioUrl`, `maxPlays`) trong bảng preview trước khi lưu vào DB.
+
+**Tối ưu hóa Redis Cache & Hạ tầng Pre-Linux Docker (PR #26, PR #20):**
+- Cấu hình Redis serialization an toàn trong `CacheConfig.java` cho các cache keys `leaderboard`, `blueprints`, `exams`.
+- Đóng gói trọn bộ Docker production (`docker-compose.prod.yml`, `.env.prod.example`) và bộ scripts vận hành (`ops/scripts/run-migrations.sh`, `backup-db.sh`, `health-monitor.sh`, `smoke-test.sh`).
 
 **Backend & Cloud Database:**
 - Áp dụng đầy đủ 11 bản migration SQL (`0001` đến `0011`) trực tiếp lên cơ sở dữ liệu production Neon Cloud (`PostgreSQL 17`), bao gồm các bảng `tickets`, `leaderboard_opt_in`, `question_groups`, `exam_blueprints`, `exam_windows`.

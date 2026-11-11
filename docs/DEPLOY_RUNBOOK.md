@@ -1,7 +1,7 @@
 # V-SAT Compass API — Deploy Runbook
 
-> Tài liệu vận hành backend V-SAT Compass API trên Render.com + Neon PostgreSQL.
-> Cập nhật: 2026-04-23 | Phiên bản: v0.8.0
+> Tài liệu vận hành backend V-SAT Compass API trên Render.com / Pre-Linux Docker Production Stack + PostgreSQL 17 + Redis 7.
+> Cập nhật: 2026-11-11 | Phiên bản: **v1.2.0** / **android/v0.3.0** (`versionCode = 3`)
 
 ---
 

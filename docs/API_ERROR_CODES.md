@@ -1,6 +1,6 @@
 # V-SAT Compass API — Error Codes
 
-> Phiên bản: v0.8.0 | Cập nhật: 2026-04-23
+> Phiên bản: **v1.2.0** / **android/v0.3.0** (`versionCode = 3`) | Cập nhật: 2026-11-11
 
 ---
 
