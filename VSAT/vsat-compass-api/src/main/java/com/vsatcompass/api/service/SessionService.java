@@ -1,9 +1,14 @@
 package com.vsatcompass.api.service;
 
 import com.vsatcompass.api.dto.request.SessionRequest;
+import com.vsatcompass.api.dto.response.AudioPlayResponse;
 import com.vsatcompass.api.dto.response.SessionAnswerKeysResponse;
+import com.vsatcompass.api.dto.response.SessionAnswerResponse;
 import com.vsatcompass.api.dto.response.SessionQuestionContentResponse;
 import com.vsatcompass.api.dto.response.SessionResponse;
+
+import java.util.List;
+import java.util.Map;
 
 public interface SessionService {
 
@@ -39,4 +44,10 @@ public interface SessionService {
             Long sessionId,
             SessionRequest.RecordViolation request
     );
+
+    List<SessionAnswerResponse> getSessionAnswers(Long sessionId, Long userId);
+
+    Map<String, Integer> getAudioPlayCounts(Long sessionId, Long userId);
+
+    AudioPlayResponse recordAudioPlay(Long sessionId, Long userId, SessionRequest.RecordAudioPlay request);
 }

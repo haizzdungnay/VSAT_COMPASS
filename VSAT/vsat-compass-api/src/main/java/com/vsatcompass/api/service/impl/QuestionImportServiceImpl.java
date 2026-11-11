@@ -1,5 +1,7 @@
 package com.vsatcompass.api.service.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vsatcompass.api.dto.response.QuestionImportItemDto;
 import com.vsatcompass.api.dto.response.QuestionImportResultResponse;
 import com.vsatcompass.api.entity.*;
@@ -13,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,12 +24,18 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class QuestionImportServiceImpl implements QuestionImportService {
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final Pattern TAG_PATTERN = Pattern.compile("^\\[([A-Za-z0-9_]+)\\]\\s*:?\\s*(.*)$");
 
     private final SubjectRepository subjectRepository;
     private final TopicRepository topicRepository;
@@ -153,35 +163,22 @@ public class QuestionImportServiceImpl implements QuestionImportService {
             throw AppException.badRequest("Kích thước file tối đa cho phép là 10MB");
         }
         String fileName = file.getOriginalFilename();
-        if (fileName != null && !fileName.toLowerCase().endsWith(".xlsx")) {
-            throw AppException.badRequest("Định dạng file không hỗ trợ, vui lòng tải lên file Excel .xlsx");
+        String lowerName = (fileName != null) ? fileName.toLowerCase() : "";
+        if (!lowerName.endsWith(".xlsx") && !lowerName.endsWith(".json") && !lowerName.endsWith(".docx") && !lowerName.endsWith(".txt")) {
+            throw AppException.badRequest("Định dạng file không hỗ trợ, vui lòng tải lên file .xlsx, .json, .docx hoặc .txt");
         }
 
         List<QuestionImportItemDto> items = new ArrayList<>();
         List<String> errors = new ArrayList<>();
 
-        try (InputStream is = file.getInputStream(); Workbook workbook = WorkbookFactory.create(is)) {
-            // Parse Sheet 1: Single Questions (if present)
-            Sheet sheet1 = workbook.getSheet("Single Questions");
-            if (sheet1 == null && workbook.getNumberOfSheets() > 0) {
-                sheet1 = workbook.getSheetAt(0);
-            }
-            if (sheet1 != null && !isGroupSheet(sheet1)) {
-                parseSingleQuestionsSheet(sheet1, items, errors);
-            }
-
-            // Parse Sheet 2: Question Groups (if present)
-            Sheet sheet2 = workbook.getSheet("Question Groups");
-            if (sheet2 == null && workbook.getNumberOfSheets() > 1) {
-                sheet2 = workbook.getSheetAt(1);
-            }
-            if (sheet2 != null && isGroupSheet(sheet2)) {
-                parseGroupQuestionsSheet(sheet2, items, errors);
-            }
-
-        } catch (Exception e) {
-            log.error("Lỗi parse file Excel: {}", e.getMessage(), e);
-            throw AppException.badRequest("Không thể đọc file Excel: " + e.getMessage());
+        if (lowerName.endsWith(".xlsx")) {
+            parseExcel(file, items, errors);
+        } else if (lowerName.endsWith(".json")) {
+            parseJson(file, items, errors);
+        } else if (lowerName.endsWith(".docx")) {
+            parseDocx(file, items, errors);
+        } else {
+            parseTxt(file, items, errors);
         }
 
         int totalRows = items.size();
@@ -254,6 +251,293 @@ public class QuestionImportServiceImpl implements QuestionImportService {
                 .items(items)
                 .errors(errors)
                 .build();
+    }
+
+    private void parseExcel(MultipartFile file, List<QuestionImportItemDto> items, List<String> errors) {
+        try (InputStream is = file.getInputStream(); Workbook workbook = WorkbookFactory.create(is)) {
+            // Parse Sheet 1: Single Questions (if present)
+            Sheet sheet1 = workbook.getSheet("Single Questions");
+            if (sheet1 == null && workbook.getNumberOfSheets() > 0) {
+                sheet1 = workbook.getSheetAt(0);
+            }
+            if (sheet1 != null && !isGroupSheet(sheet1)) {
+                parseSingleQuestionsSheet(sheet1, items, errors);
+            }
+
+            // Parse Sheet 2: Question Groups (if present)
+            Sheet sheet2 = workbook.getSheet("Question Groups");
+            if (sheet2 == null && workbook.getNumberOfSheets() > 1) {
+                sheet2 = workbook.getSheetAt(1);
+            }
+            if (sheet2 != null && isGroupSheet(sheet2)) {
+                parseGroupQuestionsSheet(sheet2, items, errors);
+            }
+
+        } catch (Exception e) {
+            log.error("Lỗi parse file Excel: {}", e.getMessage(), e);
+            throw AppException.badRequest("Không thể đọc file Excel: " + e.getMessage());
+        }
+    }
+
+    private void parseJson(MultipartFile file, List<QuestionImportItemDto> items, List<String> errors) {
+        JsonNode rootNode;
+        try {
+            rootNode = OBJECT_MAPPER.readTree(file.getInputStream());
+        } catch (Exception e) {
+            log.error("Lỗi parse file JSON: {}", e.getMessage(), e);
+            throw AppException.badRequest("Không thể đọc file JSON: " + e.getMessage());
+        }
+
+        JsonNode arrayNode;
+        if (rootNode != null && rootNode.isArray()) {
+            arrayNode = rootNode;
+        } else if (rootNode != null && rootNode.isObject() && rootNode.has("questions") && rootNode.get("questions").isArray()) {
+            arrayNode = rootNode.get("questions");
+        } else {
+            throw AppException.badRequest("File JSON không hợp lệ: phải là mảng câu hỏi hoặc đối tượng chứa mảng 'questions'");
+        }
+
+        int rowNumber = 1;
+        for (JsonNode node : arrayNode) {
+            if (node == null || node.isNull()) {
+                rowNumber++;
+                continue;
+            }
+
+            String subjectRaw = getJsonField(node, "subject", "subjectId", "subjectCode");
+            String topicRaw = getJsonField(node, "topic", "topicId", "topicCode");
+            String subtopicRaw = getJsonField(node, "subtopic", "subtopicId", "subtopicCode");
+            String diffRaw = getJsonField(node, "difficulty", "diff");
+            String typeRaw = getJsonField(node, "questionType", "type");
+            String questionText = getJsonField(node, "questionText", "question", "stem", "text");
+            String optA = "";
+            String optB = "";
+            String optC = "";
+            String optD = "";
+
+            if (node.has("options") && node.get("options").isArray()) {
+                JsonNode opts = node.get("options");
+                optA = opts.size() > 0 ? opts.get(0).asText("").trim() : "";
+                optB = opts.size() > 1 ? opts.get(1).asText("").trim() : "";
+                optC = opts.size() > 2 ? opts.get(2).asText("").trim() : "";
+                optD = opts.size() > 3 ? opts.get(3).asText("").trim() : "";
+            } else {
+                optA = getJsonField(node, "optionA", "optA", "a", "A");
+                optB = getJsonField(node, "optionB", "optB", "b", "B");
+                optC = getJsonField(node, "optionC", "optC", "c", "C");
+                optD = getJsonField(node, "optionD", "optD", "d", "D");
+            }
+
+            String correctRaw = getJsonField(node, "correctAnswer", "correct", "key", "answer");
+            String explanation = getJsonField(node, "explanation", "explain");
+
+            String tags = "";
+            if (node.has("tags")) {
+                JsonNode tagsNode = node.get("tags");
+                if (tagsNode.isArray()) {
+                    List<String> tagList = new ArrayList<>();
+                    for (JsonNode t : tagsNode) {
+                        tagList.add(t.asText("").trim());
+                    }
+                    tags = String.join(",", tagList);
+                } else {
+                    tags = tagsNode.asText("").trim();
+                }
+            }
+
+            String groupCode = getJsonField(node, "groupCode", "group_code");
+            String groupTitle = getJsonField(node, "groupTitle", "group_title");
+            String passageText = getJsonField(node, "passageText", "passage_text", "passage");
+            String audioUrl = getJsonField(node, "audioUrl", "audio_url", "audio");
+            if (audioUrl.isBlank()) audioUrl = null;
+
+            Integer maxPlays = 2;
+            if (node.has("maxPlays") && !node.get("maxPlays").isNull()) {
+                maxPlays = node.get("maxPlays").asInt(2);
+            } else if (node.has("max_plays") && !node.get("max_plays").isNull()) {
+                maxPlays = node.get("max_plays").asInt(2);
+            }
+
+            QuestionImportItemDto item = QuestionImportItemDto.builder()
+                    .sheetName("JSON")
+                    .rowNumber(rowNumber)
+                    .groupCode(groupCode.isBlank() ? null : groupCode)
+                    .groupTitle(groupTitle.isBlank() ? null : groupTitle)
+                    .passageText(passageText.isBlank() ? null : passageText)
+                    .questionText(questionText)
+                    .options(List.of(optA, optB, optC, optD))
+                    .correctAnswer(correctRaw)
+                    .explanation(explanation)
+                    .tags(tags)
+                    .audioUrl(audioUrl)
+                    .maxPlays(maxPlays)
+                    .valid(true)
+                    .build();
+
+            if (item.getGroupCode() != null && (item.getPassageText() == null || item.getPassageText().isBlank())) {
+                item.setValid(false);
+                item.setError("Đoạn văn đọc hiểu / Passage Text không được để trống");
+                errors.add(String.format("[%s Hàng %d] %s", "JSON", rowNumber, item.getError()));
+            }
+
+            if (item.isValid()) {
+                validateAndPopulateCommon(item, subjectRaw, topicRaw, subtopicRaw, diffRaw, typeRaw, optA, optB, optC, optD, correctRaw, errors);
+            }
+
+            items.add(item);
+            rowNumber++;
+        }
+    }
+
+    private String getJsonField(JsonNode node, String... fieldNames) {
+        for (String field : fieldNames) {
+            if (node.has(field) && !node.get(field).isNull()) {
+                return node.get(field).asText("").trim();
+            }
+        }
+        return "";
+    }
+
+    private void parseDocx(MultipartFile file, List<QuestionImportItemDto> items, List<String> errors) {
+        String fullText;
+        try (InputStream is = file.getInputStream();
+             XWPFDocument doc = new XWPFDocument(is)) {
+            StringBuilder sb = new StringBuilder();
+            for (XWPFParagraph p : doc.getParagraphs()) {
+                sb.append(p.getText()).append("\n");
+            }
+            fullText = sb.toString();
+        } catch (Exception e) {
+            log.error("Lỗi parse file DOCX: {}", e.getMessage(), e);
+            throw AppException.badRequest("Không thể đọc file DOCX: " + e.getMessage());
+        }
+        parseTextBlocks(fullText, "DOCX", items, errors);
+    }
+
+    private void parseTxt(MultipartFile file, List<QuestionImportItemDto> items, List<String> errors) {
+        String fullText;
+        try {
+            fullText = new String(file.getBytes(), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            log.error("Lỗi parse file TXT: {}", e.getMessage(), e);
+            throw AppException.badRequest("Không thể đọc file TXT: " + e.getMessage());
+        }
+        parseTextBlocks(fullText, "TXT", items, errors);
+    }
+
+    private void parseTextBlocks(String fullText, String sourceName, List<QuestionImportItemDto> items, List<String> errors) {
+        String[] lines = fullText.split("\\r?\\n");
+        List<List<String>> blocks = new ArrayList<>();
+        List<String> currentBlock = new ArrayList<>();
+
+        for (String rawLine : lines) {
+            String trimmed = rawLine.trim();
+            boolean isSeparator = trimmed.matches("^---+$");
+            boolean isQHeader = (trimmed.startsWith("[Q]") || trimmed.startsWith("[q]"))
+                    || (trimmed.startsWith("[Q") && trimmed.contains("]"));
+            if (isSeparator || isQHeader) {
+                if (!currentBlock.isEmpty()) {
+                    blocks.add(currentBlock);
+                    currentBlock = new ArrayList<>();
+                }
+                if (isQHeader) {
+                    currentBlock.add(rawLine);
+                }
+            } else {
+                currentBlock.add(rawLine);
+            }
+        }
+        if (!currentBlock.isEmpty()) {
+            blocks.add(currentBlock);
+        }
+
+        int rowNumber = 1;
+        for (List<String> blockLines : blocks) {
+            Map<String, StringBuilder> tagMap = new LinkedHashMap<>();
+            String currentTag = null;
+
+            for (String rawLine : blockLines) {
+                String lineTrimmed = rawLine.trim();
+                Matcher m = TAG_PATTERN.matcher(lineTrimmed);
+                if (m.matches()) {
+                    String tag = m.group(1).toUpperCase();
+                    String val = m.group(2).trim();
+                    currentTag = tag;
+                    tagMap.put(tag, new StringBuilder(val));
+                } else if (currentTag != null && tagMap.containsKey(currentTag)) {
+                    tagMap.get(currentTag).append("\n").append(lineTrimmed);
+                }
+            }
+
+            if (tagMap.isEmpty()) {
+                continue;
+            }
+
+            String subjectRaw = getTagValue(tagMap, "SUBJECT");
+            String topicRaw = getTagValue(tagMap, "TOPIC");
+            String subtopicRaw = getTagValue(tagMap, "SUBTOPIC");
+            String diffRaw = getTagValue(tagMap, "DIFF", "DIFFICULTY");
+            String typeRaw = getTagValue(tagMap, "TYPE", "QUESTION_TYPE");
+            String stem = getTagValue(tagMap, "STEM", "QUESTION", "TEXT");
+            String optA = getTagValue(tagMap, "A", "OPTION_A", "OPT_A");
+            String optB = getTagValue(tagMap, "B", "OPTION_B", "OPT_B");
+            String optC = getTagValue(tagMap, "C", "OPTION_C", "OPT_C");
+            String optD = getTagValue(tagMap, "D", "OPTION_D", "OPT_D");
+            String key = getTagValue(tagMap, "KEY", "ANSWER", "CORRECT");
+            String explanation = getTagValue(tagMap, "EXPLANATION", "EXPLAIN");
+            String audioUrl = getTagValue(tagMap, "AUDIO", "AUDIO_URL");
+            String maxPlaysStr = getTagValue(tagMap, "MAXPLAYS", "MAX_PLAYS");
+            String groupCode = getTagValue(tagMap, "GROUP", "GROUP_CODE");
+            String groupTitle = getTagValue(tagMap, "GROUP_TITLE");
+            String passageText = getTagValue(tagMap, "PASSAGE", "PASSAGE_TEXT");
+            String tags = getTagValue(tagMap, "TAGS", "TAG");
+
+            Integer maxPlays = 2;
+            if (!maxPlaysStr.isBlank()) {
+                try {
+                    maxPlays = Integer.parseInt(maxPlaysStr);
+                } catch (NumberFormatException ignored) {}
+            }
+
+            QuestionImportItemDto item = QuestionImportItemDto.builder()
+                    .sheetName(sourceName)
+                    .rowNumber(rowNumber)
+                    .groupCode(groupCode.isBlank() ? null : groupCode)
+                    .groupTitle(groupTitle.isBlank() ? null : groupTitle)
+                    .passageText(passageText.isBlank() ? null : passageText)
+                    .questionText(stem)
+                    .options(List.of(optA, optB, optC, optD))
+                    .correctAnswer(key)
+                    .explanation(explanation)
+                    .tags(tags)
+                    .audioUrl(audioUrl.isBlank() ? null : audioUrl)
+                    .maxPlays(maxPlays)
+                    .valid(true)
+                    .build();
+
+            if (item.getGroupCode() != null && (item.getPassageText() == null || item.getPassageText().isBlank())) {
+                item.setValid(false);
+                item.setError("Đoạn văn đọc hiểu / Passage Text không được để trống");
+                errors.add(String.format("[%s Hàng %d] %s", sourceName, rowNumber, item.getError()));
+            }
+
+            if (item.isValid()) {
+                validateAndPopulateCommon(item, subjectRaw, topicRaw, subtopicRaw, diffRaw, typeRaw, optA, optB, optC, optD, key, errors);
+            }
+
+            items.add(item);
+            rowNumber++;
+        }
+    }
+
+    private String getTagValue(Map<String, StringBuilder> tagMap, String... keys) {
+        for (String k : keys) {
+            StringBuilder sb = tagMap.get(k);
+            if (sb != null) {
+                return sb.toString().trim();
+            }
+        }
+        return "";
     }
 
     private boolean isGroupSheet(Sheet sheet) {
@@ -388,9 +672,6 @@ public class QuestionImportServiceImpl implements QuestionImportService {
             String correctRaw,
             List<String> errors
     ) {
-        String sheetName = item.getSheetName();
-        int rowNumber = item.getRowNumber();
-
         // 1. Resolve Subject
         if (subjectRaw.isBlank()) {
             failItem(item, "Thiếu thông tin Môn học (Subject)", errors);
@@ -514,6 +795,7 @@ public class QuestionImportServiceImpl implements QuestionImportService {
             case "MULTIPLE_CHOICE", "NHIEU_DAP_AN", "MC" -> QuestionType.MULTIPLE_CHOICE;
             case "TRUE_FALSE", "DUNG_SAI", "TF" -> QuestionType.TRUE_FALSE;
             case "SHORT_ANSWER", "DIEN_KHUYET" -> QuestionType.SHORT_ANSWER;
+            case "MATCHING", "GHEP_HOP", "MATCH" -> QuestionType.MATCHING;
             default -> QuestionType.SINGLE_CHOICE;
         };
     }

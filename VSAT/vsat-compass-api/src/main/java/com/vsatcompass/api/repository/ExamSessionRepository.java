@@ -2,8 +2,10 @@ package com.vsatcompass.api.repository;
 
 import com.vsatcompass.api.entity.ExamSession;
 import com.vsatcompass.api.entity.enums.SessionStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -16,6 +18,10 @@ import java.util.Optional;
 public interface ExamSessionRepository extends JpaRepository<ExamSession, Long> {
 
     Optional<ExamSession> findByIdAndUserId(Long id, Long userId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT es FROM ExamSession es WHERE es.id = :id")
+    Optional<ExamSession> findByIdForUpdate(@Param("id") Long id);
 
     long countByExamWindowIdAndStatus(Long examWindowId, SessionStatus status);
 

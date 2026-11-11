@@ -2,7 +2,12 @@ package com.vsatcompass.api.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.List;
 import java.util.Map;
@@ -86,5 +91,12 @@ public class SessionRequest {
         private String details;
 
         private String timestamp;
+    }
+
+    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+    public static class RecordAudioPlay {
+        @NotBlank(message = "audioKey không được để trống")
+        @Pattern(regexp = "^[gq]:\\d+$", message = "audioKey phải có định dạng g:{id} hoặc q:{id}")
+        private String audioKey;
     }
 }

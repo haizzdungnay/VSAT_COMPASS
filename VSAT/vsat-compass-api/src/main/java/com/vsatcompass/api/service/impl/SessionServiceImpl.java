@@ -1,10 +1,12 @@
 package com.vsatcompass.api.service.impl;
 
 import com.vsatcompass.api.dto.request.SessionRequest;
+import com.vsatcompass.api.dto.response.AudioPlayResponse;
 import com.vsatcompass.api.dto.response.QuestionAnswerKeyResponse;
 import com.vsatcompass.api.dto.response.QuestionGroupResponse;
 import com.vsatcompass.api.dto.response.QuestionOptionContentResponse;
 import com.vsatcompass.api.dto.response.SessionAnswerKeysResponse;
+import com.vsatcompass.api.dto.response.SessionAnswerResponse;
 import com.vsatcompass.api.dto.response.SessionQuestionContentResponse;
 import com.vsatcompass.api.dto.response.SessionResponse;
 import com.vsatcompass.api.entity.ExamQuestion;
@@ -33,6 +35,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +48,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -274,15 +278,26 @@ public class SessionServiceImpl implements SessionService {
         }
 
         Long questionId = request.getQuestionId();
-        Long selectedOptionId = request.getSelectedOptionId();
-        Map<String, Object> payload = request.getAnswerPayload();
-
-        if (questionId == null || (selectedOptionId == null && (payload == null || payload.isEmpty()))) {
+        if (questionId == null) {
             throw AppException.badRequest("questionId và câu trả lời không được để trống");
         }
 
         // Confirm the question belongs to the session's exam
         ExamQuestion examQuestion = findExamQuestion(session.getExamId(), questionId);
+
+        Long selectedOptionId = request.getSelectedOptionId();
+        Map<String, Object> payload = request.getAnswerPayload();
+
+        if (selectedOptionId == null && (payload == null || payload.isEmpty())) {
+            // ponytail: deleting row also clears bookmark if any
+            sessionAnswerRepository.findBySessionIdAndQuestionId(sessionId, questionId)
+                    .ifPresent(existing -> {
+                        sessionAnswerRepository.delete(existing);
+                        session.setAnsweredCount((int) sessionAnswerRepository.countBySessionId(sessionId));
+                        examSessionRepository.save(session);
+                    });
+            return;
+        }
 
         Question question = questionRepository.findById(questionId).orElse(null);
         List<QuestionOption> options = questionOptionRepository
@@ -581,6 +596,135 @@ public class SessionServiceImpl implements SessionService {
                 request.getCorrectCount(), request.getTotalQuestions());
 
         return toSessionInfo(session);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SessionAnswerResponse> getSessionAnswers(Long sessionId, Long userId) {
+        ExamSession session = loadOwnedSession(sessionId, userId);
+        if (session.getStatus() != SessionStatus.IN_PROGRESS && session.getStatus() != SessionStatus.SUBMITTED) {
+            throw AppException.badRequest(
+                    "Session must be IN_PROGRESS or SUBMITTED (current: " + session.getStatus() + ")");
+        }
+
+        List<SessionAnswer> answers = sessionAnswerRepository.findBySessionId(sessionId);
+        return answers.stream()
+                .map(a -> SessionAnswerResponse.builder()
+                        .questionId(a.getQuestionId())
+                        .questionOrder(a.getQuestionOrder())
+                        .selectedOptionId(a.getSelectedOptionId())
+                        .answerPayload(a.getAnswerPayload())
+                        .bookmarked(a.getIsBookmarked())
+                        .timeSpentSeconds(a.getTimeSpentSeconds())
+                        .build())
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Integer> getAudioPlayCounts(Long sessionId, Long userId) {
+        ExamSession session = loadOwnedSession(sessionId, userId);
+        if (session.getStatus() != SessionStatus.IN_PROGRESS && session.getStatus() != SessionStatus.SUBMITTED) {
+            throw AppException.badRequest(
+                    "Session must be IN_PROGRESS or SUBMITTED (current: " + session.getStatus() + ")");
+        }
+        Map<String, Integer> counts = session.getAudioPlayCounts();
+        return counts != null ? counts : Map.of();
+    }
+
+    @Override
+    @Transactional
+    public AudioPlayResponse recordAudioPlay(Long sessionId, Long userId, SessionRequest.RecordAudioPlay request) {
+        Optional<ExamSession> sessionOpt = examSessionRepository.findByIdForUpdate(sessionId);
+        if (sessionOpt == null || sessionOpt.isEmpty()) {
+            sessionOpt = examSessionRepository.findById(sessionId);
+        }
+        ExamSession session = (sessionOpt != null ? sessionOpt : Optional.<ExamSession>empty())
+                .orElseThrow(() -> AppException.notFound("ExamSession", sessionId));
+
+        if (!session.getUserId().equals(userId)) {
+            throw AppException.sessionForbidden();
+        }
+        if (session.getStatus() != SessionStatus.IN_PROGRESS) {
+            throw AppException.badRequest("Phiên thi không ở trạng thái IN_PROGRESS (hiện tại: " + session.getStatus() + ")");
+        }
+
+        String audioKey = request != null ? request.getAudioKey() : null;
+        if (audioKey == null || !audioKey.matches("^[gq]:\\d+$")) {
+            throw AppException.badRequest("audioKey phải có định dạng g:{id} hoặc q:{id}");
+        }
+
+        String prefix = audioKey.substring(0, 1);
+        long targetId;
+        try {
+            targetId = Long.parseLong(audioKey.substring(2));
+        } catch (NumberFormatException e) {
+            throw AppException.badRequest("audioKey không hợp lệ");
+        }
+
+        List<ExamQuestion> examQuestions = examQuestionRepository
+                .findByExamIdOrderByQuestionOrderAscIdAsc(session.getExamId());
+
+        int maxPlays = 2;
+
+        if ("g".equals(prefix)) {
+            boolean groupInExam = false;
+            for (ExamQuestion eq : examQuestions) {
+                Question q = questionRepository.findById(eq.getQuestionId()).orElse(null);
+                if (q != null && Objects.equals(q.getQuestionGroupId(), targetId)) {
+                    groupInExam = true;
+                    break;
+                }
+            }
+            if (!groupInExam) {
+                throw new AppException(HttpStatus.NOT_FOUND, "RESOURCE_NOT_FOUND",
+                        "Nhóm câu hỏi nghe không thuộc đề thi này");
+            }
+
+            QuestionGroup qg = questionGroupRepository.findById(targetId).orElse(null);
+            if (qg != null && qg.getMaxPlays() != null && qg.getMaxPlays() > 0) {
+                maxPlays = qg.getMaxPlays();
+            }
+        } else {
+            boolean questionInExam = examQuestions.stream()
+                    .anyMatch(eq -> Objects.equals(eq.getQuestionId(), targetId));
+            if (!questionInExam) {
+                throw new AppException(HttpStatus.NOT_FOUND, "RESOURCE_NOT_FOUND",
+                        "Câu hỏi nghe không thuộc đề thi này");
+            }
+
+            Question q = questionRepository.findById(targetId).orElse(null);
+            if (q != null && q.getQuestionGroupId() != null) {
+                QuestionGroup qg = questionGroupRepository.findById(q.getQuestionGroupId()).orElse(null);
+                if (qg != null && qg.getMaxPlays() != null && qg.getMaxPlays() > 0) {
+                    maxPlays = qg.getMaxPlays();
+                }
+            }
+        }
+
+        Map<String, Integer> counts = session.getAudioPlayCounts();
+        if (counts == null) {
+            counts = new HashMap<>();
+        } else {
+            counts = new HashMap<>(counts);
+        }
+
+        int current = counts.getOrDefault(audioKey, 0);
+        if (current >= maxPlays) {
+            throw AppException.conflict("Đã hết số lượt nghe tối đa (" + maxPlays + " lượt) cho phần nghe này");
+        }
+
+        int updated = current + 1;
+        counts.put(audioKey, updated);
+        session.setAudioPlayCounts(counts);
+        examSessionRepository.save(session);
+
+        return AudioPlayResponse.builder()
+                .audioKey(audioKey)
+                .playCount(updated)
+                .maxPlays(maxPlays)
+                .allowed(true)
+                .build();
     }
 
     private void persistClientAnswers(ExamSession session, SessionRequest.ClientSubmit request) {

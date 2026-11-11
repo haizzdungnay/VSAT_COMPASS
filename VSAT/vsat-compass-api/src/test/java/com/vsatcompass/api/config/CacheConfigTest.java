@@ -2,6 +2,7 @@ package com.vsatcompass.api.config;
 
 import com.vsatcompass.api.dto.request.AdminExamCreateRequest;
 import com.vsatcompass.api.dto.request.AdminExamUpdateRequest;
+import com.vsatcompass.api.dto.request.BlueprintUpsertRequest;
 import com.vsatcompass.api.dto.request.GenerateByMatrixRequest;
 import com.vsatcompass.api.dto.request.GenerateVariantsRequest;
 import com.vsatcompass.api.dto.request.SessionRequest;
@@ -29,6 +30,7 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.cache.annotation.CachingConfigurer;
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.cache.interceptor.CacheErrorHandler;
@@ -148,6 +150,31 @@ class CacheConfigTest {
         assertThat(getCache).isNotNull();
         assertThat(getCache.value()).contains("blueprintDetail");
         assertThat(getCache.key()).isEqualTo("#id");
+    }
+
+    @Test
+    @DisplayName("AdminBlueprintServiceImpl mutating methods have @Caching evict")
+    void testAdminBlueprintServiceImplEviction() throws NoSuchMethodException {
+        List<Method> mutatingMethods = List.of(
+                AdminBlueprintServiceImpl.class.getMethod("createBlueprint", BlueprintUpsertRequest.class),
+                AdminBlueprintServiceImpl.class.getMethod("updateBlueprint", Long.class, BlueprintUpsertRequest.class),
+                AdminBlueprintServiceImpl.class.getMethod("deleteBlueprint", Long.class)
+        );
+
+        for (Method method : mutatingMethods) {
+            Caching caching = method.getAnnotation(Caching.class);
+            assertThat(caching)
+                    .as("Method %s must be annotated with @Caching", method.getName())
+                    .isNotNull();
+            assertThat(caching.evict()).hasSize(2);
+            List<String> cacheNames = java.util.Arrays.stream(caching.evict())
+                    .flatMap(e -> java.util.Arrays.stream(e.value()))
+                    .toList();
+            assertThat(cacheNames).containsExactlyInAnyOrder("blueprints", "blueprintDetail");
+            for (CacheEvict evict : caching.evict()) {
+                assertThat(evict.allEntries()).isTrue();
+            }
+        }
     }
 
     @Test

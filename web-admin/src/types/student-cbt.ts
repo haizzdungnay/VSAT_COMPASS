@@ -209,3 +209,10 @@ export interface SessionViolationResponse {
   message: string;
 }
 
+export interface SessionAudioPlayResponse {
+  audioKey: string;
+  playCount: number;
+  maxPlays: number;
+  allowed: boolean;
+}
+

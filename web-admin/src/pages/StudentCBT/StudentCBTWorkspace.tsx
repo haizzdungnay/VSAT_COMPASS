@@ -9,7 +9,11 @@ import {
   saveSessionAnswer,
   submitStudentSession,
   fallbackSessionQuestions,
-  reportSessionViolation
+  reportSessionViolation,
+  fetchSessionAnswers,
+  fetchSessionAudioPlays,
+  recordSessionAudioPlay,
+  getLocalSessionAnswers
 } from '../../services/api';
 import { MathView } from '../../components/MathView';
 import { MatchingQuestionPanel } from './MatchingQuestionPanel';
@@ -35,7 +39,7 @@ interface ListeningAudioPlayerProps {
   durationSec?: number | null;
   maxPlays?: number | null;
   playCount: number;
-  onIncrementPlay: () => void;
+  onIncrementPlay: () => Promise<void> | void;
 }
 
 const ListeningAudioPlayer: React.FC<ListeningAudioPlayerProps> = ({
@@ -65,10 +69,12 @@ const ListeningAudioPlayer: React.FC<ListeningAudioPlayerProps> = ({
     } else {
       try {
         if (currentTime === 0 || audioRef.current.ended) {
-          onIncrementPlay();
+          await onIncrementPlay();
         }
-        await audioRef.current.play();
-        setIsPlaying(true);
+        if (audioRef.current) {
+          await audioRef.current.play();
+          setIsPlaying(true);
+        }
       } catch (err: unknown) {
         console.warn('Audio play error:', err);
       }
@@ -222,15 +228,27 @@ export const StudentCBTWorkspace: React.FC<StudentCBTWorkspaceProps> = ({
 
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [questionCache, setQuestionCache] = useState<Record<number, StudentQuestionContent>>({});
-  const [answers, setAnswers] = useState<Record<number, LocalAnswerState>>({});
+  const [answers, setAnswers] = useState<Record<number, LocalAnswerState>>(() => {
+    const local = getLocalSessionAnswers(session.id);
+    const initial: Record<number, LocalAnswerState> = {};
+    for (const [k, v] of Object.entries(local)) {
+      const qId = Number(k);
+      initial[qId] = {
+        selectedOptionId: v.selectedOptionId,
+        answerPayload: v.answerPayload,
+        bookmarked: Boolean(v.bookmarked),
+        isDirty: false
+      };
+    }
+    return initial;
+  });
   const [remainingSeconds, setRemainingSeconds] = useState<number>(durationMinutes * 60);
   const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [showSubmitModal, setShowSubmitModal] = useState<boolean>(false);
 
-  // Audio Listening Play Counts (persisted in sessionStorage)
-  // ponytail: client sessionStorage tracking; upgrade path is server-side play counter
+  // Audio Listening Play Counts (persisted in sessionStorage & server-synced)
   const audioStorageKey = `vsat_audio_plays_${session.id}`;
   const [audioPlayCounts, setAudioPlayCounts] = useState<Record<string, number>>(() => {
     try {
@@ -247,13 +265,67 @@ export const StudentCBTWorkspace: React.FC<StudentCBTWorkspaceProps> = ({
     } catch {}
   }, [audioStorageKey, audioPlayCounts]);
 
-  const handleIncrementAudioPlay = useCallback((key: string) => {
+  // Initial server session restore (answers & audio plays)
+  useEffect(() => {
+    let isMounted = true;
+
+    fetchSessionAnswers(session.id)
+      .then(serverAnswers => {
+        if (!isMounted || !serverAnswers) return;
+        setAnswers(prev => {
+          const merged: Record<number, LocalAnswerState> = { ...prev };
+          for (const [k, v] of Object.entries(serverAnswers)) {
+            const qId = Number(k);
+            merged[qId] = {
+              selectedOptionId: v.selectedOptionId !== undefined ? v.selectedOptionId : prev[qId]?.selectedOptionId,
+              answerPayload: v.answerPayload !== undefined ? v.answerPayload : prev[qId]?.answerPayload,
+              bookmarked: v.bookmarked !== undefined ? v.bookmarked : (prev[qId]?.bookmarked ?? false),
+              isDirty: false
+            };
+          }
+          return merged;
+        });
+      })
+      .catch(err => console.warn('fetchSessionAnswers error:', err));
+
+    fetchSessionAudioPlays(session.id)
+      .then(serverPlays => {
+        if (!isMounted || !serverPlays) return;
+        setAudioPlayCounts(prev => ({
+          ...serverPlays,
+          ...prev
+        }));
+      })
+      .catch(err => console.warn('fetchSessionAudioPlays error:', err));
+
+    return () => {
+      isMounted = false;
+    };
+  }, [session.id]);
+
+  const handleIncrementAudioPlay = useCallback(async (key: string, maxPlays = 2) => {
     if (!key) return;
-    setAudioPlayCounts(prev => ({
-      ...prev,
-      [key]: (prev[key] || 0) + 1
-    }));
-  }, []);
+    try {
+      const res = await recordSessionAudioPlay(session.id, key);
+      setAudioPlayCounts(prev => ({
+        ...prev,
+        [key]: res.playCount
+      }));
+    } catch (err: any) {
+      if (err?.status === 409) {
+        setAudioPlayCounts(prev => ({
+          ...prev,
+          [key]: maxPlays
+        }));
+      } else {
+        setAudioPlayCounts(prev => ({
+          ...prev,
+          [key]: (prev[key] || 0) + 1
+        }));
+      }
+      throw err;
+    }
+  }, [session.id]);
 
   // Proctoring / Anti-cheating Mode State (P4)
   const isProctoring = session.mode === 'SCHEDULED_MOCK';
@@ -362,11 +434,10 @@ export const StudentCBTWorkspace: React.FC<StudentCBTWorkspaceProps> = ({
     const targetState = state || answersRef.current[qId];
     if (!targetState) return;
 
-    const hasPayloadContent = targetState.answerPayload && Object.keys(targetState.answerPayload).length > 0;
     const payload: SaveSessionAnswerPayload = {
       questionId: qId,
       selectedOptionId: targetState.selectedOptionId,
-      answerPayload: hasPayloadContent ? targetState.answerPayload : undefined,
+      answerPayload: targetState.answerPayload ?? {},
       bookmarked: targetState.bookmarked,
       timeSpentSeconds: 15
     };
@@ -530,12 +601,16 @@ export const StudentCBTWorkspace: React.FC<StudentCBTWorkspaceProps> = ({
   };
 
   const handleShortAnswerChange = (text: string) => {
+    const trimmed = text.trim();
     const updated: LocalAnswerState = {
       ...currentAnswer,
-      answerPayload: { value: text },
+      answerPayload: trimmed.length > 0 ? { value: text } : {},
       isDirty: true
     };
     setAnswers(prev => ({ ...prev, [currentQId]: updated }));
+    if (trimmed.length === 0) {
+      persistAnswer(currentQId, updated);
+    }
   };
 
   const handleMatchingChange = (nextMatching: Record<string, string>) => {
@@ -544,14 +619,11 @@ export const StudentCBTWorkspace: React.FC<StudentCBTWorkspaceProps> = ({
     );
     const updated: LocalAnswerState = {
       ...currentAnswer,
-      answerPayload: nextMatching,
-      isDirty: hasPairs
+      answerPayload: hasPairs ? nextMatching : {},
+      isDirty: true
     };
     setAnswers(prev => ({ ...prev, [currentQId]: updated }));
-    if (hasPairs) {
-      persistAnswer(currentQId, updated);
-    }
-    // ponytail: backend rejects empty answerPayload
+    persistAnswer(currentQId, updated);
   };
 
   const handleToggleBookmark = () => {
@@ -845,7 +917,7 @@ export const StudentCBTWorkspace: React.FC<StudentCBTWorkspaceProps> = ({
                         durationSec={currentQuestion.audioDurationSec || currentQuestion.questionGroup.audioDurationSec}
                         maxPlays={currentQuestion.maxPlays || currentQuestion.questionGroup.maxPlays}
                         playCount={audioPlayCounts[audioKey] || 0}
-                        onIncrementPlay={() => handleIncrementAudioPlay(audioKey)}
+                        onIncrementPlay={() => handleIncrementAudioPlay(audioKey, currentQuestion.maxPlays || currentQuestion.questionGroup?.maxPlays || 2)}
                       />
                     )}
 
@@ -875,7 +947,7 @@ export const StudentCBTWorkspace: React.FC<StudentCBTWorkspaceProps> = ({
                       durationSec={currentQuestion.audioDurationSec}
                       maxPlays={currentQuestion.maxPlays}
                       playCount={audioPlayCounts[audioKey] || 0}
-                      onIncrementPlay={() => handleIncrementAudioPlay(audioKey)}
+                      onIncrementPlay={() => handleIncrementAudioPlay(audioKey, currentQuestion.maxPlays || 2)}
                     />
                   )}
 
@@ -1258,6 +1330,11 @@ export const StudentCBTWorkspace: React.FC<StudentCBTWorkspaceProps> = ({
             type="text"
             value={shortVal}
             onChange={(e) => handleShortAnswerChange(e.target.value)}
+            onBlur={() => {
+              if (currentQId && answersRef.current[currentQId]?.isDirty) {
+                persistAnswer(currentQId, answersRef.current[currentQId]);
+              }
+            }}
             placeholder="Ví dụ: 12 hoặc 3.5 hoặc -4..."
             className="w-full px-4 py-3 rounded-xl border border-outline-variant/50 bg-surface-container-lowest text-on-surface font-mono text-base focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-xs"
           />

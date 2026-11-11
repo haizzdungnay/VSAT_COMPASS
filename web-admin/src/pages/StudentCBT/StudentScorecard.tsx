@@ -11,7 +11,8 @@ import {
   requestAiExplanation,
   createStudentTicket,
   fallbackSessionQuestions,
-  getLocalSessionAnswers
+  getLocalSessionAnswers,
+  fetchSessionAnswers
 } from '../../services/api';
 import { MathView } from '../../components/MathView';
 import { AdmissionPredictorWidget } from './AdmissionPredictorWidget';
@@ -56,13 +57,17 @@ export const StudentScorecard: React.FC<StudentScorecardProps> = ({
 
     Promise.all([
       fetchSessionAnswerKeys(session.id),
-      Promise.all(questionIds.map(id => fetchSessionQuestion(session.id, id)))
+      Promise.all(questionIds.map(id => fetchSessionQuestion(session.id, id))),
+      fetchSessionAnswers(session.id)
     ])
-      .then(([keysRes, qsRes]) => {
+      .then(([keysRes, qsRes, serverAnswers]) => {
         if (!isMounted) return;
         setAnswerKeys(keysRes.questions || []);
         const validQs = qsRes.filter((q): q is StudentQuestionContent => q !== null);
         setQuestions(validQs.length > 0 ? validQs : fallbackSessionQuestions);
+        if (serverAnswers) {
+          setStudentAnswers(serverAnswers);
+        }
       })
       .catch((err: unknown) => {
         console.warn('Load scorecard data error:', err);

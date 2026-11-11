@@ -1,9 +1,11 @@
 package com.vsatcompass.api.service;
 
 import com.vsatcompass.api.dto.request.SessionRequest;
+import com.vsatcompass.api.dto.response.AudioPlayResponse;
 import com.vsatcompass.api.dto.response.QuestionAnswerKeyResponse;
 import com.vsatcompass.api.dto.response.QuestionOptionContentResponse;
 import com.vsatcompass.api.dto.response.SessionAnswerKeysResponse;
+import com.vsatcompass.api.dto.response.SessionAnswerResponse;
 import com.vsatcompass.api.dto.response.SessionQuestionContentResponse;
 import com.vsatcompass.api.dto.response.SessionResponse;
 import com.vsatcompass.api.entity.ExamQuestion;
@@ -1141,6 +1143,164 @@ class SessionServiceTest {
         assertThat(matchRes.getCorrectMatching()).isNotNull();
         assertThat(matchRes.getCorrectMatching().get("1")).isEqualTo("B");
         assertThat(matchRes.getCorrectMatching().get("2")).isEqualTo("D");
+    }
+
+    // ===== T1-BACKEND-SESSION-SYNC: delete answer, getSessionAnswers, audio-plays =====
+
+    @Test
+    @DisplayName("submitAnswer: empty payload and null selectedOptionId deletes existing answer and updates answeredCount")
+    void submitAnswer_emptyPayload_deletesExistingAnswerAndUpdatesCount() {
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(EXAM_ID))
+                .thenReturn(List.of(examQuestion(QUESTION_ID, 1)));
+
+        SessionAnswer existing = SessionAnswer.builder()
+                .id(999L)
+                .sessionId(SESSION_ID)
+                .questionId(QUESTION_ID)
+                .questionOrder(1)
+                .selectedOptionId(301L)
+                .isBookmarked(true)
+                .build();
+        when(sessionAnswerRepository.findBySessionIdAndQuestionId(SESSION_ID, QUESTION_ID))
+                .thenReturn(Optional.of(existing));
+        when(sessionAnswerRepository.countBySessionId(SESSION_ID)).thenReturn(0L);
+        when(examSessionRepository.save(any(ExamSession.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        SessionRequest.SubmitAnswer req = new SessionRequest.SubmitAnswer();
+        req.setQuestionId(QUESTION_ID);
+        req.setSelectedOptionId(null);
+        req.setAnswerPayload(Map.of());
+
+        sessionService.submitAnswer(USER_ID, SESSION_ID, req);
+
+        verify(sessionAnswerRepository).delete(existing);
+        ArgumentCaptor<ExamSession> cap = ArgumentCaptor.forClass(ExamSession.class);
+        verify(examSessionRepository).save(cap.capture());
+        assertThat(cap.getValue().getAnsweredCount()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("getSessionAnswers: happy path returns answers without exposing correctness when IN_PROGRESS")
+    void getSessionAnswers_inProgress_returnsAnswersWithoutCorrectness() {
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+        SessionAnswer a1 = SessionAnswer.builder()
+                .id(1L)
+                .sessionId(SESSION_ID)
+                .questionId(QUESTION_ID)
+                .questionOrder(1)
+                .selectedOptionId(301L)
+                .answerPayload(Map.of("a", true))
+                .isBookmarked(true)
+                .timeSpentSeconds(15)
+                .isCorrect(true)
+                .rawPointsAwarded(BigDecimal.valueOf(6.0))
+                .correctSubitems(4)
+                .build();
+        when(sessionAnswerRepository.findBySessionId(SESSION_ID)).thenReturn(List.of(a1));
+
+        List<SessionAnswerResponse> answers = sessionService.getSessionAnswers(SESSION_ID, USER_ID);
+
+        assertThat(answers).hasSize(1);
+        SessionAnswerResponse resp = answers.get(0);
+        assertThat(resp.getQuestionId()).isEqualTo(QUESTION_ID);
+        assertThat(resp.getQuestionOrder()).isEqualTo(1);
+        assertThat(resp.getSelectedOptionId()).isEqualTo(301L);
+        assertThat(resp.getAnswerPayload()).isEqualTo(Map.of("a", true));
+        assertThat(resp.getBookmarked()).isTrue();
+        assertThat(resp.getTimeSpentSeconds()).isEqualTo(15);
+
+        // Verify SessionAnswerResponse does not have isCorrect, rawPointsAwarded, correctSubitems
+        assertThat(Arrays.stream(SessionAnswerResponse.class.getDeclaredFields())
+                .map(java.lang.reflect.Field::getName))
+                .doesNotContain("isCorrect", "rawPointsAwarded", "correctSubitems");
+    }
+
+    @Test
+    @DisplayName("getSessionAnswers: SUBMITTED session is also allowed")
+    void getSessionAnswers_submitted_allowed() {
+        inProgressSession.setStatus(SessionStatus.SUBMITTED);
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+        when(sessionAnswerRepository.findBySessionId(SESSION_ID)).thenReturn(Collections.emptyList());
+
+        List<SessionAnswerResponse> answers = sessionService.getSessionAnswers(SESSION_ID, USER_ID);
+
+        assertThat(answers).isNotNull();
+        assertThat(answers).isEmpty();
+    }
+
+    @Test
+    @DisplayName("recordAudioPlay: increments playCount and throws 409 when exceeding maxPlays")
+    void recordAudioPlay_incrementsAndEnforcesMaxPlays() {
+        when(examSessionRepository.findByIdForUpdate(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(EXAM_ID))
+                .thenReturn(List.of(examQuestion(QUESTION_ID, 1)));
+        when(questionRepository.findById(QUESTION_ID)).thenReturn(Optional.of(question(QUESTION_ID, "Exp")));
+        when(examSessionRepository.save(any(ExamSession.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        SessionRequest.RecordAudioPlay req = SessionRequest.RecordAudioPlay.builder()
+                .audioKey("q:" + QUESTION_ID)
+                .build();
+
+        // 1st play: 0 -> 1
+        AudioPlayResponse resp1 = sessionService.recordAudioPlay(SESSION_ID, USER_ID, req);
+        assertThat(resp1.getPlayCount()).isEqualTo(1);
+        assertThat(resp1.getMaxPlays()).isEqualTo(2);
+        assertThat(resp1.isAllowed()).isTrue();
+
+        // 2nd play: 1 -> 2
+        AudioPlayResponse resp2 = sessionService.recordAudioPlay(SESSION_ID, USER_ID, req);
+        assertThat(resp2.getPlayCount()).isEqualTo(2);
+        assertThat(resp2.getMaxPlays()).isEqualTo(2);
+        assertThat(resp2.isAllowed()).isTrue();
+
+        // 3rd play: throws 409 Conflict
+        assertThatThrownBy(() -> sessionService.recordAudioPlay(SESSION_ID, USER_ID, req))
+                .isInstanceOfSatisfying(AppException.class, ex -> {
+                    assertThat(ex.getStatus()).isEqualTo(HttpStatus.CONFLICT);
+                    assertThat(ex.getMessage()).contains("Đã hết số lượt nghe tối đa");
+                });
+    }
+
+    @Test
+    @DisplayName("recordAudioPlay: rejects audioKey not belonging to exam with 404")
+    void recordAudioPlay_audioKeyNotInExam_throwsNotFound() {
+        when(examSessionRepository.findByIdForUpdate(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(EXAM_ID))
+                .thenReturn(List.of(examQuestion(QUESTION_ID, 1)));
+
+        // Question key not in exam
+        SessionRequest.RecordAudioPlay reqQ = SessionRequest.RecordAudioPlay.builder()
+                .audioKey("q:" + SECOND_QUESTION_ID)
+                .build();
+
+        assertThatThrownBy(() -> sessionService.recordAudioPlay(SESSION_ID, USER_ID, reqQ))
+                .isInstanceOfSatisfying(AppException.class, ex -> {
+                    assertThat(ex.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                });
+
+        // Group key not in exam
+        SessionRequest.RecordAudioPlay reqG = SessionRequest.RecordAudioPlay.builder()
+                .audioKey("g:999")
+                .build();
+
+        when(questionRepository.findById(QUESTION_ID)).thenReturn(Optional.of(question(QUESTION_ID, "Exp")));
+
+        assertThatThrownBy(() -> sessionService.recordAudioPlay(SESSION_ID, USER_ID, reqG))
+                .isInstanceOfSatisfying(AppException.class, ex -> {
+                    assertThat(ex.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                });
+    }
+
+    @Test
+    @DisplayName("getAudioPlayCounts: returns map of play counts for owned session")
+    void getAudioPlayCounts_returnsMap() {
+        inProgressSession.setAudioPlayCounts(Map.of("q:200", 2));
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+
+        Map<String, Integer> counts = sessionService.getAudioPlayCounts(SESSION_ID, USER_ID);
+
+        assertThat(counts).containsEntry("q:200", 2);
     }
 
     private void assertQuestionContentStatusRejected(SessionStatus status) {

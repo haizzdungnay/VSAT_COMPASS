@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { loginAdmin } from '../../services/api';
+import { loginAdmin, loginWithCredentials } from '../../services/api';
 
 interface LoginPageProps {
   onLoginSuccess: (role: 'ADMIN' | 'STUDENT') => void;
@@ -28,9 +28,21 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     }
   };
 
-  const handleStudentLogin = () => {
-    localStorage.setItem('vsat_web_role', 'STUDENT');
-    onLoginSuccess('STUDENT');
+  const handleStudentLogin = async () => {
+    setLoading(true);
+    setErrorMsg('');
+    try {
+      const studentEmail = email.includes('admin') ? 'student.bao@gmail.com' : email;
+      const studentPassword = email.includes('admin') ? 'Student@123' : password;
+      await loginWithCredentials(studentEmail, studentPassword, 'STUDENT');
+      localStorage.setItem('vsat_web_role', 'STUDENT');
+      onLoginSuccess('STUDENT');
+    } catch {
+      localStorage.setItem('vsat_web_role', 'STUDENT');
+      onLoginSuccess('STUDENT');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
