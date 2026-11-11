@@ -55,7 +55,7 @@ export const BlueprintsPage: React.FC<BlueprintsPageProps> = ({ onCreateExamClic
 
   const getQuestionTypeLabel = (type: string) => {
     switch (type) {
-      case 'TRUE_FALSE': return { name: 'Đúng / Sai', detail: '4 ý độc lập (lũy tiến 1-1.5-2.5-4đ)' };
+      case 'TRUE_FALSE': return { name: 'Đúng / Sai', detail: '4 ý độc lập (lũy tiến 1-2-3-6đ)' };
       case 'SINGLE_CHOICE': return { name: 'Trắc nghiệm 4 lựa chọn (MCQ)', detail: '1 đáp án đúng (6đ/câu)' };
       case 'MATCHING': return { name: 'Ghép hợp (Matching)', detail: '4 cặp tương ứng (6đ/câu)' };
       case 'SHORT_ANSWER': return { name: 'Trả lời ngắn / Điền số', detail: 'Điền số thực hoặc chuỗi (6đ/câu)' };

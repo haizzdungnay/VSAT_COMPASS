@@ -1,4 +1,5 @@
 import type { FullQuestionItem, QuestionStatus } from '../../types/exam';
+import { SUBJECTS } from '../../services/api';
 
 export function validateReviewAction(
   action: 'APPROVE' | 'REQUEST_REVISION' | 'REJECT',
@@ -38,10 +39,10 @@ export function filterQuestions(
 
   return questions.filter(q => {
     const matchesStatus = status === 'ALL' || q.status === status;
-    const matchesSubject = subject === 'ALL' ||
-      (subject === 'MATH' && q.subjectId === 1) ||
-      (subject === 'ENG' && q.subjectId === 2) ||
-      (subject === 'PHY' && q.subjectId === 3);
+    const matchesSubject = subject === 'ALL' || (() => {
+      const match = SUBJECTS.find(s => s.code === subject);
+      return match ? q.subjectId === match.id : false;
+    })();
     const matchesType = type === 'ALL' || q.questionType === type;
     const matchesSearch = !search ||
       q.questionCode.toLowerCase().includes(sLow) ||
@@ -110,12 +111,28 @@ export function runReviewQueueSelfCheck(): boolean {
       questionText: 'Grammar check',
       status: 'APPROVED',
       rawPoints: 6
+    },
+    {
+      id: 7,
+      questionCode: 'Q-GEO-07',
+      subjectId: 7,
+      questionType: 'MATCHING',
+      cognitiveLevel: 'APPLICATION',
+      difficulty: 'MEDIUM',
+      questionText: 'Địa lí kinh tế biển',
+      status: 'PENDING_REVIEW',
+      rawPoints: 9
     }
   ];
 
   const pendings = filterQuestions(sample, { status: 'PENDING_REVIEW' });
-  if (pendings.length !== 1 || pendings[0].id !== 1) {
+  if (pendings.length !== 2) {
     throw new Error('Filter by status failed');
+  }
+
+  const filterGeo = filterQuestions(sample, { subject: 'GEO' });
+  if (filterGeo.length !== 1 || filterGeo[0].id !== 7) {
+    throw new Error('Filter by 7-subject GEO failed');
   }
 
   const searchMath = filterQuestions(sample, { search: 'tích phân' });

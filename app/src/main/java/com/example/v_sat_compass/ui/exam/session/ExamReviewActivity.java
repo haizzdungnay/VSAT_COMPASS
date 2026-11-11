@@ -43,6 +43,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
+import android.media.MediaPlayer;
+import java.io.File;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -87,6 +89,9 @@ public class ExamReviewActivity extends AppCompatActivity {
     private AiExplanationRepository aiExplanationRepository;
     private Map<Long, SessionQuestionContentResponse> backendQuestionById = new HashMap<>();
     private Map<Long, QuestionAnswerKeyResponse> backendAnswerKeyByQuestionId = new HashMap<>();
+    private MediaPlayer reviewMediaPlayer;
+    private String currentReviewAudioUrl;
+    private boolean isReviewAudioPlaying = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -258,6 +263,7 @@ public class ExamReviewActivity extends AppCompatActivity {
 
 
     private void bindPassageWidget(com.example.v_sat_compass.data.model.QuestionGroup group) {
+        bindReviewAudio(group);
         if (group != null && (group.getTitle() != null || group.getPassageText() != null)) {
             binding.cardPassage.setVisibility(View.VISIBLE);
             String title = group.getTitle() != null && !group.getTitle().trim().isEmpty()
@@ -271,6 +277,106 @@ public class ExamReviewActivity extends AppCompatActivity {
         }
     }
 
+    private void bindReviewAudio(com.example.v_sat_compass.data.model.QuestionGroup group) {
+        if (group != null && group.getAudioUrl() != null && !group.getAudioUrl().trim().isEmpty()) {
+            binding.layoutReviewAudio.setVisibility(View.VISIBLE);
+            binding.btnReviewAudioPlayPause.setText(isReviewAudioPlaying ? "Tạm dừng" : "Nghe Audio");
+            binding.tvReviewAudioStatus.setText(isReviewAudioPlaying ? "Đang phát audio..." : "Audio bài nghe");
+            binding.btnReviewAudioPlayPause.setOnClickListener(v -> handleReviewAudioPlayPause(group));
+        } else {
+            binding.layoutReviewAudio.setVisibility(View.GONE);
+        }
+    }
+
+    private void handleReviewAudioPlayPause(com.example.v_sat_compass.data.model.QuestionGroup group) {
+        if (group == null || group.getAudioUrl() == null) return;
+        String audioUrl = group.getAudioUrl().trim();
+        long groupId = group.getId() != null ? group.getId() : (long) Math.abs(audioUrl.hashCode());
+
+        if (isReviewAudioPlaying) {
+            if (reviewMediaPlayer != null) {
+                try {
+                    reviewMediaPlayer.pause();
+                } catch (Exception ignored) {}
+            }
+            isReviewAudioPlaying = false;
+            binding.btnReviewAudioPlayPause.setText("Tiếp tục");
+            binding.tvReviewAudioStatus.setText("Tạm dừng");
+        } else {
+            if (reviewMediaPlayer != null && audioUrl.equals(currentReviewAudioUrl)) {
+                try {
+                    reviewMediaPlayer.start();
+                    isReviewAudioPlaying = true;
+                    binding.btnReviewAudioPlayPause.setText("Tạm dừng");
+                    binding.tvReviewAudioStatus.setText("Đang phát audio...");
+                    return;
+                } catch (Exception ignored) {}
+            }
+
+            releaseReviewMediaPlayer();
+            currentReviewAudioUrl = audioUrl;
+            reviewMediaPlayer = new MediaPlayer();
+            try {
+                File localAudio = offlineExamRepository.getDecryptedAudioFile(this, examId, groupId);
+                String dataSource = (localAudio != null && localAudio.exists())
+                        ? localAudio.getAbsolutePath()
+                        : OfflineExamRepository.resolveAudioUrl(audioUrl);
+                reviewMediaPlayer.setDataSource(dataSource);
+                binding.tvReviewAudioStatus.setText("Đang tải audio...");
+                reviewMediaPlayer.setOnPreparedListener(mp -> {
+                    mp.start();
+                    isReviewAudioPlaying = true;
+                    if (binding != null) {
+                        binding.btnReviewAudioPlayPause.setText("Tạm dừng");
+                        binding.tvReviewAudioStatus.setText("Đang phát audio...");
+                    }
+                });
+                reviewMediaPlayer.setOnCompletionListener(mp -> {
+                    isReviewAudioPlaying = false;
+                    if (binding != null) {
+                        binding.btnReviewAudioPlayPause.setText("Nghe lại");
+                        binding.tvReviewAudioStatus.setText("Đã phát xong");
+                    }
+                });
+                reviewMediaPlayer.setOnErrorListener((mp, what, extra) -> {
+                    isReviewAudioPlaying = false;
+                    if (binding != null) {
+                        binding.btnReviewAudioPlayPause.setText("Lỗi phát audio");
+                        binding.tvReviewAudioStatus.setText("Lỗi phát audio");
+                    }
+                    return true;
+                });
+                reviewMediaPlayer.prepareAsync();
+            } catch (Exception e) {
+                isReviewAudioPlaying = false;
+                if (binding != null) {
+                    binding.btnReviewAudioPlayPause.setText("Lỗi phát audio");
+                    binding.tvReviewAudioStatus.setText("Lỗi phát audio");
+                }
+            }
+        }
+    }
+
+    private void releaseReviewMediaPlayer() {
+        if (reviewMediaPlayer != null) {
+            try {
+                if (reviewMediaPlayer.isPlaying()) {
+                    reviewMediaPlayer.stop();
+                }
+                reviewMediaPlayer.release();
+            } catch (Exception ignored) {}
+            reviewMediaPlayer = null;
+        }
+        isReviewAudioPlaying = false;
+        currentReviewAudioUrl = null;
+        if (binding != null && binding.btnReviewAudioPlayPause != null) {
+            binding.btnReviewAudioPlayPause.setText("Nghe Audio");
+        }
+        if (binding != null && binding.tvReviewAudioStatus != null) {
+            binding.tvReviewAudioStatus.setText("Audio bài nghe");
+        }
+    }
+
     private void showQuestion(int index) {
         if (backendReviewMode) {
             showBackendQuestion(index);
@@ -279,6 +385,7 @@ public class ExamReviewActivity extends AppCompatActivity {
 
         if (index < 0 || index >= questionIds.size()) return;
         currentIndex = index;
+        releaseReviewMediaPlayer();
 
         Long questionId = questionIds.get(index);
         resetAiExplanationState();
@@ -334,6 +441,7 @@ public class ExamReviewActivity extends AppCompatActivity {
     private void showBackendQuestion(int index) {
         if (index < 0 || index >= questionIds.size()) return;
         currentIndex = index;
+        releaseReviewMediaPlayer();
 
         Long questionId = questionIds.get(index);
         resetAiExplanationState();
@@ -821,6 +929,18 @@ public class ExamReviewActivity extends AppCompatActivity {
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putInt(KEY_CURRENT_INDEX, currentIndex);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        releaseReviewMediaPlayer();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        releaseReviewMediaPlayer();
     }
 
     private int dpToPx(int dp) {

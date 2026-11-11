@@ -1,65 +1,132 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { FullQuestionItem, QuestionType, CognitiveLevel, DifficultyLevel } from '../../types/exam';
-import { createBankQuestion } from '../../services/api';
+import { createBankQuestion, updateBankQuestion, SUBJECTS, getSubjectNameById } from '../../services/api';
 import { MathView } from '../../components/MathView';
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (newQuestion: FullQuestionItem) => void;
+  onSuccess: (savedQuestion: FullQuestionItem) => void;
+  initialData?: FullQuestionItem | null;
 }
 
-export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, onClose, onSuccess }) => {
-  const [subjectId, setSubjectId] = useState<number>(1);
-  const [questionType, setQuestionType] = useState<QuestionType>('TRUE_FALSE');
-  const [cognitiveLevel, setCognitiveLevel] = useState<CognitiveLevel>('UNDERSTANDING');
-  const [difficulty, setDifficulty] = useState<DifficultyLevel>('MEDIUM');
-  const [questionText, setQuestionText] = useState('');
-  const [explanation, setExplanation] = useState('');
+const DEFAULT_TF_ITEMS = [
+  { key: 'a', text: '', isCorrect: true },
+  { key: 'b', text: '', isCorrect: false },
+  { key: 'c', text: '', isCorrect: true },
+  { key: 'd', text: '', isCorrect: false }
+];
+
+const DEFAULT_MCQ_OPTIONS = [
+  { label: 'A', text: '', isCorrect: true },
+  { label: 'B', text: '', isCorrect: false },
+  { label: 'C', text: '', isCorrect: false },
+  { label: 'D', text: '', isCorrect: false }
+];
+
+const DEFAULT_MATCHING_PAIRS = [
+  { left: '1. ', right: 'A. ' },
+  { left: '2. ', right: 'B. ' },
+  { left: '3. ', right: 'C. ' },
+  { left: '4. ', right: 'D. ' }
+];
+
+export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, onClose, onSuccess, initialData }) => {
+  const isEditing = Boolean(initialData && initialData.id > 0);
+
+  const [subjectId, setSubjectId] = useState<number>(initialData?.subjectId || 1);
+  const [questionType, setQuestionType] = useState<QuestionType>(initialData?.questionType || 'TRUE_FALSE');
+  const [cognitiveLevel, setCognitiveLevel] = useState<CognitiveLevel>(initialData?.cognitiveLevel || 'UNDERSTANDING');
+  const [difficulty, setDifficulty] = useState<DifficultyLevel>(initialData?.difficulty || 'MEDIUM');
+  const [questionText, setQuestionText] = useState(initialData?.questionText || '');
+  const [explanation, setExplanation] = useState(initialData?.explanation || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [conflictError, setConflictError] = useState<string | null>(null);
 
   // Nhóm ngữ liệu / bài nghe Audio (Question Group)
-  const [hasGroup, setHasGroup] = useState(false);
-  const [groupTitle, setGroupTitle] = useState('');
-  const [passageText, setPassageText] = useState('');
-  const [audioUrl, setAudioUrl] = useState('');
-  const [maxPlays, setMaxPlays] = useState<number>(2);
+  const initialAudio = (initialData as any)?.audioUrl || initialData?.questionGroup?.audioUrl || '';
+  const initialMaxPlays = (initialData as any)?.maxPlays || initialData?.questionGroup?.maxPlays || 2;
+  const [hasGroup, setHasGroup] = useState(Boolean(initialData?.questionGroup || initialAudio));
+  const [groupTitle, setGroupTitle] = useState(initialData?.questionGroup?.title || '');
+  const [passageText, setPassageText] = useState(initialData?.questionGroup?.passageText || '');
+  const [audioUrl, setAudioUrl] = useState(initialAudio);
+  const [maxPlays, setMaxPlays] = useState<number>(initialMaxPlays);
 
   // Dạng 1: Đúng/Sai (4 ý a, b, c, d)
-  const [tfItems, setTfItems] = useState([
-    { key: 'a', text: '', isCorrect: true },
-    { key: 'b', text: '', isCorrect: false },
-    { key: 'c', text: '', isCorrect: true },
-    { key: 'd', text: '', isCorrect: false }
-  ]);
+  const [tfItems, setTfItems] = useState(
+    initialData?.trueFalseItems && initialData.trueFalseItems.length > 0
+      ? initialData.trueFalseItems
+      : DEFAULT_TF_ITEMS
+  );
 
   // Dạng 2: MCQ 4 lựa chọn (A, B, C, D)
-  const [mcqOptions, setMcqOptions] = useState([
-    { label: 'A', text: '', isCorrect: true },
-    { label: 'B', text: '', isCorrect: false },
-    { label: 'C', text: '', isCorrect: false },
-    { label: 'D', text: '', isCorrect: false }
-  ]);
+  const [mcqOptions, setMcqOptions] = useState(
+    initialData?.options && initialData.options.length > 0
+      ? initialData.options
+      : DEFAULT_MCQ_OPTIONS
+  );
 
   // Dạng 3: Ghép hợp (Matching)
-  const [matchingPairs, setMatchingPairs] = useState([
-    { left: '1. ', right: 'A. ' },
-    { left: '2. ', right: 'B. ' },
-    { left: '3. ', right: 'C. ' },
-    { left: '4. ', right: 'D. ' }
-  ]);
+  const [matchingPairs, setMatchingPairs] = useState(
+    initialData?.matchingPairs && initialData.matchingPairs.length > 0
+      ? initialData.matchingPairs
+      : DEFAULT_MATCHING_PAIRS
+  );
 
   // Dạng 4: Điền số / Trả lời ngắn
-  const [saKey, setSaKey] = useState({
-    acceptedAnswer: '',
-    tolerance: 0,
-    unit: ''
-  });
+  const [saKey, setSaKey] = useState(
+    initialData?.shortAnswerKey || {
+      acceptedAnswer: '',
+      tolerance: 0,
+      unit: ''
+    }
+  );
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setConflictError(null);
+    if (initialData) {
+      setSubjectId(initialData.subjectId || 1);
+      setQuestionType(initialData.questionType || 'TRUE_FALSE');
+      setCognitiveLevel(initialData.cognitiveLevel || 'UNDERSTANDING');
+      setDifficulty(initialData.difficulty || 'MEDIUM');
+      setQuestionText(initialData.questionText || '');
+      setExplanation(initialData.explanation || '');
+      const aUrl = (initialData as any).audioUrl || initialData.questionGroup?.audioUrl || '';
+      const mPlays = (initialData as any).maxPlays || initialData.questionGroup?.maxPlays || 2;
+      setHasGroup(Boolean(initialData.questionGroup || aUrl));
+      setGroupTitle(initialData.questionGroup?.title || '');
+      setPassageText(initialData.questionGroup?.passageText || '');
+      setAudioUrl(aUrl);
+      setMaxPlays(mPlays);
+      setTfItems(initialData.trueFalseItems && initialData.trueFalseItems.length > 0 ? initialData.trueFalseItems : DEFAULT_TF_ITEMS);
+      setMcqOptions(initialData.options && initialData.options.length > 0 ? initialData.options : DEFAULT_MCQ_OPTIONS);
+      setMatchingPairs(initialData.matchingPairs && initialData.matchingPairs.length > 0 ? initialData.matchingPairs : DEFAULT_MATCHING_PAIRS);
+      setSaKey(initialData.shortAnswerKey || { acceptedAnswer: '', tolerance: 0, unit: '' });
+    } else {
+      setSubjectId(1);
+      setQuestionType('TRUE_FALSE');
+      setCognitiveLevel('UNDERSTANDING');
+      setDifficulty('MEDIUM');
+      setQuestionText('');
+      setExplanation('');
+      setHasGroup(false);
+      setGroupTitle('');
+      setPassageText('');
+      setAudioUrl('');
+      setMaxPlays(2);
+      setTfItems(DEFAULT_TF_ITEMS);
+      setMcqOptions(DEFAULT_MCQ_OPTIONS);
+      setMatchingPairs(DEFAULT_MATCHING_PAIRS);
+      setSaKey({ acceptedAnswer: '', tolerance: 0, unit: '' });
+    }
+  }, [initialData, isOpen]);
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setConflictError(null);
     if (!questionText.trim()) {
       alert('Vui lòng nhập nội dung câu hỏi!');
       return;
@@ -67,38 +134,58 @@ export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, onClose, onS
 
     setIsSubmitting(true);
     try {
-      const subjectNameMap: Record<number, string> = {
-        1: 'Toán học', 2: 'Tiếng Anh', 3: 'Vật lí', 4: 'Hóa học', 5: 'Sinh học', 6: 'Lịch sử', 7: 'Địa lí'
-      };
+      const cleanAudioUrl = audioUrl.trim() || undefined;
+      const effectiveMaxPlays = maxPlays > 0 ? maxPlays : 2;
 
       const questionGroup = hasGroup ? {
-        id: Date.now() % 100000,
+        id: initialData?.questionGroup?.id || (Date.now() % 100000),
         title: groupTitle || undefined,
         passageText: passageText || undefined,
-        audioUrl: audioUrl.trim() || undefined,
-        maxPlays: maxPlays > 0 ? maxPlays : 2
+        audioUrl: cleanAudioUrl,
+        maxPlays: effectiveMaxPlays
       } : undefined;
 
-      const newQ: Partial<FullQuestionItem> = {
+      const payload: Partial<FullQuestionItem> & { audioUrl?: string; maxPlays?: number } = {
         subjectId,
-        subjectName: subjectNameMap[subjectId] || 'Toán học',
+        subjectName: getSubjectNameById(subjectId),
         questionType,
         cognitiveLevel,
         difficulty,
         questionText,
         explanation,
-        status: 'APPROVED',
+        status: initialData?.status || 'APPROVED',
         rawPoints: 6.0,
         questionGroup,
+        audioUrl: cleanAudioUrl,
+        maxPlays: effectiveMaxPlays,
+        lockVersion: initialData?.lockVersion,
         trueFalseItems: questionType === 'TRUE_FALSE' ? tfItems : undefined,
         options: questionType === 'SINGLE_CHOICE' ? mcqOptions : undefined,
         matchingPairs: questionType === 'MATCHING' ? matchingPairs : undefined,
         shortAnswerKey: questionType === 'SHORT_ANSWER' ? saKey : undefined
       };
 
-      const saved = await createBankQuestion(newQ);
-      onSuccess(saved);
-      onClose();
+      if (isEditing && initialData) {
+        const updated = await updateBankQuestion(initialData.id, payload);
+        if (updated) {
+          onSuccess({
+            ...initialData,
+            ...payload,
+            ...updated
+          } as FullQuestionItem);
+          onClose();
+        }
+      } else {
+        const saved = await createBankQuestion(payload);
+        onSuccess(saved);
+        onClose();
+      }
+    } catch (err: any) {
+      if (err?.status === 409 || err?.code === 'CONCURRENT_MODIFICATION') {
+        setConflictError(err.message || 'Xung đột phiên bản chỉnh sửa đồng thời (HTTP 409 CONCURRENT_MODIFICATION). Dữ liệu câu hỏi đã bị người khác cập nhật, vui lòng tải lại trước khi lưu.');
+      } else {
+        setConflictError(err?.message || 'Đã xảy ra lỗi khi lưu câu hỏi.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -110,11 +197,18 @@ export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, onClose, onS
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-outline-variant/20 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary text-[24px]">post_add</span>
-            <h2 className="font-headline-sm text-on-surface">Nhập câu hỏi mới chuẩn V-SAT 2026</h2>
+            <span className="material-symbols-outlined text-primary text-[24px]">
+              {isEditing ? 'edit_note' : 'post_add'}
+            </span>
+            <h2 className="font-headline-sm text-on-surface">
+              {isEditing
+                ? `Chỉnh sửa câu hỏi ${initialData?.questionCode || `#${initialData?.id}`} (lockVersion v${initialData?.lockVersion ?? 0})`
+                : 'Nhập câu hỏi mới chuẩn V-SAT 2026'}
+            </h2>
           </div>
           <button
             onClick={onClose}
+            type="button"
             className="p-1 rounded text-outline hover:text-on-surface hover:bg-surface-container"
           >
             <span className="material-symbols-outlined">close</span>
@@ -123,6 +217,16 @@ export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, onClose, onS
 
         {/* Modal Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto flex-1">
+          {conflictError && (
+            <div className="p-4 rounded-xl bg-red-50 border border-red-300 text-red-900 text-body-sm flex items-start gap-2.5 shadow-xs">
+              <span className="material-symbols-outlined text-red-600 text-[22px] shrink-0">gpp_maybe</span>
+              <div className="space-y-0.5">
+                <div className="font-bold">Cảnh báo Xung đột Phiên bản (Optimistic Locking 409)</div>
+                <div className="text-xs">{conflictError}</div>
+              </div>
+            </div>
+          )}
+
           {/* Metadata selectors */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="space-y-1">
@@ -132,13 +236,9 @@ export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, onClose, onS
                 onChange={(e) => setSubjectId(Number(e.target.value))}
                 className="w-full h-9 px-2 text-body-sm bg-surface-container-low rounded border border-outline-variant/40"
               >
-                <option value={1}>Toán học</option>
-                <option value={2}>Tiếng Anh</option>
-                <option value={3}>Vật lí</option>
-                <option value={4}>Hóa học</option>
-                <option value={5}>Sinh học</option>
-                <option value={6}>Lịch sử</option>
-                <option value={7}>Địa lí</option>
+                {SUBJECTS.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
               </select>
             </div>
 
@@ -228,6 +328,16 @@ export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, onClose, onS
                   </div>
                 </div>
 
+                {audioUrl.trim() && (
+                  <div className="p-2.5 rounded-lg bg-surface-container-lowest border border-outline-variant/30 space-y-1">
+                    <div className="text-[11px] font-bold text-primary flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[16px]">headphones</span>
+                      <span>Nghe thử Audio Listening:</span>
+                    </div>
+                    <audio controls preload="none" src={audioUrl.trim()} className="w-full h-8" />
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="font-label-sm text-outline">Số lượt nghe tối đa (maxPlays, mặc định: 2)</label>
@@ -302,8 +412,7 @@ export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, onClose, onS
                       type="text"
                       value={item.text}
                       onChange={(e) => {
-                        const copy = [...tfItems];
-                        copy[idx].text = e.target.value;
+                        const copy = tfItems.map((t, i) => i === idx ? { ...t, text: e.target.value } : t);
                         setTfItems(copy);
                       }}
                       placeholder={`Nội dung khẳng định ${item.key} (hỗ trợ LaTeX)... `}
@@ -317,8 +426,7 @@ export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, onClose, onS
                           name={`tf_${item.key}`}
                           checked={item.isCorrect}
                           onChange={() => {
-                            const copy = [...tfItems];
-                            copy[idx].isCorrect = true;
+                            const copy = tfItems.map((t, i) => i === idx ? { ...t, isCorrect: true } : t);
                             setTfItems(copy);
                           }}
                         />
@@ -331,8 +439,7 @@ export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, onClose, onS
                           name={`tf_${item.key}`}
                           checked={!item.isCorrect}
                           onChange={() => {
-                            const copy = [...tfItems];
-                            copy[idx].isCorrect = false;
+                            const copy = tfItems.map((t, i) => i === idx ? { ...t, isCorrect: false } : t);
                             setTfItems(copy);
                           }}
                         />
@@ -350,7 +457,7 @@ export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, onClose, onS
             <div className="p-4 rounded-xl bg-indigo-50/40 border border-indigo-200 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="font-label-md text-indigo-900 font-bold">4 Phương án trắc nghiệm (Chọn 1 đáp án đúng)</span>
-                <span className="text-[11px] text-indigo-800">Mỗi câu đúng 6.0 điểm</span>
+                <span className="text-[11px] text-indigo-800">Mỗi câu đúng 4.0 điểm</span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -376,8 +483,7 @@ export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, onClose, onS
                       type="text"
                       value={opt.text}
                       onChange={(e) => {
-                        const copy = [...mcqOptions];
-                        copy[idx].text = e.target.value;
+                        const copy = mcqOptions.map((o, i) => i === idx ? { ...o, text: e.target.value } : o);
                         setMcqOptions(copy);
                       }}
                       placeholder="Nội dung phương án (hỗ trợ LaTeX)..."
@@ -400,7 +506,7 @@ export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, onClose, onS
             <div className="p-4 rounded-xl bg-amber-50/40 border border-amber-200 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="font-label-md text-amber-900 font-bold">4 Cặp ghép hợp (Cột 1 ghép với Cột 2)</span>
-                <span className="text-[11px] text-amber-800">1.5 điểm / cặp ghép chuẩn</span>
+                <span className="text-[11px] text-amber-800">9.0 điểm / câu chuẩn</span>
               </div>
 
               <div className="space-y-2">
@@ -410,8 +516,7 @@ export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, onClose, onS
                       type="text"
                       value={pair.left}
                       onChange={(e) => {
-                        const copy = [...matchingPairs];
-                        copy[idx].left = e.target.value;
+                        const copy = matchingPairs.map((p, i) => i === idx ? { ...p, left: e.target.value } : p);
                         setMatchingPairs(copy);
                       }}
                       placeholder={`Vế ${idx + 1} ở Cột 1...`}
@@ -421,8 +526,7 @@ export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, onClose, onS
                       type="text"
                       value={pair.right}
                       onChange={(e) => {
-                        const copy = [...matchingPairs];
-                        copy[idx].right = e.target.value;
+                        const copy = matchingPairs.map((p, i) => i === idx ? { ...p, right: e.target.value } : p);
                         setMatchingPairs(copy);
                       }}
                       placeholder={`Vế tương ứng ở Cột 2...`}
@@ -439,7 +543,7 @@ export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, onClose, onS
             <div className="p-4 rounded-xl bg-emerald-50/40 border border-emerald-200 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="font-label-md text-emerald-900 font-bold">Khóa đáp án Điền số / Trả lời ngắn</span>
-                <span className="text-[11px] text-emerald-800">Đúng hoàn toàn = 6.0 điểm</span>
+                <span className="text-[11px] text-emerald-800">Đúng hoàn toàn = 8.75 điểm</span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -460,7 +564,7 @@ export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, onClose, onS
                   <input
                     type="number"
                     step="0.01"
-                    value={saKey.tolerance}
+                    value={saKey.tolerance ?? 0}
                     onChange={(e) => setSaKey(prev => ({ ...prev, tolerance: Number(e.target.value) }))}
                     className="w-full h-8 px-2 text-body-sm bg-surface-container-lowest rounded border border-outline-variant/40 font-mono"
                   />
@@ -470,7 +574,7 @@ export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, onClose, onS
                   <label className="font-label-sm text-outline">Đơn vị (Unit)</label>
                   <input
                     type="text"
-                    value={saKey.unit}
+                    value={saKey.unit ?? ''}
                     onChange={(e) => setSaKey(prev => ({ ...prev, unit: e.target.value }))}
                     placeholder="VD: cm, m/s, lít..."
                     className="w-full h-8 px-2 text-body-sm bg-surface-container-lowest rounded border border-outline-variant/40"
@@ -508,7 +612,7 @@ export const QuestionCreateModal: React.FC<ModalProps> = ({ isOpen, onClose, onS
               disabled={isSubmitting}
               className="h-9 px-5 rounded-lg bg-primary hover:bg-tertiary text-on-primary font-label-md font-bold shadow-sm transition-colors disabled:opacity-50 flex items-center gap-2"
             >
-              {isSubmitting ? 'Đang lưu...' : 'Lưu câu hỏi vào ngân hàng'}
+              {isSubmitting ? 'Đang lưu...' : (isEditing ? 'Cập nhật câu hỏi' : 'Lưu câu hỏi vào ngân hàng')}
             </button>
           </div>
         </form>

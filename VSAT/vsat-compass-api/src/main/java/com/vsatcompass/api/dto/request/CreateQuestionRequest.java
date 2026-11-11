@@ -70,15 +70,15 @@ public class CreateQuestionRequest {
     @Valid
     private QuestionGroupInput questionGroup;
 
-    @NotEmpty(message = "options required (>=2 for SINGLE_CHOICE/MULTIPLE_CHOICE/TRUE_FALSE)")
-    @Size(min = 2, max = 10, message = "options must have 2 to 10 entries")
+    @NotEmpty(message = "options required")
+    @Size(min = 1, max = 10, message = "options must have 1 to 10 entries")
     @Valid
     private List<OptionInput> options;
 
     public String resolveAudioUrl() {
-        if (audioUrl != null) return audioUrl;
-        if (questionGroup != null) return questionGroup.getAudioUrl();
-        return null;
+        if (audioUrl != null && !audioUrl.isBlank()) return audioUrl;
+        if (questionGroup != null && questionGroup.getAudioUrl() != null) return questionGroup.getAudioUrl();
+        return audioUrl;
     }
 
     public Integer resolveAudioDurationSec() {

@@ -66,14 +66,14 @@ public class UpdateQuestionRequest {
     @Valid
     private QuestionGroupInput questionGroup;
 
-    @Size(min = 2, max = 10, message = "options must have 2 to 10 entries when provided")
+    @Size(min = 1, max = 10, message = "options must have 1 to 10 entries when provided")
     @Valid
     private List<OptionInput> options;
 
     public String resolveAudioUrl() {
-        if (audioUrl != null) return audioUrl;
-        if (questionGroup != null) return questionGroup.getAudioUrl();
-        return null;
+        if (audioUrl != null && !audioUrl.isBlank()) return audioUrl;
+        if (questionGroup != null && questionGroup.getAudioUrl() != null) return questionGroup.getAudioUrl();
+        return audioUrl;
     }
 
     public Integer resolveAudioDurationSec() {

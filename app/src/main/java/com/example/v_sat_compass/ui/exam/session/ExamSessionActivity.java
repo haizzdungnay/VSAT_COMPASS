@@ -105,6 +105,9 @@ public class ExamSessionActivity extends AppCompatActivity {
     private MediaPlayer audioPlayer;
     private Long currentAudioGroupId = null;
     private boolean isAudioPlaying = false;
+    private boolean lockTaskStarted = false;
+    private long lockTaskStartTimestamp = 0L;
+    private boolean sessionSubmitted = false;
 
     // Colors for option cards
     private int colorDefault;
@@ -1074,7 +1077,7 @@ public class ExamSessionActivity extends AppCompatActivity {
     private void bindAudioPlayer(QuestionGroup group) {
         if (group != null && group.getAudioUrl() != null && !group.getAudioUrl().trim().isEmpty()) {
             binding.layoutAudioPlayer.setVisibility(View.VISIBLE);
-            long groupId = group.getId() != null ? group.getId() : (long) group.getAudioUrl().hashCode();
+            long groupId = group.getId() != null ? group.getId() : (long) Math.abs(group.getAudioUrl().hashCode());
             int maxPlays = group.getMaxPlays() != null ? group.getMaxPlays() : AudioPlayLimiter.DEFAULT_MAX_PLAYS;
             if (audioPlayLimiter != null) {
                 audioPlayLimiter.setGroupMaxPlays(groupId, maxPlays);
@@ -1164,7 +1167,13 @@ public class ExamSessionActivity extends AppCompatActivity {
             }
             audioPlayer = new MediaPlayer();
             try {
-                audioPlayer.setDataSource(audioUrl);
+                long targetGroupId = currentAudioGroupId != null ? currentAudioGroupId : groupId;
+                java.io.File localAudio = OfflineExamRepository.getInstance().getDecryptedAudioFile(this, examId, targetGroupId);
+                if (localAudio != null && localAudio.exists()) {
+                    audioPlayer.setDataSource(localAudio.getAbsolutePath());
+                } else {
+                    audioPlayer.setDataSource(OfflineExamRepository.resolveAudioUrl(audioUrl));
+                }
                 audioPlayer.setOnPreparedListener(mp -> {
                     mp.start();
                     isAudioPlaying = true;
@@ -1470,6 +1479,8 @@ public class ExamSessionActivity extends AppCompatActivity {
     }
 
     private void submitExam() {
+        sessionSubmitted = true;
+        safeStopLockTask();
         if (timer != null) timer.cancel();
 
         if (backendExamContent && hasRemoteSession) {
@@ -1807,8 +1818,32 @@ public class ExamSessionActivity extends AppCompatActivity {
                 .setMessage("Bài thi chưa được nộp. Bạn muốn làm gì?")
                 .setPositiveButton("Nộp và thoát", (d, w) -> submitExam())
                 .setNegativeButton("Tiếp tục thi", null)
-                .setNeutralButton("Thoát không nộp", (d, w) -> finish())
+                .setNeutralButton("Thoát không nộp", (d, w) -> {
+                    safeStopLockTask();
+                    finish();
+                })
                 .show();
+    }
+
+    private void safeStopLockTask() {
+        if (lockTaskStarted) {
+            try {
+                stopLockTask();
+            } catch (Exception ignored) {}
+            lockTaskStarted = false;
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (isProctoringActive() && !lockTaskStarted && !sessionSubmitted) {
+            try {
+                startLockTask();
+                lockTaskStarted = true;
+                lockTaskStartTimestamp = System.currentTimeMillis();
+            } catch (Exception ignored) {}
+        }
     }
 
     @Override
@@ -1821,6 +1856,9 @@ public class ExamSessionActivity extends AppCompatActivity {
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
+        if (System.currentTimeMillis() - lockTaskStartTimestamp < 3000L) {
+            return;
+        }
         if (proctoringMonitor != null && proctoringMonitor.isProctoringActive() && !isFinishing()) {
             if (!hasFocus) {
                 handleProctoringViolation(
@@ -1887,6 +1925,7 @@ public class ExamSessionActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        safeStopLockTask();
         if (timer != null) timer.cancel();
         if (audioPlayer != null) {
             try {

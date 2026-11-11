@@ -27,6 +27,7 @@ public class OfflineExamRepositoryTest {
     public TemporaryFolder tempFolder = new TemporaryFolder();
 
     private File fakeFilesDir;
+    private File fakeCacheDir;
     private Context fakeContext;
     private OfflineExamRepository repository;
     private final Gson gson = new Gson();
@@ -34,10 +35,16 @@ public class OfflineExamRepositoryTest {
     @Before
     public void setUp() throws Exception {
         fakeFilesDir = tempFolder.newFolder("files");
+        fakeCacheDir = tempFolder.newFolder("cache");
         fakeContext = new ContextWrapper(null) {
             @Override
             public File getFilesDir() {
                 return fakeFilesDir;
+            }
+
+            @Override
+            public File getCacheDir() {
+                return fakeCacheDir;
             }
 
             @Override
@@ -230,5 +237,90 @@ public class OfflineExamRepositoryTest {
 
         OfflineExamBundle loaded = repository.loadBundle(fakeContext, examId);
         assertNull("Truncated AES-GCM bundle must throw IOException and return null safely", loaded);
+    }
+
+    @Test
+    public void saveEncryptedAudio_encryptsWithAesGcm_and_getDecryptedAudioFile_returnsOriginalBytes() throws Exception {
+        long examId = 707L;
+        long groupId = 77L;
+        byte[] originalBytes = "AUDIO_RAW_PCM_OR_MP3_STREAM_2026".getBytes(StandardCharsets.UTF_8);
+
+        File vsaFile = repository.saveEncryptedAudio(fakeContext, examId, groupId, originalBytes);
+        assertNotNull(vsaFile);
+        assertTrue("VSA audio file must exist", vsaFile.exists());
+        assertTrue("File name must end with .vsa", vsaFile.getName().endsWith(".vsa"));
+
+        byte[] rawBytes = new byte[(int) vsaFile.length()];
+        try (FileInputStream fis = new FileInputStream(vsaFile)) {
+            int read = fis.read(rawBytes);
+            assertEquals(vsaFile.length(), read);
+        }
+
+        // Header check: 'V', 'S', 'A', 'T', 0x02
+        assertEquals('V', (char) rawBytes[0]);
+        assertEquals('S', (char) rawBytes[1]);
+        assertEquals('A', (char) rawBytes[2]);
+        assertEquals('T', (char) rawBytes[3]);
+        assertEquals(0x02, rawBytes[4]);
+
+        String rawString = new String(rawBytes, StandardCharsets.UTF_8);
+        assertFalse("Ciphertext must not contain plaintext audio string", rawString.contains("AUDIO_RAW_PCM_OR_MP3_STREAM_2026"));
+
+        File decrypted = repository.getDecryptedAudioFile(fakeContext, examId, groupId);
+        assertNotNull("Decrypted audio file must not be null", decrypted);
+        assertTrue("Decrypted audio file must exist", decrypted.exists());
+
+        byte[] decryptedBytes = new byte[(int) decrypted.length()];
+        try (FileInputStream fis = new FileInputStream(decrypted)) {
+            int read = fis.read(decryptedBytes);
+            assertEquals(decrypted.length(), read);
+        }
+        assertArrayEquals("Decrypted bytes must match original plaintext", originalBytes, decryptedBytes);
+    }
+
+    @Test
+    public void getDecryptedAudioFile_fileNotExists_or_tampered_returnsNull() throws Exception {
+        // 1. File does not exist
+        assertNull(repository.getDecryptedAudioFile(fakeContext, 808L, 88L));
+
+        // 2. Tampered .vsa file
+        long examId = 809L;
+        long groupId = 89L;
+        byte[] originalBytes = "TAMPER_AUDIO_DATA_TEST".getBytes(StandardCharsets.UTF_8);
+        File vsaFile = repository.saveEncryptedAudio(fakeContext, examId, groupId, originalBytes);
+
+        byte[] rawBytes = new byte[(int) vsaFile.length()];
+        try (FileInputStream fis = new FileInputStream(vsaFile)) {
+            fis.read(rawBytes);
+        }
+        rawBytes[20] ^= (byte) 0xFF;
+        try (FileOutputStream fos = new FileOutputStream(vsaFile)) {
+            fos.write(rawBytes);
+        }
+
+        File decrypted = repository.getDecryptedAudioFile(fakeContext, examId, groupId);
+        assertNull("Tampered .vsa file must fail GCM verification and return null", decrypted);
+    }
+
+    @Test
+    public void deleteExam_deletesBundleAndAudioDirectory() throws Exception {
+        long examId = 910L;
+        OfflineExamBundle bundle = createMockBundle(examId, "De Thi Xoa Kem Audio");
+        repository.saveBundle(fakeContext, examId, bundle);
+        repository.saveEncryptedAudio(fakeContext, examId, 91L, "AUDIO_SAMPLE".getBytes(StandardCharsets.UTF_8));
+
+        File bundleFile = repository.bundleFile(fakeContext, examId);
+        File audioDir = new File(fakeFilesDir, "offline_exams/audio/" + examId);
+        File audioFile = new File(audioDir, "91.vsa");
+
+        assertTrue("Bundle file must exist before delete", bundleFile.exists());
+        assertTrue("Audio dir must exist before delete", audioDir.exists());
+        assertTrue("Audio file must exist before delete", audioFile.exists());
+
+        boolean deleted = repository.deleteExam(fakeContext, examId);
+        assertTrue(deleted);
+        assertFalse("Bundle file must be deleted", bundleFile.exists());
+        assertFalse("Audio file must be deleted", audioFile.exists());
+        assertFalse("Audio dir must be deleted", audioDir.exists());
     }
 }

@@ -32,6 +32,21 @@ import type {
 const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) || (import.meta.env.PROD ? 'https://vsat-compass-api.onrender.com/api/v1' : 'http://localhost:18080/api/v1');
 const TOKEN_KEY = 'vsat_admin_access_token';
 
+export const SUBJECTS = [
+  { id: 1, code: 'MATH' as const, name: 'Toán học' },
+  { id: 2, code: 'ENG' as const, name: 'Tiếng Anh' },
+  { id: 3, code: 'PHY' as const, name: 'Vật lí' },
+  { id: 4, code: 'CHEM' as const, name: 'Hóa học' },
+  { id: 5, code: 'BIO' as const, name: 'Sinh học' },
+  { id: 6, code: 'HIS' as const, name: 'Lịch sử' },
+  { id: 7, code: 'GEO' as const, name: 'Địa lí' }
+];
+
+export function getSubjectNameById(id: number): string {
+  const s = SUBJECTS.find(sub => sub.id === id);
+  return s ? s.name : `Môn #${id}`;
+}
+
 export function getStoredToken(): string | null {
   try {
     return localStorage.getItem(TOKEN_KEY);
@@ -338,7 +353,7 @@ export async function fetchExams(params?: {
           examCode: item.examCode || `VSAT_${item.id}`,
           title: item.title,
           subjectId: item.subjectId || 1,
-          subjectName: item.subjectId === 1 ? 'Toán học' : (item.subjectId === 2 ? 'Tiếng Anh' : (item.subjectId === 3 ? 'Vật lí' : 'Khoa học')),
+          subjectName: getSubjectNameById(item.subjectId || 1),
           questionCount: item.questionCount ?? 0,
           durationMinutes: item.durationMinutes || 90,
           difficulty: item.difficulty || 'MEDIUM',
@@ -369,7 +384,7 @@ export async function fetchExamDetail(id: number): Promise<ExamDetail | null> {
           examCode: item.examCode,
           title: item.title,
           subjectId: item.subjectId,
-          subjectName: item.subjectCode || (item.subjectId === 1 ? 'Toán học' : 'Tiếng Anh'),
+          subjectName: item.subjectCode || getSubjectNameById(item.subjectId || 1),
           description: item.description,
           questionCount: item.questionCount ?? 0,
           durationMinutes: item.durationMinutes,
@@ -509,14 +524,15 @@ export async function fetchBankQuestions(params?: {
           id: q.id,
           questionCode: q.questionCode || `Q_${q.id}`,
           subjectId: q.subjectId || 1,
-          subjectName: q.subjectId === 1 ? 'Toán học' : (q.subjectId === 2 ? 'Tiếng Anh' : 'Vật lí'),
+          subjectName: getSubjectNameById(q.subjectId || 1),
           topicName: 'Kiến thức cốt lõi',
           questionType: q.questionType || 'SINGLE_CHOICE',
-          cognitiveLevel: 'UNDERSTANDING',
+          cognitiveLevel: q.cognitiveLevel || 'UNDERSTANDING',
           difficulty: q.difficulty || 'MEDIUM',
           questionText: q.questionTextSnippet || 'Nội dung câu hỏi...',
           status: q.status || 'APPROVED',
           rawPoints: 6.0,
+          audioUrl: q.audioUrl || q.questionGroup?.audioUrl,
           updatedAt: q.updatedAt ? q.updatedAt.substring(0, 10) : '06/10/2026'
         }));
       }
@@ -555,14 +571,15 @@ export async function fetchReviewQueue(params?: {
     id: q.id,
     questionCode: q.questionCode || ("Q_" + q.id),
     subjectId: q.subjectId || 1,
-    subjectName: q.subjectId === 1 ? "Toán học" : (q.subjectId === 2 ? "Tiếng Anh" : (q.subjectId === 3 ? "Vật lí" : ("Môn #" + q.subjectId))),
+    subjectName: getSubjectNameById(q.subjectId || 1),
     topicName: q.topicName || ("Chủ đề #" + (q.topicId || 1)),
     questionType: q.questionType || "SINGLE_CHOICE",
-    cognitiveLevel: "UNDERSTANDING",
+    cognitiveLevel: q.cognitiveLevel || "UNDERSTANDING",
     difficulty: q.difficulty || "MEDIUM",
     questionText: q.questionTextSnippet || q.questionText || "(Chưa có nội dung xem trước)",
     status: q.status || "PENDING_REVIEW",
     rawPoints: 6.0,
+    audioUrl: q.audioUrl || q.questionGroup?.audioUrl,
     updatedAt: q.updatedAt ? q.updatedAt.substring(0, 10) : undefined
   }));
 }
@@ -579,31 +596,73 @@ export async function fetchQuestionDetail(id: number): Promise<FullQuestionItem 
   const q = json.data;
   if (!q) return null;
 
+  const rawOptions = q.options || [];
+  let trueFalseItems = q.trueFalseItems;
+  let matchingPairs = q.matchingPairs;
+  let shortAnswerKey = q.shortAnswerKey;
+
+  if (q.questionType === 'TRUE_FALSE' && (!trueFalseItems || trueFalseItems.length === 0) && rawOptions.length > 0) {
+    trueFalseItems = rawOptions.map((opt: any, idx: number) => ({
+      key: (opt.optionLabel || String.fromCharCode(97 + idx)).toLowerCase(),
+      text: opt.optionText || '',
+      isCorrect: Boolean(opt.isCorrect)
+    }));
+  }
+
+  if (q.questionType === 'MATCHING' && (!matchingPairs || matchingPairs.length === 0) && rawOptions.length > 0) {
+    matchingPairs = rawOptions.map((opt: any, idx: number) => {
+      const parts = (opt.optionText || '').split('⇄').map((s: string) => s.trim());
+      return {
+        left: parts[0] || opt.optionLabel || `${idx + 1}. `,
+        right: parts[1] || ''
+      };
+    });
+  }
+
+  if (q.questionType === 'SHORT_ANSWER' && !shortAnswerKey && rawOptions.length > 0) {
+    shortAnswerKey = {
+      acceptedAnswer: rawOptions[0].optionText || '',
+      tolerance: 0,
+      unit: ''
+    };
+  }
+
+  const audioUrl = q.audioUrl || q.questionGroup?.audioUrl || undefined;
+  const maxPlays = q.maxPlays || q.questionGroup?.maxPlays || 2;
+  const lockVersion = q.lockVersion !== undefined ? q.lockVersion : 1;
+
+  const questionGroup = q.questionGroup
+    ? { ...q.questionGroup, audioUrl: audioUrl || q.questionGroup.audioUrl, maxPlays }
+    : (audioUrl ? { id: q.questionGroupId || 0, audioUrl, maxPlays } : undefined);
+
   return {
     id: q.id,
     questionCode: q.questionCode,
     subjectId: q.subjectId,
-    subjectName: q.subjectId === 1 ? "Toán học" : (q.subjectId === 2 ? "Tiếng Anh" : (q.subjectId === 3 ? "Vật lí" : ("Môn #" + q.subjectId))),
+    subjectName: getSubjectNameById(q.subjectId || 1),
     topicId: q.topicId,
     questionGroupId: q.questionGroupId,
-    questionGroup: q.questionGroup,
+    questionGroup,
     questionType: q.questionType,
-    cognitiveLevel: "UNDERSTANDING",
+    cognitiveLevel: q.cognitiveLevel || "UNDERSTANDING",
     difficulty: q.difficulty,
     questionText: q.questionText || "",
     explanation: q.explanation || "",
     status: q.status,
-    rawPoints: 6.0,
+    rawPoints: q.rawPoints || 6.0,
+    lockVersion,
+    audioUrl,
+    maxPlays,
     updatedAt: q.updatedAt ? q.updatedAt.substring(0, 10) : undefined,
-    options: (q.options || []).map((opt: any) => ({
+    options: rawOptions.map((opt: any) => ({
       label: opt.optionLabel,
       text: opt.optionText,
       isCorrect: opt.isCorrect
     })),
-    trueFalseItems: q.trueFalseItems,
-    matchingPairs: q.matchingPairs,
-    shortAnswerKey: q.shortAnswerKey
-  };
+    trueFalseItems,
+    matchingPairs,
+    shortAnswerKey
+  } as FullQuestionItem;
 }
 
 export async function approveBankQuestion(id: number, comment?: string): Promise<ReviewActionResult> {
@@ -647,39 +706,93 @@ export async function requestRevisionBankQuestion(id: number, comment = "Cần c
     return { ok: false, error: e?.message || "Lỗi kết nối mạng" };
   }
 }
-export async function createBankQuestion(q: Partial<FullQuestionItem>): Promise<FullQuestionItem> {
-  const options = (q.options || []).map((opt, i) => ({
-    optionLabel: opt.label,
-    optionText: opt.text,
-    isCorrect: opt.isCorrect,
-    displayOrder: i + 1
-  }));
+function buildOptionsForQuestion(q: Partial<FullQuestionItem>): any[] {
+  const options: any[] = [];
+  const type = q.questionType;
 
-  if (options.length === 0 && q.trueFalseItems) {
-    q.trueFalseItems.forEach((item, i) => {
+  if (type === 'SINGLE_CHOICE') {
+    if (q.options && q.options.length > 0) {
+      q.options.forEach((opt, idx) => {
+        options.push({
+          optionLabel: opt.label || String.fromCharCode(65 + idx),
+          optionText: opt.text || '',
+          isCorrect: Boolean(opt.isCorrect),
+          displayOrder: idx + 1
+        });
+      });
+    }
+  } else if (type === 'TRUE_FALSE') {
+    if (q.trueFalseItems && q.trueFalseItems.length > 0) {
+      q.trueFalseItems.forEach((item: any, idx: number) => {
+        const label = (item.key || String.fromCharCode(97 + idx)).toLowerCase();
+        const text = item.statement ?? item.text ?? '';
+        const isCorrect = Boolean(item.isTrue !== undefined ? item.isTrue : item.isCorrect);
+        options.push({
+          optionLabel: label,
+          optionText: text,
+          isCorrect,
+          displayOrder: idx + 1
+        });
+      });
+    }
+  } else if (type === 'MATCHING') {
+    if (q.matchingPairs && q.matchingPairs.length > 0) {
+      q.matchingPairs.forEach((pair: any, idx: number) => {
+        const left = pair.leftItem ?? pair.left ?? '';
+        const right = pair.rightChoice ?? pair.right ?? '';
+        options.push({
+          optionLabel: String(idx + 1),
+          optionText: `${left} ⇄ ${right}`,
+          isCorrect: true,
+          displayOrder: idx + 1
+        });
+      });
+    }
+  } else if (type === 'SHORT_ANSWER') {
+    if (q.shortAnswerKey) {
+      const ans = typeof q.shortAnswerKey === 'object' ? (q.shortAnswerKey.acceptedAnswer ?? '') : String(q.shortAnswerKey);
+      if (ans) {
+        options.push({
+          optionLabel: 'A',
+          optionText: String(ans),
+          isCorrect: true,
+          displayOrder: 1
+        });
+      }
+    }
+  } else if (q.options && q.options.length > 0) {
+    q.options.forEach((opt, idx) => {
       options.push({
-        optionLabel: item.key.toUpperCase(),
-        optionText: item.text,
-        isCorrect: item.isCorrect,
-        displayOrder: i + 1
+        optionLabel: opt.label || String.fromCharCode(65 + idx),
+        optionText: opt.text || '',
+        isCorrect: Boolean(opt.isCorrect),
+        displayOrder: idx + 1
       });
     });
   }
 
-  if (options.length < 2) {
-    options.push({ optionLabel: 'A', optionText: q.questionText || 'Option A', isCorrect: true, displayOrder: 1 });
-    options.push({ optionLabel: 'B', optionText: 'Option B', isCorrect: false, displayOrder: 2 });
-  }
+  return options;
+}
 
-  const payload = {
+export async function createBankQuestion(q: Partial<FullQuestionItem>): Promise<FullQuestionItem> {
+  const options = buildOptionsForQuestion(q);
+  const audioUrl = (q as any).audioUrl || q.questionGroup?.audioUrl || undefined;
+  const audioDurationSec = (q as any).audioDurationSec || (q.questionGroup as any)?.audioDurationSec || undefined;
+  const maxPlays = (q as any).maxPlays || q.questionGroup?.maxPlays || undefined;
+
+  const payload: any = {
     subjectId: q.subjectId || 1,
     topicId: q.topicId || 1,
     difficulty: q.difficulty || 'MEDIUM',
     questionType: q.questionType || 'SINGLE_CHOICE',
+    cognitiveLevel: q.cognitiveLevel || 'UNDERSTANDING',
     questionText: q.questionText || '',
     explanation: q.explanation || '',
     options,
     questionGroup: q.questionGroup,
+    audioUrl,
+    audioDurationSec,
+    maxPlays,
     lockVersion: q.lockVersion
   };
 
@@ -696,16 +809,21 @@ export async function createBankQuestion(q: Partial<FullQuestionItem>): Promise<
         id: created.id,
         questionCode: created.questionCode,
         status: created.status || 'DRAFT',
-        lockVersion: created.lockVersion || 1
+        lockVersion: created.lockVersion || 1,
+        audioUrl: created.audioUrl || audioUrl,
+        maxPlays: created.maxPlays || maxPlays
       } as FullQuestionItem;
     }
     if (res.status === 409) {
       const errJson = await res.json().catch(() => ({}));
-      const message = errJson?.error?.message || 'Xung đột chỉnh sửa đồng thời (CONCURRENT_MODIFICATION).';
-      alert(message);
-      throw new Error(message);
+      const message = errJson?.error?.message || errJson?.message || 'Xung đột phiên bản (CONCURRENT_MODIFICATION).';
+      const err: any = new Error(message);
+      err.status = 409;
+      err.code = errJson?.error?.code || 'CONCURRENT_MODIFICATION';
+      throw err;
     }
-  } catch (err) {
+  } catch (err: any) {
+    if (err?.status === 409) throw err;
     console.warn('createBankQuestion failed, saving locally:', err);
   }
 
@@ -715,42 +833,66 @@ export async function createBankQuestion(q: Partial<FullQuestionItem>): Promise<
     questionCode: `Q_${Date.now() % 10000}`,
     status: 'APPROVED',
     lockVersion: 1,
+    audioUrl,
+    maxPlays,
     updatedAt: '06/10/2026'
   } as FullQuestionItem;
 }
 
 export async function updateBankQuestion(id: number, q: Partial<FullQuestionItem>): Promise<FullQuestionItem | null> {
-  const payload = {
+  const options = buildOptionsForQuestion(q);
+  const audioUrl = (q as any).audioUrl || q.questionGroup?.audioUrl || undefined;
+  const audioDurationSec = (q as any).audioDurationSec || (q.questionGroup as any)?.audioDurationSec || undefined;
+  const maxPlays = (q as any).maxPlays || q.questionGroup?.maxPlays || undefined;
+
+  const payload: any = {
     subjectId: q.subjectId,
     topicId: q.topicId,
     difficulty: q.difficulty,
     questionType: q.questionType,
+    cognitiveLevel: q.cognitiveLevel,
     questionText: q.questionText,
     explanation: q.explanation,
+    options,
     questionGroup: q.questionGroup,
+    audioUrl,
+    audioDurationSec,
+    maxPlays,
     lockVersion: q.lockVersion
   };
 
-  try {
-    const res = await authenticatedFetch(`${BASE_URL}/admin/questions/${id}`, {
+  let res = await authenticatedFetch(`${BASE_URL}/collaborator/questions/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload)
+  });
+
+  if (!res.ok && (res.status === 404 || res.status === 403)) {
+    res = await authenticatedFetch(`${BASE_URL}/admin/questions/${id}`, {
       method: 'PUT',
       body: JSON.stringify(payload)
     });
-    if (res.ok) {
-      const json = await res.json();
-      return json.data as FullQuestionItem;
-    }
-    if (res.status === 409) {
-      const errJson = await res.json().catch(() => ({}));
-      const message = errJson?.error?.message || 'Xung đột chỉnh sửa đồng thời (CONCURRENT_MODIFICATION). Câu hỏi đã được thay đổi bởi phiên làm việc khác, vui lòng tải lại trang.';
-      alert(message);
-      throw new Error(message);
-    }
-  } catch (err) {
-    console.warn(`updateBankQuestion(${id}) failed:`, err);
+  }
+
+  if (res.status === 409) {
+    const errJson = await res.json().catch(() => ({}));
+    const message = errJson?.error?.message || errJson?.message || 'Xung đột chỉnh sửa đồng thời (CONCURRENT_MODIFICATION). Câu hỏi đã được thay đổi bởi phiên làm việc khác, vui lòng tải lại trang.';
+    const err: any = new Error(message);
+    err.status = 409;
+    err.code = errJson?.error?.code || 'CONCURRENT_MODIFICATION';
     throw err;
   }
-  return null;
+
+  if (res.ok) {
+    const json = await res.json();
+    return json.data as FullQuestionItem;
+  }
+
+  const errJson = await res.json().catch(() => ({}));
+  const message = errJson?.error?.message || errJson?.message || `Cập nhật câu hỏi thất bại (${res.status})`;
+  const err: any = new Error(message);
+  err.status = res.status;
+  err.code = errJson?.error?.code;
+  throw err;
 }
 
 // -------------------------------------------------------------
@@ -869,11 +1011,11 @@ export async function fetchBlueprints(subjectId?: number): Promise<BlueprintItem
   return subjectId ? fallbackBlueprints.filter(b => b.subjectId === subjectId) : fallbackBlueprints;
 }
 
-export async function generateByMatrix(examId: number, blueprintId = 1, variantCount = 4): Promise<any> {
+export async function generateByMatrix(examId: number, blueprintId = 1, variantCount = 4, maxExposureRate = 0.3): Promise<any> {
   try {
     const res = await authenticatedFetch(`${BASE_URL}/admin/exams/${examId}/generate-by-matrix`, {
       method: 'POST',
-      body: JSON.stringify({ blueprintId, variantCount })
+      body: JSON.stringify({ blueprintId, variantCount, maxExposureRate })
     });
     if (res.ok) {
       const json = await res.json();
