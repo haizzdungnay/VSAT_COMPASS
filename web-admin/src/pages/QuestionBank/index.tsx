@@ -3,7 +3,9 @@ import type { FullQuestionItem } from '../../types/exam';
 import {
   fetchBankQuestions,
   approveBankQuestion,
-  rejectBankQuestion
+  rejectBankQuestion,
+  fetchQuestionDetail,
+  SUBJECTS
 } from '../../services/api';
 import { MathView } from '../../components/MathView';
 import { QuestionCreateModal } from './QuestionCreateModal';
@@ -15,12 +17,19 @@ export const QuestionBank: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState<FullQuestionItem | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const getSubjectId = (filter: string): number | undefined => {
+    if (filter === 'ALL') return undefined;
+    const match = SUBJECTS.find(s => s.code === filter);
+    return match ? match.id : undefined;
+  };
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const subjectId = subjectFilter === 'MATH' ? 1 : (subjectFilter === 'ENG' ? 2 : (subjectFilter === 'PHY' ? 3 : (subjectFilter === 'CHEM' ? 4 : undefined)));
+      const subjectId = getSubjectId(subjectFilter);
       const data = await fetchBankQuestions({
         status: statusFilter,
         subjectId,
@@ -36,7 +45,7 @@ export const QuestionBank: React.FC = () => {
   useEffect(() => {
     let ignore = false;
     const load = async () => {
-      const subjectId = subjectFilter === 'MATH' ? 1 : (subjectFilter === 'ENG' ? 2 : (subjectFilter === 'PHY' ? 3 : (subjectFilter === 'CHEM' ? 4 : undefined)));
+      const subjectId = getSubjectId(subjectFilter);
       const data = await fetchBankQuestions({
         status: statusFilter,
         subjectId,
@@ -61,8 +70,32 @@ export const QuestionBank: React.FC = () => {
     setQuestions(prev => prev.map(q => q.id === id ? { ...q, status: 'ARCHIVED' } : q));
   };
 
-  const handleCreated = (newQ: FullQuestionItem) => {
-    setQuestions(prev => [newQ, ...prev]);
+  const handleEdit = async (id: number) => {
+    try {
+      const detail = await fetchQuestionDetail(id);
+      const target = detail || questions.find(q => q.id === id) || null;
+      setEditingQuestion(target);
+      setIsModalOpen(true);
+    } catch {
+      const fallback = questions.find(q => q.id === id) || null;
+      setEditingQuestion(fallback);
+      setIsModalOpen(true);
+    }
+  };
+
+  const handleOpenCreate = () => {
+    setEditingQuestion(null);
+    setIsModalOpen(true);
+  };
+
+  const handleSaved = (savedQ: FullQuestionItem) => {
+    setQuestions(prev => {
+      const exists = prev.some(q => q.id === savedQ.id);
+      if (exists) {
+        return prev.map(q => q.id === savedQ.id ? savedQ : q);
+      }
+      return [savedQ, ...prev];
+    });
   };
 
   const filtered = questions.filter(q => {
@@ -88,20 +121,22 @@ export const QuestionBank: React.FC = () => {
             </span>
           </div>
           <p className="font-body-md text-body-md text-on-surface-variant">
-            Quản trị kho câu hỏi 4 dạng thức chuẩn khảo thí V-SAT: Đúng/Sai, Trắc nghiệm 4 lựa chọn, Ghép hợp, Điền số
+            Quản trị kho câu hỏi 4 dạng thức chuẩn khảo thí V-SAT cho 7 môn: Đúng/Sai, Trắc nghiệm 4 lựa chọn, Ghép hợp, Điền số
           </p>
         </div>
 
         <div className="flex items-center gap-space-sm">
           <button
             onClick={loadData}
+            type="button"
             className="h-9 px-space-md rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md flex items-center gap-1.5 shadow-sm transition-colors"
           >
             <span className="material-symbols-outlined text-[18px] text-outline">refresh</span>
             <span>Làm mới</span>
           </button>
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={handleOpenCreate}
+            type="button"
             className="h-9 px-space-md rounded-lg bg-primary hover:bg-tertiary text-on-primary font-label-md text-label-md flex items-center gap-1.5 shadow-sm transition-colors"
           >
             <span className="material-symbols-outlined text-[18px]">add</span>
@@ -110,7 +145,7 @@ export const QuestionBank: React.FC = () => {
         </div>
       </div>
 
-      {/* Filter Bar */}
+      {/* Filter Bar - Strict WEB-006: at least 3 select elements */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-space-md bg-surface-container-lowest p-space-md rounded-xl border border-outline-variant/30">
         <div className="flex items-center gap-space-sm w-full md:w-auto flex-wrap">
           <div className="relative flex-1 md:w-72">
@@ -132,10 +167,9 @@ export const QuestionBank: React.FC = () => {
             className="h-9 px-3 text-body-sm bg-surface-container-low rounded-lg border border-outline-variant/40"
           >
             <option value="ALL">Tất cả môn học</option>
-            <option value="MATH">Toán học</option>
-            <option value="PHY">Vật lí</option>
-            <option value="CHEM">Hóa học</option>
-            <option value="ENG">Tiếng Anh</option>
+            {SUBJECTS.map((s) => (
+              <option key={s.code} value={s.code}>{s.name}</option>
+            ))}
           </select>
 
           <select
@@ -182,6 +216,8 @@ export const QuestionBank: React.FC = () => {
             q.questionType === 'MATCHING' ? 'Phần 3: Ghép hợp' :
             'Phần 4: Điền số / Trả lời ngắn';
 
+          const effectiveAudio = (q as any).audioUrl || q.questionGroup?.audioUrl;
+
           return (
             <div
               key={q.id}
@@ -205,6 +241,9 @@ export const QuestionBank: React.FC = () => {
                   <span className="px-1.5 py-0.2 rounded bg-surface-container text-on-surface-variant text-[11px]">
                     {q.cognitiveLevel}
                   </span>
+                  {q.lockVersion !== undefined && (
+                    <span className="font-mono text-[10px] text-outline">v{q.lockVersion}</span>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -220,8 +259,27 @@ export const QuestionBank: React.FC = () => {
                   >
                     {q.status}
                   </span>
+                  <button
+                    type="button"
+                    onClick={() => handleEdit(q.id)}
+                    className="px-2.5 py-1 rounded bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold transition-all flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">edit</span>
+                    <span>Sửa</span>
+                  </button>
                 </div>
               </div>
+
+              {/* Question Audio if present */}
+              {effectiveAudio && (
+                <div className="p-2.5 rounded-lg bg-surface-container-low border border-outline-variant/30 space-y-1">
+                  <div className="text-[11px] font-bold text-primary flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[16px]">headphones</span>
+                    <span>Bài nghe Tiếng Anh (Audio Listening):</span>
+                  </div>
+                  <audio controls preload="none" src={effectiveAudio} className="w-full h-8" />
+                </div>
+              )}
 
               {/* Question stem (LaTeX rendered via MathView) */}
               <div className="text-body-md font-medium text-on-surface leading-relaxed">
@@ -312,12 +370,14 @@ export const QuestionBank: React.FC = () => {
               {q.status === 'PENDING_REVIEW' && (
                 <div className="flex items-center justify-end gap-2 pt-2 border-t border-outline-variant/20">
                   <button
+                    type="button"
                     onClick={() => handleReject(q.id)}
                     className="h-8 px-3 rounded bg-surface-container hover:bg-surface-container-high text-red-600 text-label-sm font-semibold transition-colors"
                   >
                     Từ chối
                   </button>
                   <button
+                    type="button"
                     onClick={() => handleApprove(q.id)}
                     className="h-8 px-3 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-label-sm font-bold shadow-sm transition-colors"
                   >
@@ -330,11 +390,16 @@ export const QuestionBank: React.FC = () => {
         })}
       </div>
 
-      {/* Question Create Modal */}
+      {/* Question Create/Edit Modal */}
       <QuestionCreateModal
+        key={editingQuestion?.id ? `edit-${editingQuestion.id}` : 'new'}
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={handleCreated}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingQuestion(null);
+        }}
+        onSuccess={handleSaved}
+        initialData={editingQuestion}
       />
     </div>
   );

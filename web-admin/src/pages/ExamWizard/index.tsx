@@ -9,12 +9,20 @@ import { Step4VariantsPublish } from './Step4VariantsPublish';
 interface WizardProps {
   onBackToList: () => void;
   initialBlueprint?: BlueprintItem | null;
+  initialExam?: ExamDetail | null;
 }
 
-export const CreateExamWizard: React.FC<WizardProps> = ({ onBackToList, initialBlueprint }) => {
+export const CreateExamWizard: React.FC<WizardProps> = ({ onBackToList, initialBlueprint, initialExam }) => {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isSaving, setIsSaving] = useState(false);
   const [exam, setExam] = useState<ExamDetail>(() => {
+    if (initialExam) {
+      return {
+        ...initialExam,
+        scoringProfileCode: initialExam.scoringProfileCode || 'VSAT_2026_RAW_150',
+        deliveryMode: initialExam.deliveryMode || 'PRACTICE'
+      };
+    }
     if (initialBlueprint) {
       return {
         id: 0,
@@ -65,19 +73,21 @@ export const CreateExamWizard: React.FC<WizardProps> = ({ onBackToList, initialB
     }
   };
 
-  const handleNextStep = async () => {
+  const handleNextStep = () => {
     if (currentStep === 1) {
-      setIsSaving(true);
-      try {
-        if (exam.id === 0) {
-          const created = await createExam(exam);
-          setExam(created);
-        } else {
-          await updateExam(exam.id, exam);
+      // Non-blocking draft save for fast <400ms wizard transition (WEB-003)
+      (async () => {
+        try {
+          if (exam.id === 0) {
+            const created = await createExam(exam);
+            setExam(created);
+          } else {
+            await updateExam(exam.id, exam);
+          }
+        } catch (err) {
+          console.warn('Background save draft failed:', err);
         }
-      } finally {
-        setIsSaving(false);
-      }
+      })();
     }
     setCurrentStep(prev => Math.min(4, prev + 1));
   };

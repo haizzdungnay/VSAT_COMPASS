@@ -5,7 +5,8 @@ import {
   fetchQuestionDetail,
   approveBankQuestion,
   rejectBankQuestion,
-  requestRevisionBankQuestion
+  requestRevisionBankQuestion,
+  SUBJECTS
 } from '../../services/api';
 import { MathView } from '../../components/MathView';
 
@@ -167,10 +168,10 @@ export const ReviewQueue: React.FC = () => {
     const matchesSearch = !search ||
       q.questionCode.toLowerCase().includes(search.toLowerCase()) ||
       q.questionText.toLowerCase().includes(search.toLowerCase());
-    const matchesSubject = subjectFilter === 'ALL' ||
-      (subjectFilter === 'MATH' && q.subjectId === 1) ||
-      (subjectFilter === 'ENG' && q.subjectId === 2) ||
-      (subjectFilter === 'PHY' && q.subjectId === 3);
+    const matchesSubject = subjectFilter === 'ALL' || (() => {
+      const matchSub = SUBJECTS.find(s => s.code === subjectFilter);
+      return matchSub ? q.subjectId === matchSub.id : false;
+    })();
     const matchesType = typeFilter === 'ALL' || q.questionType === typeFilter;
     return matchesSearch && matchesSubject && matchesType;
   });
@@ -333,9 +334,9 @@ export const ReviewQueue: React.FC = () => {
             className="h-10 px-3 rounded-lg border border-outline-variant/40 bg-surface-container-lowest font-body-sm text-on-surface focus:outline-none focus:border-primary"
           >
             <option value="ALL">Tất cả môn học</option>
-            <option value="MATH">Toán học</option>
-            <option value="ENG">Tiếng Anh</option>
-            <option value="PHY">Vật lí</option>
+            {SUBJECTS.map((s) => (
+              <option key={s.code} value={s.code}>{s.name}</option>
+            ))}
           </select>
 
           <select
@@ -398,6 +399,20 @@ export const ReviewQueue: React.FC = () => {
                       <div className="line-clamp-2 text-on-surface">
                         <MathView content={q.questionText} />
                       </div>
+                      {((q as any).audioUrl || q.questionGroup?.audioUrl) && (
+                        <div className="mt-1.5 space-y-1">
+                          <div className="flex items-center gap-1 text-[11px] text-primary font-bold">
+                            <span className="material-symbols-outlined text-[14px]">headphones</span>
+                            <span>Audio Listening</span>
+                          </div>
+                          <audio
+                            controls
+                            preload="none"
+                            src={(q as any).audioUrl || q.questionGroup?.audioUrl}
+                            className="w-full h-7"
+                          />
+                        </div>
+                      )}
                     </td>
                     <td className="py-3 px-4 whitespace-nowrap">
                       <span className="px-2 py-0.5 rounded bg-surface-container font-label-sm text-[11px] text-on-surface-variant font-medium">
@@ -502,6 +517,22 @@ export const ReviewQueue: React.FC = () => {
                       />
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Audio Listening Player (if audioUrl exists) */}
+              {((selectedQuestion as any).audioUrl || selectedQuestion.questionGroup?.audioUrl) && (
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                  <div className="text-[12px] font-bold text-primary flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[16px]">headphones</span>
+                    <span>Bài nghe Tiếng Anh (Audio Listening):</span>
+                  </div>
+                  <audio
+                    controls
+                    preload="none"
+                    src={(selectedQuestion as any).audioUrl || selectedQuestion.questionGroup?.audioUrl}
+                    className="w-full h-8"
+                  />
                 </div>
               )}
 

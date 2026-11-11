@@ -51,6 +51,7 @@ import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -114,9 +115,9 @@ class QuestionServiceTest {
     // ============================================================
 
     private CreateQuestionRequest validCreateReq(QuestionType type, List<Boolean> correctFlags) {
-        List<CreateQuestionRequest.OptionInput> opts = correctFlags.stream()
-                .map(isCorrect -> {
-                    int idx = correctFlags.indexOf(isCorrect);
+        List<CreateQuestionRequest.OptionInput> opts = IntStream.range(0, correctFlags.size())
+                .mapToObj(idx -> {
+                    boolean isCorrect = correctFlags.get(idx);
                     return CreateQuestionRequest.OptionInput.builder()
                             .optionLabel(String.valueOf((char) ('A' + idx)))
                             .optionText("Option " + idx)
@@ -330,6 +331,208 @@ class QuestionServiceTest {
 
             verify(questionRepository, never()).save(any());
         }
+
+        @Test
+        @DisplayName("create: TRUE_FALSE with 4 options and multiple correct succeeds (V-SAT 2026)")
+        void create_trueFalse_fourStatementsMultipleCorrect_succeeds() {
+            mockSubjectTopicValid();
+            when(questionRepository.save(any(Question.class)))
+                    .thenAnswer(inv -> {
+                        Question q = inv.getArgument(0);
+                        q.setId(1001L);
+                        return q;
+                    });
+            when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(1001L))
+                    .thenReturn(Collections.emptyList());
+            when(questionReviewRepository.findByQuestionIdOrderByCreatedAtDesc(1001L))
+                    .thenReturn(Collections.emptyList());
+
+            CreateQuestionRequest req = validCreateReq(QuestionType.TRUE_FALSE,
+                    List.of(true, true, false, true));
+            QuestionResponse result = questionService.create(OWNER_ID, req);
+
+            assertThat(result.getStatus()).isEqualTo(QuestionStatus.DRAFT);
+            verify(questionOptionRepository, times(4)).save(any(QuestionOption.class));
+        }
+
+        @Test
+        @DisplayName("create: TRUE_FALSE allows all false or all true statements")
+        void create_trueFalse_allFalseOrAllTrue_succeeds() {
+            mockSubjectTopicValid();
+            when(questionRepository.save(any(Question.class)))
+                    .thenAnswer(inv -> {
+                        Question q = inv.getArgument(0);
+                        q.setId(1002L);
+                        return q;
+                    });
+            when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(1002L))
+                    .thenReturn(Collections.emptyList());
+            when(questionReviewRepository.findByQuestionIdOrderByCreatedAtDesc(1002L))
+                    .thenReturn(Collections.emptyList());
+
+            CreateQuestionRequest allFalseReq = validCreateReq(QuestionType.TRUE_FALSE,
+                    List.of(false, false, false, false));
+            QuestionResponse res1 = questionService.create(OWNER_ID, allFalseReq);
+            assertThat(res1.getStatus()).isEqualTo(QuestionStatus.DRAFT);
+
+            CreateQuestionRequest allTrueReq = validCreateReq(QuestionType.TRUE_FALSE,
+                    List.of(true, true, true, true));
+            QuestionResponse res2 = questionService.create(OWNER_ID, allTrueReq);
+            assertThat(res2.getStatus()).isEqualTo(QuestionStatus.DRAFT);
+        }
+
+        @Test
+        @DisplayName("create: TRUE_FALSE with < 2 or > 4 options throws 400 VALIDATION_FAILED")
+        void create_trueFalse_invalidOptionCounts_throws400() {
+            mockSubjectTopicValid();
+            CreateQuestionRequest singleOpt = validCreateReq(QuestionType.TRUE_FALSE, List.of(true));
+            assertThatThrownBy(() -> questionService.create(OWNER_ID, singleOpt))
+                    .isInstanceOf(AppException.class)
+                    .satisfies(ex -> {
+                        AppException ae = (AppException) ex;
+                        assertThat(ae.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+                        assertThat(ae.getMessage()).contains("TRUE_FALSE").contains("between 2 and 4 options");
+                    });
+
+            CreateQuestionRequest fiveOpts = validCreateReq(QuestionType.TRUE_FALSE,
+                    List.of(true, false, true, false, true));
+            assertThatThrownBy(() -> questionService.create(OWNER_ID, fiveOpts))
+                    .isInstanceOf(AppException.class)
+                    .satisfies(ex -> {
+                        AppException ae = (AppException) ex;
+                        assertThat(ae.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+                        assertThat(ae.getMessage()).contains("TRUE_FALSE").contains("between 2 and 4 options");
+                    });
+        }
+
+        @Test
+        @DisplayName("create: SHORT_ANSWER with 1 correct option succeeds")
+        void create_shortAnswer_singleOption_succeeds() {
+            mockSubjectTopicValid();
+            when(questionRepository.save(any(Question.class)))
+                    .thenAnswer(inv -> {
+                        Question q = inv.getArgument(0);
+                        q.setId(1003L);
+                        return q;
+                    });
+            when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(1003L))
+                    .thenReturn(Collections.emptyList());
+            when(questionReviewRepository.findByQuestionIdOrderByCreatedAtDesc(1003L))
+                    .thenReturn(Collections.emptyList());
+
+            CreateQuestionRequest req = validCreateReq(QuestionType.SHORT_ANSWER, List.of(true));
+            QuestionResponse result = questionService.create(OWNER_ID, req);
+
+            assertThat(result.getStatus()).isEqualTo(QuestionStatus.DRAFT);
+            verify(questionOptionRepository, times(1)).save(any(QuestionOption.class));
+        }
+
+        @Test
+        @DisplayName("create: SHORT_ANSWER with zero correct options throws 400 VALIDATION_FAILED")
+        void create_shortAnswer_zeroCorrect_throws400() {
+            mockSubjectTopicValid();
+            CreateQuestionRequest req = validCreateReq(QuestionType.SHORT_ANSWER, List.of(false));
+
+            assertThatThrownBy(() -> questionService.create(OWNER_ID, req))
+                    .isInstanceOf(AppException.class)
+                    .satisfies(ex -> {
+                        AppException ae = (AppException) ex;
+                        assertThat(ae.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+                        assertThat(ae.getMessage()).contains("SHORT_ANSWER").contains("at least 1 correct option");
+                    });
+        }
+
+        @Test
+        @DisplayName("create: MATCHING with 2 to 6 options succeeds")
+        void create_matching_validOptions_succeeds() {
+            mockSubjectTopicValid();
+            when(questionRepository.save(any(Question.class)))
+                    .thenAnswer(inv -> {
+                        Question q = inv.getArgument(0);
+                        q.setId(1004L);
+                        return q;
+                    });
+            when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(1004L))
+                    .thenReturn(Collections.emptyList());
+            when(questionReviewRepository.findByQuestionIdOrderByCreatedAtDesc(1004L))
+                    .thenReturn(Collections.emptyList());
+
+            CreateQuestionRequest req = validCreateReq(QuestionType.MATCHING, List.of(true, true, true, true));
+            QuestionResponse result = questionService.create(OWNER_ID, req);
+
+            assertThat(result.getStatus()).isEqualTo(QuestionStatus.DRAFT);
+            verify(questionOptionRepository, times(4)).save(any(QuestionOption.class));
+        }
+
+        @Test
+        @DisplayName("create: MATCHING with invalid option count throws 400 VALIDATION_FAILED")
+        void create_matching_invalidOptionCounts_throws400() {
+            mockSubjectTopicValid();
+            CreateQuestionRequest singleOpt = validCreateReq(QuestionType.MATCHING, List.of(true));
+            assertThatThrownBy(() -> questionService.create(OWNER_ID, singleOpt))
+                    .isInstanceOf(AppException.class)
+                    .satisfies(ex -> {
+                        AppException ae = (AppException) ex;
+                        assertThat(ae.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+                        assertThat(ae.getMessage()).contains("MATCHING").contains("between 2 and 6 options");
+                    });
+
+            CreateQuestionRequest sevenOpts = validCreateReq(QuestionType.MATCHING,
+                    List.of(true, false, true, false, true, false, true));
+            assertThatThrownBy(() -> questionService.create(OWNER_ID, sevenOpts))
+                    .isInstanceOf(AppException.class)
+                    .satisfies(ex -> {
+                        AppException ae = (AppException) ex;
+                        assertThat(ae.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+                        assertThat(ae.getMessage()).contains("MATCHING").contains("between 2 and 6 options");
+                    });
+        }
+
+        @Test
+        @DisplayName("create: audioUrl without questionGroupId auto-creates QuestionGroup with default maxPlays 2")
+        void create_withAudioUrl_autoCreatesQuestionGroup() {
+            mockSubjectTopicValid();
+            when(questionGroupRepository.save(any(QuestionGroup.class)))
+                    .thenAnswer(inv -> {
+                        QuestionGroup g = inv.getArgument(0);
+                        g.setId(888L);
+                        return g;
+                    });
+            when(questionRepository.save(any(Question.class)))
+                    .thenAnswer(inv -> {
+                        Question q = inv.getArgument(0);
+                        q.setId(1005L);
+                        return q;
+                    });
+            when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(1005L))
+                    .thenReturn(Collections.emptyList());
+            when(questionReviewRepository.findByQuestionIdOrderByCreatedAtDesc(1005L))
+                    .thenReturn(Collections.emptyList());
+
+            CreateQuestionRequest req = validSingleChoiceReq();
+            req.setAudioUrl("https://storage.example.com/audio/sample.mp3");
+            req.setAudioDurationSec(120);
+
+            QuestionResponse result = questionService.create(OWNER_ID, req);
+
+            ArgumentCaptor<QuestionGroup> groupCap = ArgumentCaptor.forClass(QuestionGroup.class);
+            verify(questionGroupRepository).save(groupCap.capture());
+            QuestionGroup savedGroup = groupCap.getValue();
+            assertThat(savedGroup.getAudioUrl()).isEqualTo("https://storage.example.com/audio/sample.mp3");
+            assertThat(savedGroup.getAudioDurationSec()).isEqualTo(120);
+            assertThat(savedGroup.getMaxPlays()).isEqualTo(2);
+            assertThat(savedGroup.getSubjectId()).isEqualTo(SUBJECT_MATH);
+            assertThat(savedGroup.getCode()).startsWith("QG-AUDIO-");
+
+            ArgumentCaptor<Question> qCap = ArgumentCaptor.forClass(Question.class);
+            verify(questionRepository).save(qCap.capture());
+            assertThat(qCap.getValue().getQuestionGroupId()).isEqualTo(888L);
+
+            assertThat(result.getQuestionGroupId()).isEqualTo(888L);
+            assertThat(result.getQuestionGroup()).isNotNull();
+            assertThat(result.getQuestionGroup().getAudioUrl()).isEqualTo("https://storage.example.com/audio/sample.mp3");
+            assertThat(result.getQuestionGroup().getMaxPlays()).isEqualTo(2);
+        }
     }
 
     // ============================================================
@@ -507,7 +710,13 @@ class QuestionServiceTest {
                             .isCorrect(false).displayOrder(2).build(),
                     QuestionOption.builder()
                             .id(3L).questionId(50L).optionLabel("C").optionText("C")
-                            .isCorrect(false).displayOrder(3).build()
+                            .isCorrect(false).displayOrder(3).build(),
+                    QuestionOption.builder()
+                            .id(4L).questionId(50L).optionLabel("D").optionText("D")
+                            .isCorrect(false).displayOrder(4).build(),
+                    QuestionOption.builder()
+                            .id(5L).questionId(50L).optionLabel("E").optionText("E")
+                            .isCorrect(false).displayOrder(5).build()
             );
             when(questionRepository.findById(50L)).thenReturn(Optional.of(existing));
             when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(50L))
@@ -524,11 +733,87 @@ class QuestionServiceTest {
                         assertThat(ae.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
                         assertThat(ae.getCode()).isEqualTo("VALIDATION_FAILED");
                         assertThat(ae.getMessage()).contains("TRUE_FALSE")
-                                                   .contains("exactly 2 options");
+                                                   .contains("between 2 and 4 options");
                     });
 
             verify(questionRepository, never()).save(any());
             verify(questionOptionRepository, never()).deleteByQuestionId(any());
+        }
+
+        @Test
+        @DisplayName("update: audioUrl when question has no group auto-creates QuestionGroup")
+        void update_withAudioUrlWhenNoQuestionGroup_autoCreatesQuestionGroup() {
+            Question existing = existingQuestion(50L, QuestionStatus.DRAFT, OWNER_ID);
+            existing.setLockVersion(4);
+            when(questionRepository.findById(50L)).thenReturn(Optional.of(existing));
+            when(questionGroupRepository.save(any(QuestionGroup.class)))
+                    .thenAnswer(inv -> {
+                        QuestionGroup g = inv.getArgument(0);
+                        g.setId(999L);
+                        return g;
+                    });
+            when(questionRepository.save(any(Question.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(50L))
+                    .thenReturn(Collections.emptyList());
+            when(questionReviewRepository.findByQuestionIdOrderByCreatedAtDesc(50L))
+                    .thenReturn(Collections.emptyList());
+
+            UpdateQuestionRequest req = UpdateQuestionRequest.builder()
+                    .audioUrl("https://example.com/audio/new.mp3")
+                    .audioDurationSec(90)
+                    .maxPlays(3)
+                    .build();
+
+            QuestionResponse result = questionService.update(OWNER_ID, ROLE_COLLAB, 50L, req);
+
+            ArgumentCaptor<QuestionGroup> groupCap = ArgumentCaptor.forClass(QuestionGroup.class);
+            verify(questionGroupRepository).save(groupCap.capture());
+            assertThat(groupCap.getValue().getAudioUrl()).isEqualTo("https://example.com/audio/new.mp3");
+            assertThat(groupCap.getValue().getAudioDurationSec()).isEqualTo(90);
+            assertThat(groupCap.getValue().getMaxPlays()).isEqualTo(3);
+            assertThat(groupCap.getValue().getSubjectId()).isEqualTo(SUBJECT_MATH);
+
+            assertThat(result.getQuestionGroupId()).isEqualTo(999L);
+            assertThat(result.getQuestionGroup()).isNotNull();
+            assertThat(result.getQuestionGroup().getAudioUrl()).isEqualTo("https://example.com/audio/new.mp3");
+            assertThat(result.getQuestionGroup().getMaxPlays()).isEqualTo(3);
+            assertThat(result.getLockVersion()).isEqualTo(4);
+        }
+
+        @Test
+        @DisplayName("update: audioUrl when question already has questionGroup updates existing group")
+        void update_withAudioUrlWhenQuestionGroupExists_updatesExistingQuestionGroup() {
+            Question existing = existingQuestion(50L, QuestionStatus.DRAFT, OWNER_ID);
+            existing.setQuestionGroupId(777L);
+            QuestionGroup existingGroup = QuestionGroup.builder()
+                    .id(777L)
+                    .code("QG-READING-1")
+                    .subjectId(SUBJECT_MATH)
+                    .audioUrl("https://example.com/old.mp3")
+                    .maxPlays(2)
+                    .build();
+
+            when(questionRepository.findById(50L)).thenReturn(Optional.of(existing));
+            when(questionGroupRepository.findById(777L)).thenReturn(Optional.of(existingGroup));
+            when(questionGroupRepository.save(any(QuestionGroup.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(questionRepository.save(any(Question.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(50L))
+                    .thenReturn(Collections.emptyList());
+            when(questionReviewRepository.findByQuestionIdOrderByCreatedAtDesc(50L))
+                    .thenReturn(Collections.emptyList());
+
+            UpdateQuestionRequest req = UpdateQuestionRequest.builder()
+                    .audioUrl("https://example.com/updated.mp3")
+                    .maxPlays(1)
+                    .build();
+
+            QuestionResponse result = questionService.update(OWNER_ID, ROLE_COLLAB, 50L, req);
+
+            verify(questionGroupRepository).save(existingGroup);
+            assertThat(existingGroup.getAudioUrl()).isEqualTo("https://example.com/updated.mp3");
+            assertThat(existingGroup.getMaxPlays()).isEqualTo(1);
+            assertThat(result.getQuestionGroup().getAudioUrl()).isEqualTo("https://example.com/updated.mp3");
+            assertThat(result.getQuestionGroup().getMaxPlays()).isEqualTo(1);
         }
     }
 

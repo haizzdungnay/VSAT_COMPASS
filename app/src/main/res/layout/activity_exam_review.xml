@@ -69,6 +69,40 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+                <!-- Review Audio Player Controller -->
+                <LinearLayout
+                    android:id="@+id/layoutReviewAudio"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:background="@drawable/bg_option_default"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp"
+                    android:visibility="gone">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnReviewAudioPlayPause"
+                        android:layout_width="wrap_content"
+                        android:layout_height="42dp"
+                        android:backgroundTint="@color/primary"
+                        android:text="Nghe Audio"
+                        android:textAllCaps="false"
+                        android:textSize="13sp"
+                        app:cornerRadius="8dp" />
+
+                    <TextView
+                        android:id="@+id/tvReviewAudioStatus"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:text="Audio bài nghe"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
                 <!-- Question Group / Reading Passage card -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardPassage"

@@ -112,6 +112,31 @@ public class OfflineExamRepository {
 
                 OfflineExamBundle bundle = response.body().getData();
                 saveBundle(appCtx, examId, bundle);
+
+                if (bundle.getQuestions() != null) {
+                    java.util.Set<Long> downloadedGroups = new java.util.HashSet<>();
+                    for (OfflineExamBundle.QuestionBundleItem item : bundle.getQuestions()) {
+                        com.example.v_sat_compass.data.model.QuestionGroup qg = item.getQuestionGroup();
+                        if (qg != null && qg.getAudioUrl() != null) {
+                            String audioUrl = qg.getAudioUrl().trim();
+                            if (!audioUrl.isEmpty()) {
+                                long groupId = qg.getId() != null ? qg.getId() : (long) Math.abs(audioUrl.hashCode());
+                                if (!downloadedGroups.contains(groupId)) {
+                                    downloadedGroups.add(groupId);
+                                    try {
+                                        byte[] bytes = downloadAudioBytes(audioUrl);
+                                        if (bytes != null && bytes.length > 0) {
+                                            saveEncryptedAudio(appCtx, examId, groupId, bytes);
+                                        }
+                                    } catch (Exception e) {
+                                        Log.w(TAG, "Failed to download audio for group " + groupId + ": " + e.getMessage());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
                 mainHandler.post(() -> callback.onSuccess(bundle));
 
             } catch (Exception e) {
@@ -256,10 +281,122 @@ public class OfflineExamRepository {
 
     public synchronized boolean deleteExam(Context context, long examId) {
         File file = bundleFile(context, examId);
+        boolean deleted = false;
         if (file.exists()) {
-            return file.delete();
+            deleted = file.delete();
         }
-        return false;
+        File audioDir = new File(context.getFilesDir(), "offline_exams/audio/" + examId);
+        if (audioDir.exists()) {
+            File[] files = audioDir.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    f.delete();
+                }
+            }
+            audioDir.delete();
+        }
+        return deleted;
+    }
+
+    public synchronized File saveEncryptedAudio(Context ctx, long examId, long groupId, byte[] plainAudioBytes)
+            throws IOException {
+        if (ctx == null) {
+            throw new IOException("Context cannot be null");
+        }
+        byte[] encrypted;
+        try {
+            encrypted = encryptMediaBytes(plainAudioBytes);
+        } catch (GeneralSecurityException e) {
+            throw new IOException("Failed to encrypt audio with AES-128-GCM", e);
+        }
+
+        File targetFile = new File(ctx.getFilesDir(), "offline_exams/audio/" + examId + "/" + groupId + ".vsa");
+        File parentDir = targetFile.getParentFile();
+        if (parentDir != null && !parentDir.exists() && !parentDir.mkdirs()) {
+            throw new IOException("Cannot create directory " + parentDir.getAbsolutePath());
+        }
+
+        try (FileOutputStream fos = new FileOutputStream(targetFile)) {
+            fos.write(encrypted);
+            fos.flush();
+        }
+        return targetFile;
+    }
+
+    public synchronized File getDecryptedAudioFile(Context ctx, long examId, long groupId) {
+        if (ctx == null) return null;
+        File audioFile = new File(ctx.getFilesDir(), "offline_exams/audio/" + examId + "/" + groupId + ".vsa");
+        if (!audioFile.exists()) {
+            return null;
+        }
+
+        try {
+            byte[] fileBytes;
+            try (FileInputStream fis = new FileInputStream(audioFile);
+                 ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+                byte[] buf = new byte[4096];
+                int read;
+                while ((read = fis.read(buf)) != -1) {
+                    bos.write(buf, 0, read);
+                }
+                fileBytes = bos.toByteArray();
+            }
+
+            byte[] decryptedBytes = decryptMediaBytes(fileBytes);
+            File cacheDir = ctx.getCacheDir();
+            if (cacheDir != null && !cacheDir.exists()) {
+                cacheDir.mkdirs();
+            }
+            File tempAudioFile = new File(cacheDir, "vsat_audio_" + examId + "_" + groupId + ".mp3");
+            try (FileOutputStream fos = new FileOutputStream(tempAudioFile)) {
+                fos.write(decryptedBytes);
+                fos.flush();
+            }
+            return tempAudioFile;
+        } catch (Exception e) {
+            Log.w(TAG, "getDecryptedAudioFile failed for exam " + examId + " group " + groupId, e);
+            return null;
+        }
+    }
+
+    public static String resolveAudioUrl(String audioUrl) {
+        if (audioUrl == null) return null;
+        String trimmed = audioUrl.trim();
+        if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+            return trimmed;
+        }
+        String base = com.example.v_sat_compass.data.api.ApiClient.getCurrentBaseUrl();
+        if (base == null) return trimmed;
+        if (trimmed.startsWith("/")) {
+            int apiIdx = base.indexOf("/api/");
+            String host = apiIdx != -1 ? base.substring(0, apiIdx) : base.replaceAll("/+$", "");
+            return host + trimmed;
+        } else {
+            return base.endsWith("/") ? base + trimmed : base + "/" + trimmed;
+        }
+    }
+
+    private byte[] downloadAudioBytes(String audioUrl) throws IOException {
+        String resolvedUrl = resolveAudioUrl(audioUrl);
+        java.net.URL url = java.net.URI.create(resolvedUrl).toURL();
+        java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+        conn.setConnectTimeout(15000);
+        conn.setReadTimeout(30000);
+        conn.setRequestMethod("GET");
+        int responseCode = conn.getResponseCode();
+        if (responseCode >= 200 && responseCode < 300) {
+            try (java.io.InputStream in = conn.getInputStream();
+                 ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                byte[] buf = new byte[8192];
+                int read;
+                while ((read = in.read(buf)) != -1) {
+                    out.write(buf, 0, read);
+                }
+                return out.toByteArray();
+            }
+        } else {
+            throw new IOException("HTTP error " + responseCode + " while fetching " + resolvedUrl);
+        }
     }
 
     public void delete(Context context, long examId, Runnable callback) {

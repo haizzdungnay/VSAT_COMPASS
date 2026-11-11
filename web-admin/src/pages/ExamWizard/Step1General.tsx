@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { ExamDetail } from '../../types/exam';
+import { SUBJECTS } from '../../services/api';
 
 interface Step1Props {
   exam: ExamDetail;
@@ -7,6 +8,9 @@ interface Step1Props {
 }
 
 export const Step1General: React.FC<Step1Props> = ({ exam, onChange }) => {
+  const [startAt, setStartAt] = useState<string>(exam.startAt || '2026-10-20T08:00');
+  const [endAt, setEndAt] = useState<string>(exam.endAt || '2026-10-20T09:30');
+  const [gracePeriod, setGracePeriod] = useState<number>(exam.gracePeriodMinutes ?? 15);
   return (
     <div className="space-y-space-lg">
       <div className="bg-surface-container-lowest p-space-lg rounded-xl border border-outline-variant/30 shadow-sm space-y-space-md">
@@ -50,21 +54,20 @@ export const Step1General: React.FC<Step1Props> = ({ exam, onChange }) => {
               onChange={(e) => {
                 const subId = Number(e.target.value);
                 const isMath = subId === 1;
+                const match = SUBJECTS.find(s => s.id === subId);
                 onChange({
                   subjectId: subId,
                   durationMinutes: isMath ? 90 : 60,
-                  subjectName: isMath ? 'Toán học' : (subId === 2 ? 'Tiếng Anh' : 'Vật lí')
+                  subjectName: match ? match.name : `Môn #${subId}`
                 });
               }}
               className="w-full h-10 px-3 text-body-md bg-surface-container-low rounded-lg border border-outline-variant/40 focus:outline-none focus:border-primary"
             >
-              <option value={1}>Toán học (Chuẩn 90 phút, 25 câu)</option>
-              <option value={2}>Tiếng Anh (Chuẩn 60 phút, 25 câu)</option>
-              <option value={3}>Vật lí (Chuẩn 60 phút, 25 câu)</option>
-              <option value={4}>Hóa học (Chuẩn 60 phút, 25 câu)</option>
-              <option value={5}>Sinh học (Chuẩn 60 phút, 25 câu)</option>
-              <option value={6}>Lịch sử (Chuẩn 60 phút, 25 câu)</option>
-              <option value={7}>Địa lí (Chuẩn 60 phút, 25 câu)</option>
+              {SUBJECTS.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} (Chuẩn {s.id === 1 ? '90' : '60'} phút, 25 câu)
+                </option>
+              ))}
             </select>
           </div>
 
@@ -153,7 +156,11 @@ export const Step1General: React.FC<Step1Props> = ({ exam, onChange }) => {
               <label className="font-label-sm text-outline">Thời gian mở ca thi (Start)</label>
               <input
                 type="datetime-local"
-                defaultValue="2026-10-20T08:00"
+                value={startAt}
+                onChange={(e) => {
+                  setStartAt(e.target.value);
+                  onChange({ startAt: e.target.value });
+                }}
                 className="w-full h-9 px-2 text-body-sm bg-surface-container-lowest rounded border border-outline-variant/40"
               />
             </div>
@@ -161,15 +168,26 @@ export const Step1General: React.FC<Step1Props> = ({ exam, onChange }) => {
               <label className="font-label-sm text-outline">Thời gian đóng ca thi (End)</label>
               <input
                 type="datetime-local"
-                defaultValue="2026-10-20T09:30"
+                value={endAt}
+                onChange={(e) => {
+                  setEndAt(e.target.value);
+                  onChange({ endAt: e.target.value });
+                }}
                 className="w-full h-9 px-2 text-body-sm bg-surface-container-lowest rounded border border-outline-variant/40"
               />
             </div>
             <div className="space-y-1">
-              <label className="font-label-sm text-outline">Trễ giờ tối đa (Grace period)</label>
+              <label className="font-label-sm text-outline">Trễ giờ tối đa (Grace period - phút)</label>
               <input
                 type="number"
-                defaultValue={15}
+                min={0}
+                max={60}
+                value={gracePeriod}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setGracePeriod(val);
+                  onChange({ gracePeriodMinutes: val });
+                }}
                 className="w-full h-9 px-2 text-body-sm bg-surface-container-lowest rounded border border-outline-variant/40"
               />
             </div>

@@ -1,19 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import type { ExamItem } from '../types/exam';
-import { fetchExams, discardDraftExam } from '../services/api';
+import { fetchExams, discardDraftExam, SUBJECTS } from '../services/api';
 
 interface ExamListProps {
   onCreateClick: () => void;
+  onDetailClick?: (exam: ExamItem) => void;
 }
 
-export const ExamList: React.FC<ExamListProps> = ({ onCreateClick }) => {
+export const ExamList: React.FC<ExamListProps> = ({ onCreateClick, onDetailClick }) => {
   const [exams, setExams] = useState<ExamItem[]>([]);
   const [search, setSearch] = useState('');
   const [subjectFilter, setSubjectFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
+  const getSubjectId = (filter: string): number | undefined => {
+    if (filter === 'ALL') return undefined;
+    const match = SUBJECTS.find(s => s.code === filter);
+    return match ? match.id : undefined;
+  };
+
   const loadExams = async () => {
-    const subjectId = subjectFilter === 'MATH' ? 1 : (subjectFilter === 'ENG' ? 2 : (subjectFilter === 'PHY' ? 3 : undefined));
+    const subjectId = getSubjectId(subjectFilter);
     const status = statusFilter !== 'ALL' ? statusFilter : undefined;
     const data = await fetchExams({ status, subjectId });
     setExams(data);
@@ -22,7 +29,7 @@ export const ExamList: React.FC<ExamListProps> = ({ onCreateClick }) => {
   useEffect(() => {
     let ignore = false;
     const load = async () => {
-      const subjectId = subjectFilter === 'MATH' ? 1 : (subjectFilter === 'ENG' ? 2 : (subjectFilter === 'PHY' ? 3 : undefined));
+      const subjectId = getSubjectId(subjectFilter);
       const status = statusFilter !== 'ALL' ? statusFilter : undefined;
       const data = await fetchExams({ status, subjectId });
       if (!ignore) setExams(data);
@@ -107,9 +114,9 @@ export const ExamList: React.FC<ExamListProps> = ({ onCreateClick }) => {
             className="h-9 px-3 text-body-sm bg-surface-container-low rounded-lg border border-outline-variant/40 focus:outline-none focus:border-primary"
           >
             <option value="ALL">Tất cả môn học</option>
-            <option value="MATH">Toán học</option>
-            <option value="ENG">Tiếng Anh</option>
-            <option value="PHY">Vật lí</option>
+            {SUBJECTS.map((s) => (
+              <option key={s.code} value={s.code}>{s.name}</option>
+            ))}
           </select>
 
           <select
@@ -188,7 +195,7 @@ export const ExamList: React.FC<ExamListProps> = ({ onCreateClick }) => {
                   </button>
                 )}
                 <button
-                  onClick={onCreateClick}
+                  onClick={() => (onDetailClick ? onDetailClick(ex) : onCreateClick())}
                   className="px-2.5 py-1 rounded bg-surface-container hover:bg-surface-container-high text-primary text-[11px] font-bold transition-colors"
                 >
                   Chi tiết

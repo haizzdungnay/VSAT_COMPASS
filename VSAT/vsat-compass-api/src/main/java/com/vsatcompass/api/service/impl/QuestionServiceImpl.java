@@ -39,6 +39,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Slf4j
@@ -60,24 +61,35 @@ public class QuestionServiceImpl implements QuestionService {
     @Transactional
     public QuestionResponse create(Long currentUserId, CreateQuestionRequest req) {
         validateSubjectTopicSubtopic(req.getSubjectId(), req.getTopicId(), req.getSubtopicId());
-        if (req.getQuestionGroupId() != null) {
-            QuestionGroup group = questionGroupRepository.findById(req.getQuestionGroupId())
+        QuestionGroup resolvedGroup = null;
+        Long questionGroupId = req.getQuestionGroupId();
+        if (questionGroupId != null) {
+            resolvedGroup = questionGroupRepository.findById(questionGroupId)
                     .orElseThrow(() -> AppException.notFound("QuestionGroup", req.getQuestionGroupId()));
-            if (!req.getSubjectId().equals(group.getSubjectId())) {
+            if (!req.getSubjectId().equals(resolvedGroup.getSubjectId())) {
                 throw AppException.badRequest("Question group subject must match question subject");
             }
-            updateGroupAudioFields(group, req.resolveAudioUrl(), req.resolveAudioDurationSec(), req.resolveMaxPlays());
         }
         validateOptionsForType(req.getQuestionType(),
-                req.getOptions().stream().map(o -> o.getIsCorrect()).toList(),
+                req.getOptions().stream().map(CreateQuestionRequest.OptionInput::getIsCorrect).toList(),
                 req.getOptions().size());
+
+        String resolvedAudioUrl = req.resolveAudioUrl();
+        if (resolvedGroup != null) {
+            resolvedGroup = updateGroupAudioFields(resolvedGroup, resolvedAudioUrl,
+                    req.resolveAudioDurationSec(), req.resolveMaxPlays());
+        } else if (resolvedAudioUrl != null && !resolvedAudioUrl.isBlank()) {
+            resolvedGroup = createAudioQuestionGroup(req.getSubjectId(), resolvedAudioUrl,
+                    req.resolveAudioDurationSec(), req.resolveMaxPlays());
+            questionGroupId = resolvedGroup != null ? resolvedGroup.getId() : null;
+        }
 
         Question q = Question.builder()
                 .questionCode(generateQuestionCode(req.getTopicId()))
                 .subjectId(req.getSubjectId())
                 .topicId(req.getTopicId())
                 .subtopicId(req.getSubtopicId())
-                .questionGroupId(req.getQuestionGroupId())
+                .questionGroupId(questionGroupId)
                 .difficulty(req.getDifficulty())
                 .questionType(req.getQuestionType())
                 .questionText(req.getQuestionText())
@@ -106,7 +118,7 @@ public class QuestionServiceImpl implements QuestionService {
                     .build());
         }
 
-        return toQuestionResponse(saved);
+        return toQuestionResponse(saved, resolvedGroup);
     }
 
     // ---------- GET ----------
@@ -149,17 +161,16 @@ public class QuestionServiceImpl implements QuestionService {
         }
 
         Long effectiveGroupId = req.getQuestionGroupId() != null ? req.getQuestionGroupId() : q.getQuestionGroupId();
+        QuestionGroup resolvedGroup = null;
         if (effectiveGroupId != null) {
-            QuestionGroup group = questionGroupRepository.findById(effectiveGroupId)
+            resolvedGroup = questionGroupRepository.findById(effectiveGroupId)
                     .orElseThrow(() -> AppException.notFound("QuestionGroup", effectiveGroupId));
             if (req.getQuestionGroupId() != null) {
                 Long effectiveSubjectId = req.getSubjectId() != null ? req.getSubjectId() : q.getSubjectId();
-                if (!effectiveSubjectId.equals(group.getSubjectId())) {
+                if (!effectiveSubjectId.equals(resolvedGroup.getSubjectId())) {
                     throw AppException.badRequest("Question group subject must match question subject");
                 }
-                q.setQuestionGroupId(req.getQuestionGroupId());
             }
-            updateGroupAudioFields(group, req.resolveAudioUrl(), req.resolveAudioDurationSec(), req.resolveMaxPlays());
         }
         if (req.getDifficulty() != null) q.setDifficulty(req.getDifficulty());
         boolean questionTypeChanged = req.getQuestionType() != null;
@@ -175,7 +186,7 @@ public class QuestionServiceImpl implements QuestionService {
         if (req.getOptions() != null) {
             QuestionType effectiveType = q.getQuestionType();
             validateOptionsForType(effectiveType,
-                    req.getOptions().stream().map(o -> o.getIsCorrect()).toList(),
+                    req.getOptions().stream().map(UpdateQuestionRequest.OptionInput::getIsCorrect).toList(),
                     req.getOptions().size());
 
             questionOptionRepository.deleteByQuestionId(questionId);
@@ -198,9 +209,24 @@ public class QuestionServiceImpl implements QuestionService {
                     existingOptions.size());
         }
 
+        String resolvedAudioUrl = req.resolveAudioUrl();
+        if (resolvedGroup != null) {
+            if (req.getQuestionGroupId() != null) {
+                q.setQuestionGroupId(req.getQuestionGroupId());
+            }
+            resolvedGroup = updateGroupAudioFields(resolvedGroup, resolvedAudioUrl,
+                    req.resolveAudioDurationSec(), req.resolveMaxPlays());
+        } else if (resolvedAudioUrl != null && !resolvedAudioUrl.isBlank()) {
+            resolvedGroup = createAudioQuestionGroup(q.getSubjectId(), resolvedAudioUrl,
+                    req.resolveAudioDurationSec(), req.resolveMaxPlays());
+            if (resolvedGroup != null) {
+                q.setQuestionGroupId(resolvedGroup.getId());
+            }
+        }
+
         q.setVersion(q.getVersion() + 1);
         Question saved = questionRepository.save(q);
-        return toQuestionResponse(saved);
+        return toQuestionResponse(saved, resolvedGroup);
     }
 
     // ---------- LIST BY CREATOR ----------
@@ -340,24 +366,59 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     private void validateOptionsForType(QuestionType type, List<Boolean> isCorrectFlags, int totalCount) {
-        long correctCount = isCorrectFlags.stream()
-                .filter(b -> Boolean.TRUE.equals(b))
+        if (type == null) {
+            return;
+        }
+        long correctCount = isCorrectFlags == null ? 0 : isCorrectFlags.stream()
+                .filter(Boolean.TRUE::equals)
                 .count();
 
-        if (type == QuestionType.SINGLE_CHOICE || type == QuestionType.TRUE_FALSE) {
-            if (correctCount != 1) {
-                throw AppException.validationFailed(
-                        type + " requires exactly 1 correct option, got " + correctCount);
+        switch (type) {
+            case SINGLE_CHOICE -> {
+                if (totalCount < 2) {
+                    throw AppException.validationFailed(
+                            "SINGLE_CHOICE requires at least 2 options, got " + totalCount);
+                }
+                if (correctCount != 1) {
+                    throw AppException.validationFailed(
+                            "SINGLE_CHOICE requires exactly 1 correct option, got " + correctCount);
+                }
             }
-        } else if (type == QuestionType.MULTIPLE_CHOICE) {
-            if (correctCount < 1) {
-                throw AppException.validationFailed(
-                        "MULTIPLE_CHOICE requires at least 1 correct option");
+            case MULTIPLE_CHOICE -> {
+                if (totalCount < 2) {
+                    throw AppException.validationFailed(
+                            "MULTIPLE_CHOICE requires at least 2 options, got " + totalCount);
+                }
+                if (correctCount < 1) {
+                    throw AppException.validationFailed(
+                            "MULTIPLE_CHOICE requires at least 1 correct option");
+                }
             }
-        }
-        if (type == QuestionType.TRUE_FALSE && totalCount != 2) {
-            throw AppException.validationFailed(
-                    "TRUE_FALSE requires exactly 2 options, got " + totalCount);
+            case TRUE_FALSE -> {
+                if (totalCount < 2 || totalCount > 4) {
+                    throw AppException.validationFailed(
+                            "TRUE_FALSE requires between 2 and 4 options, got " + totalCount);
+                }
+            }
+            case MATCHING -> {
+                if (totalCount < 2 || totalCount > 6) {
+                    throw AppException.validationFailed(
+                            "MATCHING requires between 2 and 6 options, got " + totalCount);
+                }
+            }
+            case SHORT_ANSWER -> {
+                if (totalCount < 1 || totalCount > 10) {
+                    throw AppException.validationFailed(
+                            "SHORT_ANSWER requires between 1 and 10 options, got " + totalCount);
+                }
+                if (correctCount < 1) {
+                    throw AppException.validationFailed(
+                            "SHORT_ANSWER requires at least 1 correct option");
+                }
+            }
+            case FILL_IN_BLANK -> {
+                // No specific options constraint beyond request size
+            }
         }
     }
 
@@ -395,6 +456,10 @@ public class QuestionServiceImpl implements QuestionService {
         return "Q-T" + topicId + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
+    private String generateQuestionGroupCode() {
+        return "QG-AUDIO-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+
     // ---------- MAPPERS ----------
     private QuestionGroupResponse toQuestionGroupResponse(QuestionGroup g) {
         if (g == null) return null;
@@ -413,12 +478,18 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     private QuestionResponse toQuestionResponse(Question q) {
+        return toQuestionResponse(q, null);
+    }
+
+    private QuestionResponse toQuestionResponse(Question q, QuestionGroup preloadedGroup) {
         List<QuestionOption> options =
                 questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(q.getId());
         List<QuestionReview> reviews =
                 questionReviewRepository.findByQuestionIdOrderByCreatedAtDesc(q.getId());
         QuestionGroupResponse group = null;
-        if (q.getQuestionGroupId() != null) {
+        if (preloadedGroup != null) {
+            group = toQuestionGroupResponse(preloadedGroup);
+        } else if (q.getQuestionGroupId() != null) {
             group = questionGroupRepository.findById(q.getQuestionGroupId())
                     .map(this::toQuestionGroupResponse)
                     .orElse(null);
@@ -519,22 +590,44 @@ public class QuestionServiceImpl implements QuestionService {
                 .build();
     }
 
-    private void updateGroupAudioFields(QuestionGroup group, String audioUrl, Integer audioDurationSec, Integer maxPlays) {
+    private QuestionGroup createAudioQuestionGroup(Long subjectId, String audioUrl, Integer audioDurationSec, Integer maxPlays) {
+        QuestionGroup group = QuestionGroup.builder()
+                .code(generateQuestionGroupCode())
+                .subjectId(subjectId)
+                .audioUrl(audioUrl)
+                .audioDurationSec(audioDurationSec)
+                .maxPlays(maxPlays != null ? maxPlays : 2)
+                .build();
+        QuestionGroup saved = questionGroupRepository.save(group);
+        return saved != null ? saved : group;
+    }
+
+    private QuestionGroup updateGroupAudioFields(QuestionGroup group, String audioUrl, Integer audioDurationSec, Integer maxPlays) {
         boolean updated = false;
         if (audioUrl != null) {
-            group.setAudioUrl(audioUrl);
-            updated = true;
+            String normalizedAudioUrl = audioUrl.isBlank() ? null : audioUrl;
+            if (!Objects.equals(group.getAudioUrl(), normalizedAudioUrl)) {
+                group.setAudioUrl(normalizedAudioUrl);
+                updated = true;
+            }
         }
-        if (audioDurationSec != null) {
+        if (audioDurationSec != null && !Objects.equals(group.getAudioDurationSec(), audioDurationSec)) {
             group.setAudioDurationSec(audioDurationSec);
             updated = true;
         }
         if (maxPlays != null) {
-            group.setMaxPlays(maxPlays);
+            if (!Objects.equals(group.getMaxPlays(), maxPlays)) {
+                group.setMaxPlays(maxPlays);
+                updated = true;
+            }
+        } else if (group.getMaxPlays() == null && audioUrl != null && !audioUrl.isBlank()) {
+            group.setMaxPlays(2);
             updated = true;
         }
         if (updated) {
-            questionGroupRepository.save(group);
+            QuestionGroup saved = questionGroupRepository.save(group);
+            return saved != null ? saved : group;
         }
+        return group;
     }
 }
