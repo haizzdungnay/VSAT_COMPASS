@@ -19,7 +19,7 @@ export const CreateExamWizard: React.FC<WizardProps> = ({ onBackToList, initialB
     if (initialExam) {
       return {
         ...initialExam,
-        scoringProfileCode: initialExam.scoringProfileCode || 'VSAT_2026_RAW_150',
+        scoringProfileCode: initialExam.scoringProfileCode || 'VSAT_2026_DRAFT_SPEC_150',
         deliveryMode: initialExam.deliveryMode || 'PRACTICE'
       };
     }
@@ -35,7 +35,7 @@ export const CreateExamWizard: React.FC<WizardProps> = ({ onBackToList, initialB
         difficulty: 'MEDIUM',
         pricingType: 'FREE',
         status: 'DRAFT',
-        scoringProfileCode: 'VSAT_2026_RAW_150',
+        scoringProfileCode: 'VSAT_2026_DRAFT_SPEC_150',
         deliveryMode: 'PRACTICE'
       };
     }
@@ -50,7 +50,7 @@ export const CreateExamWizard: React.FC<WizardProps> = ({ onBackToList, initialB
       difficulty: 'HARD',
       pricingType: 'FREE',
       status: 'DRAFT',
-      scoringProfileCode: 'VSAT_2026_RAW_150',
+      scoringProfileCode: 'VSAT_2026_DRAFT_SPEC_150',
       deliveryMode: 'PRACTICE'
     };
   });
@@ -201,7 +201,7 @@ export const CreateExamWizard: React.FC<WizardProps> = ({ onBackToList, initialB
       <div>
         {currentStep === 1 && <Step1General exam={exam} onChange={handleUpdate} />}
         {currentStep === 2 && <Step2Composition exam={exam} onChange={handleUpdate} initialBlueprintId={initialBlueprint?.id} />}
-        {currentStep === 3 && <Step3Preview exam={exam} />}
+        {currentStep === 3 && <Step3Preview exam={exam} onPublish={() => setCurrentStep(4)} />}
         {currentStep === 4 && <Step4VariantsPublish exam={exam} onPublishSuccess={onBackToList} />}
       </div>
 

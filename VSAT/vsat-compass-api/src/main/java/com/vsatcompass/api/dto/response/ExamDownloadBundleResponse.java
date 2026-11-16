@@ -1,5 +1,6 @@
 package com.vsatcompass.api.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.vsatcompass.api.entity.enums.Difficulty;
 import com.vsatcompass.api.entity.enums.ExamPricingType;
 import com.vsatcompass.api.entity.enums.QuestionType;
@@ -10,6 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -18,6 +20,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ExamDownloadBundleResponse implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -42,6 +45,7 @@ public class ExamDownloadBundleResponse implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class QuestionBundleItem implements Serializable {
         private static final long serialVersionUID = 1L;
 
@@ -60,9 +64,11 @@ public class ExamDownloadBundleResponse implements Serializable {
         private String explanation;
         private String explanationHtml;
         private Integer questionOrder;
+        private BigDecimal maxRawScore;
         private String correctAnswer;
         private List<Long> correctOptionIds;
         private List<OptionBundleItem> options;
+        private List<MatchingChoiceDto> matchingChoices;
     }
 
     @Getter
@@ -70,6 +76,7 @@ public class ExamDownloadBundleResponse implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class OptionBundleItem implements Serializable {
         private static final long serialVersionUID = 1L;
 
@@ -80,5 +87,18 @@ public class ExamDownloadBundleResponse implements Serializable {
         private String imageUrl;
         private Boolean isCorrect;
         private Integer displayOrder;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class MatchingChoiceDto implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private String key;
+        private String text;
     }
 }

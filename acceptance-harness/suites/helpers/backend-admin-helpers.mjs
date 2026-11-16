@@ -60,7 +60,7 @@ export function ensureDraftExam(queryDb, code) {
       difficulty, pricing_type, price, status, created_by, version
     )
     SELECT
-      '${code}', 'Fixture Exam ${code}', s.id, sp.id, 0, 60,
+      '${code}', 'Fixture Exam ${code}', s.id, sp.id, 0, 90,
       'MEDIUM', 'FREE', 0, 'DRAFT', u.id, 1
     FROM subjects s, scoring_profiles sp, users u
     WHERE s.code = 'MATH' AND sp.code = 'VSAT_2026_DRAFT_SPEC_150' AND u.email = 'superadmin@vsat.com'
@@ -78,7 +78,7 @@ export function ensureExamWithStatus(queryDb, code, status) {
       difficulty, pricing_type, price, status, created_by, version
     )
     SELECT
-      '${code}', 'Fixture Exam ${code}', s.id, sp.id, 1, 60,
+      '${code}', 'Fixture Exam ${code}', s.id, sp.id, 1, 90,
       'MEDIUM', 'FREE', 0, '${status}', u.id, 1
     FROM subjects s, scoring_profiles sp, users u
     WHERE s.code = 'MATH' AND sp.code = 'VSAT_2026_DRAFT_SPEC_150' AND u.email = 'superadmin@vsat.com'

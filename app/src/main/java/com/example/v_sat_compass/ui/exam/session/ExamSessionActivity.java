@@ -611,8 +611,8 @@ public class ExamSessionActivity extends AppCompatActivity {
             Long optId = opt.getId();
             btnDung.setOnClickListener(v -> {
                 currentTf.put(propKey, true);
-                selectedAnswers.put(questionId, optId != null ? optId : (questionId * 10 + 1));
-                submitAnswer(questionId, selectedAnswers.get(questionId), new HashMap<>(currentTf));
+                selectedAnswers.put(questionId, optId);
+                submitAnswer(questionId, optId, new HashMap<>(currentTf));
                 displayQuestion(currentQuestion);
             });
             row.addView(btnDung);
@@ -631,8 +631,8 @@ public class ExamSessionActivity extends AppCompatActivity {
             btnSai.setPadding(dpToPx(12), dpToPx(6), dpToPx(12), dpToPx(6));
             btnSai.setOnClickListener(v -> {
                 currentTf.put(propKey, false);
-                selectedAnswers.put(questionId, optId != null ? optId : (questionId * 10 + 1));
-                submitAnswer(questionId, selectedAnswers.get(questionId), new HashMap<>(currentTf));
+                selectedAnswers.put(questionId, optId);
+                submitAnswer(questionId, optId, new HashMap<>(currentTf));
                 displayQuestion(currentQuestion);
             });
             row.addView(btnSai);
@@ -729,9 +729,16 @@ public class ExamSessionActivity extends AppCompatActivity {
         }
     }
 
-    private void renderMatchingWidget(Long questionId, List<Question.Option> opts) {
+    private void renderMatchingWidget(
+            Long questionId,
+            List<Question.Option> opts,
+            List<Question.MatchingChoice> matchingChoices
+    ) {
         binding.llOptions.addView(createFormatBadge(
                 "PHẦN 3: GHÉP HỢP (NỐI CẶP)", 0xFFE65100, 0xFFFFF3E0));
+
+        List<String> choiceKeys = resolveMatchingChoiceKeys(matchingChoices);
+        renderMatchingChoicesLegend(matchingChoices);
 
         Map<String, String> currentMatch = matchingAnswers.computeIfAbsent(questionId, k -> new HashMap<>());
         if (opts == null || opts.isEmpty()) return;
@@ -777,9 +784,8 @@ public class ExamSessionActivity extends AppCompatActivity {
             tvPrompt.setTextColor(0xFF757575);
             chipsRow.addView(tvPrompt);
 
-            String[] choices = {"A", "B", "C", "D"};
             Long optId = opt.getId();
-            for (String ch : choices) {
+            for (String ch : choiceKeys) {
                 boolean isChosen = ch.equalsIgnoreCase(selectedChoice);
                 TextView btnChip = new TextView(this);
                 btnChip.setText(ch);
@@ -800,8 +806,8 @@ public class ExamSessionActivity extends AppCompatActivity {
 
                 btnChip.setOnClickListener(v -> {
                     currentMatch.put(itemKey, ch);
-                    selectedAnswers.put(questionId, optId != null ? optId : (questionId * 10 + 1));
-                    submitAnswer(questionId, selectedAnswers.get(questionId), new HashMap<>(currentMatch));
+                    selectedAnswers.put(questionId, optId);
+                    submitAnswer(questionId, optId, new HashMap<>(currentMatch));
                     displayQuestion(currentQuestion);
                 });
                 chipsRow.addView(btnChip);
@@ -813,9 +819,16 @@ public class ExamSessionActivity extends AppCompatActivity {
         }
     }
 
-    private void renderBackendMatchingWidget(Long questionId, List<QuestionOptionContentResponse> opts) {
+    private void renderBackendMatchingWidget(
+            Long questionId,
+            List<QuestionOptionContentResponse> opts,
+            List<SessionQuestionContentResponse.MatchingChoiceDto> matchingChoices
+    ) {
         binding.llOptions.addView(createFormatBadge(
                 "PHẦN 3: GHÉP HỢP (NỐI CẶP)", 0xFFE65100, 0xFFFFF3E0));
+
+        List<String> choiceKeys = resolveBackendMatchingChoiceKeys(matchingChoices);
+        renderBackendMatchingChoicesLegend(matchingChoices);
 
         Map<String, String> currentMatch = matchingAnswers.computeIfAbsent(questionId, k -> new HashMap<>());
         if (opts == null || opts.isEmpty()) return;
@@ -861,8 +874,7 @@ public class ExamSessionActivity extends AppCompatActivity {
             tvPrompt.setTextColor(0xFF757575);
             chipsRow.addView(tvPrompt);
 
-            String[] choices = {"A", "B", "C", "D"};
-            for (String ch : choices) {
+            for (String ch : choiceKeys) {
                 boolean isChosen = ch.equalsIgnoreCase(selectedChoice);
                 TextView btnChip = new TextView(this);
                 btnChip.setText(ch);
@@ -894,6 +906,94 @@ public class ExamSessionActivity extends AppCompatActivity {
             card.addView(container);
             binding.llOptions.addView(card);
         }
+    }
+
+    private List<String> resolveMatchingChoiceKeys(List<Question.MatchingChoice> matchingChoices) {
+        List<String> keys = new ArrayList<>();
+        if (matchingChoices != null) {
+            for (Question.MatchingChoice choice : matchingChoices) {
+                if (choice != null && choice.getKey() != null && !choice.getKey().trim().isEmpty()) {
+                    keys.add(choice.getKey().trim());
+                }
+            }
+        }
+        if (keys.isEmpty()) {
+            keys.add("A");
+            keys.add("B");
+            keys.add("C");
+            keys.add("D");
+        }
+        return keys;
+    }
+
+    private List<String> resolveBackendMatchingChoiceKeys(
+            List<SessionQuestionContentResponse.MatchingChoiceDto> matchingChoices
+    ) {
+        List<String> keys = new ArrayList<>();
+        if (matchingChoices != null) {
+            for (SessionQuestionContentResponse.MatchingChoiceDto choice : matchingChoices) {
+                if (choice != null && choice.getKey() != null && !choice.getKey().trim().isEmpty()) {
+                    keys.add(choice.getKey().trim());
+                }
+            }
+        }
+        if (keys.isEmpty()) {
+            keys.add("A");
+            keys.add("B");
+            keys.add("C");
+            keys.add("D");
+        }
+        return keys;
+    }
+
+    private void renderMatchingChoicesLegend(List<Question.MatchingChoice> matchingChoices) {
+        if (matchingChoices == null || matchingChoices.isEmpty()) return;
+        List<String> lines = new ArrayList<>();
+        for (Question.MatchingChoice choice : matchingChoices) {
+            if (choice != null && choice.getKey() != null && choice.getText() != null
+                    && !choice.getText().trim().isEmpty()
+                    && !choice.getText().trim().equalsIgnoreCase(choice.getKey().trim())) {
+                lines.add(choice.getKey().trim() + ". " + choice.getText().trim());
+            }
+        }
+        addMatchingLegendCard(lines);
+    }
+
+    private void renderBackendMatchingChoicesLegend(
+            List<SessionQuestionContentResponse.MatchingChoiceDto> matchingChoices
+    ) {
+        if (matchingChoices == null || matchingChoices.isEmpty()) return;
+        List<String> lines = new ArrayList<>();
+        for (SessionQuestionContentResponse.MatchingChoiceDto choice : matchingChoices) {
+            if (choice != null && choice.getKey() != null && choice.getText() != null
+                    && !choice.getText().trim().isEmpty()
+                    && !choice.getText().trim().equalsIgnoreCase(choice.getKey().trim())) {
+                lines.add(choice.getKey().trim() + ". " + choice.getText().trim());
+            }
+        }
+        addMatchingLegendCard(lines);
+    }
+
+    private void addMatchingLegendCard(List<String> lines) {
+        if (lines.isEmpty()) return;
+        MaterialCardView legendCard = new MaterialCardView(this);
+        legendCard.setRadius(dpToPx(8));
+        legendCard.setCardElevation(0);
+        legendCard.setStrokeWidth(dpToPx(1));
+        legendCard.setStrokeColor(0xFFFFE0B2);
+        legendCard.setCardBackgroundColor(0xFFFFF8E1);
+        LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        cardLp.bottomMargin = dpToPx(10);
+        legendCard.setLayoutParams(cardLp);
+
+        TextView tvLegend = new TextView(this);
+        tvLegend.setText(android.text.TextUtils.join("\n", lines));
+        tvLegend.setTextSize(13);
+        tvLegend.setTextColor(0xFF424242);
+        tvLegend.setPadding(dpToPx(12), dpToPx(10), dpToPx(12), dpToPx(10));
+        legendCard.addView(tvLegend);
+        binding.llOptions.addView(legendCard);
     }
 
     private void renderShortAnswerWidget(Long questionId) {
@@ -943,6 +1043,20 @@ public class ExamSessionActivity extends AppCompatActivity {
         etLp.topMargin = dpToPx(8);
         etLp.bottomMargin = dpToPx(12);
         etAnswer.setLayoutParams(etLp);
+        etAnswer.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override public void afterTextChanged(android.text.Editable s) {
+                String val = s != null ? s.toString().trim() : "";
+                if (!val.isEmpty()) {
+                    shortAnswers.put(questionId, val);
+                    selectedAnswers.put(questionId, null);
+                } else {
+                    shortAnswers.remove(questionId);
+                    selectedAnswers.remove(questionId);
+                }
+            }
+        });
         container.addView(etAnswer);
 
         com.google.android.material.button.MaterialButton btnSave =
@@ -955,10 +1069,10 @@ public class ExamSessionActivity extends AppCompatActivity {
             String textVal = etAnswer.getText() != null ? etAnswer.getText().toString().trim() : "";
             if (!textVal.isEmpty()) {
                 shortAnswers.put(questionId, textVal);
-                selectedAnswers.put(questionId, questionId * 10 + 1);
+                selectedAnswers.put(questionId, null);
                 Map<String, Object> saPayload = new HashMap<>();
                 saPayload.put("value", textVal);
-                submitAnswer(questionId, selectedAnswers.get(questionId), saPayload);
+                submitAnswer(questionId, null, saPayload);
                 Toast.makeText(this, "Đã lưu đáp án: " + textVal, Toast.LENGTH_SHORT).show();
             } else {
                 shortAnswers.remove(questionId);
@@ -1219,18 +1333,20 @@ public class ExamSessionActivity extends AppCompatActivity {
             setQuestionTextWithMath("Câu " + (currentIndex + 1) + ": " + content);
         binding.llOptions.removeAllViews();
 
-        if (question.getOptions() == null || question.getOptions().isEmpty()) return;
-
         List<Question.Option> opts = question.getOptions();
         Long alreadySelected = selectedAnswers.get(question.getId());
         String qType = resolveQuestionType(question, null);
 
+        if ("SHORT_ANSWER".equalsIgnoreCase(qType) || "FILL_IN_BLANK".equalsIgnoreCase(qType)) {
+            renderShortAnswerWidget(question.getId());
+            return;
+        }
+        if (opts == null || opts.isEmpty()) return;
+
         if ("TRUE_FALSE".equalsIgnoreCase(qType)) {
             renderTrueFalseWidget(question.getId(), opts);
         } else if ("MATCHING".equalsIgnoreCase(qType)) {
-            renderMatchingWidget(question.getId(), opts);
-        } else if ("SHORT_ANSWER".equalsIgnoreCase(qType) || "FILL_IN_BLANK".equalsIgnoreCase(qType)) {
-            renderShortAnswerWidget(question.getId());
+            renderMatchingWidget(question.getId(), opts, question.getMatchingChoices());
         } else {
             renderSingleChoiceWidget(question.getId(), opts, alreadySelected);
         }
@@ -1328,7 +1444,7 @@ public class ExamSessionActivity extends AppCompatActivity {
         if ("TRUE_FALSE".equalsIgnoreCase(qType)) {
             renderBackendTrueFalseWidget(questionId, opts);
         } else if ("MATCHING".equalsIgnoreCase(qType)) {
-            renderBackendMatchingWidget(questionId, opts);
+            renderBackendMatchingWidget(questionId, opts, question.getMatchingChoices());
         } else if ("SHORT_ANSWER".equalsIgnoreCase(qType) || "FILL_IN_BLANK".equalsIgnoreCase(qType)) {
             renderShortAnswerWidget(questionId);
         } else {
@@ -1489,23 +1605,21 @@ public class ExamSessionActivity extends AppCompatActivity {
         }
 
         if (clientSideProcessing) {
-            submitExamLocally();
+            submitClientSessionToServerOrQueue();
+            return;
+        }
+
+        if (!hasRemoteSession || sessionId == null) {
+            enqueueOfflineAndOpenPendingResult();
             return;
         }
 
         examApi.submitSession(sessionId).enqueue(new Callback<ApiResponse<ExamSession>>() {
             @Override
             public void onResponse(Call<ApiResponse<ExamSession>> call, Response<ApiResponse<ExamSession>> response) {
-                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
-                    ExamSession result = response.body().getData();
-                    Intent intent = new Intent(ExamSessionActivity.this, ExamResultActivity.class);
-                    intent.putExtra("session_id", result.getId());
-                    intent.putExtra("score", result.getScorePercentage());
-                    intent.putExtra("correct", result.getCorrectAnswers());
-                    intent.putExtra("total", result.getTotalQuestions());
-                    intent.putExtra("time_spent", result.getTimeSpentSeconds());
-                    startActivity(intent);
-                    finish();
+                if (response.isSuccessful() && response.body() != null
+                        && response.body().isSuccess() && response.body().getData() != null) {
+                    openResultWithServerScore(response.body().getData(), false);
                 } else {
                     Toast.makeText(ExamSessionActivity.this, "Lỗi nộp bài. Vui lòng thử lại.", Toast.LENGTH_SHORT).show();
                 }
@@ -1513,7 +1627,7 @@ public class ExamSessionActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<ApiResponse<ExamSession>> call, Throwable t) {
-                submitExamLocally();
+                enqueueOfflineAndOpenPendingResult();
             }
         });
     }
@@ -1529,43 +1643,8 @@ public class ExamSessionActivity extends AppCompatActivity {
             public void onResponse(Call<ApiResponse<ExamSession>> call, Response<ApiResponse<ExamSession>> response) {
                 if (response.isSuccessful() && response.body() != null
                         && response.body().isSuccess() && response.body().getData() != null) {
-                    ExamSession result = response.body().getData();
                     persistBackendReviewSnapshot();
-                    String answersJson = new Gson().toJson(selectedAnswers);
-                    int resultTotal = result.getTotalQuestions() > 0 ? result.getTotalQuestions() : totalQuestions;
-                    int resultTime = result.getTimeSpentSeconds() > 0
-                            ? result.getTimeSpentSeconds()
-                            : getElapsedSeconds();
-                    final boolean[] historySaveFailed = {false};
-                    ExamHistoryEntry historyEntry = new ExamHistoryEntry(
-                            examId,
-                            examTitle != null ? examTitle : result.getExamTitle(),
-                            examSubject,
-                            resultTotal,
-                            result.getCorrectAnswers(),
-                            result.getScorePercentage(),
-                            resultTime,
-                            answersJson);
-                    ExamHistoryRepository.getInstance().saveEntry(ExamSessionActivity.this, historyEntry,
-                            () -> historySaveFailed[0] = true);
-                    GamificationRepository.getInstance().recordExamCompleted(
-                            ExamSessionActivity.this,
-                            result.getCorrectAnswers(),
-                            resultTotal);
-
-                    Intent intent = new Intent(ExamSessionActivity.this, ExamResultActivity.class);
-                    intent.putExtra("session_id", result.getId());
-                    intent.putExtra("score", result.getScorePercentage());
-                    intent.putExtra("correct", result.getCorrectAnswers());
-                    intent.putExtra("total", resultTotal);
-                    intent.putExtra("time_spent", resultTime);
-                    intent.putExtra("exam_id", examId);
-                    intent.putExtra("exam_title", examTitle);
-                    intent.putExtra("exam_subject", examSubject != null ? examSubject : "");
-                    intent.putExtra("selected_answers_json", answersJson);
-                    intent.putExtra("history_save_failed", historySaveFailed[0]);
-                    startActivity(intent);
-                    finish();
+                    openResultWithServerScore(response.body().getData(), true);
                 } else {
                     Toast.makeText(ExamSessionActivity.this,
                             "Loi nop bai backend. Vui long thu lai.", Toast.LENGTH_SHORT).show();
@@ -1599,104 +1678,127 @@ public class ExamSessionActivity extends AppCompatActivity {
                 .apply();
     }
 
-    private void submitExamLocally() {
-        int correct = 0;
-        for (Map.Entry<Long, Long> entry : selectedAnswers.entrySet()) {
-            Long qId = entry.getKey();
-            Long selectedOptionId = entry.getValue();
-            Question q = questionCache.get(qId);
-            if (q != null) {
-                String qType = resolveQuestionType(q, null);
-                if ("SHORT_ANSWER".equalsIgnoreCase(qType) || "FILL_IN_BLANK".equalsIgnoreCase(qType)) {
-                    String entered = shortAnswers.get(qId);
-                    String expected = null;
-                    if (q.getOptions() != null && !q.getOptions().isEmpty()) {
-                        expected = q.getOptions().get(0).getOptionText();
-                    }
-                    if (entered != null && expected != null && entered.trim().equalsIgnoreCase(expected.trim())) {
-                        correct++;
-                    }
-                } else if (q.getOptions() != null) {
-                    for (Question.Option opt : q.getOptions()) {
-                        if (opt.getId() != null && opt.getId().equals(selectedOptionId) && opt.isCorrect()) {
-                            correct++;
-                            break;
-                        }
+    private void submitClientSessionToServerOrQueue() {
+        int total = totalQuestions <= 0 ? Math.max(questionIds.size(), 1) : totalQuestions;
+        int timeSpentSeconds = getElapsedSeconds();
+
+        if (!offlineDownloadedSession && hasRemoteSession && sessionId != null) {
+            ClientSubmitRequest resultBody = new ClientSubmitRequest(
+                    null, null, total, timeSpentSeconds, buildClientSubmitAnswers());
+            examApi.submitClientResult(sessionId, resultBody).enqueue(new Callback<ApiResponse<ExamSession>>() {
+                @Override
+                public void onResponse(Call<ApiResponse<ExamSession>> call, Response<ApiResponse<ExamSession>> response) {
+                    if (response.isSuccessful() && response.body() != null
+                            && response.body().isSuccess() && response.body().getData() != null) {
+                        openResultWithServerScore(response.body().getData(), false);
+                    } else {
+                        enqueueOfflineAndOpenPendingResult();
                     }
                 }
-            } else {
-                // fallback to local data source if question not cached
-                Long expectedOption = LocalExamDataSource.getInstance().getCorrectOptionId(this, qId);
-                if (expectedOption != null && expectedOption.equals(selectedOptionId)) correct++;
-            }
-        }
 
-        int total = totalQuestions <= 0 ? Math.max(questionIds.size(), 1) : totalQuestions;
-        double score = (correct * 100.0) / total;
-        int timeSpentSeconds = 0;
-        if (sessionStartMillis > 0) {
-            timeSpentSeconds = (int) ((System.currentTimeMillis() - sessionStartMillis) / 1000);
-            if (timeSpentSeconds < 0) timeSpentSeconds = 0;
-        }
-
-        // POST final result to backend (fire-and-forget; result is already shown to user)
-        if (hasRemoteSession && sessionId != null) {
-            List<ClientSubmitRequest.AnswerItem> answerItems = new ArrayList<>();
-            for (int i = 0; i < questionIds.size(); i++) {
-                Long qId = questionIds.get(i);
-                Long selected = selectedAnswers.get(qId);
-                answerItems.add(new ClientSubmitRequest.AnswerItem(
-                        qId,
-                        selected,
-                        i + 1,
-                        bookmarkedQuestions.contains(qId)
-                ));
-            }
-            ClientSubmitRequest resultBody = new ClientSubmitRequest(
-                    score, correct, total, timeSpentSeconds, answerItems);
-            examApi.submitClientResult(sessionId, resultBody).enqueue(new Callback<ApiResponse<ExamSession>>() {
-                @Override public void onResponse(Call<ApiResponse<ExamSession>> call, Response<ApiResponse<ExamSession>> response) {}
-                @Override public void onFailure(Call<ApiResponse<ExamSession>> call, Throwable t) {}
+                @Override
+                public void onFailure(Call<ApiResponse<ExamSession>> call, Throwable t) {
+                    enqueueOfflineAndOpenPendingResult();
+                }
             });
+            return;
         }
 
-        // Serialize selectedAnswers để truyền sang ExamResultActivity → ExamReviewActivity
+        enqueueOfflineAndOpenPendingResult();
+    }
+
+    private void openResultWithServerScore(ExamSession result, boolean backendMode) {
+        String answersJson = new Gson().toJson(selectedAnswers);
+        int resultTotal = result.getTotalQuestions() > 0 ? result.getTotalQuestions() : totalQuestions;
+        int resultTime = result.getTimeSpentSeconds() > 0 ? result.getTimeSpentSeconds() : getElapsedSeconds();
+        final boolean[] historySaveFailed = {false};
+
+        ExamHistoryEntry historyEntry = new ExamHistoryEntry(
+                examId,
+                examTitle != null ? examTitle : result.getExamTitle(),
+                examSubject,
+                resultTotal,
+                result.getCorrectAnswers(),
+                result.getScorePercentage(),
+                resultTime,
+                answersJson);
+        ExamHistoryRepository.getInstance().saveEntry(this, historyEntry, () -> historySaveFailed[0] = true);
+        GamificationRepository.getInstance().recordExamCompleted(this, result.getCorrectAnswers(), resultTotal);
+
+        Intent intent = new Intent(ExamSessionActivity.this, ExamResultActivity.class);
+        intent.putExtra("session_id", result.getId() != null ? result.getId() : System.currentTimeMillis());
+        intent.putExtra("score", result.getScorePercentage());
+        intent.putExtra("correct", result.getCorrectAnswers());
+        intent.putExtra("total", resultTotal);
+        intent.putExtra("time_spent", resultTime);
+        intent.putExtra("exam_id", examId);
+        intent.putExtra("exam_title", examTitle);
+        intent.putExtra("exam_subject", examSubject != null ? examSubject : "");
+        intent.putExtra("selected_answers_json", answersJson);
+        intent.putExtra("history_save_failed", historySaveFailed[0]);
+        intent.putExtra("score_pending", false);
+        startActivity(intent);
+        finish();
+    }
+
+    private void enqueueOfflineAndOpenPendingResult() {
+        int total = totalQuestions <= 0 ? Math.max(questionIds.size(), 1) : totalQuestions;
+        int timeSpentSeconds = getElapsedSeconds();
         String answersJson = new Gson().toJson(selectedAnswers);
 
-        // Lưu lịch sử bài làm vào local storage (async, callback nếu lỗi lưu)
-        ExamHistoryEntry historyEntry = new ExamHistoryEntry(
-                examId, examTitle, examSubject,
-                total, correct, score, timeSpentSeconds, answersJson);
-        final boolean[] historySaveFailed = {false};
-        ExamHistoryRepository.getInstance().saveEntry(this, historyEntry,
-                () -> historySaveFailed[0] = true);
-        GamificationRepository.getInstance().recordExamCompleted(this, correct, total);
-
-        if (offlineDownloadedSession) {
-            OfflineExamSyncRepository.getInstance().enqueueResult(
-                    this,
-                    OfflineExamSyncRepository.item(
-                            examId,
-                            score,
-                            correct,
-                            total,
-                            timeSpentSeconds,
-                            buildOfflineSyncAnswers()));
-        }
+        OfflineExamSyncRepository.getInstance().enqueueResult(
+                this,
+                OfflineExamSyncRepository.item(
+                        examId,
+                        null,
+                        null,
+                        total,
+                        timeSpentSeconds,
+                        buildOfflineSyncAnswers()));
 
         Intent intent = new Intent(ExamSessionActivity.this, ExamResultActivity.class);
         intent.putExtra("session_id", sessionId != null ? sessionId : System.currentTimeMillis());
-        intent.putExtra("score", score);
-        intent.putExtra("correct", correct);
+        intent.putExtra("score_pending", true);
         intent.putExtra("total", total);
         intent.putExtra("time_spent", timeSpentSeconds);
         intent.putExtra("exam_id", examId);
         intent.putExtra("exam_title", examTitle);
         intent.putExtra("exam_subject", examSubject != null ? examSubject : "");
         intent.putExtra("selected_answers_json", answersJson);
-        intent.putExtra("history_save_failed", historySaveFailed[0]);
         startActivity(intent);
         finish();
+    }
+
+    private Map<String, Object> buildAnswerPayload(Long qId) {
+        Map<String, Boolean> tf = trueFalseAnswers.get(qId);
+        if (tf != null && !tf.isEmpty()) {
+            return new HashMap<>(tf);
+        }
+        Map<String, String> match = matchingAnswers.get(qId);
+        if (match != null && !match.isEmpty()) {
+            return new HashMap<>(match);
+        }
+        String sa = shortAnswers.get(qId);
+        if (sa != null && !sa.trim().isEmpty()) {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("value", sa.trim());
+            return payload;
+        }
+        return null;
+    }
+
+    private List<ClientSubmitRequest.AnswerItem> buildClientSubmitAnswers() {
+        List<ClientSubmitRequest.AnswerItem> answerItems = new ArrayList<>();
+        for (int i = 0; i < questionIds.size(); i++) {
+            Long qId = questionIds.get(i);
+            answerItems.add(new ClientSubmitRequest.AnswerItem(
+                    qId,
+                    selectedAnswers.get(qId),
+                    i + 1,
+                    bookmarkedQuestions.contains(qId),
+                    buildAnswerPayload(qId)));
+        }
+        return answerItems;
     }
 
     private List<OfflineExamSyncRepository.Answer> buildOfflineSyncAnswers() {
@@ -1707,7 +1809,8 @@ public class ExamSessionActivity extends AppCompatActivity {
                     qId,
                     selectedAnswers.get(qId),
                     i + 1,
-                    bookmarkedQuestions.contains(qId)));
+                    bookmarkedQuestions.contains(qId),
+                    buildAnswerPayload(qId)));
         }
         return answers;
     }

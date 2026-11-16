@@ -15,6 +15,7 @@ import com.vsatcompass.api.repository.QuestionGroupRepository;
 import com.vsatcompass.api.repository.QuestionOptionRepository;
 import com.vsatcompass.api.repository.QuestionRepository;
 import com.vsatcompass.api.service.PracticeService;
+import com.vsatcompass.api.util.VsatFormatRules;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -106,7 +107,9 @@ public class PracticeServiceImpl implements PracticeService {
                 .stream()
                 .map(option -> QuestionOptionContentResponse.builder()
                         .id(option.getId())
-                        .content(option.getOptionText())
+                        .optionLabel(option.getOptionLabel())
+                        .content(VsatFormatRules.sanitizeOptionTextForStudent(
+                                option.getOptionText(), question.getQuestionType()))
                         .order(option.getDisplayOrder())
                         .build())
                 .toList();

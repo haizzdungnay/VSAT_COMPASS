@@ -44,6 +44,9 @@ public class ExamQuestion {
     @Column(name = "question_order", nullable = false)
     private Integer questionOrder;
 
+    @Column(name = "max_raw_score", precision = 7, scale = 2)
+    private java.math.BigDecimal maxRawScore;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;

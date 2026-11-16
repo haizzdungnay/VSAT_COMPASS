@@ -31,6 +31,7 @@ import com.vsatcompass.api.repository.QuestionOptionRepository;
 import com.vsatcompass.api.repository.QuestionRepository;
 import com.vsatcompass.api.repository.SessionAnswerRepository;
 import com.vsatcompass.api.service.SessionService;
+import com.vsatcompass.api.util.VsatFormatRules;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -303,141 +304,8 @@ public class SessionServiceImpl implements SessionService {
         List<QuestionOption> options = questionOptionRepository
                 .findByQuestionIdOrderByDisplayOrderAscIdAsc(questionId);
 
-        Boolean isCorrect = false;
-        Integer correctSubitems = null;
-        Integer totalSubitems = null;
-        BigDecimal rawPoints = BigDecimal.ZERO;
-        Long effectiveOptionId = selectedOptionId;
-
-        if (payload != null && !payload.isEmpty()) {
-            QuestionType qType = question != null ? question.getQuestionType() : QuestionType.SINGLE_CHOICE;
-            if (qType == null) qType = QuestionType.SINGLE_CHOICE;
-
-            switch (qType) {
-                case TRUE_FALSE -> {
-                    // ponytail: scoring profile hardcoded to draft spec 150 rules; upgrade to dynamic scoring profile lookup when multi-spec enabled
-                    int matched = 0;
-                    int total = options.isEmpty() ? payload.size() : options.size();
-                    if (total == 0) total = 4;
-
-                    for (int i = 0; i < options.size(); i++) {
-                        QuestionOption opt = options.get(i);
-                        String key = opt.getOptionLabel() != null
-                                ? opt.getOptionLabel().toLowerCase().trim()
-                                : String.valueOf((char) ('a' + i));
-                        Object userVal = payload.get(key);
-                        if (userVal == null) {
-                            userVal = payload.get(key.toUpperCase());
-                        }
-                        if (userVal != null) {
-                            boolean userBool = parseBooleanValue(userVal);
-                            boolean expectedBool = Boolean.TRUE.equals(opt.getIsCorrect());
-                            if (userBool == expectedBool) {
-                                matched++;
-                            }
-                        }
-                    }
-                    correctSubitems = matched;
-                    totalSubitems = total;
-                    isCorrect = (matched == total && total > 0);
-                    double pts = switch (matched) {
-                        case 1 -> 1.0;
-                        case 2 -> 2.0;
-                        case 3 -> 3.0;
-                        case 4 -> 6.0;
-                        default -> matched > 4 ? 6.0 : 0.0;
-                    };
-                    rawPoints = BigDecimal.valueOf(pts);
-                }
-                case MATCHING -> {
-                    if (options == null || options.isEmpty()) {
-                        correctSubitems = 0;
-                        totalSubitems = 0;
-                        isCorrect = false;
-                        rawPoints = BigDecimal.ZERO;
-                    } else {
-                        int matchedCount = 0;
-                        int total = options.size();
-
-                        for (QuestionOption opt : options) {
-                            String key = opt.getOptionLabel() != null ? opt.getOptionLabel().trim() : "";
-                            Object userVal = payload.get(key);
-                            if (userVal != null && opt.getOptionText() != null) {
-                                String userStr = String.valueOf(userVal).trim();
-                                if (isMatchingChoiceEqual(opt.getOptionText(), userStr)) {
-                                    matchedCount++;
-                                }
-                            }
-                        }
-                        if (matchedCount > total) {
-                            matchedCount = total;
-                        }
-                        correctSubitems = matchedCount;
-                        totalSubitems = total;
-                        isCorrect = (matchedCount == total && total > 0);
-                        rawPoints = BigDecimal.valueOf(matchedCount * 1.5);
-                    }
-                }
-                case SHORT_ANSWER -> {
-                    Object val = payload.get("value");
-                    if (val == null) val = payload.get("answer");
-                    if (val == null) val = payload.get("text");
-                    if (val == null && !payload.isEmpty()) {
-                        val = payload.values().iterator().next();
-                    }
-                    String userStr = val != null ? String.valueOf(val).trim() : "";
-
-                    String expected = "";
-                    for (QuestionOption opt : options) {
-                        if (Boolean.TRUE.equals(opt.getIsCorrect()) || options.size() == 1) {
-                            expected = opt.getOptionText() != null ? opt.getOptionText().trim() : "";
-                            break;
-                        }
-                    }
-                    boolean matches = isShortAnswerEqual(userStr, expected);
-                    correctSubitems = matches ? 1 : 0;
-                    totalSubitems = 1;
-                    isCorrect = matches;
-                    rawPoints = matches ? BigDecimal.valueOf(6.0) : BigDecimal.ZERO;
-                }
-                default -> {
-                    if (effectiveOptionId != null) {
-                        final Long optId = effectiveOptionId;
-                        QuestionOption chosen = options.stream()
-                                .filter(o -> Objects.equals(o.getId(), optId))
-                                .findFirst()
-                                .orElseThrow(() -> AppException.badRequest("Option " + optId + " không thuộc câu hỏi " + questionId));
-                        isCorrect = Boolean.TRUE.equals(chosen.getIsCorrect());
-                    } else if (payload.containsKey("selectedOptionId")) {
-                        Long optId = parseLongValue(payload.get("selectedOptionId"));
-                        QuestionOption chosen = options.stream()
-                                .filter(o -> Objects.equals(o.getId(), optId))
-                                .findFirst()
-                                .orElseThrow(() -> AppException.badRequest("Option " + optId + " không thuộc câu hỏi " + questionId));
-                        effectiveOptionId = optId;
-                        isCorrect = Boolean.TRUE.equals(chosen.getIsCorrect());
-                    }
-                    correctSubitems = isCorrect ? 1 : 0;
-                    totalSubitems = 1;
-                    rawPoints = isCorrect ? BigDecimal.valueOf(6.0) : BigDecimal.ZERO;
-                }
-            }
-        } else {
-            // Traditional selectedOptionId flow
-            final Long optId = effectiveOptionId;
-            boolean optionBelongs = options.stream()
-                    .anyMatch(option -> Objects.equals(option.getId(), optId));
-            if (!optionBelongs) {
-                throw AppException.badRequest("Option " + optId + " không thuộc câu hỏi " + questionId);
-            }
-
-            isCorrect = questionOptionRepository.findById(optId)
-                    .map(option -> Boolean.TRUE.equals(option.getIsCorrect()))
-                    .orElse(false);
-            correctSubitems = isCorrect ? 1 : 0;
-            totalSubitems = 1;
-            rawPoints = isCorrect ? BigDecimal.valueOf(6.0) : BigDecimal.ZERO;
-        }
+        AnswerEvaluation evaluation = evaluateAnswer(
+                sessionId, questionId, question, options, selectedOptionId, payload, true);
 
         OffsetDateTime answeredAt = OffsetDateTime.now();
 
@@ -450,12 +318,12 @@ public class SessionServiceImpl implements SessionService {
                         .questionOrder(examQuestion.getQuestionOrder())
                         .build());
         row.setQuestionOrder(examQuestion.getQuestionOrder());
-        row.setSelectedOptionId(effectiveOptionId);
+        row.setSelectedOptionId(evaluation.effectiveOptionId());
         row.setAnswerPayload(payload);
-        row.setIsCorrect(isCorrect);
-        row.setCorrectSubitems(correctSubitems);
-        row.setTotalSubitems(totalSubitems);
-        row.setRawPointsAwarded(rawPoints);
+        row.setIsCorrect(evaluation.isCorrect());
+        row.setCorrectSubitems(evaluation.correctSubitems());
+        row.setTotalSubitems(evaluation.totalSubitems());
+        row.setRawPointsAwarded(evaluation.rawPointsAwarded());
         row.setIsBookmarked(Boolean.TRUE.equals(request.getBookmarked()));
         row.setTimeSpentSeconds(request.getTimeSpentSeconds() != null ? request.getTimeSpentSeconds() : 0);
         row.setAnsweredAt(answeredAt);
@@ -466,8 +334,7 @@ public class SessionServiceImpl implements SessionService {
         session.setAnsweredCount((int) answeredCount);
         examSessionRepository.save(session);
 
-        log.debug("Session {} answer saved: question={} option={} payload={} correct={}",
-                sessionId, questionId, effectiveOptionId, payload, isCorrect);
+        log.debug("Session {} answer saved: question={}", sessionId, questionId);
     }
 
     @Override
@@ -489,9 +356,9 @@ public class SessionServiceImpl implements SessionService {
         // Count stored answers + score
         List<SessionAnswer> rows = sessionAnswerRepository.findBySessionId(sessionId);
 
-        int totalQuestions = examQuestionRepository
-                .findByExamIdOrderByQuestionOrderAscIdAsc(session.getExamId())
-                .size();
+        List<ExamQuestion> examQuestions = examQuestionRepository
+                .findByExamIdOrderByQuestionOrderAscIdAsc(session.getExamId());
+        int totalQuestions = examQuestions.size();
         if (totalQuestions <= 0) {
             throw AppException.badRequest("Đề thi không có câu hỏi nào, không thể nộp bài");
         }
@@ -509,7 +376,9 @@ public class SessionServiceImpl implements SessionService {
                         : (Boolean.TRUE.equals(r.getIsCorrect()) ? BigDecimal.valueOf(6.0) : BigDecimal.ZERO))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal maxRawScore = BigDecimal.valueOf(totalQuestions * 6.0);
+        BigDecimal maxRawScore = examQuestions.stream()
+                .map(eq -> eq.getMaxRawScore() != null ? eq.getMaxRawScore() : VsatFormatRules.DEFAULT_QUESTION_SCORE)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal scorePercentage;
         if (maxRawScore.compareTo(BigDecimal.ZERO) > 0) {
@@ -550,16 +419,12 @@ public class SessionServiceImpl implements SessionService {
     @Transactional
     @CacheEvict(value = "leaderboard", allEntries = true)
     public SessionResponse.SessionInfo clientSubmit(Long userId, Long sessionId, SessionRequest.ClientSubmit request) {
-        // Find session — must exist
         ExamSession session = examSessionRepository.findById(sessionId)
                 .orElseThrow(() -> AppException.notFound("ExamSession", sessionId));
 
-        // Owner check — the session must belong to this user
         if (!session.getUserId().equals(userId)) {
             throw AppException.sessionForbidden();
         }
-
-        // Anti-replay: session must be IN_PROGRESS
         if (session.getStatus() == SessionStatus.SUBMITTED) {
             throw AppException.sessionAlreadySubmitted();
         }
@@ -567,33 +432,53 @@ public class SessionServiceImpl implements SessionService {
             throw AppException.badRequest("Phiên thi không ở trạng thái IN_PROGRESS (hiện tại: " + session.getStatus() + ")");
         }
 
-        // Validate correctCount ≤ totalQuestions
-        if (request.getCorrectCount() > request.getTotalQuestions()) {
-            throw AppException.validationFailed("correctCount không được lớn hơn totalQuestions");
+        List<ExamQuestion> examQuestions = examQuestionRepository
+                .findByExamIdOrderByQuestionOrderAscIdAsc(session.getExamId());
+
+        int totalQuestions = !examQuestions.isEmpty()
+                ? examQuestions.size()
+                : (request.getTotalQuestions() != null ? request.getTotalQuestions() : 0);
+
+        BigDecimal maxRawScore;
+        if (!examQuestions.isEmpty()) {
+            maxRawScore = examQuestions.stream()
+                    .map(eq -> eq.getMaxRawScore() != null ? eq.getMaxRawScore() : VsatFormatRules.DEFAULT_QUESTION_SCORE)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        } else {
+            maxRawScore = BigDecimal.valueOf(totalQuestions * 6.0);
         }
 
-        // Update session with client-computed results
-        BigDecimal score = BigDecimal.valueOf(request.getScore());
-        BigDecimal scorePercentage = BigDecimal.valueOf(request.getScore());
-        int wrongCount = request.getTotalQuestions() - request.getCorrectCount();
+        ClientScoreSummary summary = scoreAndPersistClientAnswers(session, examQuestions, request.getAnswers());
+
+        int answeredCount = summary.answeredCount();
+        int correctCount = summary.correctCount();
+        int wrongCount = Math.max(0, answeredCount - correctCount);
+        int skippedCount = Math.max(0, totalQuestions - answeredCount);
+        BigDecimal rawScore = summary.rawScore();
+
+        BigDecimal scorePercentage = maxRawScore.compareTo(BigDecimal.ZERO) > 0
+                ? rawScore.multiply(BigDecimal.valueOf(100.0)).divide(maxRawScore, 2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+
+        int timeSpentSeconds = request.getTimeSpentSeconds() != null ? request.getTimeSpentSeconds() : 0;
 
         session.setStatus(SessionStatus.SUBMITTED);
         session.setSubmittedAt(OffsetDateTime.now());
-        session.setScore(score);
+        session.setScore(scorePercentage);
         session.setScorePercentage(scorePercentage);
-        session.setCorrectCount(request.getCorrectCount());
-        session.setTotalQuestions(request.getTotalQuestions());
-        session.setAnsweredCount(request.getTotalQuestions()); // client-side: assume all answered
+        session.setRawScore(rawScore);
+        session.setMaxRawScore(maxRawScore);
+        session.setCorrectCount(correctCount);
+        session.setTotalQuestions(totalQuestions);
+        session.setAnsweredCount(answeredCount);
         session.setWrongCount(wrongCount);
-        session.setSkippedCount(0);
-        session.setTimeSpentSeconds(request.getTimeSpentSeconds());
+        session.setSkippedCount(skippedCount);
+        session.setTimeSpentSeconds(timeSpentSeconds);
 
         session = examSessionRepository.save(session);
-        persistClientAnswers(session, request);
 
-        log.info("Session {} submitted by user {}: score={}, correct={}/{}",
-                session.getId(), userId, request.getScore(),
-                request.getCorrectCount(), request.getTotalQuestions());
+        log.info("Session {} client-submitted & server-scored for user {}: {}/{} correct ({}%, raw {}/{})",
+                session.getId(), userId, correctCount, totalQuestions, scorePercentage, rawScore, maxRawScore);
 
         return toSessionInfo(session);
     }
@@ -727,43 +612,270 @@ public class SessionServiceImpl implements SessionService {
                 .build();
     }
 
-    private void persistClientAnswers(ExamSession session, SessionRequest.ClientSubmit request) {
-        if (request.getAnswers() == null || request.getAnswers().isEmpty()) {
-            return;
+    private record AnswerEvaluation(
+            Long effectiveOptionId,
+            Boolean isCorrect,
+            Integer correctSubitems,
+            Integer totalSubitems,
+            BigDecimal rawPointsAwarded
+    ) {}
+
+    private record ClientScoreSummary(
+            int answeredCount,
+            int correctCount,
+            BigDecimal rawScore
+    ) {}
+
+    private AnswerEvaluation evaluateAnswer(
+            Long sessionId,
+            Long questionId,
+            Question question,
+            List<QuestionOption> options,
+            Long selectedOptionId,
+            Map<String, Object> payload,
+            boolean strictOptionValidation
+    ) {
+        boolean isCorrect = false;
+        Integer correctSubitems;
+        Integer totalSubitems;
+        BigDecimal rawPoints;
+        Long effectiveOptionId = selectedOptionId;
+
+        if (payload != null && !payload.isEmpty()) {
+            QuestionType qType = question != null ? question.getQuestionType() : QuestionType.SINGLE_CHOICE;
+            if (qType == null) qType = QuestionType.SINGLE_CHOICE;
+
+            if (qType != QuestionType.SINGLE_CHOICE && qType != QuestionType.MULTIPLE_CHOICE
+                    && effectiveOptionId != null && !strictOptionValidation
+                    && resolveOption(options, effectiveOptionId).isEmpty()) {
+                log.warn("Client submit unresolvable option for session={} question={} optionId={}",
+                        sessionId, questionId, effectiveOptionId);
+                effectiveOptionId = null;
+            }
+
+            switch (qType) {
+                case TRUE_FALSE -> {
+                    // ponytail: scoring profile hardcoded to draft spec 150 rules; upgrade to dynamic scoring profile lookup when multi-spec enabled
+                    int matched = 0;
+                    int total = options.isEmpty() ? payload.size() : options.size();
+                    if (total == 0) total = 4;
+
+                    for (int i = 0; i < options.size(); i++) {
+                        QuestionOption opt = options.get(i);
+                        String key = opt.getOptionLabel() != null
+                                ? opt.getOptionLabel().toLowerCase().trim()
+                                : String.valueOf((char) ('a' + i));
+                        Object userVal = payload.get(key);
+                        if (userVal == null) {
+                            userVal = payload.get(key.toUpperCase());
+                        }
+                        if (userVal != null) {
+                            boolean userBool = parseBooleanValue(userVal);
+                            boolean expectedBool = Boolean.TRUE.equals(opt.getIsCorrect());
+                            if (userBool == expectedBool) {
+                                matched++;
+                            }
+                        }
+                    }
+                    correctSubitems = matched;
+                    totalSubitems = total;
+                    isCorrect = (matched == total && total > 0);
+                    double pts = switch (matched) {
+                        case 1 -> 1.0;
+                        case 2 -> 2.0;
+                        case 3 -> 3.0;
+                        case 4 -> 6.0;
+                        default -> matched > 4 ? 6.0 : 0.0;
+                    };
+                    rawPoints = BigDecimal.valueOf(pts);
+                }
+                case MATCHING -> {
+                    if (options == null || options.isEmpty()) {
+                        correctSubitems = 0;
+                        totalSubitems = 0;
+                        isCorrect = false;
+                        rawPoints = BigDecimal.ZERO;
+                    } else {
+                        int matchedCount = 0;
+                        int total = options.size();
+
+                        for (QuestionOption opt : options) {
+                            String key = opt.getOptionLabel() != null ? opt.getOptionLabel().trim() : "";
+                            Object userVal = payload.get(key);
+                            if (userVal != null && opt.getOptionText() != null) {
+                                String userStr = String.valueOf(userVal).trim();
+                                String expectedTarget = VsatFormatRules.matchTarget(opt.getOptionText());
+                                if (!expectedTarget.isEmpty() && expectedTarget.equalsIgnoreCase(userStr)) {
+                                    matchedCount++;
+                                }
+                            }
+                        }
+                        if (matchedCount > total) {
+                            matchedCount = total;
+                        }
+                        correctSubitems = matchedCount;
+                        totalSubitems = total;
+                        isCorrect = (matchedCount == total && total > 0);
+                        rawPoints = BigDecimal.valueOf(matchedCount * 1.5);
+                    }
+                }
+                case SHORT_ANSWER -> {
+                    Object val = payload.get("value");
+                    if (val == null) val = payload.get("answer");
+                    if (val == null) val = payload.get("text");
+                    if (val == null && !payload.isEmpty()) {
+                        val = payload.values().iterator().next();
+                    }
+                    String userStr = val != null ? String.valueOf(val).trim() : "";
+
+                    String expected = "";
+                    for (QuestionOption opt : options) {
+                        if (Boolean.TRUE.equals(opt.getIsCorrect()) || options.size() == 1) {
+                            expected = opt.getOptionText() != null ? opt.getOptionText().trim() : "";
+                            break;
+                        }
+                    }
+                    boolean matches = isShortAnswerEqual(userStr, expected);
+                    correctSubitems = matches ? 1 : 0;
+                    totalSubitems = 1;
+                    isCorrect = matches;
+                    rawPoints = matches ? BigDecimal.valueOf(6.0) : BigDecimal.ZERO;
+                }
+                default -> {
+                    Long candidateOptId = effectiveOptionId;
+                    if (candidateOptId == null && payload.containsKey("selectedOptionId")) {
+                        try {
+                            candidateOptId = parseLongValue(payload.get("selectedOptionId"));
+                        } catch (NumberFormatException ex) {
+                            if (strictOptionValidation) {
+                                throw AppException.badRequest("selectedOptionId không hợp lệ cho câu hỏi " + questionId);
+                            }
+                            log.warn("Client submit unparseable option for session={} question={}", sessionId, questionId);
+                            return new AnswerEvaluation(null, false, 0, 1, BigDecimal.ZERO);
+                        }
+                    }
+                    if (candidateOptId != null) {
+                        Optional<QuestionOption> chosenOpt = resolveOption(options, candidateOptId);
+                        if (chosenOpt.isEmpty()) {
+                            if (strictOptionValidation) {
+                                throw AppException.badRequest("Option " + candidateOptId + " không thuộc câu hỏi " + questionId);
+                            }
+                            log.warn("Client submit unresolvable option for session={} question={} optionId={}",
+                                    sessionId, questionId, candidateOptId);
+                            return new AnswerEvaluation(null, false, 0, 1, BigDecimal.ZERO);
+                        }
+                        effectiveOptionId = candidateOptId;
+                        isCorrect = Boolean.TRUE.equals(chosenOpt.get().getIsCorrect());
+                    }
+                    correctSubitems = isCorrect ? 1 : 0;
+                    totalSubitems = 1;
+                    rawPoints = isCorrect ? BigDecimal.valueOf(6.0) : BigDecimal.ZERO;
+                }
+            }
+        } else {
+            Optional<QuestionOption> chosenOpt = resolveOption(options, effectiveOptionId);
+            if (chosenOpt.isEmpty()) {
+                if (strictOptionValidation) {
+                    throw AppException.badRequest("Option " + effectiveOptionId + " không thuộc câu hỏi " + questionId);
+                }
+                log.warn("Client submit unresolvable option for session={} question={} optionId={}",
+                        sessionId, questionId, effectiveOptionId);
+                return new AnswerEvaluation(null, false, 0, 1, BigDecimal.ZERO);
+            }
+
+            isCorrect = Boolean.TRUE.equals(chosenOpt.get().getIsCorrect());
+            correctSubitems = isCorrect ? 1 : 0;
+            totalSubitems = 1;
+            rawPoints = isCorrect ? BigDecimal.valueOf(6.0) : BigDecimal.ZERO;
+        }
+
+        return new AnswerEvaluation(effectiveOptionId, isCorrect, correctSubitems, totalSubitems, rawPoints);
+    }
+
+    private Optional<QuestionOption> resolveOption(List<QuestionOption> options, Long optionId) {
+        if (optionId == null || options == null) return Optional.empty();
+        return options.stream()
+                .filter(option -> Objects.equals(option.getId(), optionId))
+                .findFirst();
+    }
+
+    private ClientScoreSummary scoreAndPersistClientAnswers(
+            ExamSession session,
+            List<ExamQuestion> examQuestions,
+            List<SessionRequest.ClientSubmit.ClientSubmitAnswer> answers
+    ) {
+        sessionAnswerRepository.deleteBySessionId(session.getId());
+        if (answers == null || answers.isEmpty()) {
+            return new ClientScoreSummary(0, 0, BigDecimal.ZERO);
         }
 
         Map<Long, Integer> orderByQuestionId = new HashMap<>();
-        for (ExamQuestion examQuestion : examQuestionRepository
-                .findByExamIdOrderByQuestionOrderAscIdAsc(session.getExamId())) {
+        for (ExamQuestion examQuestion : examQuestions) {
             orderByQuestionId.put(examQuestion.getQuestionId(), examQuestion.getQuestionOrder());
         }
 
-        sessionAnswerRepository.deleteBySessionId(session.getId());
+        Map<Long, SessionRequest.ClientSubmit.ClientSubmitAnswer> deduped = new LinkedHashMap<>();
+        for (SessionRequest.ClientSubmit.ClientSubmitAnswer answer : answers) {
+            if (answer != null && answer.getQuestionId() != null) {
+                deduped.put(answer.getQuestionId(), answer);
+            }
+        }
+
         OffsetDateTime answeredAt = OffsetDateTime.now();
         List<SessionAnswer> rows = new ArrayList<>();
+        int answeredCount = 0;
+        int correctCount = 0;
+        BigDecimal rawScore = BigDecimal.ZERO;
 
-        for (SessionRequest.ClientSubmit.ClientSubmitAnswer answer : request.getAnswers()) {
-            if (answer.getQuestionId() == null) {
-                continue;
+        for (SessionRequest.ClientSubmit.ClientSubmitAnswer answer : deduped.values()) {
+            Long questionId = answer.getQuestionId();
+            if (!orderByQuestionId.isEmpty() && !orderByQuestionId.containsKey(questionId)) {
+                throw AppException.badRequest("Câu hỏi " + questionId + " không thuộc đề thi của phiên này");
             }
+
             Long selectedOptionId = answer.getSelectedOptionId();
-            Boolean isCorrect = null;
-            if (selectedOptionId != null) {
-                isCorrect = questionOptionRepository.findById(selectedOptionId)
-                        .map(option -> Boolean.TRUE.equals(option.getIsCorrect()))
-                        .orElse(false);
-            }
+            Map<String, Object> payload = answer.getAnswerPayload();
+            boolean hasAnswer = selectedOptionId != null || (payload != null && !payload.isEmpty());
+
             int questionOrder = answer.getQuestionOrder() != null
                     ? answer.getQuestionOrder()
-                    : orderByQuestionId.getOrDefault(answer.getQuestionId(), rows.size() + 1);
+                    : orderByQuestionId.getOrDefault(questionId, rows.size() + 1);
+
+            if (!hasAnswer) {
+                if (Boolean.TRUE.equals(answer.getBookmarked())) {
+                    rows.add(SessionAnswer.builder()
+                            .sessionId(session.getId())
+                            .questionId(questionId)
+                            .questionOrder(questionOrder)
+                            .isBookmarked(true)
+                            .answeredAt(answeredAt)
+                            .build());
+                }
+                continue;
+            }
+
+            Question question = questionRepository.findById(questionId).orElse(null);
+            List<QuestionOption> options = questionOptionRepository
+                    .findByQuestionIdOrderByDisplayOrderAscIdAsc(questionId);
+            AnswerEvaluation eval = evaluateAnswer(
+                    session.getId(), questionId, question, options, selectedOptionId, payload, false);
+
+            answeredCount++;
+            if (Boolean.TRUE.equals(eval.isCorrect())) {
+                correctCount++;
+            }
+            rawScore = rawScore.add(eval.rawPointsAwarded());
 
             rows.add(SessionAnswer.builder()
                     .sessionId(session.getId())
-                    .questionId(answer.getQuestionId())
+                    .questionId(questionId)
                     .questionOrder(questionOrder)
-                    .selectedOptionId(selectedOptionId)
-                    .answerPayload(answer.getAnswerPayload())
-                    .isCorrect(isCorrect)
+                    .selectedOptionId(eval.effectiveOptionId())
+                    .answerPayload(payload)
+                    .isCorrect(eval.isCorrect())
+                    .correctSubitems(eval.correctSubitems())
+                    .totalSubitems(eval.totalSubitems())
+                    .rawPointsAwarded(eval.rawPointsAwarded())
                     .isBookmarked(Boolean.TRUE.equals(answer.getBookmarked()))
                     .answeredAt(answeredAt)
                     .build());
@@ -772,6 +884,8 @@ public class SessionServiceImpl implements SessionService {
         if (!rows.isEmpty()) {
             sessionAnswerRepository.saveAll(rows);
         }
+
+        return new ClientScoreSummary(answeredCount, correctCount, rawScore);
     }
 
     private boolean parseBooleanValue(Object val) {
@@ -781,42 +895,8 @@ public class SessionServiceImpl implements SessionService {
         return "true".equals(s) || "1".equals(s) || "t".equals(s) || "d".equals(s) || "dung".equals(s);
     }
 
-    private boolean isMatchingChoiceEqual(String optionText, String userChoice) {
-        if (optionText == null || userChoice == null) return false;
-        String rawExpected = optionText.trim();
-        if (rawExpected.contains("⇄")) {
-            rawExpected = rawExpected.substring(rawExpected.indexOf("⇄") + 1).trim();
-        } else if (rawExpected.contains("->")) {
-            rawExpected = rawExpected.substring(rawExpected.indexOf("->") + 2).trim();
-        }
-
-        if (rawExpected.contains(":")) {
-            rawExpected = rawExpected.substring(rawExpected.lastIndexOf(":") + 1).trim();
-        }
-
-        return rawExpected.equalsIgnoreCase(userChoice.trim());
-    }
-
-    private String extractMatchingChoiceKey(String optionText) {
-        if (optionText == null) return "";
-        String raw = optionText.trim();
-        if (raw.contains("⇄")) {
-            raw = raw.substring(raw.indexOf("⇄") + 1).trim();
-        } else if (raw.contains("->")) {
-            raw = raw.substring(raw.indexOf("->") + 2).trim();
-        }
-        if (raw.contains(":")) {
-            raw = raw.substring(raw.lastIndexOf(":") + 1).trim();
-        }
-        return raw;
-    }
-
     private QuestionOptionContentResponse toOptionContent(QuestionOption option, QuestionType questionType) {
-        String content = option.getOptionText();
-        if (questionType == QuestionType.MATCHING && content != null && content.contains("⇄")) {
-            int idx = content.indexOf("⇄");
-            content = content.substring(0, idx).trim();
-        }
+        String content = VsatFormatRules.sanitizeOptionTextForStudent(option.getOptionText(), questionType);
 
         return QuestionOptionContentResponse.builder()
                 .id(option.getId())
@@ -866,7 +946,7 @@ public class SessionServiceImpl implements SessionService {
                     correctMatching = new LinkedHashMap<>();
                     for (QuestionOption opt : options) {
                         String label = opt.getOptionLabel() != null ? opt.getOptionLabel().trim() : "";
-                        String choiceKey = extractMatchingChoiceKey(opt.getOptionText());
+                        String choiceKey = VsatFormatRules.matchTarget(opt.getOptionText());
                         correctMatching.put(label, choiceKey);
                     }
                 }

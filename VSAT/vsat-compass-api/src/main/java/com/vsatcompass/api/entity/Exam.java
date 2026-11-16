@@ -47,6 +47,9 @@ public class Exam {
     @Column(name = "subject_id", nullable = false)
     private Long subjectId;
 
+    @Column(name = "scoring_profile_id")
+    private Long scoringProfileId;
+
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 

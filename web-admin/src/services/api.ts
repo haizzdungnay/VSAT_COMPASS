@@ -510,20 +510,30 @@ export async function discardDraftExam(id: number): Promise<void> {
 }
 
 export async function publishExam(id: number): Promise<boolean> {
-  try {
-    let res = await authenticatedFetch(`${BASE_URL}/admin/exams/${id}/publish`, {
-      method: 'POST'
-    });
-    if (!res.ok && res.status === 403) {
-      res = await authenticatedFetch(`${BASE_URL}/admin/exams/${id}/submit-review`, {
-        method: 'POST'
-      });
+  const res = await authenticatedFetch(`${BASE_URL}/admin/exams/${id}/publish`, {
+    method: 'POST'
+  });
+  if (!res.ok) {
+    if (res.status === 403) {
+      throw new Error('Chỉ SUPER_ADMIN được phát hành đề');
     }
-    return res.ok;
-  } catch (err) {
-    console.warn(`publishExam(${id}) failed:`, err);
-    return false;
+    const errJson = await res.json().catch(() => ({}));
+    const message = errJson?.error?.message || errJson?.message || `Lỗi phát hành đề thi (HTTP ${res.status})`;
+    throw new Error(message);
   }
+  return true;
+}
+
+export async function submitExamForReview(id: number): Promise<boolean> {
+  const res = await authenticatedFetch(`${BASE_URL}/admin/exams/${id}/submit-review`, {
+    method: 'POST'
+  });
+  if (!res.ok) {
+    const errJson = await res.json().catch(() => ({}));
+    const message = errJson?.error?.message || errJson?.message || `Lỗi gửi duyệt đề thi (HTTP ${res.status})`;
+    throw new Error(message);
+  }
+  return true;
 }
 
 // -------------------------------------------------------------
@@ -1219,111 +1229,20 @@ export async function uploadQuestionFile(
   };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  try {
-    const res = await fetch(`${BASE_URL}/admin/questions/import?dryRun=${dryRun}`, {
-      method: 'POST',
-      headers,
-      body: formData
-    });
+  const res = await fetch(`${BASE_URL}/admin/questions/import?dryRun=${dryRun}`, {
+    method: 'POST',
+    headers,
+    body: formData
+  });
 
-    if (res.ok) {
-      const json = await res.json();
-      return json.data;
-    }
-  } catch (err) {
-    console.warn('[uploadQuestionFile] Backend failed, processing client fallback:', err);
+  if (!res.ok) {
+    const errJson = await res.json().catch(() => ({}));
+    const message = errJson?.error?.message || errJson?.message || `Import file thất bại (HTTP ${res.status})`;
+    throw new Error(message);
   }
 
-  // Client-side fallback for .json, .txt, .docx, .xlsx offline simulation
-  const isJson = file.name.endsWith('.json');
-  let items: any[] = [];
-  if (isJson) {
-    try {
-      const text = await file.text();
-      const parsed = JSON.parse(text);
-      items = Array.isArray(parsed) ? parsed : (parsed.questions || parsed.items || []);
-    } catch {}
-  }
-
-  if (items.length === 0) {
-    items = [
-      {
-        sheetName: 'Phần nghe - Listening',
-        rowNumber: 2,
-        groupCode: 'ENG_AUDIO_01',
-        groupTitle: 'Phần thi Nghe Tiếng Anh - Hội thoại V-SAT 2026',
-        passageText: 'Listen to the conversation between two students discussing their university choices.',
-        subjectId: 2,
-        subjectCode: 'ENG',
-        difficulty: 'MEDIUM',
-        questionType: 'SINGLE_CHOICE',
-        questionText: 'What is the main topic of the conversation?',
-        options: [
-          'A. Choosing academic major for V-SAT',
-          'B. Registering for dormitory accommodation',
-          'C. Preparing for graduation thesis',
-          'D. Applying for exchange study program'
-        ],
-        correctAnswer: 'A',
-        explanation: 'The speakers clearly state they are deciding on their university degree preferences.',
-        valid: true,
-        audioUrl: 'https://cdn.freesound.org/previews/vsat_listening_demo_dialogue.mp3',
-        maxPlays: 2
-      },
-      {
-        sheetName: 'Phần I - Đúng/Sai',
-        rowNumber: 3,
-        subjectId: 1,
-        subjectCode: 'MATH',
-        difficulty: 'HARD',
-        questionType: 'TRUE_FALSE',
-        questionText: 'Cho hàm số $f(x) = x^3 - 3x^2 + 2$. Xét tính đúng/sai của các mệnh đề:',
-        correctAnswer: 'a-D, b-S, c-D, d-D',
-        explanation: 'Khảo sát và vẽ đồ thị hàm bậc ba theo chương trình GDPT 2018.',
-        valid: true
-      },
-      {
-        sheetName: 'Phần IV - Điền số',
-        rowNumber: 4,
-        subjectId: 4,
-        subjectCode: 'CHEM',
-        difficulty: 'VERY_HARD',
-        questionType: 'SHORT_ANSWER',
-        questionText: 'Tính thể tích khí $V\\text{ (lít)}$ thu được ở điều kiện chuẩn.',
-        correctAnswer: '7.44',
-        explanation: 'Phương trình phản ứng và định luật bảo toàn electron.',
-        valid: true
-      }
-    ];
-  }
-
-  return {
-    totalRows: items.length,
-    validCount: items.filter((i: any) => i.valid !== false).length,
-    errorCount: items.filter((i: any) => i.valid === false).length,
-    importedQuestions: dryRun ? 0 : items.length,
-    createdGroups: 1,
-    dryRun,
-    items: items.map((it: any, idx: number) => ({
-      sheetName: it.sheetName || 'Import_Sheet',
-      rowNumber: it.rowNumber || idx + 2,
-      groupCode: it.groupCode,
-      groupTitle: it.groupTitle,
-      passageText: it.passageText,
-      subjectId: it.subjectId || 1,
-      subjectCode: it.subjectCode || 'MATH',
-      difficulty: it.difficulty || 'MEDIUM',
-      questionType: it.questionType || 'SINGLE_CHOICE',
-      questionText: it.questionText || it.text || 'Nội dung câu hỏi...',
-      options: it.options,
-      correctAnswer: it.correctAnswer || 'A',
-      explanation: it.explanation,
-      valid: it.valid !== false,
-      audioUrl: it.audioUrl,
-      maxPlays: it.maxPlays
-    })),
-    errors: []
-  };
+  const json = await res.json();
+  return json.data;
 }
 
 export async function downloadImportTemplate(): Promise<Blob> {

@@ -73,12 +73,13 @@ export const Step1General: React.FC<Step1Props> = ({ exam, onChange }) => {
 
           <div className="space-y-1">
             <label className="font-label-md text-on-surface">Quy chuẩn chấm điểm (Scoring Profile)</label>
+            {/* ponytail: Backend chưa có endpoint liệt kê profile, chuyển sang dropdown động khi có GET /admin/scoring-profiles */}
             <select
-              value={exam.scoringProfileCode || 'VSAT_2026_RAW_150'}
+              value={exam.scoringProfileCode || 'VSAT_2026_DRAFT_SPEC_150'}
               onChange={(e) => onChange({ scoringProfileCode: e.target.value })}
               className="w-full h-10 px-3 text-body-md bg-surface-container-low rounded-lg border border-outline-variant/40 focus:outline-none focus:border-primary"
             >
-              <option value="VSAT_2026_RAW_150">V-SAT 2026: Điểm thô tối đa 150 (Đ/S lũy tiến 0-1-2-3-6đ)</option>
+              <option value="VSAT_2026_DRAFT_SPEC_150">V-SAT 2026: Điểm thô tối đa 150 (Đ/S lũy tiến 0-1-2-3-6đ)</option>
             </select>
           </div>
         </div>

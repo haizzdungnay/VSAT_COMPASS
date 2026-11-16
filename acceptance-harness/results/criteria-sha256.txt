@@ -1,0 +1,2 @@
+d5fb35f1130391c9e37686c140dad2657099fd00a38125fbbf835d0434b5a460 *acceptance-harness/suites/vsat-format.mjs
+d4e8b87b3fe45014c597c70494a1ffe95400f7f89f939fbe4813c73ac0e7bc27 *acceptance-harness/lib/vsat-format.mjs

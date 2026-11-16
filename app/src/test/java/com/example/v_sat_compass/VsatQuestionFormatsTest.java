@@ -78,6 +78,31 @@ public class VsatQuestionFormatsTest {
         saPayload.put("value", "37");
         String saJson = gson.toJson(saPayload);
         assertEquals("{\"value\":\"37\"}", saJson);
+
+        com.example.v_sat_compass.data.model.ClientSubmitRequest req =
+                new com.example.v_sat_compass.data.model.ClientSubmitRequest(
+                        null,
+                        null,
+                        10,
+                        120,
+                        java.util.Collections.singletonList(
+                                new com.example.v_sat_compass.data.model.ClientSubmitRequest.AnswerItem(
+                                        5L, null, 1, false, saPayload)));
+        String reqJson = gson.toJson(req);
+        assertTrue(reqJson.contains("\"answerPayload\":{\"value\":\"37\"}"));
+    }
+
+    @Test
+    public void testQuestionDeserializesMatchingChoicesAndMaxRawScore() {
+        Gson gson = new Gson();
+        String json = "{\"id\":303,\"question_type\":\"MATCHING\",\"max_raw_score\":6.0,"
+                + "\"matching_choices\":[{\"key\":\"A\",\"text\":\"Item A\"}]}";
+        Question q = gson.fromJson(json, Question.class);
+        assertEquals(Double.valueOf(6.0), q.getMaxRawScore());
+        assertNotNull(q.getMatchingChoices());
+        assertEquals(1, q.getMatchingChoices().size());
+        assertEquals("A", q.getMatchingChoices().get(0).getKey());
+        assertEquals("Item A", q.getMatchingChoices().get(0).getText());
     }
 }
 // ponytail: focused test for V-SAT 2026 formats on Android. Add instrumented UI tests when emulator farm enabled.

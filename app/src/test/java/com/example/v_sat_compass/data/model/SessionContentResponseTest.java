@@ -23,6 +23,7 @@ public class SessionContentResponseTest {
                         + "\"questionType\":\"SINGLE_CHOICE\","
                         + "\"difficulty\":\"EASY\","
                         + "\"order\":1,"
+                        + "\"matchingChoices\":[{\"key\":\"A\",\"text\":\"Choice A\"}],"
                         + "\"options\":[{\"id\":10,\"content\":\"4\",\"order\":1}]"
                         + "}",
                 SessionQuestionContentResponse.class);
@@ -33,6 +34,9 @@ public class SessionContentResponseTest {
         assertEquals("SINGLE_CHOICE", response.getQuestionType());
         assertEquals("EASY", response.getDifficulty());
         assertEquals(1, response.getOrder());
+        assertEquals(1, response.getMatchingChoices().size());
+        assertEquals("A", response.getMatchingChoices().get(0).getKey());
+        assertEquals("Choice A", response.getMatchingChoices().get(0).getText());
         assertEquals(10L, response.getOptions().get(0).getId());
     }
 

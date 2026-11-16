@@ -1,4 +1,4 @@
-export type SubjectCode = 'MATH' | 'PHY' | 'CHEM' | 'BIO' | 'HIS' | 'GEO' | 'ENG';
+export type SubjectCode = 'MATH' | 'LIT' | 'PHY' | 'CHEM' | 'BIO' | 'HIS' | 'GEO' | 'ENG';
 
 export type ExamStatus = 'DRAFT' | 'COMPOSING' | 'PENDING_REVIEW' | 'PUBLISHED' | 'HIDDEN' | 'ARCHIVED';
 
@@ -154,6 +154,7 @@ export interface ExamQuestionDetail {
   difficulty: DifficultyLevel;
   maxRawScore: number;
   options: OptionItem[];
+  status?: QuestionStatus;
 }
 
 export interface QuestionImportItem {
@@ -210,4 +211,31 @@ export interface ExamScheduleItem {
   status: 'UPCOMING' | 'RUNNING' | 'CLOSED';
   activeCandidates: number;
   totalSubmissions: number;
+}
+
+// -------------------------------------------------------------
+// V-SAT 2026 Core Specification Constants
+// -------------------------------------------------------------
+
+export const VSAT_PARTS = ['TRUE_FALSE', 'SINGLE_CHOICE', 'MATCHING', 'SHORT_ANSWER'] as const;
+
+export const VSAT_PART_COUNTS: Record<QuestionType, number> = {
+  TRUE_FALSE: 9,
+  SINGLE_CHOICE: 6,
+  MATCHING: 5,
+  SHORT_ANSWER: 5
+};
+
+export const VSAT_TOTAL_QUESTIONS = 25;
+export const VSAT_TOTAL_RAW_SCORE = 150.0;
+export const VSAT_DEFAULT_SCORING_PROFILE = 'VSAT_2026_DRAFT_SPEC_150';
+
+export function getExpectedVsatDuration(subjectId?: number, subjectName?: string, examCode?: string): number {
+  const isMath = subjectId === 1 ||
+    Boolean(subjectName && /toán|math/i.test(subjectName)) ||
+    Boolean(examCode && /toan|math/i.test(examCode));
+  const isLit =
+    Boolean(subjectName && /ngữ văn|ngu van|văn học|literature|\blit\b/i.test(subjectName)) ||
+    Boolean(examCode && /(?:^|[_-])lit(?:[_-]|$)/i.test(examCode));
+  return isMath || isLit ? 90 : 60;
 }

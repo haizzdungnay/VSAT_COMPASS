@@ -313,6 +313,25 @@ class QuestionServiceTest {
         }
 
         @Test
+        @DisplayName("create: SINGLE_CHOICE with 2 options throws 400 VALIDATION_FAILED")
+        void create_singleChoiceWithTwoOptions_throws400() {
+            mockSubjectTopicValid();
+            CreateQuestionRequest req = validCreateReq(QuestionType.SINGLE_CHOICE,
+                    List.of(true, false));
+
+            assertThatThrownBy(() -> questionService.create(OWNER_ID, req))
+                    .isInstanceOf(AppException.class)
+                    .satisfies(ex -> {
+                        AppException ae = (AppException) ex;
+                        assertThat(ae.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+                        assertThat(ae.getCode()).isEqualTo("VALIDATION_FAILED");
+                        assertThat(ae.getMessage()).contains("SINGLE_CHOICE").contains("4 options");
+                    });
+
+            verify(questionRepository, never()).save(any());
+        }
+
+        @Test
         @DisplayName("create: MULTIPLE_CHOICE with all false throws 400 VALIDATION_FAILED")
         void create_multipleChoiceWithAllIncorrect_throws400() {
             mockSubjectTopicValid();
@@ -382,16 +401,16 @@ class QuestionServiceTest {
         }
 
         @Test
-        @DisplayName("create: TRUE_FALSE with < 2 or > 4 options throws 400 VALIDATION_FAILED")
+        @DisplayName("create: TRUE_FALSE with != 4 options throws 400 VALIDATION_FAILED")
         void create_trueFalse_invalidOptionCounts_throws400() {
             mockSubjectTopicValid();
-            CreateQuestionRequest singleOpt = validCreateReq(QuestionType.TRUE_FALSE, List.of(true));
-            assertThatThrownBy(() -> questionService.create(OWNER_ID, singleOpt))
+            CreateQuestionRequest threeOpts = validCreateReq(QuestionType.TRUE_FALSE, List.of(true, false, true));
+            assertThatThrownBy(() -> questionService.create(OWNER_ID, threeOpts))
                     .isInstanceOf(AppException.class)
                     .satisfies(ex -> {
                         AppException ae = (AppException) ex;
                         assertThat(ae.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
-                        assertThat(ae.getMessage()).contains("TRUE_FALSE").contains("between 2 and 4 options");
+                        assertThat(ae.getMessage()).contains("TRUE_FALSE").contains("VF_TF4");
                     });
 
             CreateQuestionRequest fiveOpts = validCreateReq(QuestionType.TRUE_FALSE,
@@ -401,7 +420,7 @@ class QuestionServiceTest {
                     .satisfies(ex -> {
                         AppException ae = (AppException) ex;
                         assertThat(ae.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
-                        assertThat(ae.getMessage()).contains("TRUE_FALSE").contains("between 2 and 4 options");
+                        assertThat(ae.getMessage()).contains("TRUE_FALSE").contains("VF_TF4");
                     });
         }
 
@@ -468,23 +487,23 @@ class QuestionServiceTest {
         @DisplayName("create: MATCHING with invalid option count throws 400 VALIDATION_FAILED")
         void create_matching_invalidOptionCounts_throws400() {
             mockSubjectTopicValid();
-            CreateQuestionRequest singleOpt = validCreateReq(QuestionType.MATCHING, List.of(true));
-            assertThatThrownBy(() -> questionService.create(OWNER_ID, singleOpt))
+            CreateQuestionRequest twoOpts = validCreateReq(QuestionType.MATCHING, List.of(true, true));
+            assertThatThrownBy(() -> questionService.create(OWNER_ID, twoOpts))
                     .isInstanceOf(AppException.class)
                     .satisfies(ex -> {
                         AppException ae = (AppException) ex;
                         assertThat(ae.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
-                        assertThat(ae.getMessage()).contains("MATCHING").contains("between 2 and 6 options");
+                        assertThat(ae.getMessage()).contains("MATCHING").contains("VF_MATCH");
                     });
 
-            CreateQuestionRequest sevenOpts = validCreateReq(QuestionType.MATCHING,
-                    List.of(true, false, true, false, true, false, true));
-            assertThatThrownBy(() -> questionService.create(OWNER_ID, sevenOpts))
+            CreateQuestionRequest fiveOpts = validCreateReq(QuestionType.MATCHING,
+                    List.of(true, false, true, false, true));
+            assertThatThrownBy(() -> questionService.create(OWNER_ID, fiveOpts))
                     .isInstanceOf(AppException.class)
                     .satisfies(ex -> {
                         AppException ae = (AppException) ex;
                         assertThat(ae.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
-                        assertThat(ae.getMessage()).contains("MATCHING").contains("between 2 and 6 options");
+                        assertThat(ae.getMessage()).contains("MATCHING").contains("VF_MATCH");
                     });
         }
 
@@ -687,14 +706,18 @@ class QuestionServiceTest {
                     UpdateQuestionRequest.OptionInput.builder()
                             .optionLabel("A").optionText("New A").isCorrect(true).displayOrder(1).build(),
                     UpdateQuestionRequest.OptionInput.builder()
-                            .optionLabel("B").optionText("New B").isCorrect(false).displayOrder(2).build()
+                            .optionLabel("B").optionText("New B").isCorrect(false).displayOrder(2).build(),
+                    UpdateQuestionRequest.OptionInput.builder()
+                            .optionLabel("C").optionText("New C").isCorrect(false).displayOrder(3).build(),
+                    UpdateQuestionRequest.OptionInput.builder()
+                            .optionLabel("D").optionText("New D").isCorrect(false).displayOrder(4).build()
             );
             UpdateQuestionRequest req = UpdateQuestionRequest.builder().options(newOpts).build();
 
             questionService.update(OWNER_ID, ROLE_COLLAB, 50L, req);
 
             verify(questionOptionRepository).deleteByQuestionId(50L);
-            verify(questionOptionRepository, times(2)).save(any(QuestionOption.class));
+            verify(questionOptionRepository, times(4)).save(any(QuestionOption.class));
         }
 
         @Test
@@ -733,7 +756,7 @@ class QuestionServiceTest {
                         assertThat(ae.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
                         assertThat(ae.getCode()).isEqualTo("VALIDATION_FAILED");
                         assertThat(ae.getMessage()).contains("TRUE_FALSE")
-                                                   .contains("between 2 and 4 options");
+                                                   .contains("VF_TF4");
                     });
 
             verify(questionRepository, never()).save(any());

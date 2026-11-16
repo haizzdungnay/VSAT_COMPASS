@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import type { ExamDetail, ExamVariantItem } from '../../types/exam';
-import { fetchExamVariants, generateExamVariants, publishExam } from '../../services/api';
+import type { ExamDetail, ExamVariantItem, ExamQuestionDetail } from '../../types/exam';
+import { VSAT_TOTAL_QUESTIONS, VSAT_PART_COUNTS } from '../../types/exam';
+import { fetchExamVariants, generateExamVariants, publishExam, submitExamForReview, fetchExamQuestions } from '../../services/api';
 
 interface Step4Props {
   exam: ExamDetail;
@@ -12,12 +13,30 @@ export const Step4VariantsPublish: React.FC<Step4Props> = ({ exam, onPublishSucc
   const [shuffleMcq, setShuffleMcq] = useState(true);
   const [shuffleMatching, setShuffleMatching] = useState(true);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [variants, setVariants] = useState<ExamVariantItem[]>([]);
+  const [questions, setQuestions] = useState<ExamQuestionDetail[]>([]);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [canSubmitReview, setCanSubmitReview] = useState(false);
 
   useEffect(() => {
     fetchExamVariants(exam.id).then(setVariants);
+    if (exam.id > 0) {
+      fetchExamQuestions(exam.id).then(setQuestions);
+    }
   }, [exam.id]);
+
+  const tfCount = questions.filter(q => q.questionType === 'TRUE_FALSE').length;
+  const scCount = questions.filter(q => q.questionType === 'SINGLE_CHOICE').length;
+  const matchCount = questions.filter(q => q.questionType === 'MATCHING').length;
+  const saCount = questions.filter(q => q.questionType === 'SHORT_ANSWER').length;
+
+  const isExamValid = questions.length === VSAT_TOTAL_QUESTIONS &&
+    tfCount === VSAT_PART_COUNTS.TRUE_FALSE &&
+    scCount === VSAT_PART_COUNTS.SINGLE_CHOICE &&
+    matchCount === VSAT_PART_COUNTS.MATCHING &&
+    saCount === VSAT_PART_COUNTS.SHORT_ANSWER;
 
   const handleRegenerate = async () => {
     const list = await generateExamVariants(exam.id, {
@@ -32,21 +51,39 @@ export const Step4VariantsPublish: React.FC<Step4Props> = ({ exam, onPublishSucc
   const handlePublish = async () => {
     setIsPublishing(true);
     setFeedback(null);
+    setErrorMessage(null);
+    setCanSubmitReview(false);
     try {
-      const ok = await publishExam(exam.id);
-      if (ok) {
-        setFeedback('Đề thi đã được xuất bản thành công lên hệ thống!');
-        setTimeout(() => {
-          onPublishSuccess();
-        }, 1000);
-      } else {
-        setFeedback('Đã nộp đề thi để duyệt (Review queued)');
-        setTimeout(() => {
-          onPublishSuccess();
-        }, 1200);
+      await publishExam(exam.id);
+      setFeedback('Đề thi đã được xuất bản thành công lên hệ thống!');
+      setTimeout(() => {
+        onPublishSuccess();
+      }, 1000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Có lỗi khi xuất bản đề thi.';
+      setErrorMessage(msg);
+      if (msg.includes('SUPER_ADMIN') || msg.includes('403')) {
+        setCanSubmitReview(true);
       }
     } finally {
       setIsPublishing(false);
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    setIsSubmittingReview(true);
+    setFeedback(null);
+    setErrorMessage(null);
+    try {
+      await submitExamForReview(exam.id);
+      setFeedback('Đã nộp đề thi để duyệt (Review queued)');
+      setTimeout(() => {
+        onPublishSuccess();
+      }, 1200);
+    } catch (err: unknown) {
+      setErrorMessage(err instanceof Error ? err.message : 'Có lỗi khi gửi duyệt đề thi.');
+    } finally {
+      setIsSubmittingReview(false);
     }
   };
 
@@ -183,17 +220,39 @@ export const Step4VariantsPublish: React.FC<Step4Props> = ({ exam, onPublishSucc
             </div>
           )}
 
+          {errorMessage && (
+            <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-800 text-body-sm space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[20px] text-red-600">error</span>
+                <span>{errorMessage}</span>
+              </div>
+              {canSubmitReview && (
+                <button
+                  type="button"
+                  onClick={handleSubmitReview}
+                  disabled={isSubmittingReview}
+                  className="px-3 py-1.5 rounded bg-primary text-white text-xs font-semibold hover:bg-tertiary transition-colors disabled:opacity-50"
+                >
+                  {isSubmittingReview ? 'Đang gửi duyệt...' : 'Gửi đề thi để phê duyệt'}
+                </button>
+              )}
+            </div>
+          )}
+
           <div className="space-y-2">
             {[
-              'Đầy đủ 25 câu hỏi chuẩn V-SAT',
-              'Đúng 150 điểm thô',
-              `Đã sinh ${variants.length} mã đề hoán vị đẳng trị`,
-              'Đã cấu hình thời lượng & ca thi',
-              'Phân quyền xuất bản: CONTENT_ADMIN / SUPER_ADMIN'
-            ].map((text, i) => (
+              { text: `Đầy đủ 25 câu hỏi chuẩn V-SAT (${questions.length}/25 câu)`, ok: questions.length === VSAT_TOTAL_QUESTIONS },
+              { text: `Cấu trúc tỷ lệ 9/6/5/5 (${tfCount} Đ/S, ${scCount} TN, ${matchCount} Ghép, ${saCount} Điền)`, ok: isExamValid },
+              { text: 'Đúng 150 điểm thô chuẩn V-SAT', ok: isExamValid },
+              { text: `Đã sinh ${variants.length} mã đề hoán vị đẳng trị`, ok: variants.length > 0 },
+              { text: 'Đã cấu hình thời lượng & ca thi', ok: true },
+              { text: 'Phân quyền xuất bản: SUPER_ADMIN (hoặc gửi duyệt)', ok: true }
+            ].map((item, i) => (
               <div key={i} className="flex items-center gap-2 text-body-sm text-on-surface">
-                <span className="material-symbols-outlined text-[18px] text-emerald-600">check_circle</span>
-                <span>{text}</span>
+                <span className={`material-symbols-outlined text-[18px] ${item.ok ? 'text-emerald-600' : 'text-amber-600'}`}>
+                  {item.ok ? 'check_circle' : 'warning'}
+                </span>
+                <span className={item.ok ? '' : 'text-amber-800 font-medium'}>{item.text}</span>
               </div>
             ))}
           </div>
@@ -202,8 +261,9 @@ export const Step4VariantsPublish: React.FC<Step4Props> = ({ exam, onPublishSucc
         <div className="space-y-2 pt-4 border-t border-outline-variant/20">
           <button
             onClick={handlePublish}
-            disabled={isPublishing}
-            className="w-full h-11 rounded-lg bg-primary hover:bg-tertiary text-on-primary font-label-md font-bold flex items-center justify-center gap-2 shadow-sm transition-all disabled:opacity-50"
+            disabled={isPublishing || !isExamValid}
+            aria-describedby={!isExamValid ? 'publish-validation-warning' : undefined}
+            className="w-full h-11 rounded-lg bg-primary hover:bg-tertiary text-on-primary font-label-md font-bold flex items-center justify-center gap-2 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isPublishing ? (
               <>
@@ -217,6 +277,11 @@ export const Step4VariantsPublish: React.FC<Step4Props> = ({ exam, onPublishSucc
               </>
             )}
           </button>
+          {!isExamValid && (
+            <p id="publish-validation-warning" className="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 p-2 rounded-lg">
+              Nút xuất bản bị khóa: Đề thi chưa đủ 25 câu chuẩn cấu trúc V-SAT (9 Đúng/Sai, 6 Trắc nghiệm, 5 Ghép hợp, 5 Điền số). Hiện có: {questions.length}/25 câu.
+            </p>
+          )}
 
           <button
             type="button"

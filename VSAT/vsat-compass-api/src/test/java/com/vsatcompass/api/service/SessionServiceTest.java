@@ -54,10 +54,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /*
- * Trust boundary note: SessionService.clientSubmit trusts the score computed by
- * the Android client (CLIENT_SIDE_EXAM_PROCESSING flag is true). These tests
- * verify the score is persisted as received, NOT re-derived server-side. That is
- * an architectural choice, not a bug.
+ * Trust boundary note: SessionService.clientSubmit NEVER trusts client-supplied
+ * score/correctCount. It recomputes scores server-side from submitted answers
+ * (selectedOptionId + answerPayload) using V-SAT 2026 rules.
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("SessionService — characterization tests (Spring Boot 3.2.5 baseline)")
@@ -249,81 +248,146 @@ class SessionServiceTest {
     // ===== clientSubmit =====
 
     @Test
-    @DisplayName("clientSubmit: happy path marks SUBMITTED and persists client-supplied score")
-    void clientSubmit_happyPath_persistsClientScoreAndCounts() {
+    @DisplayName("clientSubmit: ignores forged client score and recomputes V-SAT 2026 scores server-side")
+    void clientSubmit_happyPath_recomputesScoreServerSide() {
         when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
         when(examSessionRepository.save(any(ExamSession.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(EXAM_ID))
+                .thenReturn(List.of(
+                        examQuestion(QUESTION_ID, 1),
+                        examQuestion(SECOND_QUESTION_ID, 2)
+                ));
 
-        SessionResponse.SessionInfo info = sessionService.clientSubmit(
-                USER_ID, SESSION_ID, submitReq(82.5, 41, 50, 1800));
+        Question mcq = Question.builder().id(QUESTION_ID).questionCode("MCQ-1").questionType(QuestionType.SINGLE_CHOICE).build();
+        Question tf = Question.builder().id(SECOND_QUESTION_ID).questionCode("TF-1").questionType(QuestionType.TRUE_FALSE).build();
+        when(questionRepository.findById(QUESTION_ID)).thenReturn(Optional.of(mcq));
+        when(questionRepository.findById(SECOND_QUESTION_ID)).thenReturn(Optional.of(tf));
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(QUESTION_ID))
+                .thenReturn(List.of(
+                        option(301L, QUESTION_ID, true, 1),
+                        option(302L, QUESTION_ID, false, 2)
+                ));
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(SECOND_QUESTION_ID))
+                .thenReturn(List.of(
+                        QuestionOption.builder().id(401L).questionId(SECOND_QUESTION_ID).optionLabel("a").isCorrect(true).displayOrder(1).build(),
+                        QuestionOption.builder().id(402L).questionId(SECOND_QUESTION_ID).optionLabel("b").isCorrect(false).displayOrder(2).build(),
+                        QuestionOption.builder().id(403L).questionId(SECOND_QUESTION_ID).optionLabel("c").isCorrect(true).displayOrder(3).build(),
+                        QuestionOption.builder().id(404L).questionId(SECOND_QUESTION_ID).optionLabel("d").isCorrect(false).displayOrder(4).build()
+                ));
+
+        SessionRequest.ClientSubmit request = submitReq(100.0, 2, 2, 1800);
+        SessionRequest.ClientSubmit.ClientSubmitAnswer a1 = new SessionRequest.ClientSubmit.ClientSubmitAnswer();
+        a1.setQuestionId(QUESTION_ID);
+        a1.setSelectedOptionId(302L); // wrong -> 0 pts
+        SessionRequest.ClientSubmit.ClientSubmitAnswer a2 = new SessionRequest.ClientSubmit.ClientSubmitAnswer();
+        a2.setQuestionId(SECOND_QUESTION_ID);
+        a2.setAnswerPayload(Map.of("a", true, "b", false, "c", true, "d", true)); // 3/4 -> 3.0 pts, isCorrect=false
+        request.setAnswers(List.of(a1, a2));
+
+        SessionResponse.SessionInfo info = sessionService.clientSubmit(USER_ID, SESSION_ID, request);
 
         assertThat(info.getStatus()).isEqualTo("SUBMITTED");
-        assertThat(info.getScore()).isEqualByComparingTo(BigDecimal.valueOf(82.5));
-        assertThat(info.getCorrectCount()).isEqualTo(41);
-        assertThat(info.getTotalQuestions()).isEqualTo(50);
+        assertThat(info.getRawScore()).isEqualByComparingTo(new BigDecimal("3.0"));
+        assertThat(info.getMaxRawScore()).isEqualByComparingTo(new BigDecimal("12.00"));
+        assertThat(info.getScore()).isEqualByComparingTo(new BigDecimal("25.00"));
+        assertThat(info.getCorrectCount()).isEqualTo(0);
+        assertThat(info.getTotalQuestions()).isEqualTo(2);
         assertThat(info.getTimeSpentSeconds()).isEqualTo(1800);
-        assertThat(info.getOrderedQuestionIds()).isEmpty();
 
-        // Verify the saved entity reflects the client payload — server does NOT recompute
         ArgumentCaptor<ExamSession> cap = ArgumentCaptor.forClass(ExamSession.class);
         verify(examSessionRepository).save(cap.capture());
         ExamSession saved = cap.getValue();
         assertThat(saved.getStatus()).isEqualTo(SessionStatus.SUBMITTED);
         assertThat(saved.getSubmittedAt()).isNotNull();
-        assertThat(saved.getScore()).isEqualByComparingTo(BigDecimal.valueOf(82.5));
-        assertThat(saved.getScorePercentage()).isEqualByComparingTo(BigDecimal.valueOf(82.5));
-        assertThat(saved.getCorrectCount()).isEqualTo(41);
-        assertThat(saved.getWrongCount()).isEqualTo(9);
-        assertThat(saved.getAnsweredCount()).isEqualTo(50);
+        assertThat(saved.getScore()).isEqualByComparingTo(new BigDecimal("25.00"));
+        assertThat(saved.getRawScore()).isEqualByComparingTo(new BigDecimal("3.0"));
+        assertThat(saved.getCorrectCount()).isEqualTo(0);
+        assertThat(saved.getWrongCount()).isEqualTo(2);
+        assertThat(saved.getAnsweredCount()).isEqualTo(2);
         assertThat(saved.getSkippedCount()).isEqualTo(0);
     }
 
     @Test
-    @DisplayName("clientSubmit: persists optional session answers for topic stats")
+    @DisplayName("clientSubmit: persists session answers and computes MATCHING + SHORT_ANSWER payloads even when client score is null")
     void clientSubmit_withAnswers_persistsSessionAnswers() {
         when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
         when(examSessionRepository.save(any(ExamSession.class))).thenAnswer(inv -> inv.getArgument(0));
         when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(EXAM_ID))
-                .thenReturn(List.of(examQuestion(QUESTION_ID, 1)));
-        when(questionOptionRepository.findById(301L))
-                .thenReturn(Optional.of(QuestionOption.builder().id(301L).isCorrect(true).build()));
+                .thenReturn(List.of(
+                        examQuestion(QUESTION_ID, 1),
+                        examQuestion(SECOND_QUESTION_ID, 2)
+                ));
+        when(questionRepository.findById(QUESTION_ID))
+                .thenReturn(Optional.of(Question.builder().id(QUESTION_ID).questionType(QuestionType.MATCHING).build()));
+        when(questionRepository.findById(SECOND_QUESTION_ID))
+                .thenReturn(Optional.of(Question.builder().id(SECOND_QUESTION_ID).questionType(QuestionType.SHORT_ANSWER).build()));
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(QUESTION_ID))
+                .thenReturn(List.of(
+                        QuestionOption.builder().id(301L).questionId(QUESTION_ID).optionLabel("1").optionText("P1 ⇄ A").isCorrect(true).displayOrder(1).build(),
+                        QuestionOption.builder().id(302L).questionId(QUESTION_ID).optionLabel("2").optionText("P2 ⇄ B").isCorrect(true).displayOrder(2).build()
+                ));
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(SECOND_QUESTION_ID))
+                .thenReturn(List.of(
+                        QuestionOption.builder().id(401L).questionId(SECOND_QUESTION_ID).optionLabel("Đáp án").optionText("12.5").isCorrect(true).displayOrder(1).build()
+                ));
 
-        SessionRequest.ClientSubmit request = submitReq(80.0, 1, 1, 120);
+        SessionRequest.ClientSubmit request = new SessionRequest.ClientSubmit();
+        request.setTotalQuestions(2);
+        request.setTimeSpentSeconds(120);
+        SessionRequest.ClientSubmit.ClientSubmitAnswer a1 = new SessionRequest.ClientSubmit.ClientSubmitAnswer();
+        a1.setQuestionId(QUESTION_ID);
+        a1.setAnswerPayload(Map.of("1", "A", "2", "B")); // 2*1.5 = 3.0 pts, isCorrect=true
+        SessionRequest.ClientSubmit.ClientSubmitAnswer a2 = new SessionRequest.ClientSubmit.ClientSubmitAnswer();
+        a2.setQuestionId(SECOND_QUESTION_ID);
+        a2.setAnswerPayload(Map.of("value", "12.50")); // 6.0 pts, isCorrect=true
+        request.setAnswers(List.of(a1, a2));
+
+        SessionResponse.SessionInfo info = sessionService.clientSubmit(USER_ID, SESSION_ID, request);
+
+        assertThat(info.getCorrectCount()).isEqualTo(2);
+        assertThat(info.getRawScore()).isEqualByComparingTo(new BigDecimal("9.0"));
+        assertThat(info.getScore()).isEqualByComparingTo(new BigDecimal("75.00"));
+
+        verify(sessionAnswerRepository).deleteBySessionId(SESSION_ID);
+        ArgumentCaptor<List<SessionAnswer>> answersCaptor = ArgumentCaptor.forClass(List.class);
+        verify(sessionAnswerRepository).saveAll(answersCaptor.capture());
+        assertThat(answersCaptor.getValue()).hasSize(2);
+        assertThat(answersCaptor.getValue()).allSatisfy(row -> assertThat(row.getIsCorrect()).isTrue());
+    }
+
+    @Test
+    @DisplayName("clientSubmit: all correct answers sets zero-wrong and 100% score (boundary)")
+    void clientSubmit_correctEqualsTotal_persistsAllAnsweredZeroWrong() {
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+        when(examSessionRepository.save(any(ExamSession.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(EXAM_ID))
+                .thenReturn(List.of(examQuestion(QUESTION_ID, 1)));
+        when(questionRepository.findById(QUESTION_ID))
+                .thenReturn(Optional.of(Question.builder().id(QUESTION_ID).questionType(QuestionType.SINGLE_CHOICE).build()));
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(QUESTION_ID))
+                .thenReturn(List.of(option(301L, QUESTION_ID, true, 1)));
+
+        SessionRequest.ClientSubmit request = submitReq(10.0, 0, 1, 1800);
         SessionRequest.ClientSubmit.ClientSubmitAnswer answer = new SessionRequest.ClientSubmit.ClientSubmitAnswer();
         answer.setQuestionId(QUESTION_ID);
         answer.setSelectedOptionId(301L);
         request.setAnswers(List.of(answer));
 
-        sessionService.clientSubmit(USER_ID, SESSION_ID, request);
-
-        verify(sessionAnswerRepository).deleteBySessionId(SESSION_ID);
-        ArgumentCaptor<List<SessionAnswer>> answersCaptor = ArgumentCaptor.forClass(List.class);
-        verify(sessionAnswerRepository).saveAll(answersCaptor.capture());
-        assertThat(answersCaptor.getValue()).hasSize(1);
-        assertThat(answersCaptor.getValue().get(0).getIsCorrect()).isTrue();
-    }
-
-    @Test
-    @DisplayName("clientSubmit: correctCount == totalQuestions persists all-answered, zero-wrong (boundary)")
-    void clientSubmit_correctEqualsTotal_persistsAllAnsweredZeroWrong() {
-        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
-        when(examSessionRepository.save(any(ExamSession.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        SessionResponse.SessionInfo info = sessionService.clientSubmit(
-                USER_ID, SESSION_ID, submitReq(100.0, 50, 50, 1800));
+        SessionResponse.SessionInfo info = sessionService.clientSubmit(USER_ID, SESSION_ID, request);
 
         assertThat(info.getStatus()).isEqualTo("SUBMITTED");
-        assertThat(info.getCorrectCount()).isEqualTo(50);
-        assertThat(info.getTotalQuestions()).isEqualTo(50);
+        assertThat(info.getCorrectCount()).isEqualTo(1);
+        assertThat(info.getTotalQuestions()).isEqualTo(1);
+        assertThat(info.getScore()).isEqualByComparingTo(new BigDecimal("100.00"));
 
         ArgumentCaptor<ExamSession> cap = ArgumentCaptor.forClass(ExamSession.class);
         verify(examSessionRepository).save(cap.capture());
         ExamSession saved = cap.getValue();
         assertThat(saved.getStatus()).isEqualTo(SessionStatus.SUBMITTED);
-        assertThat(saved.getCorrectCount()).isEqualTo(50);
-        assertThat(saved.getTotalQuestions()).isEqualTo(50);
+        assertThat(saved.getCorrectCount()).isEqualTo(1);
+        assertThat(saved.getTotalQuestions()).isEqualTo(1);
         assertThat(saved.getWrongCount()).isEqualTo(0);
-        assertThat(saved.getAnsweredCount()).isEqualTo(50);
+        assertThat(saved.getAnsweredCount()).isEqualTo(1);
         assertThat(saved.getSkippedCount()).isEqualTo(0);
     }
 
@@ -406,15 +470,22 @@ class SessionServiceTest {
     }
 
     @Test
-    @DisplayName("clientSubmit: correctCount > totalQuestions throws VALIDATION_FAILED")
-    void clientSubmit_correctGreaterThanTotal_throwsValidation() {
+    @DisplayName("clientSubmit: question not belonging to session exam throws BAD_REQUEST")
+    void clientSubmit_questionOutOfExam_throwsBadRequest() {
         when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(EXAM_ID))
+                .thenReturn(List.of(examQuestion(QUESTION_ID, 1)));
 
-        assertThatThrownBy(() -> sessionService.clientSubmit(
-                USER_ID, SESSION_ID, submitReq(110.0, 60, 50, 1800)))
+        SessionRequest.ClientSubmit request = submitReq(100.0, 1, 1, 1800);
+        SessionRequest.ClientSubmit.ClientSubmitAnswer answer = new SessionRequest.ClientSubmit.ClientSubmitAnswer();
+        answer.setQuestionId(9999L);
+        answer.setSelectedOptionId(301L);
+        request.setAnswers(List.of(answer));
+
+        assertThatThrownBy(() -> sessionService.clientSubmit(USER_ID, SESSION_ID, request))
                 .isInstanceOfSatisfying(AppException.class, ex -> {
                     assertThat(ex.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
-                    assertThat(ex.getCode()).isEqualTo("VALIDATION_FAILED");
+                    assertThat(ex.getCode()).isEqualTo("BAD_REQUEST");
                 });
 
         verify(examSessionRepository, never()).save(any());
@@ -638,8 +709,6 @@ class SessionServiceTest {
                 .thenReturn(List.of(examQuestion(QUESTION_ID, 1)));
         when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(QUESTION_ID))
                 .thenReturn(List.of(option(301L, QUESTION_ID, true, 1)));
-        when(questionOptionRepository.findById(301L))
-                .thenReturn(Optional.of(option(301L, QUESTION_ID, true, 1)));
         when(sessionAnswerRepository.findBySessionIdAndQuestionId(SESSION_ID, QUESTION_ID))
                 .thenReturn(Optional.empty());
         when(sessionAnswerRepository.countBySessionId(SESSION_ID)).thenReturn(1L);
@@ -677,8 +746,6 @@ class SessionServiceTest {
                         option(301L, QUESTION_ID, true, 1),
                         option(302L, QUESTION_ID, false, 2)
                 ));
-        when(questionOptionRepository.findById(302L))
-                .thenReturn(Optional.of(option(302L, QUESTION_ID, false, 2)));
         SessionAnswer previous = SessionAnswer.builder()
                 .id(9001L)
                 .sessionId(SESSION_ID)
@@ -1301,6 +1368,78 @@ class SessionServiceTest {
         Map<String, Integer> counts = sessionService.getAudioPlayCounts(SESSION_ID, USER_ID);
 
         assertThat(counts).containsEntry("q:200", 2);
+    }
+
+    @Test
+    @DisplayName("clientSubmit: unresolvable selectedOptionId scores 0 with null effectiveOptionId instead of 400")
+    void clientSubmit_unresolvableOptionId_scoresZeroAndNullsOptionId() {
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(EXAM_ID)).thenReturn(List.of(
+                examQuestion(QUESTION_ID, 1),
+                examQuestion(SECOND_QUESTION_ID, 2)
+        ));
+
+        Question mcq = question(QUESTION_ID, null);
+        Question sa = Question.builder()
+                .id(SECOND_QUESTION_ID)
+                .questionCode("SA-201")
+                .questionType(QuestionType.SHORT_ANSWER)
+                .build();
+        when(questionRepository.findById(QUESTION_ID)).thenReturn(Optional.of(mcq));
+        when(questionRepository.findById(SECOND_QUESTION_ID)).thenReturn(Optional.of(sa));
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(QUESTION_ID))
+                .thenReturn(List.of(QuestionOption.builder().id(1001L).questionId(QUESTION_ID).optionLabel("A").isCorrect(true).build()));
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(SECOND_QUESTION_ID))
+                .thenReturn(List.of(QuestionOption.builder().id(2001L).questionId(SECOND_QUESTION_ID).optionLabel("A").optionText("42").isCorrect(true).build()));
+        when(examSessionRepository.save(any(ExamSession.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        SessionRequest.ClientSubmit.ClientSubmitAnswer badMcq = new SessionRequest.ClientSubmit.ClientSubmitAnswer();
+        badMcq.setQuestionId(QUESTION_ID);
+        badMcq.setSelectedOptionId(999999L);
+
+        SessionRequest.ClientSubmit.ClientSubmitAnswer saWithFakeOpt = new SessionRequest.ClientSubmit.ClientSubmitAnswer();
+        saWithFakeOpt.setQuestionId(SECOND_QUESTION_ID);
+        saWithFakeOpt.setSelectedOptionId(SECOND_QUESTION_ID * 10 + 1);
+        saWithFakeOpt.setAnswerPayload(Map.of("value", "42"));
+
+        SessionRequest.ClientSubmit req = submitReq(0, 0, 2, 100);
+        req.setAnswers(List.of(badMcq, saWithFakeOpt));
+
+        SessionResponse.SessionInfo result = sessionService.clientSubmit(USER_ID, SESSION_ID, req);
+
+        assertThat(result.getCorrectCount()).isEqualTo(1);
+        assertThat(result.getRawScore()).isEqualByComparingTo("6.0");
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<SessionAnswer>> rowsCap = ArgumentCaptor.forClass(List.class);
+        verify(sessionAnswerRepository).saveAll(rowsCap.capture());
+        assertThat(rowsCap.getValue()).hasSize(2);
+        assertThat(rowsCap.getValue()).allSatisfy(r -> assertThat(r.getSelectedOptionId()).isNull());
+        assertThat(rowsCap.getValue().get(0).getRawPointsAwarded()).isEqualByComparingTo("0");
+        assertThat(rowsCap.getValue().get(1).getRawPointsAwarded()).isEqualByComparingTo("6.0");
+    }
+
+    @Test
+    @DisplayName("serverSubmit: computes maxRawScore by summing ExamQuestion.maxRawScore")
+    void serverSubmit_usesExamQuestionMaxRawScore() {
+        when(examSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(inProgressSession));
+        ExamQuestion eq1 = examQuestion(QUESTION_ID, 1);
+        eq1.setMaxRawScore(BigDecimal.valueOf(4.0));
+        ExamQuestion eq2 = examQuestion(SECOND_QUESTION_ID, 2);
+        eq2.setMaxRawScore(BigDecimal.valueOf(8.0));
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(EXAM_ID))
+                .thenReturn(List.of(eq1, eq2));
+        when(sessionAnswerRepository.findBySessionId(SESSION_ID)).thenReturn(List.of(
+                SessionAnswer.builder().sessionId(SESSION_ID).questionId(QUESTION_ID)
+                        .isCorrect(true).rawPointsAwarded(BigDecimal.valueOf(4.0)).build()
+        ));
+        when(examSessionRepository.save(any(ExamSession.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        SessionResponse.SessionInfo info = sessionService.serverSubmit(USER_ID, SESSION_ID);
+
+        assertThat(info.getMaxRawScore()).isEqualByComparingTo("12.0");
+        assertThat(info.getRawScore()).isEqualByComparingTo("4.0");
+        assertThat(info.getScorePercentage()).isEqualByComparingTo("33.33");
     }
 
     private void assertQuestionContentStatusRejected(SessionStatus status) {

@@ -98,6 +98,41 @@ class PracticeServiceTest {
                 .satisfies(ex -> assertThat(((AppException) ex).getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
     }
 
+    @Test
+    @DisplayName("getQuestions sanitizes MATCHING arrow targets and blanks SHORT_ANSWER option text")
+    void getQuestions_sanitizesMatchingAndShortAnswerOptions() {
+        Question matchingQ = Question.builder()
+                .id(10L).questionCode("M1").subjectId(1L).topicId(2L).subtopicId(30L)
+                .difficulty(Difficulty.MEDIUM).questionType(QuestionType.MATCHING)
+                .questionText("Match").status(QuestionStatus.APPROVED).version(1).createdBy(1L).build();
+        Question shortQ = Question.builder()
+                .id(11L).questionCode("SA1").subjectId(1L).topicId(2L).subtopicId(30L)
+                .difficulty(Difficulty.MEDIUM).questionType(QuestionType.SHORT_ANSWER)
+                .questionText("Solve").status(QuestionStatus.APPROVED).version(1).createdBy(1L).build();
+
+        when(questionRepository.findPracticeQuestions(eq(30L), eq(null), eq(Difficulty.MEDIUM), any(), eq(PageRequest.of(0, 5))))
+                .thenReturn(List.of(matchingQ, shortQ));
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(10L))
+                .thenReturn(List.of(
+                        QuestionOption.builder().id(101L).questionId(10L).optionLabel("1")
+                                .optionText("Mục 1 ⇄ C").displayOrder(1).build(),
+                        QuestionOption.builder().id(102L).questionId(10L).optionLabel("2")
+                                .optionText("Mục 2 -> A").displayOrder(2).build()
+                ));
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(11L))
+                .thenReturn(List.of(
+                        QuestionOption.builder().id(111L).questionId(11L).optionLabel("A")
+                                .optionText("12.5").isCorrect(true).displayOrder(1).build()
+                ));
+
+        List<SessionQuestionContentResponse> result = practiceService.getQuestions(30L, null, Difficulty.MEDIUM, 5);
+
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).getOptions()).extracting("content")
+                .containsExactly("Mục 1", "Mục 2");
+        assertThat(result.get(1).getOptions().get(0).getContent()).isNull();
+    }
+
     private Question question(Long id, QuestionStatus status, Difficulty difficulty) {
         return Question.builder()
                 .id(id)

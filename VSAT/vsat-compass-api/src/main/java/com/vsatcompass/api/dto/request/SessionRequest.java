@@ -46,12 +46,10 @@ public class SessionRequest {
 
     @Data
     public static class ClientSubmit {
-        @NotNull(message = "score không được để trống")
         @DecimalMin(value = "0.0", message = "score phải ≥ 0")
         @DecimalMax(value = "100.0", message = "score phải ≤ 100")
         private Double score;
 
-        @NotNull(message = "correctCount không được để trống")
         @Min(value = 0, message = "correctCount phải ≥ 0")
         private Integer correctCount;
 

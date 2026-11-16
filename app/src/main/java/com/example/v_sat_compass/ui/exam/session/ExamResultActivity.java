@@ -42,17 +42,26 @@ public class ExamResultActivity extends AppCompatActivity {
         int timeSpent    = getIntent().getIntExtra("time_spent", 0);
         String examSubject = getIntent().getStringExtra("exam_subject");
         boolean saveFailed = getIntent().getBooleanExtra("history_save_failed", false);
+        boolean scorePending = getIntent().getBooleanExtra("score_pending", false);
 
         examId             = getIntent().getLongExtra("exam_id", 0);
         selectedAnswersJson = getIntent().getStringExtra("selected_answers_json");
 
-        // Dùng ScoreConstants.PERCENT_TO_VSAT thay vì magic number 12
-        int displayScore = (int) (score * ScoreConstants.PERCENT_TO_VSAT);
-        binding.tvScore.setText(String.valueOf(displayScore));
-        binding.tvScoreMax.setText("/" + ScoreConstants.VSAT_MAX_SCORE);
-        binding.tvCorrectCount.setText(correct + "/" + total);
-
-        binding.progressScore.setProgress((int) score);
+        if (scorePending) {
+            binding.tvScore.setText("--");
+            binding.tvScoreMax.setText("Chờ chấm");
+            binding.tvCorrectCount.setText("-/" + total);
+            binding.progressScore.setProgress(0);
+            binding.btnPredictAdmission.setEnabled(false);
+            binding.btnPredictAdmission.setAlpha(0.5f);
+        } else {
+            // Dùng ScoreConstants.PERCENT_TO_VSAT thay vì magic number 12
+            int displayScore = (int) (score * ScoreConstants.PERCENT_TO_VSAT);
+            binding.tvScore.setText(String.valueOf(displayScore));
+            binding.tvScoreMax.setText("/" + ScoreConstants.VSAT_MAX_SCORE);
+            binding.tvCorrectCount.setText(correct + "/" + total);
+            binding.progressScore.setProgress((int) score);
+        }
 
         int minutes = timeSpent / 60;
         int seconds = timeSpent % 60;
@@ -64,7 +73,11 @@ public class ExamResultActivity extends AppCompatActivity {
         binding.btnViewDetail.setOnClickListener(v -> openReview());
         binding.btnPredictAdmission.setOnClickListener(v -> openAdmissionPredictor(score));
 
-        renderSubjectResult(examSubject, correct, total, (int) Math.round(score));
+        if (scorePending) {
+            renderPendingScoreBanner(examSubject, total);
+        } else {
+            renderSubjectResult(examSubject, correct, total, (int) Math.round(score));
+        }
         loadWeakTopics();
 
         // Thông báo khi lưu lịch sử thất bại (storage đầy, permission…)
@@ -89,6 +102,17 @@ public class ExamResultActivity extends AppCompatActivity {
         intent.putExtra(AdmissionPredictorActivity.EXTRA_INITIAL_SCORE, estimated450);
         intent.putExtra("vsat_score", estimated450);
         startActivity(intent);
+    }
+
+    private void renderPendingScoreBanner(String subject, int total) {
+        binding.llSubjectResults.removeAllViews();
+        TextView pending = new TextView(this);
+        String prefix = subject != null && !subject.trim().isEmpty() ? subject + " (" + total + " câu): " : "";
+        pending.setText(prefix + "Đã nộp, chờ đồng bộ để chấm điểm");
+        pending.setTextColor(ContextCompat.getColor(this, R.color.primary));
+        pending.setTextSize(15);
+        pending.setTypeface(null, android.graphics.Typeface.BOLD);
+        binding.llSubjectResults.addView(pending);
     }
 
     private void renderSubjectResult(String subject, int correct, int total, int percentage) {

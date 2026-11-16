@@ -1,13 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import type { ExamDetail, ExamQuestionDetail } from '../../types/exam';
+import {
+  VSAT_PARTS,
+  VSAT_PART_COUNTS,
+  VSAT_TOTAL_QUESTIONS,
+  VSAT_TOTAL_RAW_SCORE,
+  getExpectedVsatDuration
+} from '../../types/exam';
 import { fetchExamQuestions } from '../../services/api';
 import { MathView } from '../../components/MathView';
 
 interface Step3Props {
   exam: ExamDetail;
+  onPublish?: () => void;
 }
 
-export const Step3Preview: React.FC<Step3Props> = ({ exam }) => {
+export const Step3Preview: React.FC<Step3Props> = ({ exam, onPublish }) => {
   const [questions, setQuestions] = useState<ExamQuestionDetail[]>([]);
 
   useEffect(() => {
@@ -18,34 +26,82 @@ export const Step3Preview: React.FC<Step3Props> = ({ exam }) => {
 
   const hasRealQuestions = questions.length > 0;
 
-  // Compute 7 criteria dynamically
-  const qCount = hasRealQuestions ? questions.length : 25;
-  const part1Count = questions.filter(q => q.questionType === 'SINGLE_CHOICE').length;
-  const part2Count = questions.filter(q => q.questionType === 'TRUE_FALSE').length;
+  // Compute V-SAT criteria dynamically from real question list
+  const isCountValid = questions.length === VSAT_TOTAL_QUESTIONS;
+  const part1Count = questions.filter(q => q.questionType === 'TRUE_FALSE').length;
+  const part2Count = questions.filter(q => q.questionType === 'SINGLE_CHOICE').length;
   const part3Count = questions.filter(q => q.questionType === 'MATCHING').length;
   const part4Count = questions.filter(q => q.questionType === 'SHORT_ANSWER').length;
 
-  const totalRawScore = hasRealQuestions
-    ? (part1Count * 4.0) + (part2Count * 6.0) + (part3Count * 9.0) + (part4Count * 8.75)
-    : 150.0;
+  const isStructureValid = isCountValid &&
+    part1Count === VSAT_PART_COUNTS.TRUE_FALSE &&
+    part2Count === VSAT_PART_COUNTS.SINGLE_CHOICE &&
+    part3Count === VSAT_PART_COUNTS.MATCHING &&
+    part4Count === VSAT_PART_COUNTS.SHORT_ANSWER;
 
-  const isCountValid = qCount === 25;
-  const isScoreValid = Math.abs(totalRawScore - 150.0) < 0.1 || !hasRealQuestions;
-  const isStructureValid = !hasRealQuestions || (part1Count === 10 && part2Count === 8 && part3Count === 3 && part4Count === 4);
-  const uniqueCount = new Set(questions.map(q => q.questionId || q.id)).size;
-  const isUnique = !hasRealQuestions || uniqueCount === questions.length;
+  const partIndices = questions.map(q => VSAT_PARTS.indexOf(q.questionType as any));
+  const isOrderValid = isCountValid &&
+    partIndices.every((idx, i) => idx >= 0 && (i === 0 || idx >= partIndices[i - 1]));
+
+  const expectedDuration = getExpectedVsatDuration(exam.subjectId, exam.subjectName, exam.examCode);
+  const isDurationValid = exam.durationMinutes === expectedDuration;
+
+  const totalRawScore = questions.reduce((sum, q) => sum + (Number(q.maxRawScore) || 6.0), 0);
+  const isScoreValid = isCountValid && Math.abs(totalRawScore - VSAT_TOTAL_RAW_SCORE) < 0.1;
+
+  const isStatusValid = isCountValid &&
+    questions.every(q => !q.status || q.status === 'APPROVED' || q.status === 'PUBLISHED');
+
+  const uniqueIds = new Set(questions.map(q => q.questionId || q.id));
+  const isUnique = isCountValid && uniqueIds.size === VSAT_TOTAL_QUESTIONS;
 
   const criteria = [
-    { label: `Số lượng câu hỏi: ${isCountValid ? 'Đủ 25 câu' : `${qCount}/25 câu`}`, ok: isCountValid },
-    { label: `Tổng điểm thô: ${isScoreValid ? 'Chuẩn 150 điểm' : `${totalRawScore.toFixed(1)} / 150 điểm`}`, ok: isScoreValid },
-    { label: `Cấu trúc chuẩn V-SAT (10 MCQ, 8 TF, 3 Matching, 4 SA): ${isStructureValid ? 'Đạt chuẩn' : 'Chưa cân đối'}`, ok: isStructureValid },
-    { label: '100% câu hỏi trạng thái APPROVED', ok: true },
-    { label: 'Công thức toán KaTeX hợp lệ: 0 lỗi cú pháp', ok: true },
-    { label: 'Đáp án & Phương án không bị khuyết', ok: true },
-    { label: `Không có câu hỏi trùng lặp: ${isUnique ? 'Đạt chuẩn' : 'Có câu trùng'}`, ok: isUnique }
+    {
+      id: 'count',
+      label: `Số lượng câu hỏi: ${isCountValid ? 'Đủ 25 câu' : `${questions.length}/25 câu`}`,
+      ok: isCountValid,
+      reason: `Chưa đủ 25 câu (hiện có ${questions.length}/25 câu)`
+    },
+    {
+      id: 'structure',
+      label: `Cấu trúc tỷ lệ 9/6/5/5 (9 Đ/S, 6 Trắc nghiệm, 5 Ghép hợp, 5 Điền số): ${isStructureValid ? 'Đạt chuẩn' : `Chưa đạt (${part1Count} Đ/S, ${part2Count} TN, ${part3Count} Ghép, ${part4Count} Điền)`}`,
+      ok: isStructureValid,
+      reason: `Cấu trúc chưa đạt chuẩn 9/6/5/5 (hiện có ${part1Count}/${part2Count}/${part3Count}/${part4Count})`
+    },
+    {
+      id: 'order',
+      label: `Thứ tự các phần (Phần I Đ/S → Phần II Trắc nghiệm → Phần III Ghép hợp → Phần IV Điền số): ${isOrderValid ? 'Đúng thứ tự' : 'Sai thứ tự phần'}`,
+      ok: isOrderValid,
+      reason: 'Thứ tự các phần chưa đúng chuẩn (Phần I Đ/S → Phần II TN → Phần III Ghép → Phần IV Điền)'
+    },
+    {
+      id: 'duration',
+      label: `Thời lượng làm bài: ${exam.durationMinutes} phút (${isDurationValid ? 'Đúng chuẩn' : `Chưa đúng, môn này chuẩn ${expectedDuration} phút`})`,
+      ok: isDurationValid,
+      reason: `Thời lượng ${exam.durationMinutes} phút chưa đúng chuẩn (${expectedDuration} phút)`
+    },
+    {
+      id: 'score',
+      label: `Tổng điểm thô: ${isScoreValid ? 'Chuẩn 150 điểm' : `${totalRawScore.toFixed(1)} / 150 điểm`}`,
+      ok: isScoreValid,
+      reason: `Tổng điểm thô ${totalRawScore.toFixed(1)}đ chưa đạt 150 điểm`
+    },
+    {
+      id: 'status',
+      label: `100% câu hỏi trạng thái APPROVED: ${isStatusValid ? 'Đạt chuẩn' : 'Có câu chưa duyệt hoặc thiếu câu'}`,
+      ok: isStatusValid,
+      reason: 'Có câu hỏi chưa ở trạng thái duyệt APPROVED'
+    },
+    {
+      id: 'unique',
+      label: `Không có câu hỏi trùng lặp: ${isUnique ? 'Đạt chuẩn' : 'Có câu trùng lặp hoặc thiếu câu'}`,
+      ok: isUnique,
+      reason: 'Có câu hỏi bị trùng lặp'
+    }
   ];
 
   const allPassed = criteria.every(c => c.ok);
+  const failedCriteria = criteria.filter(c => !c.ok);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-lg">
@@ -102,8 +158,8 @@ export const Step3Preview: React.FC<Step3Props> = ({ exam }) => {
             {/* Section 1: Đúng Sai Demo */}
             <div className="space-y-3">
               <div className="p-2.5 rounded-lg bg-cyan-50 border border-cyan-200 flex justify-between items-center text-cyan-900 font-bold text-body-sm">
-                <span>PHẦN I. CÂU HỎI ĐÚNG / SAI (Gồm 8 câu hỏi từ Câu 1 đến Câu 8)</span>
-                <span>48 ĐIỂM</span>
+                <span>PHẦN I. CÂU HỎI ĐÚNG / SAI (Gồm 9 câu hỏi từ Câu 1 đến Câu 9)</span>
+                <span>54 ĐIỂM</span>
               </div>
 
               <div className="p-space-md rounded-lg bg-surface-container-low border border-outline-variant/30 space-y-2">
@@ -138,13 +194,13 @@ export const Step3Preview: React.FC<Step3Props> = ({ exam }) => {
             {/* Section 2: MCQ Demo */}
             <div className="space-y-3">
               <div className="p-2.5 rounded-lg bg-indigo-50 border border-indigo-200 flex justify-between items-center text-indigo-900 font-bold text-body-sm">
-                <span>PHẦN II. TRẮC NGHIỆM 4 LỰA CHỌN (Gồm 10 câu hỏi từ Câu 9 đến Câu 18)</span>
-                <span>40 ĐIỂM</span>
+                <span>PHẦN II. TRẮC NGHIỆM 4 LỰA CHỌN (Gồm 6 câu hỏi từ Câu 10 đến Câu 15)</span>
+                <span>36 ĐIỂM</span>
               </div>
 
               <div className="p-space-md rounded-lg bg-surface-container-low border border-outline-variant/30 space-y-2">
                 <div className="flex items-center justify-between text-[11px] text-outline font-mono">
-                  <span>Câu 9 (MATH_MCQ_001) · Điểm tối đa: 4.0đ</span>
+                  <span>Câu 10 (MATH_MCQ_001) · Điểm tối đa: 6.0đ</span>
                   <span className="text-primary font-bold">Thông hiểu</span>
                 </div>
                 <div className="text-body-md font-medium text-on-surface">
@@ -170,13 +226,13 @@ export const Step3Preview: React.FC<Step3Props> = ({ exam }) => {
             {/* Section 3: Matching Demo */}
             <div className="space-y-3">
               <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-200 flex justify-between items-center text-amber-900 font-bold text-body-sm">
-                <span>PHẦN III. GHÉP HỢP (Gồm 3 câu hỏi từ Câu 19 đến Câu 21)</span>
-                <span>27 ĐIỂM</span>
+                <span>PHẦN III. GHÉP HỢP (Gồm 5 câu hỏi từ Câu 16 đến Câu 20)</span>
+                <span>30 ĐIỂM</span>
               </div>
 
               <div className="p-space-md rounded-lg bg-surface-container-low border border-outline-variant/30 space-y-2">
                 <div className="flex items-center justify-between text-[11px] text-outline font-mono">
-                  <span>Câu 19 (MATH_MATCH_001) · Điểm tối đa: 9.0đ</span>
+                  <span>Câu 16 (MATH_MATCH_001) · Điểm tối đa: 6.0đ</span>
                   <span className="text-primary font-bold">Vận dụng</span>
                 </div>
                 <div className="text-body-md font-medium text-on-surface">
@@ -206,13 +262,13 @@ export const Step3Preview: React.FC<Step3Props> = ({ exam }) => {
             {/* Section 4: Short Answer Demo */}
             <div className="space-y-3">
               <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 flex justify-between items-center text-emerald-900 font-bold text-body-sm">
-                <span>PHẦN IV. ĐIỀN SỐ / TRẢ LỜI NGẮN (Gồm 4 câu hỏi từ Câu 22 đến Câu 25)</span>
-                <span>35 ĐIỂM</span>
+                <span>PHẦN IV. ĐIỀN SỐ / TRẢ LỜI NGẮN (Gồm 5 câu hỏi từ Câu 21 đến Câu 25)</span>
+                <span>30 ĐIỂM</span>
               </div>
 
               <div className="p-space-md rounded-lg bg-surface-container-low border border-outline-variant/30 space-y-2">
                 <div className="flex items-center justify-between text-[11px] text-outline font-mono">
-                  <span>Câu 22 (MATH_SA_001) · Điểm tối đa: 8.75đ</span>
+                  <span>Câu 21 (MATH_SA_001) · Điểm tối đa: 6.0đ</span>
                   <span className="text-primary font-bold">Vận dụng cao</span>
                 </div>
                 <div className="text-body-md font-medium text-on-surface">
@@ -259,6 +315,30 @@ export const Step3Preview: React.FC<Step3Props> = ({ exam }) => {
               ? 'Sẵn sàng chuyển sang Bước 4 để sinh mã đề hoán vị và xuất bản.'
               : 'Vui lòng kiểm tra lại cấu trúc các phần thi.'}
           </div>
+        </div>
+
+        {/* Nút xuất bản (bị khóa kèm lý do khi chưa đạt kiểm định) */}
+        <div className="pt-2 border-t border-outline-variant/20 space-y-2">
+          <button
+            type="button"
+            disabled={!allPassed}
+            aria-describedby={!allPassed ? 'step3-publish-reason' : undefined}
+            onClick={onPublish}
+            className="w-full h-11 rounded-lg bg-primary hover:bg-tertiary text-on-primary font-label-md font-bold flex items-center justify-center gap-2 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span className="material-symbols-outlined text-[20px]">publish</span>
+            <span>XUẤT BẢN ĐỀ THI V-SAT</span>
+          </button>
+          {!allPassed && (
+            <div id="step3-publish-reason" className="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 p-2.5 rounded-lg space-y-1">
+              <div className="font-semibold">Nút xuất bản bị khóa do chưa đạt các tiêu chí:</div>
+              <ul className="list-disc list-inside space-y-0.5 text-[11px]">
+                {failedCriteria.map(c => (
+                  <li key={c.id}>{c.reason}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
     </div>

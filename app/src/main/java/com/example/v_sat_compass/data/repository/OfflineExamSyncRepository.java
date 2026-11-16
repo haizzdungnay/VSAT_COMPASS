@@ -275,11 +275,12 @@ public class OfflineExamSyncRepository {
     }
 
     /**
-     * True ONLY for unprocessable entity (422 invalid payload format).
-     * 400, 404, 401, 403 MUST remain pending to protect student submissions against temporary server bugs/unlisting.
+     * True for unrecoverable 4xx client errors (all 4xx except 401, 403, 408, 429).
+     * 404 and 409 are handled in syncOne before this check.
      */
     boolean isUnrecoverableClientError(int code) {
-        return code == 422;
+        return code >= 400 && code < 500
+                && code != 401 && code != 403 && code != 408 && code != 429;
     }
 
     private List<ClientSubmitRequest.AnswerItem> toClientAnswers(List<Answer> answers) {
@@ -290,12 +291,13 @@ public class OfflineExamSyncRepository {
                     answer.questionId,
                     answer.selectedOptionId,
                     answer.questionOrder,
-                    answer.bookmarked));
+                    answer.bookmarked,
+                    answer.answerPayload));
         }
         return result;
     }
 
-    private List<QueueItem> loadQueueSync(Context context) {
+    List<QueueItem> loadQueueSync(Context context) {
         File file = new File(context.getFilesDir(), QUEUE_FILE);
         if (!file.exists()) return new ArrayList<>();
         try (FileReader reader = new FileReader(file)) {
@@ -303,8 +305,22 @@ public class OfflineExamSyncRepository {
             List<QueueItem> queue = gson.fromJson(reader, type);
             return queue != null ? queue : new ArrayList<>();
         } catch (IOException | com.google.gson.JsonSyntaxException e) {
-            Log.w(TAG, "loadQueueSync failed", e);
+            Log.e(TAG, "loadQueueSync failed, quarantining corrupt queue file", e);
+            quarantineCorruptQueueFile(context, file);
             return new ArrayList<>();
+        }
+    }
+
+    private void quarantineCorruptQueueFile(Context context, File file) {
+        if (file == null || !file.exists()) return;
+        File quarantine = new File(context.getFilesDir(),
+                QUEUE_FILE + ".corrupt-" + System.currentTimeMillis());
+        try {
+            java.nio.file.Files.move(file.toPath(), quarantine.toPath(),
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            Log.e(TAG, "Quarantined corrupt queue file to " + quarantine.getName());
+        } catch (IOException moveEx) {
+            Log.e(TAG, "Failed to quarantine corrupt queue file " + file.getName(), moveEx);
         }
     }
 
@@ -342,8 +358,8 @@ public class OfflineExamSyncRepository {
 
     public static QueueItem item(
             long examId,
-            double score,
-            int correctCount,
+            Double score,
+            Integer correctCount,
             int totalQuestions,
             int timeSpentSeconds,
             List<Answer> answers
@@ -360,11 +376,22 @@ public class OfflineExamSyncRepository {
     }
 
     public static Answer answer(long questionId, Long selectedOptionId, Integer questionOrder, boolean bookmarked) {
+        return answer(questionId, selectedOptionId, questionOrder, bookmarked, null);
+    }
+
+    public static Answer answer(
+            long questionId,
+            Long selectedOptionId,
+            Integer questionOrder,
+            boolean bookmarked,
+            Map<String, Object> answerPayload
+    ) {
         Answer answer = new Answer();
         answer.questionId = questionId;
         answer.selectedOptionId = selectedOptionId;
         answer.questionOrder = questionOrder;
         answer.bookmarked = bookmarked;
+        answer.answerPayload = answerPayload;
         return answer;
     }
 
@@ -372,8 +399,8 @@ public class OfflineExamSyncRepository {
         String localAttemptId;
         Long remoteSessionId;
         long examId;
-        double score;
-        int correctCount;
+        Double score;
+        Integer correctCount;
         int totalQuestions;
         int timeSpentSeconds;
         int resetAttempts;
@@ -385,6 +412,7 @@ public class OfflineExamSyncRepository {
         Long selectedOptionId;
         Integer questionOrder;
         boolean bookmarked;
+        Map<String, Object> answerPayload;
     }
 
     private static class SyncResult {

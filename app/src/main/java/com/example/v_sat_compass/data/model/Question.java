@@ -31,7 +31,13 @@ public class Question {
     @SerializedName("topic_name")
     private String topicName;
 
+    @SerializedName(value = "maxRawScore", alternate = {"max_raw_score"})
+    private Double maxRawScore;
+
     private List<Option> options;
+
+    @SerializedName(value = "matchingChoices", alternate = {"matching_choices"})
+    private List<MatchingChoice> matchingChoices;
 
     public Long getId() { return id; }
     public String getQuestionCode() { return questionCode; }
@@ -45,7 +51,17 @@ public class Question {
     public String getExplanation() { return explanation; }
     public String getSubjectName() { return subjectName; }
     public String getTopicName() { return topicName; }
+    public Double getMaxRawScore() { return maxRawScore; }
     public List<Option> getOptions() { return options; }
+    public List<MatchingChoice> getMatchingChoices() { return matchingChoices; }
+
+    public static class MatchingChoice {
+        private String key;
+        private String text;
+
+        public String getKey() { return key; }
+        public String getText() { return text; }
+    }
 
     public static class Option {
         private Long id;
@@ -56,16 +72,12 @@ public class Question {
         @SerializedName("option_text")
         private String optionText;
 
-        @SerializedName("is_correct")
-        private boolean isCorrect;
-
         @SerializedName("display_order")
         private int displayOrder;
 
         public Long getId() { return id; }
         public String getOptionLabel() { return optionLabel; }
         public String getOptionText() { return optionText; }
-        public boolean isCorrect() { return isCorrect; }
         public int getDisplayOrder() { return displayOrder; }
     }
 }

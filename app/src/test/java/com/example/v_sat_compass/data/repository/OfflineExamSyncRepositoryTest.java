@@ -42,20 +42,38 @@ public class OfflineExamSyncRepositoryTest {
 
     @Test
     public void unrecoverableClientError_classification_protectsStudentOfflineData() {
-        // Fatal malformed payload error
+        // Non-retryable 4xx go to DLQ (all 4xx except 401, 403, 408, 429)
         assertTrue(repository.isUnrecoverableClientError(422));
+        assertTrue(repository.isUnrecoverableClientError(400));
+        assertTrue(repository.isUnrecoverableClientError(404));
 
-        // Critical: 400, 404, 401, 403 MUST NOT be treated as unrecoverable (protects student offline submissions)
-        assertFalse(repository.isUnrecoverableClientError(400));
-        assertFalse(repository.isUnrecoverableClientError(404));
+        // Auth, timeout, and rate-limit errors MUST remain pending for retry
         assertFalse(repository.isUnrecoverableClientError(401));
         assertFalse(repository.isUnrecoverableClientError(403));
-
-        // Transient errors MUST NOT be dropped
         assertFalse(repository.isUnrecoverableClientError(408));
         assertFalse(repository.isUnrecoverableClientError(429));
+
+        // 5xx server errors MUST NOT be dropped
         assertFalse(repository.isUnrecoverableClientError(500));
         assertFalse(repository.isUnrecoverableClientError(503));
+    }
+
+    @Test
+    public void loadQueueSync_corruptJson_quarantinesFileAndStartsFresh() throws Exception {
+        File queueFile = new File(fakeFilesDir, "offline_exam_result_queue.json");
+        try (java.io.FileWriter writer = new java.io.FileWriter(queueFile)) {
+            writer.write("{corrupt-json-content");
+        }
+        assertTrue(queueFile.exists());
+
+        List<OfflineExamSyncRepository.QueueItem> loaded = repository.loadQueueSync(fakeContext);
+        assertTrue(loaded.isEmpty());
+        assertFalse("Original corrupt queue file must be moved away", queueFile.exists());
+
+        File[] quarantined = fakeFilesDir.listFiles((dir, name) ->
+                name.startsWith("offline_exam_result_queue.json.corrupt-"));
+        assertNotNull(quarantined);
+        assertEquals(1, quarantined.length);
     }
 
     @Test
@@ -82,5 +100,32 @@ public class OfflineExamSyncRepositoryTest {
     public void syncPendingSync_whenOffline_returnsFalseSafely() {
         boolean synced = repository.syncPendingSync(fakeContext);
         assertFalse("When offline, syncPendingSync must return false without attempting network calls", synced);
+    }
+
+    @Test
+    public void deadLetterQueue_preservesPendingScoreAndAnswerPayload() {
+        java.util.Map<String, Object> tfPayload = new java.util.HashMap<>();
+        tfPayload.put("a", true);
+        tfPayload.put("b", false);
+
+        OfflineExamSyncRepository.QueueItem item = OfflineExamSyncRepository.item(
+                202L,
+                null,
+                null,
+                25,
+                900,
+                Collections.singletonList(
+                        OfflineExamSyncRepository.answer(2001L, 7001L, 1, true, tfPayload)));
+
+        assertTrue(repository.moveToDeadLetterSync(fakeContext, item, "Preserve payload"));
+        List<OfflineExamSyncRepository.QueueItem> dlq = repository.loadDeadLetterSync(fakeContext);
+        assertEquals(1, dlq.size());
+        assertNull(dlq.get(0).score);
+        assertNull(dlq.get(0).correctCount);
+        assertNotNull(dlq.get(0).answers);
+        assertEquals(1, dlq.get(0).answers.size());
+        assertNotNull(dlq.get(0).answers.get(0).answerPayload);
+        assertEquals(Boolean.TRUE, dlq.get(0).answers.get(0).answerPayload.get("a"));
+        assertEquals(Boolean.FALSE, dlq.get(0).answers.get(0).answerPayload.get("b"));
     }
 }

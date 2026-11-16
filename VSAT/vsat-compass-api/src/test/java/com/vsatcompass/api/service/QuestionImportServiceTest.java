@@ -1,22 +1,32 @@
 package com.vsatcompass.api.service;
 
+import com.vsatcompass.api.dto.request.SessionRequest;
 import com.vsatcompass.api.dto.response.QuestionImportResultResponse;
+import com.vsatcompass.api.dto.response.SessionResponse;
+import com.vsatcompass.api.entity.ExamQuestion;
+import com.vsatcompass.api.entity.ExamSession;
 import com.vsatcompass.api.entity.Question;
 import com.vsatcompass.api.entity.QuestionGroup;
+import com.vsatcompass.api.entity.QuestionMatchingChoice;
 import com.vsatcompass.api.entity.QuestionOption;
 import com.vsatcompass.api.entity.Subject;
 import com.vsatcompass.api.entity.Topic;
 import com.vsatcompass.api.entity.enums.Difficulty;
+import com.vsatcompass.api.entity.enums.QuestionStatus;
 import com.vsatcompass.api.entity.enums.QuestionType;
+import com.vsatcompass.api.entity.enums.SessionMode;
+import com.vsatcompass.api.entity.enums.SessionStatus;
 import com.vsatcompass.api.exception.AppException;
 import com.vsatcompass.api.repository.*;
 import com.vsatcompass.api.service.impl.QuestionImportServiceImpl;
+import com.vsatcompass.api.service.impl.SessionServiceImpl;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -25,6 +35,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -42,6 +53,7 @@ class QuestionImportServiceTest {
     @Mock QuestionGroupRepository questionGroupRepository;
     @Mock QuestionRepository questionRepository;
     @Mock QuestionOptionRepository questionOptionRepository;
+    @Mock QuestionMatchingChoiceRepository questionMatchingChoiceRepository;
 
     @InjectMocks QuestionImportServiceImpl importService;
 
@@ -328,12 +340,12 @@ class QuestionImportServiceTest {
                 [TYPE] MATCHING
                 [DIFF] VD
                 [STEM] Ghép nối các mệnh đề tương ứng sau
-                [A] 1-a
-                [B] 2-b
-                [C] 3-c
-                [D] 4-d
-                [KEY] A,B
-                [EXPLANATION] Ghép cặp theo định nghĩa hàm số
+                [A] Hà Nội
+                [B] Huế
+                [C] Đà Nẵng
+                [D] Sài Gòn
+                [KEY] 1-C,2-A,3-D,4-B
+                [EXPLANATION] Ghép cặp theo địa danh
                 """;
 
         MockMultipartFile file = new MockMultipartFile(
@@ -351,5 +363,269 @@ class QuestionImportServiceTest {
         assertThat(result.getValidCount()).isEqualTo(1);
         assertThat(result.getItems().get(0).getQuestionType()).isEqualTo(QuestionType.MATCHING);
         assertThat(result.getItems().get(0).getDifficulty()).isEqualTo(Difficulty.HARD);
+    }
+
+    @Test
+    @DisplayName("importQuestions: rejects unknown type, MCQ multi-key, and TF 3 options (VF-D02/D03/D04)")
+    void importQuestions_vsatValidationErrors() {
+        String json = """
+                [
+                  {
+                    "subject": "MATH", "topic": "1", "type": "ABC",
+                    "questionText": "Unknown type",
+                    "options": ["A", "B", "C", "D"], "correctAnswer": "A"
+                  },
+                  {
+                    "subject": "MATH", "topic": "1", "type": "SINGLE_CHOICE",
+                    "questionText": "MCQ multi key",
+                    "options": ["A", "B", "C", "D"], "correctAnswer": "A,B"
+                  },
+                  {
+                    "subject": "MATH", "topic": "1", "type": "TRUE_FALSE",
+                    "questionText": "TF 3 options",
+                    "options": ["M1", "M2", "M3"], "correctAnswer": "A,C"
+                  }
+                ]
+                """;
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "bad.json", "application/json", json.getBytes(StandardCharsets.UTF_8));
+
+        Subject math = Subject.builder().id(1L).code("MATH").name("Toán").build();
+        Topic topic = Topic.builder().id(1L).subjectId(1L).code("MATH_ALG").name("Đại số").build();
+        when(subjectRepository.findByCode("MATH")).thenReturn(Optional.of(math));
+        when(topicRepository.findById(1L)).thenReturn(Optional.of(topic));
+
+        QuestionImportResultResponse result = importService.importQuestions(file, true, 99L);
+
+        assertThat(result.getTotalRows()).isEqualTo(3);
+        assertThat(result.getValidCount()).isZero();
+        assertThat(result.getErrorCount()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("importQuestions: commit saves PENDING_REVIEW, SHORT_ANSWER option, and MATCHING options + choices")
+    void importQuestions_commit_vsatTypesAndPendingReview() {
+        String json = """
+                [
+                  {
+                    "subject": "MATH", "topic": "1", "type": "TRUE_FALSE",
+                    "questionText": "TF question",
+                    "options": ["M1", "M2", "M3", "M4"], "correctAnswer": "A,C"
+                  },
+                  {
+                    "subject": "MATH", "topic": "1", "type": "SHORT_ANSWER",
+                    "questionText": "SA question",
+                    "answer": "12.5"
+                  },
+                  {
+                    "subject": "MATH", "topic": "1", "type": "MATCHING",
+                    "questionText": "Match question",
+                    "options": ["Ha Noi", "Hue", "Da Nang", "Sai Gon"],
+                    "correctAnswer": "1-C,2-A,3-D,4-B"
+                  }
+                ]
+                """;
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "vsat.json", "application/json", json.getBytes(StandardCharsets.UTF_8));
+
+        Subject math = Subject.builder().id(1L).code("MATH").name("Toán").build();
+        Topic topic = Topic.builder().id(1L).subjectId(1L).code("MATH_ALG").name("Đại số").build();
+        when(subjectRepository.findByCode("MATH")).thenReturn(Optional.of(math));
+        when(topicRepository.findById(1L)).thenReturn(Optional.of(topic));
+        when(questionRepository.save(any(Question.class))).thenAnswer(inv -> {
+            Question q = inv.getArgument(0);
+            q.setId(q.getQuestionType().ordinal() + 100L);
+            return q;
+        });
+        when(questionOptionRepository.save(any(QuestionOption.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(questionMatchingChoiceRepository.save(any(QuestionMatchingChoice.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        QuestionImportResultResponse result = importService.importQuestions(file, false, 99L);
+
+        assertThat(result.getErrorCount()).isZero();
+        assertThat(result.getImportedQuestions()).isEqualTo(3);
+
+        ArgumentCaptor<Question> qCap = ArgumentCaptor.forClass(Question.class);
+        verify(questionRepository, times(3)).save(qCap.capture());
+        assertThat(qCap.getAllValues()).allSatisfy(q -> assertThat(q.getStatus()).isEqualTo(QuestionStatus.PENDING_REVIEW));
+
+        ArgumentCaptor<QuestionOption> optCap = ArgumentCaptor.forClass(QuestionOption.class);
+        verify(questionOptionRepository, times(9)).save(optCap.capture());
+        List<QuestionOption> savedOpts = optCap.getAllValues();
+        assertThat(savedOpts).anySatisfy(o -> {
+            assertThat(o.getOptionLabel()).isEqualTo("A");
+            assertThat(o.getOptionText()).isEqualTo("12.5");
+            assertThat(o.getIsCorrect()).isTrue();
+        });
+        assertThat(savedOpts).anySatisfy(o -> {
+            assertThat(o.getOptionLabel()).isEqualTo("1");
+            assertThat(o.getOptionText()).isEqualTo("Mục 1 ⇄ C");
+            assertThat(o.getIsCorrect()).isTrue();
+        });
+
+        ArgumentCaptor<QuestionMatchingChoice> choiceCap = ArgumentCaptor.forClass(QuestionMatchingChoice.class);
+        verify(questionMatchingChoiceRepository, times(4)).save(choiceCap.capture());
+        assertThat(choiceCap.getAllValues()).extracting(QuestionMatchingChoice::getChoiceKey)
+                .containsExactly("A", "B", "C", "D");
+    }
+
+    @Test
+    @DisplayName("Imported MATCHING and SHORT_ANSWER questions score 6.0 pts each in SessionService")
+    void importedMatchingAndShortAnswer_scoreSixPointsInSession() {
+        String json = """
+                [
+                  {
+                    "subject": "MATH",
+                    "topicId": 1,
+                    "difficulty": "MEDIUM",
+                    "questionType": "MATCHING",
+                    "questionText": "Ghep cap tinh thanh",
+                    "options": ["Ha Noi", "Hue", "Da Nang", "Can Tho"],
+                    "correctAnswer": "1-C,2-A,3-D,4-B"
+                  },
+                  {
+                    "subject": "MATH",
+                    "topicId": 1,
+                    "difficulty": "MEDIUM",
+                    "questionType": "SHORT_ANSWER",
+                    "questionText": "Tinh 25 / 2 = ?",
+                    "correctAnswer": "12.5"
+                  }
+                ]
+                """;
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "vsat.json", "application/json", json.getBytes(StandardCharsets.UTF_8));
+
+        Subject math = Subject.builder().id(1L).code("MATH").name("Toán").build();
+        Topic topic = Topic.builder().id(1L).subjectId(1L).code("MATH_ALG").name("Đại số").build();
+        when(subjectRepository.findByCode("MATH")).thenReturn(Optional.of(math));
+        when(topicRepository.findById(1L)).thenReturn(Optional.of(topic));
+
+        java.util.List<Question> savedQuestions = new java.util.ArrayList<>();
+        java.util.List<QuestionOption> savedOptions = new java.util.ArrayList<>();
+        when(questionRepository.save(any(Question.class))).thenAnswer(inv -> {
+            Question q = inv.getArgument(0);
+            q.setId((long) (savedQuestions.size() + 10));
+            savedQuestions.add(q);
+            return q;
+        });
+        when(questionOptionRepository.save(any(QuestionOption.class))).thenAnswer(inv -> {
+            QuestionOption opt = inv.getArgument(0);
+            opt.setId((long) (savedOptions.size() + 100));
+            savedOptions.add(opt);
+            return opt;
+        });
+        when(questionMatchingChoiceRepository.save(any(QuestionMatchingChoice.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        QuestionImportResultResponse importResult = importService.importQuestions(file, false, 99L);
+        assertThat(importResult.getImportedQuestions()).isEqualTo(2);
+
+        Question matchingQ = savedQuestions.get(0);
+        Question shortQ = savedQuestions.get(1);
+        List<QuestionOption> matchingOpts = savedOptions.stream()
+                .filter(o -> matchingQ.getId().equals(o.getQuestionId()))
+                .toList();
+        List<QuestionOption> shortOpts = savedOptions.stream()
+                .filter(o -> shortQ.getId().equals(o.getQuestionId()))
+                .toList();
+
+        ExamSessionRepository examSessionRepo = org.mockito.Mockito.mock(ExamSessionRepository.class);
+        ExamQuestionRepository examQuestionRepo = org.mockito.Mockito.mock(ExamQuestionRepository.class);
+        SessionAnswerRepository sessionAnswerRepo = org.mockito.Mockito.mock(SessionAnswerRepository.class);
+        SessionServiceImpl sessionService = new SessionServiceImpl(
+                examSessionRepo, examQuestionRepo, questionRepository,
+                questionOptionRepository, sessionAnswerRepo, questionGroupRepository,
+                org.mockito.Mockito.mock(ExamWindowRepository.class));
+
+        ExamSession session = ExamSession.builder()
+                .id(500L).userId(7L).examId(20L).mode(SessionMode.MOCK_EXAM).status(SessionStatus.IN_PROGRESS).build();
+        when(examSessionRepo.findById(500L)).thenReturn(Optional.of(session));
+        when(examSessionRepo.save(any(ExamSession.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(examQuestionRepo.findByExamIdOrderByQuestionOrderAscIdAsc(20L)).thenReturn(List.of(
+                ExamQuestion.builder().id(1L).examId(20L).questionId(matchingQ.getId()).questionOrder(1)
+                        .maxRawScore(java.math.BigDecimal.valueOf(6.0)).build(),
+                ExamQuestion.builder().id(2L).examId(20L).questionId(shortQ.getId()).questionOrder(2)
+                        .maxRawScore(java.math.BigDecimal.valueOf(6.0)).build()
+        ));
+        when(questionRepository.findById(matchingQ.getId())).thenReturn(Optional.of(matchingQ));
+        when(questionRepository.findById(shortQ.getId())).thenReturn(Optional.of(shortQ));
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(matchingQ.getId()))
+                .thenReturn(matchingOpts);
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(shortQ.getId()))
+                .thenReturn(shortOpts);
+
+        SessionRequest.ClientSubmit.ClientSubmitAnswer a1 = new SessionRequest.ClientSubmit.ClientSubmitAnswer();
+        a1.setQuestionId(matchingQ.getId());
+        a1.setQuestionOrder(1);
+        a1.setAnswerPayload(java.util.Map.of("1", "C", "2", "A", "3", "D", "4", "B"));
+
+        SessionRequest.ClientSubmit.ClientSubmitAnswer a2 = new SessionRequest.ClientSubmit.ClientSubmitAnswer();
+        a2.setQuestionId(shortQ.getId());
+        a2.setQuestionOrder(2);
+        a2.setAnswerPayload(java.util.Map.of("value", "12.5"));
+
+        SessionRequest.ClientSubmit req = new SessionRequest.ClientSubmit();
+        req.setAnswers(List.of(a1, a2));
+        req.setTotalQuestions(2);
+
+        SessionResponse.SessionInfo info = sessionService.clientSubmit(7L, 500L, req);
+
+        assertThat(info.getCorrectCount()).isEqualTo(2);
+        assertThat(info.getRawScore()).isEqualByComparingTo("12.0");
+    }
+
+    @Test
+    @DisplayName("Invalid maxPlays in JSON and TXT fails row instead of falling back to 2")
+    void invalidMaxPlays_failsRowInsteadOfFallback() {
+        String json = """
+                [
+                  {
+                    "subject": "MATH",
+                    "topicId": 1,
+                    "difficulty": "EASY",
+                    "questionType": "SINGLE_CHOICE",
+                    "questionText": "Bad maxPlays",
+                    "options": ["A", "B", "C", "D"],
+                    "correctAnswer": "A",
+                    "maxPlays": "abc"
+                  },
+                  {
+                    "subject": "MATH",
+                    "topicId": 1,
+                    "difficulty": "EASY",
+                    "questionType": "SINGLE_CHOICE",
+                    "questionText": "Zero maxPlays",
+                    "options": ["A", "B", "C", "D"],
+                    "correctAnswer": "A",
+                    "maxPlays": 0
+                  }
+                ]
+                """;
+        MockMultipartFile jsonFile = new MockMultipartFile(
+                "file", "bad-maxplays.json", "application/json", json.getBytes(StandardCharsets.UTF_8));
+
+        QuestionImportResultResponse jsonPreview = importService.importQuestions(jsonFile, true, 99L);
+        assertThat(jsonPreview.getErrorCount()).isEqualTo(2);
+        assertThat(jsonPreview.getValidCount()).isZero();
+
+        String txt = """
+                [SUBJECT]: MATH
+                [TOPIC]: 1
+                [TYPE]: SINGLE_CHOICE
+                [STEM]: Bad TXT maxPlays
+                [A]: 1
+                [B]: 2
+                [C]: 3
+                [D]: 4
+                [KEY]: A
+                [MAXPLAYS]: invalid
+                """;
+        MockMultipartFile txtFile = new MockMultipartFile(
+                "file", "bad-maxplays.txt", "text/plain", txt.getBytes(StandardCharsets.UTF_8));
+
+        QuestionImportResultResponse txtPreview = importService.importQuestions(txtFile, true, 99L);
+        assertThat(txtPreview.getErrorCount()).isEqualTo(1);
+        assertThat(txtPreview.getValidCount()).isZero();
     }
 }

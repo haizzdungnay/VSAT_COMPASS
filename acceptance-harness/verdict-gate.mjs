@@ -35,9 +35,9 @@ function getRequiredFeatureIds() {
     }
   }
 
-  if (ids.size !== 126) {
+  if (ids.size !== 170) {
     throw new Error(
-      `Expected exactly 126 target IDs from feature inventory, but extracted ${ids.size} IDs!`
+      `Expected exactly 170 target IDs from feature inventory, but extracted ${ids.size} IDs!`
     );
   }
   return { requiredIds: ids, idToSection };
@@ -63,7 +63,7 @@ export async function evaluateVerdict(customResultsDir = null) {
   console.log(`============================================================`);
 
   const { requiredIds, idToSection } = getRequiredFeatureIds();
-  console.log(`[VERDICT GATE] Required acceptance IDs: 126 (across 5 feature domains)`);
+  console.log(`[VERDICT GATE] Required acceptance IDs: 170 (across 5 feature domains)`);
 
   if (!existsSync(resultsDir)) {
     console.error(`[VERDICT REJECTED] Results directory does not exist: ${resultsDir}`);
@@ -125,9 +125,9 @@ export async function evaluateVerdict(customResultsDir = null) {
   }
 
   // 2. Total count check
-  if (collectedResults.size !== 126) {
+  if (collectedResults.size !== 170) {
     violations.push(
-      `Total collected test IDs count mismatch: expected 126, got ${collectedResults.size}`
+      `Total collected test IDs count mismatch: expected 170, got ${collectedResults.size}`
     );
   }
 
@@ -162,14 +162,14 @@ export async function evaluateVerdict(customResultsDir = null) {
     passedCount++;
   }
 
-  const isAccepted = violations.length === 0 && passedCount === 126;
+  const isAccepted = violations.length === 0 && passedCount === 170;
   const verdictStatus = isAccepted ? 'ACCEPTED' : 'REJECTED';
 
   const verdictPayload = {
     verdict: verdictStatus,
     timestamp: new Date().toISOString(),
     summary: {
-      requiredCount: 126,
+      requiredCount: 170,
       collectedCount: collectedResults.size,
       passedCount,
       failedCount,
@@ -203,9 +203,9 @@ export async function evaluateVerdict(customResultsDir = null) {
     `============================================================`,
     `Verdict          : ${verdictStatus}`,
     `Generated At     : ${verdictPayload.timestamp}`,
-    `Total Required   : 126 IDs`,
+    `Total Required   : 170 IDs`,
     `Total Collected  : ${collectedResults.size} IDs`,
-    `Passed Count     : ${passedCount} / 126`,
+    `Passed Count     : ${passedCount} / 170`,
     `Failed Count     : ${failedCount}`,
     `Violations Count : ${violations.length}`,
     `------------------------------------------------------------`,
@@ -214,7 +214,7 @@ export async function evaluateVerdict(customResultsDir = null) {
       sec => `  - ${sec.padEnd(30)}: ${verdictPayload.suiteBreakdown[sec]?.passed || 0}/${verdictPayload.suiteBreakdown[sec]?.total || 0}`
     ),
     `============================================================`,
-    violations.length > 0 ? `\nVIOLATIONS:\n${violations.map(v => `  * ${v}`).join('\n')}` : `All 126/126 acceptance criteria passed with strict assertions.`
+    violations.length > 0 ? `\nVIOLATIONS:\n${violations.map(v => `  * ${v}`).join('\n')}` : `All 170/170 acceptance criteria passed with strict assertions.`
   ].join('\n');
 
   const summaryTxtPath = join(resultsDir, 'machine-summary.txt');
@@ -226,7 +226,7 @@ export async function evaluateVerdict(customResultsDir = null) {
     console.error(`\n[FINAL RESULT] VERDICT: REJECTED`);
     process.exit(1);
   } else {
-    console.log(`\n[FINAL RESULT] VERDICT: ACCEPTED (126/126 passed)`);
+    console.log(`\n[FINAL RESULT] VERDICT: ACCEPTED (170/170 passed)`);
     process.exit(0);
   }
 }

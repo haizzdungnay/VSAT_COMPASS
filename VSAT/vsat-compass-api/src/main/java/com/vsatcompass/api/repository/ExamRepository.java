@@ -33,4 +33,14 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             ExamStatus status,
             Long subjectId,
             Pageable pageable);
+
+    @org.springframework.data.jpa.repository.Query(
+            value = "SELECT id FROM scoring_profiles WHERE code = :code LIMIT 1",
+            nativeQuery = true)
+    Long findScoringProfileIdByCode(@org.springframework.data.repository.query.Param("code") String code);
+
+    @org.springframework.data.jpa.repository.Query(
+            value = "SELECT EXISTS(SELECT 1 FROM scoring_profiles WHERE id = :id)",
+            nativeQuery = true)
+    boolean existsScoringProfileById(@org.springframework.data.repository.query.Param("id") Long id);
 }

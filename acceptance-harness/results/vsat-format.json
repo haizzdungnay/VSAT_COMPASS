@@ -1,0 +1,1413 @@
+{
+  "suite": "vsat-format",
+  "generatedAt": "2026-11-16T04:13:20.277Z",
+  "totalCases": 44,
+  "passedCount": 44,
+  "failedCount": 0,
+  "results": [
+    {
+      "id": "VF-A01",
+      "description": "Đề 25 câu chuẩn: publish 200 và oracle PASS",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 7522,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "publish đề chuẩn"
+        },
+        {
+          "name": "assertDeepEqual",
+          "passed": true,
+          "actual": [],
+          "expected": [],
+          "message": "oracle V-SAT trên đề đã publish"
+        }
+      ],
+      "evidence": {
+        "examId": 26,
+        "oracle": [],
+        "totalMaxRaw": 150
+      },
+      "error": null
+    },
+    {
+      "id": "VF-A02",
+      "description": "Publish đề 1 câu bị chặn (G1)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 62,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "đề 1 câu phải bị từ chối"
+        }
+      ],
+      "evidence": {
+        "publish": {
+          "status": 400,
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "message": "V-SAT publish validation failed: VF_COUNT"
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-A03",
+      "description": "Publish đề 25 câu toàn 4 lựa chọn bị chặn VF_MIX (G1)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 640,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "sai tỉ lệ 9/6/5/5 phải bị từ chối"
+        }
+      ],
+      "evidence": {
+        "publish": {
+          "status": 400,
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "message": "V-SAT publish validation failed: VF_MIX"
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-A04",
+      "description": "Publish đề 26 câu bị chặn (G1)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 638,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "đề 26 câu phải bị từ chối"
+        }
+      ],
+      "evidence": {
+        "publish": {
+          "status": 400,
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "message": "V-SAT publish validation failed: VF_COUNT, VF_ORDER"
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-A05",
+      "description": "Thêm câu môn ENG vào đề MATH bị chặn (G2)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 30,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "câu khác môn phải bị từ chối"
+        }
+      ],
+      "evidence": {
+        "add": {
+          "status": 400,
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "message": "Question subject (2) does not match exam subject (1)"
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-A06",
+      "description": "Thêm câu DRAFT bị chặn",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 28,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "câu chưa duyệt phải bị từ chối"
+        }
+      ],
+      "evidence": {
+        "add": {
+          "status": 400,
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "message": "Question 67 must be APPROVED or PUBLISHED before it can be added to an exam."
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-A07",
+      "description": "Thêm trùng câu trả 409",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 38,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 409,
+          "expected": 409,
+          "message": "câu trùng"
+        }
+      ],
+      "evidence": {
+        "add": {
+          "status": 409,
+          "error": {
+            "code": "DUPLICATE",
+            "message": "Question 31 already exists in exam 32"
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-A08",
+      "description": "Tạo đề MATH 60 phút bị chặn (G17)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 9,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "Toán V-SAT là 90 phút"
+        }
+      ],
+      "evidence": {
+        "create": {
+          "status": 400,
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "message": "Invalid duration: subject MATH requires 90 minutes, got 60"
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-A09",
+      "description": "Publish đề có câu Đ/S chỉ 3 ý bị chặn (G4)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 658,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "câu Đ/S thiếu ý phải chặn publish"
+        }
+      ],
+      "evidence": {
+        "publish": {
+          "status": 400,
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "message": "V-SAT publish validation failed: VF_TF4"
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-A10",
+      "description": "CONTENT_ADMIN publish trả 403, không tự chuyển submit-review (G15)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 743,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "backend chặn CONTENT_ADMIN publish"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "PENDING_REVIEW",
+          "expected": "PENDING_REVIEW",
+          "message": "trạng thái giữ nguyên"
+        },
+        {
+          "name": "assertFalse",
+          "passed": true,
+          "actual": false,
+          "expected": false,
+          "message": "web api.ts publishExam không được âm thầm gọi submit-review khi 403"
+        }
+      ],
+      "evidence": {
+        "webPublishExam": [
+          "export async function publishExam(id: number): Promise<boolean> {",
+          "  const res = await authenticatedFetch(`${BASE_URL}/admin/exams/${id}/publish`, {",
+          "    method: 'POST'",
+          "  });",
+          "  if (!res.ok) {",
+          "    if (res.status === 403) {",
+          "      throw new Error('Chỉ SUPER_ADMIN được phát hành đề');",
+          "    }",
+          "    const errJson = await res.json().catch(() => ({}));",
+          "    const message = errJson?.error?.message || errJson?.message || `Lỗi phát hành đề thi (HTTP ${res.status})`;",
+          "    throw new Error(message);",
+          "  }",
+          "  return true;",
+          "}"
+        ]
+      },
+      "error": null
+    },
+    {
+      "id": "VF-B01",
+      "description": "Sinh đề từ VSAT_2026_BP_MATH ra đúng 9/6/5/5, oracle PASS (G3)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 712,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "generate-by-matrix"
+        },
+        {
+          "name": "assertDeepEqual",
+          "passed": true,
+          "actual": [],
+          "expected": [],
+          "message": "đề sinh theo ma trận phải đạt chuẩn"
+        }
+      ],
+      "evidence": {
+        "types": [
+          "TRUE_FALSE",
+          "TRUE_FALSE",
+          "TRUE_FALSE",
+          "TRUE_FALSE",
+          "TRUE_FALSE",
+          "TRUE_FALSE",
+          "TRUE_FALSE",
+          "TRUE_FALSE",
+          "TRUE_FALSE",
+          "SINGLE_CHOICE",
+          "SINGLE_CHOICE",
+          "SINGLE_CHOICE",
+          "SINGLE_CHOICE",
+          "SINGLE_CHOICE",
+          "SINGLE_CHOICE",
+          "MATCHING",
+          "MATCHING",
+          "MATCHING",
+          "MATCHING",
+          "MATCHING",
+          "SHORT_ANSWER",
+          "SHORT_ANSWER",
+          "SHORT_ANSWER",
+          "SHORT_ANSWER",
+          "SHORT_ANSWER"
+        ],
+        "oracle": []
+      },
+      "error": null
+    },
+    {
+      "id": "VF-B02",
+      "description": "Ngân hàng ENG toàn 4 lựa chọn: sinh đề phải 400 hoặc cảnh báo thiếu dạng (G3)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 13419,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "thiếu Đ/S, ghép hợp, trả lời ngắn phải bị báo"
+        }
+      ],
+      "evidence": {
+        "generate": {
+          "status": 200,
+          "error": "Exam questions generated by matrix successfully",
+          "selected": 6,
+          "warnings": [
+            "Phần TRUE_FALSE chỉ có 0/9 câu đạt chuẩn.",
+            "Phần MATCHING chỉ có 0/5 câu đạt chuẩn.",
+            "Phần SHORT_ANSWER chỉ có 0/5 câu đạt chuẩn."
+          ]
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-B03",
+      "description": "Sinh đề vào đề PUBLISHED bị chặn 409 (G3)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 1672,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 409,
+          "expected": 409,
+          "message": "không được ghi đè đề đang phát hành"
+        },
+        {
+          "name": "assertFalse",
+          "passed": true,
+          "actual": false,
+          "expected": false,
+          "message": "danh sách câu của đề PUBLISHED không đổi"
+        }
+      ],
+      "evidence": {
+        "generate": {
+          "status": 409,
+          "error": {
+            "code": "INVALID_STATE",
+            "message": "Cannot generate questions for exam in status PUBLISHED. Only DRAFT exams allow matrix generation."
+          }
+        },
+        "changed": false
+      },
+      "error": null
+    },
+    {
+      "id": "VF-B04",
+      "description": "blueprintId 10 câu được tôn trọng hoặc bị từ chối (G3/G12)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 23,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "blueprint không chuẩn bị từ chối ngay"
+        }
+      ],
+      "evidence": {
+        "blueprint": {
+          "status": 400,
+          "error": {
+            "code": "BAD_REQUEST",
+            "message": "Tổng số câu hỏi (totalQuestions) phải bằng 25 theo chuẩn V-SAT, nhận 10"
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-B05",
+      "description": "rawScore trả về khớp tổng điểm thực của đề (G3)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 2176,
+      "assertions": [
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 18,
+          "expected": 18,
+          "message": "rawScore = tổng điểm các câu đã chọn"
+        }
+      ],
+      "evidence": {
+        "generate": {
+          "rawScore": 18,
+          "selected": 3,
+          "actualMaxRaw": 18,
+          "warnings": [
+            "Phần TRUE_FALSE chỉ có 0/9 câu đạt chuẩn.",
+            "Phần SINGLE_CHOICE chỉ có 3/6 câu đạt chuẩn.",
+            "Phần MATCHING chỉ có 0/5 câu đạt chuẩn.",
+            "Phần SHORT_ANSWER chỉ có 0/5 câu đạt chuẩn."
+          ]
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-C01",
+      "description": "PUT đề PUBLISHED trả 409",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 9,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 409,
+          "expected": 409,
+          "message": "không sửa đề đang phát hành"
+        }
+      ],
+      "evidence": {
+        "put": {
+          "status": 409,
+          "error": {
+            "code": "INVALID_STATE",
+            "message": "Cannot edit exam metadata in status PUBLISHED. Only DRAFT or HIDDEN exams allow metadata edits in this batch."
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-C02",
+      "description": "Đề HIDDEN: thêm/xóa/sắp xếp câu đều 409",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 827,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 409,
+          "expected": 409,
+          "message": "add khi HIDDEN"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 409,
+          "expected": 409,
+          "message": "remove khi HIDDEN"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 409,
+          "expected": 409,
+          "message": "reorder khi HIDDEN"
+        }
+      ],
+      "evidence": {
+        "statuses": {
+          "add": 409,
+          "remove": 409,
+          "reorder": 409
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-C03",
+      "description": "DRAFT đổi môn sang ENG nhưng giữ câu MATH, publish bị chặn (G2)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 1051,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "câu khác môn với đề phải chặn publish"
+        }
+      ],
+      "evidence": {
+        "put": {
+          "status": 200,
+          "error": "Cập nhật đề thi thành công"
+        },
+        "publish": {
+          "status": 400,
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "message": "V-SAT publish validation failed: VF_SUBJECT"
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-C04",
+      "description": "HIDDEN đổi môn rồi publish lại phải chạy lại validator (G2)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 806,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "publish lại đề HIDDEN đã sai môn phải bị chặn"
+        }
+      ],
+      "evidence": {
+        "put": {
+          "status": 200,
+          "error": "Cập nhật đề thi thành công"
+        },
+        "republish": {
+          "status": 400,
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "message": "V-SAT publish validation failed: VF_SUBJECT"
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-C05",
+      "description": "Return-to-draft, bỏ 1 câu Đ/S rồi publish lại bị chặn (G1)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 874,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "đề 24 câu (8 Đ/S) phải bị chặn"
+        }
+      ],
+      "evidence": {
+        "publish": {
+          "status": 400,
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "message": "V-SAT publish validation failed: VF_COUNT"
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-C06",
+      "description": "Sửa câu APPROVED nằm trong đề PUBLISHED bị chặn 409",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 11,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 409,
+          "expected": 409,
+          "message": "câu đã duyệt không được sửa"
+        }
+      ],
+      "evidence": {
+        "put": {
+          "status": 409,
+          "error": {
+            "code": "INVALID_STATE",
+            "message": "Cannot edit question in status APPROVED. Only DRAFT or NEEDS_REVISION are editable."
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-C07",
+      "description": "Hai admin cùng lockVersion: người thứ hai nhận 409",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 71,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "lần sửa đầu"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 409,
+          "expected": 409,
+          "message": "lần sửa sau với lockVersion cũ"
+        }
+      ],
+      "evidence": {
+        "statuses": {
+          "lock": 0,
+          "first": 200,
+          "second": 409
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-C08",
+      "description": "Reorder làm 4 lựa chọn đứng trước Đ/S bị chặn VF_ORDER",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 568,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "thứ tự phần thi cố định Đ/S, 4LC, ghép, TLN"
+        }
+      ],
+      "evidence": {
+        "reorder": {
+          "status": 400,
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "message": "Question order violates section sequence: TRUE_FALSE cannot appear after section index 1"
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-D01",
+      "description": "Import Đ/S + 4LC hợp lệ: câu vào trạng thái chờ duyệt, đúng cấu trúc (G8)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 386,
+      "assertions": [
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 2,
+          "expected": 2,
+          "message": "đủ 2 câu được nhập"
+        },
+        {
+          "name": "assertDeepEqual",
+          "passed": true,
+          "actual": [],
+          "expected": [],
+          "message": "cấu trúc câu đúng chuẩn"
+        },
+        {
+          "name": "assertDeepEqual",
+          "passed": true,
+          "actual": [
+            "PENDING_REVIEW",
+            "PENDING_REVIEW"
+          ],
+          "expected": [
+            "PENDING_REVIEW",
+            "PENDING_REVIEW"
+          ],
+          "message": "câu import phải qua bước duyệt"
+        }
+      ],
+      "evidence": {
+        "imported": [
+          {
+            "type": "TRUE_FALSE",
+            "status": "PENDING_REVIEW",
+            "errors": []
+          },
+          {
+            "type": "SINGLE_CHOICE",
+            "status": "PENDING_REVIEW",
+            "errors": []
+          }
+        ]
+      },
+      "error": null
+    },
+    {
+      "id": "VF-D02",
+      "description": "Import dạng câu lạ \"ABC\" phải là dòng lỗi (G8)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 25,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "dryRun"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 1,
+          "expected": 1,
+          "message": "không được tự đổi thành SINGLE_CHOICE"
+        }
+      ],
+      "evidence": {
+        "dryRun": {
+          "status": 200,
+          "valid": 0,
+          "errorCount": 1,
+          "errors": [
+            "[JSON Hàng 1] Loại câu hỏi không hợp lệ: ABC"
+          ]
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-D03",
+      "description": "Import SINGLE_CHOICE đáp án \"A,B\" phải là dòng lỗi (G8)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 24,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "dryRun"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 1,
+          "expected": 1,
+          "message": "4 lựa chọn chỉ có 1 đáp án đúng"
+        }
+      ],
+      "evidence": {
+        "dryRun": {
+          "status": 200,
+          "valid": 0,
+          "errorCount": 1,
+          "errors": [
+            "[JSON Hàng 1] Đáp án đúng SINGLE_CHOICE phải là đúng 1 lựa chọn A, B, C hoặc D: A,B"
+          ]
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-D04",
+      "description": "Import Đ/S chỉ 3 ý phải là dòng lỗi (G4/G8)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 24,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "dryRun"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 1,
+          "expected": 1,
+          "message": "Đ/S phải đủ 4 ý"
+        }
+      ],
+      "evidence": {
+        "dryRun": {
+          "status": 200,
+          "valid": 0,
+          "errorCount": 1,
+          "errors": [
+            "[JSON Hàng 1] Câu hỏi TRUE_FALSE phải có đúng 4 mệnh đề (a, b, c, d)"
+          ]
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-D05",
+      "description": "Import trả lời ngắn đáp án số 12.5 hợp lệ (G7/G8)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 23,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "dryRun"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 0,
+          "expected": 0,
+          "message": "đáp án số phải được chấp nhận"
+        }
+      ],
+      "evidence": {
+        "dryRun": {
+          "status": 200,
+          "valid": 1,
+          "errorCount": 0,
+          "errors": []
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-D06",
+      "description": "Import ghép hợp 4 cặp 1-C,2-A,3-D,4-B lưu được khóa ghép (G6/G8)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 361,
+      "assertions": [
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 0,
+          "expected": 0,
+          "message": "dòng ghép hợp hợp lệ"
+        },
+        {
+          "name": "assertDeepEqual",
+          "passed": true,
+          "actual": [],
+          "expected": [],
+          "message": "có đủ 4 tiểu mục kèm khóa ghép"
+        }
+      ],
+      "evidence": {
+        "dryRun": {
+          "status": 200,
+          "valid": 1,
+          "errorCount": 0,
+          "errors": []
+        },
+        "imported": [
+          {
+            "questionId": 104,
+            "status": "PENDING_REVIEW",
+            "questionType": "MATCHING",
+            "options": [
+              {
+                "id": 341,
+                "optionLabel": "1",
+                "optionText": "Mục 1 ⇄ C",
+                "isCorrect": true
+              },
+              {
+                "id": 342,
+                "optionLabel": "2",
+                "optionText": "Mục 2 ⇄ A",
+                "isCorrect": true
+              },
+              {
+                "id": 343,
+                "optionLabel": "3",
+                "optionText": "Mục 3 ⇄ D",
+                "isCorrect": true
+              },
+              {
+                "id": 344,
+                "optionLabel": "4",
+                "optionText": "Mục 4 ⇄ B",
+                "isCorrect": true
+              }
+            ]
+          }
+        ]
+      },
+      "error": null
+    },
+    {
+      "id": "VF-D08",
+      "description": "dryRun không ghi DB; commit nhập đúng số dòng hợp lệ",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 686,
+      "assertions": [
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 0,
+          "expected": 0,
+          "message": "dryRun không ghi DB"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 2,
+          "expected": 2,
+          "message": "dryRun đếm 2 dòng hợp lệ"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 2,
+          "expected": 2,
+          "message": "commit nhập 2 câu"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 2,
+          "expected": 2,
+          "message": "DB có 2 câu"
+        }
+      ],
+      "evidence": {
+        "result": {
+          "dryValid": 2,
+          "imported": 2,
+          "db": 2
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-D09",
+      "description": "Import 1001 dòng trả 400",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 5242,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "vượt 1000 dòng"
+        }
+      ],
+      "evidence": {
+        "import": {
+          "status": 400,
+          "error": {
+            "code": "BAD_REQUEST",
+            "message": "Số lượng dòng câu hỏi vượt quá giới hạn cho phép (tối đa 1000 dòng)"
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-E01",
+      "description": "Blueprint seed: 25 câu / 150đ / 9-6-5-5 / có profile (G10)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 527,
+      "assertions": [
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 25,
+          "expected": 25,
+          "message": "totalQuestions"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 150,
+          "expected": 150,
+          "message": "maxRawScore"
+        },
+        {
+          "name": "assertDeepEqual",
+          "passed": true,
+          "actual": {
+            "TRUE_FALSE": 9,
+            "SINGLE_CHOICE": 6,
+            "MATCHING": 5,
+            "SHORT_ANSWER": 5
+          },
+          "expected": {
+            "TRUE_FALSE": 9,
+            "SINGLE_CHOICE": 6,
+            "MATCHING": 5,
+            "SHORT_ANSWER": 5
+          },
+          "message": "tỉ lệ 9/6/5/5"
+        },
+        {
+          "name": "assertDeepEqual",
+          "passed": true,
+          "actual": [],
+          "expected": [],
+          "message": "mọi blueprint có scoring profile tồn tại"
+        }
+      ],
+      "evidence": {
+        "blueprint": {
+          "totalQuestions": 25,
+          "maxRawScore": 150,
+          "mix": {
+            "TRUE_FALSE": 9,
+            "SINGLE_CHOICE": 6,
+            "MATCHING": 5,
+            "SHORT_ANSWER": 5
+          },
+          "noProfile": []
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-E02",
+      "description": "Tạo blueprint totalQuestions=10 bị chặn (G12)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 16,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "blueprint V-SAT phải 25 câu"
+        }
+      ],
+      "evidence": {
+        "create": {
+          "status": 400,
+          "error": {
+            "code": "BAD_REQUEST",
+            "message": "Tổng số câu hỏi (totalQuestions) phải bằng 25 theo chuẩn V-SAT, nhận 10"
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-E03",
+      "description": "Blueprint có ô âm / dạng câu trùng bị chặn (G12)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 18,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "ô âm và dạng trùng phải bị từ chối"
+        }
+      ],
+      "evidence": {
+        "create": {
+          "status": 400,
+          "error": {
+            "code": "BAD_REQUEST",
+            "message": "Số lượng câu hỏi trong từng ô ma trận không được âm"
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-E04",
+      "description": "Blueprint scoringProfileId không tồn tại bị chặn 400 (G10)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 18,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "profile không tồn tại"
+        }
+      ],
+      "evidence": {
+        "create": {
+          "status": 400,
+          "error": {
+            "code": "BAD_REQUEST",
+            "message": "Scoring profile không tồn tại: 999999"
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-F01",
+      "description": "Bundle của đề chuẩn mô tả đủ 4 phần và điểm (G14)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 602,
+      "assertions": [
+        {
+          "name": "assertDeepEqual",
+          "passed": true,
+          "actual": [],
+          "expected": [],
+          "message": "bundle đạt chuẩn V-SAT (trừ lộ đáp án, xem F02)"
+        }
+      ],
+      "evidence": {
+        "bundleKeys": [
+          "id",
+          "examCode",
+          "title",
+          "subjectId",
+          "questionCount",
+          "durationMinutes",
+          "difficulty",
+          "pricingType",
+          "publishDate",
+          "examVersion",
+          "updatedAt",
+          "questions"
+        ],
+        "oracle": []
+      },
+      "error": null
+    },
+    {
+      "id": "VF-F02",
+      "description": "Bundle của học sinh không chứa đáp án (G13)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 257,
+      "assertions": [
+        {
+          "name": "assertDeepEqual",
+          "passed": true,
+          "actual": [],
+          "expected": [],
+          "message": "không có isCorrect/correctOptionIds/correctAnswer/explanation/khóa ghép/khóa TLN"
+        }
+      ],
+      "evidence": {
+        "leakCount": 0,
+        "leakSample": []
+      },
+      "error": null
+    },
+    {
+      "id": "VF-F03",
+      "description": "correctAnswer của câu Đ/S (nếu có) phải đủ 4 cờ Đ/S (G14)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 294,
+      "assertions": [
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "bundle có 9 câu Đ/S"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "mỗi câu Đ/S: không có correctAnswer, hoặc có đủ 4 cờ"
+        }
+      ],
+      "evidence": {
+        "tfCorrectAnswers": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      "error": null
+    },
+    {
+      "id": "VF-F04",
+      "description": "Chấm offline scoreVsat khớp điểm server (1 bộ đáp án đúng + 10 bộ ngẫu nhiên)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 13197,
+      "assertions": [
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 150,
+          "expected": 150,
+          "message": "bộ đáp án đúng đạt 150"
+        },
+        {
+          "name": "assertDeepEqual",
+          "passed": true,
+          "actual": [],
+          "expected": [],
+          "message": "điểm server = điểm oracle"
+        }
+      ],
+      "evidence": {
+        "scores": {
+          "perfect": 150,
+          "mismatches": []
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-F05",
+      "description": "Bundle của đề chưa PUBLISHED trả 404",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 23,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 404,
+          "expected": 404,
+          "message": "đề DRAFT không tải được"
+        }
+      ],
+      "evidence": {
+        "bundle": {
+          "status": 404,
+          "error": {
+            "code": "RESOURCE_NOT_FOUND",
+            "message": "Exam không tồn tại với id: 45"
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-Q01",
+      "description": "Tạo câu Đ/S 3 ý bị chặn (G4)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 11,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "Đ/S phải đủ 4 ý a–d"
+        }
+      ],
+      "evidence": {
+        "create": {
+          "status": 400,
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "message": "TRUE_FALSE requires exactly 4 options labeled a-d (VF_TF4), got 3"
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-Q02",
+      "description": "Tạo câu 4 lựa chọn chỉ 2 phương án bị chặn (G5)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 11,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "phải đủ 4 phương án"
+        }
+      ],
+      "evidence": {
+        "create": {
+          "status": 400,
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "message": "SINGLE_CHOICE requires 4 options and exactly 1 correct option, got 2 options and 1 correct"
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-Q03",
+      "description": "Tạo câu ghép hợp 2 cặp bị chặn (G6)",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 8,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "ghép hợp phải đủ 4 tiểu mục"
+        }
+      ],
+      "evidence": {
+        "create": {
+          "status": 400,
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "message": "MATCHING requires exactly 4 distinct matching pairs (VF_MATCH), got 2"
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "VF-Q04",
+      "description": "Tạo câu trả lời ngắn không có đáp án bị chặn",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 10,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "TLN bắt buộc có đáp án"
+        }
+      ],
+      "evidence": {
+        "create": {
+          "status": 400,
+          "error": {
+            "code": "VALIDATION_FAILED",
+            "message": "SHORT_ANSWER requires at least 1 correct option"
+          }
+        }
+      },
+      "error": null
+    }
+  ]
+}

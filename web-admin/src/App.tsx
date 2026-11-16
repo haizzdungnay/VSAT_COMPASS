@@ -171,7 +171,7 @@ export const App: React.FC = () => {
                   status: examItem.status || 'DRAFT',
                   lockVersion: examItem.lockVersion ?? 0,
                   deliveryMode: 'PRACTICE',
-                  scoringProfileCode: 'VSAT_2026_RAW_150'
+                  scoringProfileCode: 'VSAT_2026_DRAFT_SPEC_150'
                 });
                 setCurrentTab('create-exam');
               }}

@@ -11,14 +11,12 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.v_sat_compass.R;
-import com.example.v_sat_compass.data.local.LocalExamDataSource;
-import com.example.v_sat_compass.data.model.Question;
 
 import java.util.List;
 import java.util.Map;
 
 /**
- * Grid adapter cho màn xem lời giải — hiển thị trạng thái đúng/sai/bỏ qua từng câu.
+ * Grid adapter cho màn xem lời giải — hiển thị trạng thái đã chọn/bỏ qua từng câu.
  */
 public class ReviewGridAdapter extends RecyclerView.Adapter<ReviewGridAdapter.ViewHolder> {
 
@@ -54,21 +52,6 @@ public class ReviewGridAdapter extends RecyclerView.Adapter<ReviewGridAdapter.Vi
         Long selectedOptionId = selectedAnswers.get(questionId);
         boolean isAnswered = selectedOptionId != null;
 
-        // Tính đúng/sai qua LocalExamDataSource
-        boolean isCorrect = false;
-        if (isAnswered) {
-            Question q = LocalExamDataSource.getInstance().getQuestion(
-                    holder.itemView.getContext(), questionId);
-            if (q != null && q.getOptions() != null) {
-                for (Question.Option opt : q.getOptions()) {
-                    if (opt.getId() != null && opt.getId().equals(selectedOptionId)) {
-                        isCorrect = opt.isCorrect();
-                        break;
-                    }
-                }
-            }
-        }
-
         holder.tvNumber.setText(String.valueOf(position + 1));
 
         if (position == currentIndex) {
@@ -81,14 +64,10 @@ public class ReviewGridAdapter extends RecyclerView.Adapter<ReviewGridAdapter.Vi
             holder.itemView.setBackgroundResource(R.drawable.bg_question_unanswered);
             holder.tvNumber.setTextColor(ContextCompat.getColor(
                     holder.itemView.getContext(), R.color.text_secondary));
-        } else if (isCorrect) {
-            // Đúng → xanh lá
-            holder.itemView.setBackgroundColor(Color.parseColor("#E8F5E9"));
-            holder.tvNumber.setTextColor(Color.parseColor("#388E3C"));
         } else {
-            // Sai → đỏ nhạt
-            holder.itemView.setBackgroundColor(Color.parseColor("#FFEBEE"));
-            holder.tvNumber.setTextColor(Color.parseColor("#D32F2F"));
+            // Đã trả lời → xanh dương nhạt (chấm điểm do server phụ trách)
+            holder.itemView.setBackgroundColor(Color.parseColor("#E3F2FD"));
+            holder.tvNumber.setTextColor(Color.parseColor("#1565C0"));
         }
 
         holder.itemView.setOnClickListener(v -> {

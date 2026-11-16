@@ -68,15 +68,28 @@ public class OfflineExamRepositoryTest {
                 "      \"questionCode\": \"MATH_01\",\n" +
                 "      \"questionText\": \"Gia tri cua x la bao nhieu?\",\n" +
                 "      \"questionType\": \"SINGLE_CHOICE\",\n" +
-                "      \"explanation\": \"Loi giai chi tiet\",\n" +
+                "      \"maxRawScore\": 6.0,\n" +
                 "      \"options\": [\n" +
                 "        {\n" +
                 "          \"id\": 5001,\n" +
                 "          \"optionLabel\": \"A\",\n" +
                 "          \"optionText\": \"10\",\n" +
-                "          \"isCorrect\": true,\n" +
                 "          \"displayOrder\": 1\n" +
                 "        }\n" +
+                "      ]\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"id\": 1002,\n" +
+                "      \"questionCode\": \"MATH_MATCH_01\",\n" +
+                "      \"questionText\": \"Noi cot trai voi cot phai\",\n" +
+                "      \"questionType\": \"MATCHING\",\n" +
+                "      \"maxRawScore\": 6.0,\n" +
+                "      \"matchingChoices\": [\n" +
+                "        {\"key\": \"A\", \"text\": \"Ve phai A\"},\n" +
+                "        {\"key\": \"B\", \"text\": \"Ve phai B\"}\n" +
+                "      ],\n" +
+                "      \"options\": [\n" +
+                "        {\"id\": 5002, \"optionLabel\": \"1\", \"optionText\": \"Ve trai 1\", \"displayOrder\": 1}\n" +
                 "      ]\n" +
                 "    }\n" +
                 "  ]\n" +
@@ -123,17 +136,27 @@ public class OfflineExamRepositoryTest {
 
         // 4. Load question and question ids
         List<Long> ids = repository.loadQuestionIds(fakeContext, examId);
-        assertEquals(1, ids.size());
+        assertEquals(2, ids.size());
         assertEquals(1001L, (long) ids.get(0));
+        assertEquals(1002L, (long) ids.get(1));
 
         Question question = repository.loadQuestion(fakeContext, examId, 1001L);
         assertNotNull(question);
         assertEquals("MATH_01", question.getQuestionCode());
         assertEquals("Gia tri cua x la bao nhieu?", question.getQuestionText());
-        assertEquals("Loi giai chi tiet", question.getExplanation());
+        assertNull("Key-free bundle must omit explanation", question.getExplanation());
+        assertEquals(Double.valueOf(6.0), question.getMaxRawScore());
         assertNotNull(question.getOptions());
         assertEquals(1, question.getOptions().size());
-        assertTrue(question.getOptions().get(0).isCorrect());
+        assertEquals("10", question.getOptions().get(0).getOptionText());
+
+        Question matching = repository.loadQuestion(fakeContext, examId, 1002L);
+        assertNotNull(matching);
+        assertEquals("MATCHING", matching.getQuestionType());
+        assertNotNull(matching.getMatchingChoices());
+        assertEquals(2, matching.getMatchingChoices().size());
+        assertEquals("A", matching.getMatchingChoices().get(0).getKey());
+        assertEquals("Ve phai A", matching.getMatchingChoices().get(0).getText());
     }
 
     @Test

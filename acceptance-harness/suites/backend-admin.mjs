@@ -101,7 +101,7 @@ registerCase('API-006', 'AdminExamController POST /api/v1/admin/exams', async ({
 
 registerCase('API-007', 'AdminExamController PUT /api/v1/admin/exams/{id}', async ({ apiCall, assertStatus, assertEqual, queryDb }) => {
   const examId = ensureDraftExam(queryDb, 'ADM_PUT_EX_01');
-  const body = { title: 'Tiêu đề cập nhật API-007', durationMinutes: 75 };
+  const body = { title: 'Tiêu đề cập nhật API-007', durationMinutes: 90 };
   await verifyStandardRbac({ apiCall, assertStatus, path: `/api/v1/admin/exams/${examId}`, method: 'PUT', body });
   const res = await apiCall(`/api/v1/admin/exams/${examId}`, { method: 'PUT', body }, 'CONTENT_ADMIN');
   assertStatus(res.status, 200);
@@ -177,8 +177,8 @@ registerCase('API-013', 'AdminExamController POST /api/v1/admin/exams/{examId}/p
   const examId = ensureExamWithStatus(queryDb, 'ADM_PUB_EX_01', 'PENDING_REVIEW');
   await verifyStandardRbac({ apiCall, assertStatus, path: `/api/v1/admin/exams/${examId}/publish`, method: 'POST', superAdminOnly: true });
   const res = await apiCall(`/api/v1/admin/exams/${examId}/publish`, { method: 'POST' }, 'SUPER_ADMIN');
-  assertStatus(res.status, 200);
-  assertEqual(res.json?.data?.status, 'PUBLISHED');
+  // Spec thay đổi: Đề 1 câu không đạt chuẩn V-SAT (yêu cầu 25 câu 9/6/5/5), phải trả về 400
+  assertStatus(res.status, 400);
   const neg = await apiCall('/api/v1/admin/exams/999999/publish', { method: 'POST' }, 'SUPER_ADMIN');
   assertStatus(neg.status, 404);
 });

@@ -29,6 +29,7 @@ import com.vsatcompass.api.repository.SubtopicRepository;
 import com.vsatcompass.api.repository.TopicRepository;
 import com.vsatcompass.api.service.QuestionService;
 import com.vsatcompass.api.specification.QuestionSpecifications;
+import com.vsatcompass.api.util.VsatFormatRules;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -38,6 +39,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -71,8 +73,9 @@ public class QuestionServiceImpl implements QuestionService {
             }
         }
         validateOptionsForType(req.getQuestionType(),
-                req.getOptions().stream().map(CreateQuestionRequest.OptionInput::getIsCorrect).toList(),
-                req.getOptions().size());
+                req.getOptions().stream()
+                        .map(o -> new VsatFormatRules.OptionView(o.getOptionLabel(), o.getOptionText(), o.getIsCorrect()))
+                        .toList());
 
         String resolvedAudioUrl = req.resolveAudioUrl();
         if (resolvedGroup != null) {
@@ -186,8 +189,9 @@ public class QuestionServiceImpl implements QuestionService {
         if (req.getOptions() != null) {
             QuestionType effectiveType = q.getQuestionType();
             validateOptionsForType(effectiveType,
-                    req.getOptions().stream().map(UpdateQuestionRequest.OptionInput::getIsCorrect).toList(),
-                    req.getOptions().size());
+                    req.getOptions().stream()
+                            .map(o -> new VsatFormatRules.OptionView(o.getOptionLabel(), o.getOptionText(), o.getIsCorrect()))
+                            .toList());
 
             questionOptionRepository.deleteByQuestionId(questionId);
             for (UpdateQuestionRequest.OptionInput opt : req.getOptions()) {
@@ -205,8 +209,7 @@ public class QuestionServiceImpl implements QuestionService {
             List<QuestionOption> existingOptions =
                     questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(questionId);
             validateOptionsForType(q.getQuestionType(),
-                    existingOptions.stream().map(QuestionOption::getIsCorrect).toList(),
-                    existingOptions.size());
+                    existingOptions.stream().map(VsatFormatRules.OptionView::from).toList());
         }
 
         String resolvedAudioUrl = req.resolveAudioUrl();
@@ -365,23 +368,22 @@ public class QuestionServiceImpl implements QuestionService {
         }
     }
 
-    private void validateOptionsForType(QuestionType type, List<Boolean> isCorrectFlags, int totalCount) {
+    private void validateOptionsForType(QuestionType type, List<VsatFormatRules.OptionView> optionViews) {
         if (type == null) {
             return;
         }
-        long correctCount = isCorrectFlags == null ? 0 : isCorrectFlags.stream()
-                .filter(Boolean.TRUE::equals)
+        List<VsatFormatRules.OptionView> opts = optionViews != null ? optionViews : Collections.emptyList();
+        int totalCount = opts.size();
+        long correctCount = opts.stream()
+                .filter(o -> Boolean.TRUE.equals(o.isCorrect()))
                 .count();
 
         switch (type) {
             case SINGLE_CHOICE -> {
-                if (totalCount < 2) {
+                if (!VsatFormatRules.validateQuestionStructure(QuestionType.SINGLE_CHOICE, opts).isEmpty()) {
                     throw AppException.validationFailed(
-                            "SINGLE_CHOICE requires at least 2 options, got " + totalCount);
-                }
-                if (correctCount != 1) {
-                    throw AppException.validationFailed(
-                            "SINGLE_CHOICE requires exactly 1 correct option, got " + correctCount);
+                            "SINGLE_CHOICE requires 4 options and exactly 1 correct option, got "
+                                    + totalCount + " options and " + correctCount + " correct");
                 }
             }
             case MULTIPLE_CHOICE -> {
@@ -395,15 +397,15 @@ public class QuestionServiceImpl implements QuestionService {
                 }
             }
             case TRUE_FALSE -> {
-                if (totalCount < 2 || totalCount > 4) {
+                if (!VsatFormatRules.validateQuestionStructure(QuestionType.TRUE_FALSE, opts).isEmpty()) {
                     throw AppException.validationFailed(
-                            "TRUE_FALSE requires between 2 and 4 options, got " + totalCount);
+                            "TRUE_FALSE requires exactly 4 options labeled a-d (VF_TF4), got " + totalCount);
                 }
             }
             case MATCHING -> {
-                if (totalCount < 2 || totalCount > 6) {
+                if (!VsatFormatRules.validateQuestionStructure(QuestionType.MATCHING, opts).isEmpty()) {
                     throw AppException.validationFailed(
-                            "MATCHING requires between 2 and 6 options, got " + totalCount);
+                            "MATCHING requires exactly 4 distinct matching pairs (VF_MATCH), got " + totalCount);
                 }
             }
             case SHORT_ANSWER -> {
@@ -414,6 +416,10 @@ public class QuestionServiceImpl implements QuestionService {
                 if (correctCount < 1) {
                     throw AppException.validationFailed(
                             "SHORT_ANSWER requires at least 1 correct option");
+                }
+                if (!VsatFormatRules.validateQuestionStructure(QuestionType.SHORT_ANSWER, opts).isEmpty()) {
+                    throw AppException.validationFailed(
+                            "SHORT_ANSWER requires a non-blank answer key (VF_SA_KEY)");
                 }
             }
             case FILL_IN_BLANK -> {

@@ -2,18 +2,18 @@
 V-SAT COMPASS CLEAN-ROOM ACCEPTANCE FINAL VERDICT
 ============================================================
 Verdict          : ACCEPTED
-Generated At     : 2026-11-03T06:31:20.053Z
-Total Required   : 126 IDs
-Total Collected  : 126 IDs
-Passed Count     : 126 / 126
+Generated At     : 2026-11-16T04:13:25.083Z
+Total Required   : 170 IDs
+Total Collected  : 170 IDs
+Passed Count     : 170 / 170
 Failed Count     : 0
 Violations Count : 0
 ------------------------------------------------------------
 Domain Breakdown :
-  - backend_endpoints             : 76/76
+  - backend_endpoints             : 120/120
   - backend_jobs_and_integrations : 2/2
   - web_admin_pages               : 10/10
   - android_screens_and_flows     : 35/35
   - android_workers_and_services  : 3/3
 ============================================================
-All 126/126 acceptance criteria passed with strict assertions.
+All 170/170 acceptance criteria passed with strict assertions.

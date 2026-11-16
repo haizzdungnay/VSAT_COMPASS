@@ -9,8 +9,10 @@ import com.vsatcompass.api.entity.enums.Difficulty;
 import com.vsatcompass.api.entity.enums.QuestionType;
 import com.vsatcompass.api.exception.AppException;
 import com.vsatcompass.api.repository.ExamBlueprintRepository;
+import com.vsatcompass.api.repository.ExamRepository;
 import com.vsatcompass.api.repository.SubjectRepository;
 import com.vsatcompass.api.service.AdminBlueprintService;
+import com.vsatcompass.api.util.VsatFormatRules;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -34,18 +37,26 @@ public class AdminBlueprintServiceImpl implements AdminBlueprintService {
 
     private final SubjectRepository subjectRepository;
     private final ExamBlueprintRepository examBlueprintRepository;
+    private final ExamRepository examRepository;
 
     public AdminBlueprintServiceImpl(SubjectRepository subjectRepository) {
-        this.subjectRepository = subjectRepository;
-        this.examBlueprintRepository = null;
+        this(subjectRepository, null, null);
+    }
+
+    public AdminBlueprintServiceImpl(
+            SubjectRepository subjectRepository,
+            ExamBlueprintRepository examBlueprintRepository) {
+        this(subjectRepository, examBlueprintRepository, null);
     }
 
     @Autowired
     public AdminBlueprintServiceImpl(
             SubjectRepository subjectRepository,
-            @Autowired(required = false) ExamBlueprintRepository examBlueprintRepository) {
+            @Autowired(required = false) ExamBlueprintRepository examBlueprintRepository,
+            @Autowired(required = false) ExamRepository examRepository) {
         this.subjectRepository = subjectRepository;
         this.examBlueprintRepository = examBlueprintRepository;
+        this.examRepository = examRepository;
     }
 
     @Override
@@ -127,7 +138,11 @@ public class AdminBlueprintServiceImpl implements AdminBlueprintService {
             throw AppException.conflict("Mã ma trận blueprint đã tồn tại: " + request.getCode());
         }
 
-        int totalQuestions = request.getTotalQuestions() != null ? request.getTotalQuestions() : 25;
+        validateScoringProfile(request.getScoringProfileId());
+
+        int totalQuestions = request.getTotalQuestions() != null
+                ? request.getTotalQuestions()
+                : VsatFormatRules.TOTAL_QUESTIONS;
         validateCellQuestionCounts(request.getCells(), totalQuestions);
 
         List<BlueprintResponse.BlueprintCellResponse> cells = (request.getCells() != null)
@@ -175,7 +190,11 @@ public class AdminBlueprintServiceImpl implements AdminBlueprintService {
                     throw AppException.conflict("Mã ma trận blueprint đã tồn tại: " + request.getCode());
                 });
 
-        int totalQuestions = request.getTotalQuestions() != null ? request.getTotalQuestions() : 25;
+        validateScoringProfile(request.getScoringProfileId());
+
+        int totalQuestions = request.getTotalQuestions() != null
+                ? request.getTotalQuestions()
+                : VsatFormatRules.TOTAL_QUESTIONS;
         validateCellQuestionCounts(request.getCells(), totalQuestions);
 
         blueprint.setCode(request.getCode());
@@ -214,14 +233,51 @@ public class AdminBlueprintServiceImpl implements AdminBlueprintService {
         examBlueprintRepository.delete(blueprint);
     }
 
+    private void validateScoringProfile(Long scoringProfileId) {
+        if (scoringProfileId != null && examRepository != null
+                && !examRepository.existsScoringProfileById(scoringProfileId)) {
+            throw AppException.badRequest("Scoring profile không tồn tại: " + scoringProfileId);
+        }
+    }
+
     private void validateCellQuestionCounts(List<BlueprintResponse.BlueprintCellResponse> cells, int expectedTotal) {
-        int cellSum = (cells != null)
-                ? cells.stream().mapToInt(c -> c.getQuestionCount() != null ? c.getQuestionCount() : 0).sum()
-                : 0;
+        if (expectedTotal != VsatFormatRules.TOTAL_QUESTIONS) {
+            throw AppException.badRequest(
+                    "Tổng số câu hỏi (totalQuestions) phải bằng " + VsatFormatRules.TOTAL_QUESTIONS
+                            + " theo chuẩn V-SAT, nhận " + expectedTotal);
+        }
+        if (cells == null || cells.isEmpty()) {
+            throw AppException.badRequest("Ma trận câu hỏi (cells) không được để trống");
+        }
+
+        Map<QuestionType, Integer> countsByType = new EnumMap<>(QuestionType.class);
+        int cellSum = 0;
+        for (BlueprintResponse.BlueprintCellResponse c : cells) {
+            Integer rawCount = c.getQuestionCount();
+            if (rawCount == null || rawCount < 0) {
+                throw AppException.badRequest("Số lượng câu hỏi trong từng ô ma trận không được âm");
+            }
+            if (c.getQuestionType() == null) {
+                throw AppException.badRequest("Loại câu hỏi trong ô ma trận không được để trống");
+            }
+            if (!VsatFormatRules.PART_COUNTS.containsKey(c.getQuestionType()) && rawCount > 0) {
+                throw AppException.badRequest("Loại câu hỏi không hợp lệ trong ma trận V-SAT: " + c.getQuestionType());
+            }
+            cellSum += rawCount;
+            countsByType.merge(c.getQuestionType(), rawCount, Integer::sum);
+        }
+
         if (cellSum != expectedTotal) {
             throw AppException.badRequest(
                     "Tổng số câu hỏi trong ma trận (" + cellSum + ") không khớp với totalQuestions (" + expectedTotal + ")");
         }
+
+        VsatFormatRules.findMismatchedPart(countsByType).ifPresent(part -> {
+            int actual = countsByType.getOrDefault(part, 0);
+            int expected = VsatFormatRules.PART_COUNTS.get(part);
+            throw AppException.badRequest(
+                    "Cơ cấu loại " + part + " phải là " + expected + " câu (nhận " + actual + ")");
+        });
     }
 
     private List<BlueprintResponse.BlueprintCellResponse> defaultCells() {

@@ -9,6 +9,7 @@ import com.vsatcompass.api.dto.response.ExamSummaryResponse;
 import com.vsatcompass.api.entity.Exam;
 import com.vsatcompass.api.entity.ExamQuestion;
 import com.vsatcompass.api.entity.Question;
+import com.vsatcompass.api.entity.QuestionMatchingChoice;
 import com.vsatcompass.api.entity.QuestionOption;
 import com.vsatcompass.api.entity.enums.Difficulty;
 import com.vsatcompass.api.entity.enums.ExamPricingType;
@@ -19,6 +20,7 @@ import com.vsatcompass.api.exception.AppException;
 import com.vsatcompass.api.repository.ExamQuestionRepository;
 import com.vsatcompass.api.repository.ExamRepository;
 import com.vsatcompass.api.repository.QuestionGroupRepository;
+import com.vsatcompass.api.repository.QuestionMatchingChoiceRepository;
 import com.vsatcompass.api.repository.QuestionOptionRepository;
 import com.vsatcompass.api.repository.QuestionRepository;
 import com.vsatcompass.api.service.impl.ExamServiceImpl;
@@ -58,6 +60,7 @@ class ExamServiceTest {
     @Mock QuestionRepository questionRepository;
     @Mock QuestionOptionRepository questionOptionRepository;
     @Mock QuestionGroupRepository questionGroupRepository;
+    @Mock QuestionMatchingChoiceRepository questionMatchingChoiceRepository;
 
     @InjectMocks ExamServiceImpl examService;
 
@@ -173,40 +176,87 @@ class ExamServiceTest {
     }
 
     @Test
-    @DisplayName("getDownloadBundle: published free zero-price exam returns full answer bundle")
-    void getDownloadBundle_publishedFreeZeroPrice_returnsFullBundle() {
-        Question question = question(501L);
-        List<QuestionOption> options = List.of(
+    @DisplayName("getDownloadBundle: published free zero-price exam strips all answer keys and exposes maxRawScore + matchingChoices")
+    void getDownloadBundle_publishedFreeZeroPrice_returnsKeyFreeBundle() throws Exception {
+        Question mcq = question(501L);
+        List<QuestionOption> mcqOptions = List.of(
                 option(9001L, 501L, "A", false, 1),
                 option(9002L, 501L, "B", true, 2));
+
+        Question tf = question(502L);
+        tf.setQuestionType(QuestionType.TRUE_FALSE);
+        List<QuestionOption> tfOptions = List.of(
+                option(9011L, 502L, "a", true, 1),
+                option(9012L, 502L, "b", false, 2),
+                option(9013L, 502L, "c", true, 3),
+                option(9014L, 502L, "d", false, 4));
+
+        Question matching = question(503L);
+        matching.setQuestionType(QuestionType.MATCHING);
+        List<QuestionOption> matchOptions = List.of(
+                QuestionOption.builder().id(9021L).questionId(503L).optionLabel("1").optionText("Ha Noi ⇄ C").isCorrect(true).displayOrder(1).build(),
+                QuestionOption.builder().id(9022L).questionId(503L).optionLabel("2").optionText("Hue -> A").isCorrect(true).displayOrder(2).build(),
+                QuestionOption.builder().id(9023L).questionId(503L).optionLabel("3").optionText("Da Nang ⇄ D").isCorrect(true).displayOrder(3).build(),
+                QuestionOption.builder().id(9024L).questionId(503L).optionLabel("4").optionText("Sai Gon ⇄ B").isCorrect(true).displayOrder(4).build());
+        List<QuestionMatchingChoice> matchChoices = List.of(
+                QuestionMatchingChoice.builder().id(1L).questionId(503L).choiceKey("A").choiceText("Co do").displayOrder(1).build(),
+                QuestionMatchingChoice.builder().id(2L).questionId(503L).choiceKey("B").choiceText("Nam Bo").displayOrder(2).build());
+
+        Question shortAnswer = question(504L);
+        shortAnswer.setQuestionType(QuestionType.SHORT_ANSWER);
+        List<QuestionOption> saOptions = List.of(
+                QuestionOption.builder().id(9031L).questionId(504L).optionLabel("Đáp án").optionText("12.5").isCorrect(true).displayOrder(1).build());
+
         when(examRepository.findByIdAndStatusAndPricingType(
                 1L, ExamStatus.PUBLISHED, ExamPricingType.FREE))
                 .thenReturn(Optional.of(algebraExam));
         when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(1L))
-                .thenReturn(List.of(ExamQuestion.builder()
-                        .examId(1L)
-                        .questionId(501L)
-                        .questionOrder(1)
-                        .build()));
-        when(questionRepository.findById(501L)).thenReturn(Optional.of(question));
-        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(501L))
-                .thenReturn(options);
+                .thenReturn(List.of(
+                        ExamQuestion.builder().examId(1L).questionId(501L).questionOrder(1).build(),
+                        ExamQuestion.builder().examId(1L).questionId(502L).questionOrder(2).build(),
+                        ExamQuestion.builder().examId(1L).questionId(503L).questionOrder(3).build(),
+                        ExamQuestion.builder().examId(1L).questionId(504L).questionOrder(4).build()));
+        when(questionRepository.findById(501L)).thenReturn(Optional.of(mcq));
+        when(questionRepository.findById(502L)).thenReturn(Optional.of(tf));
+        when(questionRepository.findById(503L)).thenReturn(Optional.of(matching));
+        when(questionRepository.findById(504L)).thenReturn(Optional.of(shortAnswer));
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(501L)).thenReturn(mcqOptions);
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(502L)).thenReturn(tfOptions);
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(503L)).thenReturn(matchOptions);
+        when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(504L)).thenReturn(saOptions);
+        when(questionMatchingChoiceRepository.findByQuestionIdOrderByDisplayOrderAsc(503L)).thenReturn(matchChoices);
 
         ExamDownloadBundleResponse result = examService.getDownloadBundle(1L);
 
         assertThat(result.getId()).isEqualTo(1L);
         assertThat(result.getExamVersion()).isEqualTo(3);
         assertThat(result.getUpdatedAt()).isEqualTo(algebraExam.getUpdatedAt());
-        assertThat(result.getQuestionCount()).isEqualTo(1);
-        assertThat(result.getQuestions()).hasSize(1);
-        ExamDownloadBundleResponse.QuestionBundleItem bundledQuestion = result.getQuestions().get(0);
-        assertThat(bundledQuestion.getId()).isEqualTo(501L);
-        assertThat(bundledQuestion.getQuestionOrder()).isEqualTo(1);
-        assertThat(bundledQuestion.getExplanation()).isEqualTo("Because B is correct");
-        assertThat(bundledQuestion.getCorrectAnswer()).isEqualTo("B");
-        assertThat(bundledQuestion.getCorrectOptionIds()).containsExactly(9002L);
-        assertThat(bundledQuestion.getOptions()).extracting("isCorrect")
-                .containsExactly(false, true);
+        assertThat(result.getQuestionCount()).isEqualTo(4);
+        assertThat(result.getQuestions()).hasSize(4);
+
+        for (ExamDownloadBundleResponse.QuestionBundleItem item : result.getQuestions()) {
+            assertThat(item.getMaxRawScore()).isEqualByComparingTo(new BigDecimal("6.00"));
+            assertThat(item.getExplanation()).isNull();
+            assertThat(item.getExplanationHtml()).isNull();
+            assertThat(item.getCorrectAnswer()).isNull();
+            assertThat(item.getCorrectOptionIds()).isNull();
+            assertThat(item.getOptions()).extracting("isCorrect").containsOnly((Boolean) null);
+        }
+
+        ExamDownloadBundleResponse.QuestionBundleItem bundledTf = result.getQuestions().get(1);
+        assertThat(bundledTf.getOptions()).extracting("optionLabel").containsExactly("a", "b", "c", "d");
+
+        ExamDownloadBundleResponse.QuestionBundleItem bundledMatch = result.getQuestions().get(2);
+        assertThat(bundledMatch.getOptions()).extracting("optionText")
+                .containsExactly("Ha Noi", "Hue", "Da Nang", "Sai Gon");
+        assertThat(bundledMatch.getMatchingChoices()).extracting("key").containsExactly("A", "B");
+
+        ExamDownloadBundleResponse.QuestionBundleItem bundledSa = result.getQuestions().get(3);
+        assertThat(bundledSa.getOptions()).extracting("optionText").containsOnly((String) null);
+
+        String json = objectMapper.writeValueAsString(result);
+        assertThat(json).doesNotContain("isCorrect", "correctOptionIds", "correctAnswer",
+                "explanation", "explanationHtml", "⇄", "->", "12.5", "Because B is correct");
     }
 
     @Test

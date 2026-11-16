@@ -8,16 +8,20 @@ import com.vsatcompass.api.entity.Exam;
 import com.vsatcompass.api.entity.ExamQuestion;
 import com.vsatcompass.api.entity.Question;
 import com.vsatcompass.api.entity.QuestionGroup;
+import com.vsatcompass.api.entity.QuestionMatchingChoice;
 import com.vsatcompass.api.entity.QuestionOption;
 import com.vsatcompass.api.entity.enums.ExamPricingType;
 import com.vsatcompass.api.entity.enums.ExamStatus;
+import com.vsatcompass.api.entity.enums.QuestionType;
 import com.vsatcompass.api.exception.AppException;
 import com.vsatcompass.api.repository.ExamQuestionRepository;
 import com.vsatcompass.api.repository.ExamRepository;
 import com.vsatcompass.api.repository.QuestionGroupRepository;
+import com.vsatcompass.api.repository.QuestionMatchingChoiceRepository;
 import com.vsatcompass.api.repository.QuestionOptionRepository;
 import com.vsatcompass.api.repository.QuestionRepository;
 import com.vsatcompass.api.service.ExamService;
+import com.vsatcompass.api.util.VsatFormatRules;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -29,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -46,6 +51,7 @@ public class ExamServiceImpl implements ExamService {
     private final QuestionRepository questionRepository;
     private final QuestionOptionRepository questionOptionRepository;
     private final QuestionGroupRepository questionGroupRepository;
+    private final QuestionMatchingChoiceRepository questionMatchingChoiceRepository;
 
     @Override
     @Cacheable(value = "publicExams", key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
@@ -171,15 +177,15 @@ public class ExamServiceImpl implements ExamService {
     ) {
         List<QuestionOption> options = questionOptionRepository
                 .findByQuestionIdOrderByDisplayOrderAscIdAsc(question.getId());
-        List<Long> correctOptionIds = options.stream()
-                .filter(option -> Boolean.TRUE.equals(option.getIsCorrect()))
-                .map(QuestionOption::getId)
-                .toList();
-        String correctAnswer = options.stream()
-                .filter(option -> Boolean.TRUE.equals(option.getIsCorrect()))
-                .map(QuestionOption::getOptionLabel)
-                .findFirst()
-                .orElse(null);
+        QuestionType questionType = question.getQuestionType();
+        BigDecimal maxRawScore = examQuestion.getMaxRawScore() != null
+                ? examQuestion.getMaxRawScore()
+                : VsatFormatRules.pointsFor(questionType);
+
+        List<ExamDownloadBundleResponse.MatchingChoiceDto> matchingChoices = null;
+        if (questionType == QuestionType.MATCHING) {
+            matchingChoices = loadMatchingChoices(question.getId(), options);
+        }
 
         QuestionGroupResponse group = question.getQuestionGroupId() != null
                 ? groupMap.get(question.getQuestionGroupId())
@@ -193,29 +199,66 @@ public class ExamServiceImpl implements ExamService {
                 .questionGroupId(question.getQuestionGroupId())
                 .questionGroup(group)
                 .difficulty(question.getDifficulty())
-                .questionType(question.getQuestionType())
+                .questionType(questionType)
                 .questionText(question.getQuestionText())
                 .questionHtml(question.getQuestionHtml())
                 .imageUrl(question.getImageUrl())
-                .explanation(question.getExplanation())
-                .explanationHtml(question.getExplanationHtml())
                 .questionOrder(examQuestion.getQuestionOrder())
-                .correctAnswer(correctAnswer)
-                .correctOptionIds(correctOptionIds)
-                .options(options.stream().map(this::toBundleOption).toList())
+                .maxRawScore(maxRawScore)
+                .options(options.stream().map(opt -> toBundleOption(opt, questionType)).toList())
+                .matchingChoices(matchingChoices)
                 .build();
     }
 
-    private ExamDownloadBundleResponse.OptionBundleItem toBundleOption(QuestionOption option) {
+    private ExamDownloadBundleResponse.OptionBundleItem toBundleOption(
+            QuestionOption option,
+            QuestionType questionType
+    ) {
+        String optionText = VsatFormatRules.sanitizeOptionTextForStudent(option.getOptionText(), questionType);
+        String optionHtml = VsatFormatRules.sanitizeOptionTextForStudent(option.getOptionHtml(), questionType);
         return ExamDownloadBundleResponse.OptionBundleItem.builder()
                 .id(option.getId())
                 .optionLabel(option.getOptionLabel())
-                .optionText(option.getOptionText())
-                .optionHtml(option.getOptionHtml())
+                .optionText(optionText)
+                .optionHtml(optionHtml)
                 .imageUrl(option.getImageUrl())
-                .isCorrect(option.getIsCorrect())
                 .displayOrder(option.getDisplayOrder())
                 .build();
+    }
+
+    private List<ExamDownloadBundleResponse.MatchingChoiceDto> loadMatchingChoices(
+            Long questionId,
+            List<QuestionOption> options
+    ) {
+        if (questionMatchingChoiceRepository != null) {
+            List<QuestionMatchingChoice> found = questionMatchingChoiceRepository
+                    .findByQuestionIdOrderByDisplayOrderAsc(questionId);
+            if (found != null && !found.isEmpty()) {
+                return found.stream()
+                        .map(choice -> ExamDownloadBundleResponse.MatchingChoiceDto.builder()
+                                .key(choice.getChoiceKey())
+                                .text(choice.getChoiceText())
+                                .build())
+                        .toList();
+            }
+        }
+        Set<String> derivedKeys = new LinkedHashSet<>();
+        for (QuestionOption option : options) {
+            String target = VsatFormatRules.matchTarget(option.getOptionText());
+            if (!target.isEmpty()) {
+                derivedKeys.add(target);
+            }
+        }
+        if (derivedKeys.isEmpty()) {
+            return null;
+        }
+        return derivedKeys.stream()
+                .sorted()
+                .map(k -> ExamDownloadBundleResponse.MatchingChoiceDto.builder()
+                        .key(k)
+                        .text(k)
+                        .build())
+                .toList();
     }
 
     private boolean isZeroPrice(Exam exam) {

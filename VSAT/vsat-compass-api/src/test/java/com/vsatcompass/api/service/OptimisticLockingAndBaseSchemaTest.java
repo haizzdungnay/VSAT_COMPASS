@@ -83,7 +83,7 @@ class OptimisticLockingAndBaseSchemaTest {
                 .title("Math Exam")
                 .subjectId(1L)
                 .status(ExamStatus.DRAFT)
-                .durationMinutes(60)
+                .durationMinutes(90)
                 .difficulty(Difficulty.MEDIUM)
                 .pricingType(ExamPricingType.FREE)
                 .price(BigDecimal.ZERO)

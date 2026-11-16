@@ -1058,6 +1058,406 @@
       ],
       "file_path": "VSAT/vsat-compass-api/src/main/java/com/vsatcompass/api/controller/subject/SubjectController.java:40",
       "description": "List subtopics under a curriculum topic"
+    },
+    {
+      "id": "VF-A01",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Đề 25 câu chuẩn: publish 200 và oracle PASS",
+      "acceptance_gaps": [
+        "G1"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-A02",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Publish đề 1 câu bị chặn (G1)",
+      "acceptance_gaps": [
+        "G1"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-A03",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Publish đề 25 câu toàn 4 lựa chọn bị chặn VF_MIX (G1)",
+      "acceptance_gaps": [
+        "G1"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-A04",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Publish đề 26 câu bị chặn (G1)",
+      "acceptance_gaps": [
+        "G1"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-A05",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Thêm câu môn ENG vào đề MATH bị chặn (G2)",
+      "acceptance_gaps": [
+        "G2"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-A06",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Thêm câu DRAFT bị chặn",
+      "acceptance_gaps": [
+        "G1"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-A07",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Thêm trùng câu trả 409",
+      "acceptance_gaps": [
+        "G1"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-A08",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Tạo đề MATH 60 phút bị chặn (G17)",
+      "acceptance_gaps": [
+        "G17"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-A09",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Publish đề có câu Đ/S chỉ 3 ý bị chặn (G4)",
+      "acceptance_gaps": [
+        "G4"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-A10",
+      "type": "AcceptanceTest",
+      "acceptance_case": "CONTENT_ADMIN publish trả 403, không tự chuyển submit-review (G15)",
+      "acceptance_gaps": [
+        "G15"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-B01",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Sinh đề từ VSAT_2026_BP_MATH ra đúng 9/6/5/5, oracle PASS (G3)",
+      "acceptance_gaps": [
+        "G3"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-B02",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Ngân hàng ENG toàn 4 lựa chọn: sinh đề phải 400 hoặc cảnh báo thiếu dạng (G3)",
+      "acceptance_gaps": [
+        "G3"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-B03",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Sinh đề vào đề PUBLISHED bị chặn 409 (G3)",
+      "acceptance_gaps": [
+        "G3"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-B04",
+      "type": "AcceptanceTest",
+      "acceptance_case": "blueprintId 10 câu được tôn trọng hoặc bị từ chối (G3/G12)",
+      "acceptance_gaps": [
+        "G3",
+        "G12"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-B05",
+      "type": "AcceptanceTest",
+      "acceptance_case": "rawScore trả về khớp tổng điểm thực của đề (G3)",
+      "acceptance_gaps": [
+        "G3"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-C01",
+      "type": "AcceptanceTest",
+      "acceptance_case": "PUT đề PUBLISHED trả 409",
+      "acceptance_gaps": [
+        "G1"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-C02",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Đề HIDDEN: thêm/xóa/sắp xếp câu đều 409",
+      "acceptance_gaps": [
+        "G1"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-C03",
+      "type": "AcceptanceTest",
+      "acceptance_case": "DRAFT đổi môn sang ENG nhưng giữ câu MATH, publish bị chặn (G2)",
+      "acceptance_gaps": [
+        "G2"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-C04",
+      "type": "AcceptanceTest",
+      "acceptance_case": "HIDDEN đổi môn rồi publish lại phải chạy lại validator (G2)",
+      "acceptance_gaps": [
+        "G2"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-C05",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Return-to-draft, bỏ 1 câu Đ/S rồi publish lại bị chặn (G1)",
+      "acceptance_gaps": [
+        "G1"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-C06",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Sửa câu APPROVED nằm trong đề PUBLISHED bị chặn 409",
+      "acceptance_gaps": [
+        "G2"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-C07",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Hai admin cùng lockVersion: người thứ hai nhận 409",
+      "acceptance_gaps": [
+        "G1"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-C08",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Reorder làm 4 lựa chọn đứng trước Đ/S bị chặn VF_ORDER",
+      "acceptance_gaps": [
+        "G1"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-D01",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Import Đ/S + 4LC hợp lệ: câu vào trạng thái chờ duyệt, đúng cấu trúc (G8)",
+      "acceptance_gaps": [
+        "G8"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-D02",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Import dạng câu lạ \"ABC\" phải là dòng lỗi (G8)",
+      "acceptance_gaps": [
+        "G8"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-D03",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Import SINGLE_CHOICE đáp án \"A,B\" phải là dòng lỗi (G8)",
+      "acceptance_gaps": [
+        "G8"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-D04",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Import Đ/S chỉ 3 ý phải là dòng lỗi (G4/G8)",
+      "acceptance_gaps": [
+        "G4",
+        "G8"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-D05",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Import trả lời ngắn đáp án số 12.5 hợp lệ (G7/G8)",
+      "acceptance_gaps": [
+        "G7",
+        "G8"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-D06",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Import ghép hợp 4 cặp 1-C,2-A,3-D,4-B lưu được khóa ghép (G6/G8)",
+      "acceptance_gaps": [
+        "G6",
+        "G8"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-D08",
+      "type": "AcceptanceTest",
+      "acceptance_case": "dryRun không ghi DB; commit nhập đúng số dòng hợp lệ",
+      "acceptance_gaps": [
+        "G8"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-D09",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Import 1001 dòng trả 400",
+      "acceptance_gaps": [
+        "G8"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-E01",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Blueprint seed: 25 câu / 150đ / 9-6-5-5 / có profile (G10)",
+      "acceptance_gaps": [
+        "G10"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-E02",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Tạo blueprint totalQuestions=10 bị chặn (G12)",
+      "acceptance_gaps": [
+        "G12"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-E03",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Blueprint có ô âm / dạng câu trùng bị chặn (G12)",
+      "acceptance_gaps": [
+        "G12"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-E04",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Blueprint scoringProfileId không tồn tại bị chặn 400 (G10)",
+      "acceptance_gaps": [
+        "G10"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-F01",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Bundle của đề chuẩn mô tả đủ 4 phần và điểm (G14)",
+      "acceptance_gaps": [
+        "G14"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-F02",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Bundle của học sinh không chứa đáp án (G13)",
+      "acceptance_gaps": [
+        "G13"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-F03",
+      "type": "AcceptanceTest",
+      "acceptance_case": "correctAnswer của câu Đ/S (nếu có) phải đủ 4 cờ Đ/S (G14)",
+      "acceptance_gaps": [
+        "G14"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-F04",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Chấm offline scoreVsat khớp điểm server (1 bộ đáp án đúng + 10 bộ ngẫu nhiên)",
+      "acceptance_gaps": [
+        "G14"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-F05",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Bundle của đề chưa PUBLISHED trả 404",
+      "acceptance_gaps": [
+        "G14"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-Q01",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Tạo câu Đ/S 3 ý bị chặn (G4)",
+      "acceptance_gaps": [
+        "G4"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-Q02",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Tạo câu 4 lựa chọn chỉ 2 phương án bị chặn (G5)",
+      "acceptance_gaps": [
+        "G5"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-Q03",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Tạo câu ghép hợp 2 cặp bị chặn (G6)",
+      "acceptance_gaps": [
+        "G6"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
+    },
+    {
+      "id": "VF-Q04",
+      "type": "AcceptanceTest",
+      "acceptance_case": "Tạo câu trả lời ngắn không có đáp án bị chặn",
+      "acceptance_gaps": [
+        "G7"
+      ],
+      "result_file": "acceptance-harness/results/vsat-format.json"
     }
   ],
   "backend_jobs_and_integrations": [

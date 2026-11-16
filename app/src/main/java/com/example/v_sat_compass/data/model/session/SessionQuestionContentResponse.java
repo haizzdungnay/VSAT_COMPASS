@@ -34,6 +34,9 @@ public class SessionQuestionContentResponse {
     @SerializedName("options")
     private List<QuestionOptionContentResponse> options;
 
+    @SerializedName("matchingChoices")
+    private List<MatchingChoiceDto> matchingChoices;
+
     public long getId() { return id; }
     public String getQuestionCode() { return questionCode; }
     public Long getQuestionGroupId() { return questionGroupId; }
@@ -44,5 +47,19 @@ public class SessionQuestionContentResponse {
     public int getOrder() { return order; }
     public List<QuestionOptionContentResponse> getOptions() {
         return options != null ? options : Collections.emptyList();
+    }
+    public List<MatchingChoiceDto> getMatchingChoices() {
+        return matchingChoices != null ? matchingChoices : Collections.emptyList();
+    }
+
+    public static class MatchingChoiceDto {
+        @SerializedName("key")
+        private String key;
+
+        @SerializedName("text")
+        private String text;
+
+        public String getKey() { return key; }
+        public String getText() { return text; }
     }
 }

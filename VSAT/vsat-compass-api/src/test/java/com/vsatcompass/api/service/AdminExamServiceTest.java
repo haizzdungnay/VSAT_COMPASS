@@ -54,6 +54,7 @@ class AdminExamServiceTest {
     @Mock QuestionRepository questionRepository;
     @Mock SubjectRepository subjectRepository;
     @Mock com.vsatcompass.api.repository.QuestionOptionRepository questionOptionRepository;
+    @Mock com.vsatcompass.api.repository.ExamBlueprintRepository examBlueprintRepository;
 
     @InjectMocks AdminExamServiceImpl adminExamService;
 
@@ -249,7 +250,7 @@ class AdminExamServiceTest {
         AdminExamUpdateRequest req = AdminExamUpdateRequest.builder()
                 .title("New Title")
                 .description("New Description")
-                .durationMinutes(120)
+                .durationMinutes(90)
                 .difficulty(Difficulty.HARD)
                 .tags("new,tags")
                 .build();
@@ -263,7 +264,7 @@ class AdminExamServiceTest {
 
         assertThat(existing.getTitle()).isEqualTo("New Title");
         assertThat(existing.getDescription()).isEqualTo("New Description");
-        assertThat(existing.getDurationMinutes()).isEqualTo(120);
+        assertThat(existing.getDurationMinutes()).isEqualTo(90);
         assertThat(existing.getDifficulty()).isEqualTo(Difficulty.HARD);
         assertThat(existing.getTags()).isEqualTo("new,tags");
         assertThat(result.getStatus()).isEqualTo(ExamStatus.DRAFT);
@@ -760,14 +761,12 @@ class AdminExamServiceTest {
     @Test
     @DisplayName("WF-05 PENDING_REVIEW -> publish (SUPER_ADMIN) -> PUBLISHED; reviewedBy set, publishDate set")
     void wf05_publishPendingReviewAsSuperAdmin_successAuditSet() {
-        Exam exam = publishableExam(44L, ExamStatus.PENDING_REVIEW, 1);
+        Exam exam = publishableExam(44L, ExamStatus.PENDING_REVIEW, 25);
         when(examRepository.findById(44L)).thenReturn(Optional.of(exam));
-        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(44L))
-                .thenReturn(mappings(44L, 201L));
-        when(questionRepository.findAllById(List.of(201L)))
-                .thenReturn(List.of(question(201L, QuestionStatus.APPROVED)));
+        when(examQuestionRepository.countByExamId(44L)).thenReturn(25L);
+        setupStandard25MockExam(44L, exam);
         when(examRepository.save(any(Exam.class))).thenAnswer(inv -> inv.getArgument(0));
-        stubAdminResponseDependencies(44L, 1L);
+        stubAdminResponseDependencies(44L, 25L);
 
         AdminExamResponse result = adminExamService.publish(902L, 44L);
 
@@ -924,17 +923,15 @@ class AdminExamServiceTest {
     @Test
     @DisplayName("WF-16 HIDDEN -> publish (SUPER_ADMIN) -> PUBLISHED; reviewedBy AND publishDate overwritten")
     void wf16_publishHidden_successAuditOverwritten() {
-        Exam exam = publishableExam(55L, ExamStatus.HIDDEN, 1);
+        Exam exam = publishableExam(55L, ExamStatus.HIDDEN, 25);
         OffsetDateTime oldPublishDate = FIXED_TIME.minusDays(2);
         exam.setReviewedBy(777L);
         exam.setPublishDate(oldPublishDate);
         when(examRepository.findById(55L)).thenReturn(Optional.of(exam));
-        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(55L))
-                .thenReturn(mappings(55L, 205L));
-        when(questionRepository.findAllById(List.of(205L)))
-                .thenReturn(List.of(question(205L, QuestionStatus.PUBLISHED)));
+        when(examQuestionRepository.countByExamId(55L)).thenReturn(25L);
+        setupStandard25MockExam(55L, exam);
         when(examRepository.save(any(Exam.class))).thenAnswer(inv -> inv.getArgument(0));
-        stubAdminResponseDependencies(55L, 1L);
+        stubAdminResponseDependencies(55L, 25L);
 
         AdminExamResponse result = adminExamService.publish(902L, 55L);
 
@@ -1302,6 +1299,8 @@ class AdminExamServiceTest {
     private Question question(Long id, QuestionStatus status) {
         return Question.builder()
                 .id(id)
+                .subjectId(SUBJECT_ACTIVE_ID)
+                .questionType(com.vsatcompass.api.entity.enums.QuestionType.SINGLE_CHOICE)
                 .status(status)
                 .build();
     }
@@ -1331,6 +1330,72 @@ class AdminExamServiceTest {
         return exam;
     }
 
+    private void setupStandard25MockExam(Long examId, Exam exam) {
+        exam.setScoringProfileId(1L);
+        when(examRepository.existsScoringProfileById(1L)).thenReturn(true);
+        when(subjectRepository.findById(SUBJECT_ACTIVE_ID)).thenReturn(Optional.of(activeSubject));
+
+        List<ExamQuestion> mappings = new java.util.ArrayList<>();
+        List<Question> questions = new java.util.ArrayList<>();
+        List<Long> questionIds = new java.util.ArrayList<>();
+
+        long idCounter = 1000L;
+        int order = 1;
+
+        // 9 TF
+        for (int i = 0; i < 9; i++) {
+            long qId = idCounter++;
+            questionIds.add(qId);
+            mappings.add(mapping(examId, qId, order++));
+            questions.add(Question.builder().id(qId).subjectId(SUBJECT_ACTIVE_ID).questionType(com.vsatcompass.api.entity.enums.QuestionType.TRUE_FALSE).status(QuestionStatus.APPROVED).build());
+            when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(qId)).thenReturn(List.of(
+                    com.vsatcompass.api.entity.QuestionOption.builder().optionLabel("a").optionText("t").isCorrect(true).build(),
+                    com.vsatcompass.api.entity.QuestionOption.builder().optionLabel("b").optionText("f").isCorrect(false).build(),
+                    com.vsatcompass.api.entity.QuestionOption.builder().optionLabel("c").optionText("t").isCorrect(true).build(),
+                    com.vsatcompass.api.entity.QuestionOption.builder().optionLabel("d").optionText("f").isCorrect(false).build()
+            ));
+        }
+        // 6 MCQ
+        for (int i = 0; i < 6; i++) {
+            long qId = idCounter++;
+            questionIds.add(qId);
+            mappings.add(mapping(examId, qId, order++));
+            questions.add(Question.builder().id(qId).subjectId(SUBJECT_ACTIVE_ID).questionType(com.vsatcompass.api.entity.enums.QuestionType.SINGLE_CHOICE).status(QuestionStatus.APPROVED).build());
+            when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(qId)).thenReturn(List.of(
+                    com.vsatcompass.api.entity.QuestionOption.builder().optionLabel("A").optionText("A").isCorrect(true).build(),
+                    com.vsatcompass.api.entity.QuestionOption.builder().optionLabel("B").optionText("B").isCorrect(false).build(),
+                    com.vsatcompass.api.entity.QuestionOption.builder().optionLabel("C").optionText("C").isCorrect(false).build(),
+                    com.vsatcompass.api.entity.QuestionOption.builder().optionLabel("D").optionText("D").isCorrect(false).build()
+            ));
+        }
+        // 5 MATCHING
+        for (int i = 0; i < 5; i++) {
+            long qId = idCounter++;
+            questionIds.add(qId);
+            mappings.add(mapping(examId, qId, order++));
+            questions.add(Question.builder().id(qId).subjectId(SUBJECT_ACTIVE_ID).questionType(com.vsatcompass.api.entity.enums.QuestionType.MATCHING).status(QuestionStatus.APPROVED).build());
+            when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(qId)).thenReturn(List.of(
+                    com.vsatcompass.api.entity.QuestionOption.builder().optionLabel("1").optionText("1 ⇄ A").isCorrect(true).build(),
+                    com.vsatcompass.api.entity.QuestionOption.builder().optionLabel("2").optionText("2 ⇄ B").isCorrect(true).build(),
+                    com.vsatcompass.api.entity.QuestionOption.builder().optionLabel("3").optionText("3 ⇄ C").isCorrect(true).build(),
+                    com.vsatcompass.api.entity.QuestionOption.builder().optionLabel("4").optionText("4 ⇄ D").isCorrect(true).build()
+            ));
+        }
+        // 5 SHORT_ANSWER
+        for (int i = 0; i < 5; i++) {
+            long qId = idCounter++;
+            questionIds.add(qId);
+            mappings.add(mapping(examId, qId, order++));
+            questions.add(Question.builder().id(qId).subjectId(SUBJECT_ACTIVE_ID).questionType(com.vsatcompass.api.entity.enums.QuestionType.SHORT_ANSWER).explanation("ans").status(QuestionStatus.APPROVED).build());
+            when(questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(qId)).thenReturn(List.of(
+                    com.vsatcompass.api.entity.QuestionOption.builder().optionLabel("1").optionText("42").isCorrect(true).build()
+            ));
+        }
+
+        when(examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(examId)).thenReturn(mappings);
+        when(questionRepository.findAllById(questionIds)).thenReturn(questions);
+    }
+
     private AdminExamCreateRequest baseCreateRequest() {
         return AdminExamCreateRequest.builder()
                 .examCode(EXAM_CODE_VALID)
@@ -1353,7 +1418,7 @@ class AdminExamServiceTest {
                 .subjectId(SUBJECT_ACTIVE_ID)
                 .description("desc")
                 .questionCount(0)
-                .durationMinutes(60)
+                .durationMinutes(90)
                 .difficulty(Difficulty.MEDIUM)
                 .pricingType(ExamPricingType.FREE)
                 .price(BigDecimal.ZERO)

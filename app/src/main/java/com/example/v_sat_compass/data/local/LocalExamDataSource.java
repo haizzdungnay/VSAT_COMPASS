@@ -32,7 +32,6 @@ public class LocalExamDataSource {
     private boolean loaded;
     private final List<Exam> exams = new ArrayList<>();
     private final Map<Long, Question> questionsById = new HashMap<>();
-    private final Map<Long, Long> correctOptionByQuestionId = new HashMap<>();
 
     private LocalExamDataSource() {}
 
@@ -60,11 +59,6 @@ public class LocalExamDataSource {
         return questionsById.get(questionId);
     }
 
-    public synchronized Long getCorrectOptionId(Context context, long questionId) {
-        ensureLoaded(context);
-        return correctOptionByQuestionId.get(questionId);
-    }
-
     private void ensureLoaded(Context context) {
         if (loaded) {
             return;
@@ -73,7 +67,6 @@ public class LocalExamDataSource {
         try {
             exams.clear();
             questionsById.clear();
-            correctOptionByQuestionId.clear();
 
             List<String> examAssets = getExamAssetFiles(context);
             for (String assetFile : examAssets) {
@@ -84,7 +77,6 @@ public class LocalExamDataSource {
         } catch (Exception ex) {
             exams.clear();
             questionsById.clear();
-            correctOptionByQuestionId.clear();
             loaded = true;
         }
     }
@@ -164,7 +156,6 @@ public class LocalExamDataSource {
 
             JsonArray convertedOptions = new JsonArray();
             JsonArray sourceOptions = sourceQuestion.getAsJsonArray("options");
-            String correctLabel = getString(sourceQuestion, "correct", "");
 
             if (sourceOptions != null) {
                 int optionIndex = 0;
@@ -178,13 +169,8 @@ public class LocalExamDataSource {
                     optionObj.addProperty("id", optionId);
                     optionObj.addProperty("option_label", label);
                     optionObj.addProperty("option_text", getString(sourceOption, "content", ""));
-                    optionObj.addProperty("is_correct", label.equalsIgnoreCase(correctLabel));
                     optionObj.addProperty("display_order", optionIndex);
                     convertedOptions.add(optionObj);
-
-                    if (label.equalsIgnoreCase(correctLabel)) {
-                        correctOptionByQuestionId.put(questionId, optionId);
-                    }
                 }
             }
 

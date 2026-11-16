@@ -47,9 +47,11 @@ public class OfflineExamBundle {
         private String explanation;
         private String explanationHtml;
         private Integer questionOrder;
+        private Double maxRawScore;
         private String correctAnswer;
         private List<Long> correctOptionIds;
         private List<OptionBundleItem> options;
+        private List<MatchingChoiceDto> matchingChoices;
 
         public Long getId() { return id; }
         public Long getQuestionGroupId() { return questionGroupId; }
@@ -59,8 +61,18 @@ public class OfflineExamBundle {
         public String getQuestionType() { return questionType; }
         public String getExplanation() { return explanation; }
         public Integer getQuestionOrder() { return questionOrder; }
+        public Double getMaxRawScore() { return maxRawScore; }
         public List<Long> getCorrectOptionIds() { return correctOptionIds; }
         public List<OptionBundleItem> getOptions() { return options; }
+        public List<MatchingChoiceDto> getMatchingChoices() { return matchingChoices; }
+    }
+
+    public static class MatchingChoiceDto {
+        private String key;
+        private String text;
+
+        public String getKey() { return key; }
+        public String getText() { return text; }
     }
 
     public static class OptionBundleItem {

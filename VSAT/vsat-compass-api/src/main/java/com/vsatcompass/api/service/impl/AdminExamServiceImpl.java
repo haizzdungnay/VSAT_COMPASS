@@ -10,6 +10,7 @@ import com.vsatcompass.api.dto.response.ExamQuestionDetailResponse;
 import com.vsatcompass.api.dto.response.ExamVariantResponse;
 import com.vsatcompass.api.dto.response.MatrixGenerateResponse;
 import com.vsatcompass.api.entity.Exam;
+import com.vsatcompass.api.entity.ExamBlueprint;
 import com.vsatcompass.api.entity.ExamQuestion;
 import com.vsatcompass.api.entity.Question;
 import com.vsatcompass.api.entity.QuestionOption;
@@ -18,7 +19,9 @@ import com.vsatcompass.api.entity.enums.Difficulty;
 import com.vsatcompass.api.entity.enums.ExamPricingType;
 import com.vsatcompass.api.entity.enums.ExamStatus;
 import com.vsatcompass.api.entity.enums.QuestionStatus;
+import com.vsatcompass.api.entity.enums.QuestionType;
 import com.vsatcompass.api.exception.AppException;
+import com.vsatcompass.api.repository.ExamBlueprintRepository;
 import com.vsatcompass.api.repository.ExamQuestionRepository;
 import com.vsatcompass.api.repository.ExamRepository;
 import com.vsatcompass.api.repository.QuestionOptionRepository;
@@ -26,6 +29,7 @@ import com.vsatcompass.api.repository.QuestionRepository;
 import com.vsatcompass.api.repository.SubjectRepository;
 import com.vsatcompass.api.service.AdminExamService;
 import com.vsatcompass.api.util.SecurityUtils;
+import com.vsatcompass.api.util.VsatFormatRules;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -39,11 +43,16 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -59,6 +68,7 @@ public class AdminExamServiceImpl implements AdminExamService {
     private final QuestionRepository questionRepository;
     private final SubjectRepository subjectRepository;
     private final QuestionOptionRepository questionOptionRepository;
+    private final ExamBlueprintRepository examBlueprintRepository;
 
     // ---------- LIST ----------
     @Override
@@ -94,14 +104,23 @@ public class AdminExamServiceImpl implements AdminExamService {
         validateFreeOnlyPricing(req.getPricingType(), req.getPrice());
         Subject subject = loadActiveSubject(req.getSubjectId());
 
+        int expectedDuration = VsatFormatRules.expectedDuration(subject.getCode());
+        if (req.getDurationMinutes() == null || !req.getDurationMinutes().equals(expectedDuration)) {
+            throw AppException.validationFailed("Invalid duration: subject " + subject.getCode()
+                    + " requires " + expectedDuration + " minutes, got " + req.getDurationMinutes());
+        }
+
         if (examRepository.existsByExamCode(req.getExamCode())) {
             throw AppException.conflict("Exam code already exists: " + req.getExamCode());
         }
+
+        Long scoringProfileId = resolveScoringProfileIdForSubject(subject.getId());
 
         Exam exam = Exam.builder()
                 .examCode(req.getExamCode())
                 .title(req.getTitle())
                 .subjectId(subject.getId())
+                .scoringProfileId(scoringProfileId)
                 .description(req.getDescription())
                 .questionCount(0)
                 .durationMinutes(req.getDurationMinutes())
@@ -153,11 +172,23 @@ public class AdminExamServiceImpl implements AdminExamService {
         Subject subject = loadActiveSubject(effectiveSubjectId);
         if (!subject.getId().equals(exam.getSubjectId())) {
             exam.setSubjectId(subject.getId());
+            Long newProfileId = resolveScoringProfileIdForSubject(subject.getId());
+            if (newProfileId != null) {
+                exam.setScoringProfileId(newProfileId);
+            }
         }
+
+        Integer effectiveDuration =
+                req.getDurationMinutes() != null ? req.getDurationMinutes() : exam.getDurationMinutes();
+        int expectedDuration = VsatFormatRules.expectedDuration(subject.getCode());
+        if (effectiveDuration == null || !effectiveDuration.equals(expectedDuration)) {
+            throw AppException.validationFailed("Invalid duration: subject " + subject.getCode()
+                    + " requires " + expectedDuration + " minutes, got " + effectiveDuration);
+        }
+        exam.setDurationMinutes(effectiveDuration);
 
         if (req.getTitle() != null) exam.setTitle(req.getTitle());
         if (req.getDescription() != null) exam.setDescription(req.getDescription());
-        if (req.getDurationMinutes() != null) exam.setDurationMinutes(req.getDurationMinutes());
         if (req.getDifficulty() != null) exam.setDifficulty(req.getDifficulty());
         if (req.getTags() != null) exam.setTags(req.getTags());
 
@@ -193,6 +224,11 @@ public class AdminExamServiceImpl implements AdminExamService {
                 .orElseThrow(() -> AppException.notFound("Question", questionId));
         validateComposableQuestion(question);
 
+        if (question.getSubjectId() == null || !question.getSubjectId().equals(exam.getSubjectId())) {
+            throw AppException.validationFailed("Question subject (" + question.getSubjectId()
+                    + ") does not match exam subject (" + exam.getSubjectId() + ")");
+        }
+
         if (examQuestionRepository.existsByExamIdAndQuestionId(examId, questionId)) {
             throw AppException.conflict(
                     "Question " + questionId + " already exists in exam " + examId);
@@ -203,6 +239,7 @@ public class AdminExamServiceImpl implements AdminExamService {
                 .examId(examId)
                 .questionId(questionId)
                 .questionOrder((maxOrder == null ? 0 : maxOrder) + 1)
+                .maxRawScore(VsatFormatRules.pointsFor(question.getQuestionType()))
                 .build());
 
         syncQuestionCount(exam);
@@ -240,6 +277,22 @@ public class AdminExamServiceImpl implements AdminExamService {
         List<ExamQuestion> currentMappings =
                 examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(examId);
         validateReorderRequest(questionIds, currentMappings);
+
+        List<Question> questions = questionRepository.findAllById(questionIds);
+        Map<Long, Question> questionMap = questions.stream()
+                .collect(Collectors.toMap(Question::getId, q -> q));
+        int lastPartIndex = -1;
+        for (Long qId : questionIds) {
+            Question q = questionMap.get(qId);
+            if (q != null && q.getQuestionType() != null) {
+                int pIndex = VsatFormatRules.partIndex(q.getQuestionType());
+                if (pIndex < 0 || (lastPartIndex >= 0 && pIndex < lastPartIndex)) {
+                    throw AppException.validationFailed("Question order violates section sequence: " + q.getQuestionType()
+                            + " cannot appear after section index " + lastPartIndex);
+                }
+                lastPartIndex = pIndex;
+            }
+        }
 
         examQuestionRepository.moveQuestionOrdersToTemporaryNegativeRange(examId);
         for (int i = 0; i < questionIds.size(); i++) {
@@ -369,7 +422,7 @@ public class AdminExamServiceImpl implements AdminExamService {
                     .questionText(q.getQuestionText())
                     .questionType(q.getQuestionType())
                     .difficulty(q.getDifficulty())
-                    .maxRawScore(new BigDecimal("6.00"))
+                    .maxRawScore(eq.getMaxRawScore() != null ? eq.getMaxRawScore() : VsatFormatRules.pointsFor(q.getQuestionType()))
                     .options(optionItems)
                     .build());
         }
@@ -448,11 +501,67 @@ public class AdminExamServiceImpl implements AdminExamService {
     @CacheEvict(value = {"publicExams", "publicExamDetail", "publicExamBundle"}, allEntries = true)
     public MatrixGenerateResponse generateByMatrixForExam(Long examId, GenerateByMatrixRequest req) {
         Exam exam = loadExam(examId);
-        List<Question> candidates = questionRepository.findAll().stream()
-                .filter(q -> q.getSubjectId().equals(exam.getSubjectId()))
-                .filter(q -> isComposableQuestionStatus(q.getStatus()))
-                .limit(25)
-                .toList();
+        if (exam.getStatus() != ExamStatus.DRAFT) {
+            throw invalidState("Cannot generate questions for exam in status " + exam.getStatus()
+                    + ". Only DRAFT exams allow matrix generation.");
+        }
+
+        Map<QuestionType, Integer> targetCounts = new LinkedHashMap<>();
+        if (req != null && req.getBlueprintId() != null) {
+            ExamBlueprint blueprint = examBlueprintRepository.findById(req.getBlueprintId())
+                    .orElseThrow(() -> AppException.notFound("ExamBlueprint", req.getBlueprintId()));
+
+            if (!blueprint.getSubjectId().equals(exam.getSubjectId())) {
+                throw AppException.badRequest("Blueprint subject (" + blueprint.getSubjectId()
+                        + ") does not match exam subject (" + exam.getSubjectId() + ")");
+            }
+
+            Map<QuestionType, Integer> bpCounts = new EnumMap<>(QuestionType.class);
+            var cells = blueprint.getCellsJson();
+            if (cells != null && !cells.isEmpty()) {
+                for (var cell : cells) {
+                    if (cell.getQuestionType() != null && cell.getQuestionCount() != null) {
+                        QuestionType qt = cell.getQuestionType();
+                        bpCounts.put(qt, bpCounts.getOrDefault(qt, 0) + cell.getQuestionCount());
+                    }
+                }
+            } else if (blueprint.getTotalQuestions() != null && blueprint.getTotalQuestions() == VsatFormatRules.TOTAL_QUESTIONS) {
+                bpCounts.putAll(VsatFormatRules.PART_COUNTS);
+            }
+            if (!VsatFormatRules.matchesVsatCounts(blueprint.getTotalQuestions(), bpCounts)) {
+                throw AppException.badRequest("Blueprint does not match standard V-SAT structure (25 questions: 9 TF, 6 MCQ, 5 MATCH, 5 SA)");
+            }
+            targetCounts.putAll(VsatFormatRules.PART_COUNTS);
+        } else {
+            targetCounts.putAll(VsatFormatRules.PART_COUNTS);
+        }
+
+        List<Question> selectedQuestions = new ArrayList<>();
+        List<String> warnings = new ArrayList<>();
+
+        for (QuestionType type : VsatFormatRules.PARTS) {
+            int needed = targetCounts.getOrDefault(type, 0);
+            List<Question> candidates = questionRepository
+                    .findBySubjectIdAndQuestionTypeAndStatusInOrderByIdAsc(
+                            exam.getSubjectId(), type, VsatFormatRules.COMPOSABLE_STATUSES);
+
+            List<Question> validCandidates = new ArrayList<>();
+            for (Question cand : candidates) {
+                List<QuestionOption> options = questionOptionRepository
+                        .findByQuestionIdOrderByDisplayOrderAscIdAsc(cand.getId());
+                if (VsatFormatRules.validateQuestionStructure(cand, options).isEmpty()) {
+                    validCandidates.add(cand);
+                    if (validCandidates.size() == needed) {
+                        break;
+                    }
+                }
+            }
+
+            selectedQuestions.addAll(validCandidates);
+            if (validCandidates.size() < needed) {
+                warnings.add("Phần " + type + " chỉ có " + validCandidates.size() + "/" + needed + " câu đạt chuẩn.");
+            }
+        }
 
         List<ExamQuestion> existing =
                 examQuestionRepository.findByExamIdOrderByQuestionOrderAscIdAsc(examId);
@@ -461,11 +570,15 @@ public class AdminExamServiceImpl implements AdminExamService {
         }
 
         int order = 1;
-        for (Question q : candidates) {
+        BigDecimal totalRawScore = BigDecimal.ZERO;
+        for (Question q : selectedQuestions) {
+            BigDecimal points = VsatFormatRules.pointsFor(q.getQuestionType());
+            totalRawScore = totalRawScore.add(points);
             examQuestionRepository.save(ExamQuestion.builder()
                     .examId(examId)
                     .questionId(q.getId())
                     .questionOrder(order++)
+                    .maxRawScore(points)
                     .build());
         }
 
@@ -473,22 +586,26 @@ public class AdminExamServiceImpl implements AdminExamService {
         examRepository.save(exam);
 
         List<String> variants = List.of("101", "102", "103", "104");
-        List<String> warnings = new ArrayList<>();
-        if (candidates.size() < 25) {
-            warnings.add("Ngân hàng câu hỏi môn này hiện có " + candidates.size() + " câu đã duyệt.");
-        }
 
         return MatrixGenerateResponse.builder()
                 .examId(examId)
                 .examCode(exam.getExamCode())
-                .selectedQuestions(candidates.size())
-                .rawScore(new BigDecimal("150.00"))
+                .selectedQuestions(selectedQuestions.size())
+                .rawScore(totalRawScore)
                 .variants(variants)
                 .generationWarnings(warnings)
                 .build();
     }
 
     // ---------- HELPERS ----------
+    private Long resolveScoringProfileIdForSubject(Long subjectId) {
+        return examBlueprintRepository.findBySubjectId(subjectId).stream()
+                .map(ExamBlueprint::getScoringProfileId)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElseGet(() -> examRepository.findScoringProfileIdByCode(VsatFormatRules.DEFAULT_SCORING_PROFILE_CODE));
+    }
+
     private Exam loadExam(Long examId) {
         return examRepository.findById(examId)
                 .orElseThrow(() -> AppException.notFound("Exam", examId));
@@ -565,6 +682,40 @@ public class AdminExamServiceImpl implements AdminExamService {
         }
 
         validatePublishPricing(exam);
+
+        Subject subject = subjectRepository.findById(exam.getSubjectId()).orElse(null);
+        String subjectCode = subject != null ? subject.getCode() : null;
+
+        boolean profileValid = exam.getScoringProfileId() != null
+                && examRepository.existsScoringProfileById(exam.getScoringProfileId());
+
+        Map<Long, Question> questionMap = questions.stream()
+                .collect(Collectors.toMap(Question::getId, q -> q));
+
+        List<VsatFormatRules.ExamQuestionView> questionViews = new ArrayList<>();
+        for (ExamQuestion eq : mappings) {
+            Question q = questionMap.get(eq.getQuestionId());
+            if (q != null) {
+                List<QuestionOption> options =
+                        questionOptionRepository.findByQuestionIdOrderByDisplayOrderAscIdAsc(q.getId());
+                BigDecimal score = eq.getMaxRawScore() != null
+                        ? eq.getMaxRawScore()
+                        : VsatFormatRules.pointsFor(q.getQuestionType());
+                questionViews.add(VsatFormatRules.ExamQuestionView.from(q, score, options));
+            }
+        }
+
+        List<String> errors = VsatFormatRules.validateExam(
+                exam.getSubjectId(),
+                subjectCode,
+                exam.getDurationMinutes(),
+                profileValid,
+                questionViews
+        );
+
+        if (!errors.isEmpty()) {
+            throw AppException.validationFailed("V-SAT publish validation failed: " + String.join(", ", errors));
+        }
     }
 
     private void validateReorderRequest(List<Long> requestedQuestionIds, List<ExamQuestion> currentMappings) {

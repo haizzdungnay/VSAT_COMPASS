@@ -1,6 +1,6 @@
 {
   "suite": "android-student-report",
-  "generatedAt": "2026-11-03T06:28:47.168Z",
+  "generatedAt": "2026-11-16T04:12:25.271Z",
   "totalCases": 20,
   "passedCount": 20,
   "failedCount": 0,
@@ -10,7 +10,7 @@
       "description": "SplashActivity (Application launcher entry point, token verification, role redirect)",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 32,
+      "durationMs": 4,
       "assertions": [
         {
           "name": "assertTrue",
@@ -49,7 +49,7 @@
       "description": "LoginActivity (User authentication with email and password, EncryptedSharedPreferences token persistence)",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 10,
+      "durationMs": 2,
       "assertions": [
         {
           "name": "assertTrue",
@@ -100,7 +100,7 @@
       "description": "RegisterActivity (Student registration form with validation and auto-login)",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 14,
+      "durationMs": 2,
       "assertions": [
         {
           "name": "assertTrue",
@@ -152,7 +152,7 @@
       "description": "MainActivity (Root student navigation container with BottomNavigationView, hosts 4 student fragments, privileged mode switcher)",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 6,
+      "durationMs": 2,
       "assertions": [
         {
           "name": "assertTrue",
@@ -201,7 +201,7 @@
       "description": "HomeFragment (Student dashboard with daily challenge streak, subject shortcut chips, featured practice exams)",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 11,
+      "durationMs": 2,
       "assertions": [
         {
           "name": "assertTrue",
@@ -236,7 +236,7 @@
       "description": "ExamFragment (Exam catalog search and subject filters, one-tap offline exam bundle download button, badge indicators)",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 33,
+      "durationMs": 4,
       "assertions": [
         {
           "name": "assertTrue",
@@ -290,7 +290,7 @@
       "description": "ExamDetailActivity (Detailed exam syllabus overview, download offline bundle action, start live exam session)",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 20,
+      "durationMs": 3,
       "assertions": [
         {
           "name": "assertTrue",
@@ -387,7 +387,7 @@
       "description": "ExamSessionActivity (Countdown timer, question grid modal, KaTeX formula WebView, 4 V-SAT formats, submission dialog, offline caching)",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 47,
+      "durationMs": 6,
       "assertions": [
         {
           "name": "assertTrue",
@@ -461,7 +461,7 @@
       "description": "ExamResultActivity (V-SAT 150-point score summary breakdown, accuracy stats, time spent, review solutions action)",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 25,
+      "durationMs": 2,
       "assertions": [
         {
           "name": "assertTrue",
@@ -513,7 +513,7 @@
       "description": "ExamReviewActivity (Full post-exam solution review with KaTeX, AI explanation dialog, question error ticket report)",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 15,
+      "durationMs": 3,
       "assertions": [
         {
           "name": "assertTrue",
@@ -562,7 +562,7 @@
       "description": "PracticeFragment (Adaptive practice topic selection and difficulty preferences, quick flashcard review launcher, weak topic drills)",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 16,
+      "durationMs": 2,
       "assertions": [
         {
           "name": "assertTrue",
@@ -595,7 +595,7 @@
       "description": "PracticeSessionActivity (Instant practice loop with immediate grading and explanations, KaTeX WebView rendering)",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 14,
+      "durationMs": 3,
       "assertions": [
         {
           "name": "assertTrue",
@@ -644,7 +644,7 @@
       "description": "ExamHistoryActivity (Historical exam attempts, scores, and review navigation)",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 19,
+      "durationMs": 3,
       "assertions": [
         {
           "name": "assertTrue",
@@ -697,7 +697,7 @@
       "description": "FlashcardReviewActivity (Leitner spaced repetition formula flashcard review, card flip animation, self-assessed mastery tracking)",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 27,
+      "durationMs": 2,
       "assertions": [
         {
           "name": "assertTrue",
@@ -750,7 +750,7 @@
       "description": "ProgressActivity (Personal analytics: accuracy per topic, weak points, study streaks)",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 13,
+      "durationMs": 3,
       "assertions": [
         {
           "name": "assertTrue",
@@ -800,7 +800,7 @@
       "description": "ProfileFragment (Student profile overview and streak achievements, avatar picker using ActivityResultContracts.StartActivityForResult, edit profile and change password dialogs, logout confirmation)",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 14,
+      "durationMs": 3,
       "assertions": [
         {
           "name": "assertTrue",
@@ -913,7 +913,7 @@
       "description": "AdminActivity (Native Android Admin portal container, hosts AdminDashboardFragment, AdminExamListFragment, AdminQuestionBankFragment, AdminUserManagementFragment)",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 15,
+      "durationMs": 2,
       "assertions": [
         {
           "name": "assertTrue",

@@ -1,18 +1,18 @@
 {
   "verdict": "ACCEPTED",
-  "timestamp": "2026-11-03T06:31:20.053Z",
+  "timestamp": "2026-11-16T04:13:25.083Z",
   "summary": {
-    "requiredCount": 126,
-    "collectedCount": 126,
-    "passedCount": 126,
+    "requiredCount": 170,
+    "collectedCount": 170,
+    "passedCount": 170,
     "failedCount": 0,
     "violationCount": 0
   },
   "violations": [],
   "suiteBreakdown": {
     "backend_endpoints": {
-      "total": 76,
-      "passed": 76
+      "total": 120,
+      "passed": 120
     },
     "backend_jobs_and_integrations": {
       "total": 2,

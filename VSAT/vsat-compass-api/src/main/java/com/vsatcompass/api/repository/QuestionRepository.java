@@ -30,6 +30,11 @@ public interface QuestionRepository extends JpaRepository<Question, Long>,
 
     long countByStatus(QuestionStatus status);
 
+    List<Question> findBySubjectIdAndQuestionTypeAndStatusInOrderByIdAsc(
+            Long subjectId,
+            com.vsatcompass.api.entity.enums.QuestionType questionType,
+            Collection<QuestionStatus> statuses);
+
     @Query("""
             select q from Question q
             where q.status in :statuses

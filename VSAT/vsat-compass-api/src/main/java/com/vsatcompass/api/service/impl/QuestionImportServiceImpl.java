@@ -11,6 +11,7 @@ import com.vsatcompass.api.entity.enums.QuestionType;
 import com.vsatcompass.api.exception.AppException;
 import com.vsatcompass.api.repository.*;
 import com.vsatcompass.api.service.QuestionImportService;
+import com.vsatcompass.api.util.VsatFormatRules;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
@@ -36,6 +37,7 @@ public class QuestionImportServiceImpl implements QuestionImportService {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final Pattern TAG_PATTERN = Pattern.compile("^\\[([A-Za-z0-9_]+)\\]\\s*:?\\s*(.*)$");
+    private static final Pattern MATCH_PAIR_PATTERN = Pattern.compile("^([1-4])\\s*-\\s*([A-D])$");
 
     private final SubjectRepository subjectRepository;
     private final TopicRepository topicRepository;
@@ -43,6 +45,7 @@ public class QuestionImportServiceImpl implements QuestionImportService {
     private final QuestionGroupRepository questionGroupRepository;
     private final QuestionRepository questionRepository;
     private final QuestionOptionRepository questionOptionRepository;
+    private final QuestionMatchingChoiceRepository questionMatchingChoiceRepository;
 
     private final DataFormatter dataFormatter = new DataFormatter();
 
@@ -310,22 +313,23 @@ public class QuestionImportServiceImpl implements QuestionImportService {
             String diffRaw = getJsonField(node, "difficulty", "diff");
             String typeRaw = getJsonField(node, "questionType", "type");
             String questionText = getJsonField(node, "questionText", "question", "stem", "text");
-            String optA = "";
-            String optB = "";
-            String optC = "";
-            String optD = "";
+            List<String> rawOptions = new ArrayList<>();
 
             if (node.has("options") && node.get("options").isArray()) {
-                JsonNode opts = node.get("options");
-                optA = opts.size() > 0 ? opts.get(0).asText("").trim() : "";
-                optB = opts.size() > 1 ? opts.get(1).asText("").trim() : "";
-                optC = opts.size() > 2 ? opts.get(2).asText("").trim() : "";
-                optD = opts.size() > 3 ? opts.get(3).asText("").trim() : "";
+                for (JsonNode optNode : node.get("options")) {
+                    rawOptions.add(optNode.asText("").trim());
+                }
             } else {
-                optA = getJsonField(node, "optionA", "optA", "a", "A");
-                optB = getJsonField(node, "optionB", "optB", "b", "B");
-                optC = getJsonField(node, "optionC", "optC", "c", "C");
-                optD = getJsonField(node, "optionD", "optD", "d", "D");
+                String optA = getJsonField(node, "optionA", "optA", "a", "A");
+                String optB = getJsonField(node, "optionB", "optB", "b", "B");
+                String optC = getJsonField(node, "optionC", "optC", "c", "C");
+                String optD = getJsonField(node, "optionD", "optD", "d", "D");
+                if (!optA.isBlank() || !optB.isBlank() || !optC.isBlank() || !optD.isBlank()) {
+                    rawOptions.add(optA);
+                    rawOptions.add(optB);
+                    rawOptions.add(optC);
+                    rawOptions.add(optD);
+                }
             }
 
             String correctRaw = getJsonField(node, "correctAnswer", "correct", "key", "answer");
@@ -352,10 +356,17 @@ public class QuestionImportServiceImpl implements QuestionImportService {
             if (audioUrl.isBlank()) audioUrl = null;
 
             Integer maxPlays = 2;
-            if (node.has("maxPlays") && !node.get("maxPlays").isNull()) {
-                maxPlays = node.get("maxPlays").asInt(2);
-            } else if (node.has("max_plays") && !node.get("max_plays").isNull()) {
-                maxPlays = node.get("max_plays").asInt(2);
+            String maxPlaysError = null;
+            JsonNode maxPlaysNode = node.has("maxPlays") && !node.get("maxPlays").isNull()
+                    ? node.get("maxPlays")
+                    : (node.has("max_plays") && !node.get("max_plays").isNull() ? node.get("max_plays") : null);
+            if (maxPlaysNode != null) {
+                Integer parsed = parseMaxPlaysNode(maxPlaysNode);
+                if (parsed == null) {
+                    maxPlaysError = "Giá trị maxPlays không hợp lệ: " + maxPlaysNode.asText();
+                } else {
+                    maxPlays = parsed;
+                }
             }
 
             QuestionImportItemDto item = QuestionImportItemDto.builder()
@@ -365,7 +376,7 @@ public class QuestionImportServiceImpl implements QuestionImportService {
                     .groupTitle(groupTitle.isBlank() ? null : groupTitle)
                     .passageText(passageText.isBlank() ? null : passageText)
                     .questionText(questionText)
-                    .options(List.of(optA, optB, optC, optD))
+                    .options(rawOptions)
                     .correctAnswer(correctRaw)
                     .explanation(explanation)
                     .tags(tags)
@@ -374,14 +385,14 @@ public class QuestionImportServiceImpl implements QuestionImportService {
                     .valid(true)
                     .build();
 
-            if (item.getGroupCode() != null && (item.getPassageText() == null || item.getPassageText().isBlank())) {
-                item.setValid(false);
-                item.setError("Đoạn văn đọc hiểu / Passage Text không được để trống");
-                errors.add(String.format("[%s Hàng %d] %s", "JSON", rowNumber, item.getError()));
+            if (maxPlaysError != null) {
+                failItem(item, maxPlaysError, errors);
+            } else if (item.getGroupCode() != null && (item.getPassageText() == null || item.getPassageText().isBlank())) {
+                failItem(item, "Đoạn văn đọc hiểu / Passage Text không được để trống", errors);
             }
 
             if (item.isValid()) {
-                validateAndPopulateCommon(item, subjectRaw, topicRaw, subtopicRaw, diffRaw, typeRaw, optA, optB, optC, optD, correctRaw, errors);
+                validateAndPopulateCommon(item, subjectRaw, topicRaw, subtopicRaw, diffRaw, typeRaw, correctRaw, errors);
             }
 
             items.add(item);
@@ -493,10 +504,14 @@ public class QuestionImportServiceImpl implements QuestionImportService {
             String tags = getTagValue(tagMap, "TAGS", "TAG");
 
             Integer maxPlays = 2;
+            String maxPlaysError = null;
             if (!maxPlaysStr.isBlank()) {
-                try {
-                    maxPlays = Integer.parseInt(maxPlaysStr);
-                } catch (NumberFormatException ignored) {}
+                Integer parsed = parseMaxPlaysString(maxPlaysStr);
+                if (parsed == null) {
+                    maxPlaysError = "Giá trị MAXPLAYS không hợp lệ: " + maxPlaysStr;
+                } else {
+                    maxPlays = parsed;
+                }
             }
 
             QuestionImportItemDto item = QuestionImportItemDto.builder()
@@ -515,14 +530,14 @@ public class QuestionImportServiceImpl implements QuestionImportService {
                     .valid(true)
                     .build();
 
-            if (item.getGroupCode() != null && (item.getPassageText() == null || item.getPassageText().isBlank())) {
-                item.setValid(false);
-                item.setError("Đoạn văn đọc hiểu / Passage Text không được để trống");
-                errors.add(String.format("[%s Hàng %d] %s", sourceName, rowNumber, item.getError()));
+            if (maxPlaysError != null) {
+                failItem(item, maxPlaysError, errors);
+            } else if (item.getGroupCode() != null && (item.getPassageText() == null || item.getPassageText().isBlank())) {
+                failItem(item, "Đoạn văn đọc hiểu / Passage Text không được để trống", errors);
             }
 
             if (item.isValid()) {
-                validateAndPopulateCommon(item, subjectRaw, topicRaw, subtopicRaw, diffRaw, typeRaw, optA, optB, optC, optD, key, errors);
+                validateAndPopulateCommon(item, subjectRaw, topicRaw, subtopicRaw, diffRaw, typeRaw, key, errors);
             }
 
             items.add(item);
@@ -580,7 +595,7 @@ public class QuestionImportServiceImpl implements QuestionImportService {
                     .valid(true)
                     .build();
 
-            validateAndPopulateCommon(item, subjectRaw, topicRaw, subtopicRaw, diffRaw, typeRaw, optA, optB, optC, optD, correctRaw, errors);
+            validateAndPopulateCommon(item, subjectRaw, topicRaw, subtopicRaw, diffRaw, typeRaw, correctRaw, errors);
             items.add(item);
         }
     }
@@ -617,12 +632,16 @@ public class QuestionImportServiceImpl implements QuestionImportService {
             }
 
             Integer maxPlays = 2;
+            String maxPlaysError = null;
             if (row.getCell(16) != null) {
                 String val = getCellString(row.getCell(16)).trim();
                 if (!val.isBlank()) {
-                    try {
-                        maxPlays = Integer.parseInt(val);
-                    } catch (NumberFormatException ignored) {}
+                    Integer parsed = parseMaxPlaysString(val);
+                    if (parsed == null) {
+                        maxPlaysError = "Giá trị Max Plays không hợp lệ: " + val;
+                    } else {
+                        maxPlays = parsed;
+                    }
                 }
             }
 
@@ -641,18 +660,16 @@ public class QuestionImportServiceImpl implements QuestionImportService {
                     .valid(true)
                     .build();
 
-            if (groupCode.isBlank()) {
-                item.setValid(false);
-                item.setError("Mã nhóm / Group Code không được để trống");
-                errors.add(String.format("[%s Hàng %d] %s", sheetName, rowNumber, item.getError()));
+            if (maxPlaysError != null) {
+                failItem(item, maxPlaysError, errors);
+            } else if (groupCode.isBlank()) {
+                failItem(item, "Mã nhóm / Group Code không được để trống", errors);
             } else if (passageText.isBlank()) {
-                item.setValid(false);
-                item.setError("Đoạn văn đọc hiểu / Passage Text không được để trống");
-                errors.add(String.format("[%s Hàng %d] %s", sheetName, rowNumber, item.getError()));
+                failItem(item, "Đoạn văn đọc hiểu / Passage Text không được để trống", errors);
             }
 
             if (item.isValid()) {
-                validateAndPopulateCommon(item, subjectRaw, topicRaw, subtopicRaw, diffRaw, typeRaw, optA, optB, optC, optD, correctRaw, errors);
+                validateAndPopulateCommon(item, subjectRaw, topicRaw, subtopicRaw, diffRaw, typeRaw, correctRaw, errors);
             }
             items.add(item);
         }
@@ -665,10 +682,6 @@ public class QuestionImportServiceImpl implements QuestionImportService {
             String subtopicRaw,
             String diffRaw,
             String typeRaw,
-            String optA,
-            String optB,
-            String optC,
-            String optD,
             String correctRaw,
             List<String> errors
     ) {
@@ -712,7 +725,12 @@ public class QuestionImportServiceImpl implements QuestionImportService {
         item.setDifficulty(parseDifficulty(diffRaw));
 
         // 5. Resolve Question Type
-        item.setQuestionType(parseQuestionType(typeRaw));
+        QuestionType qType = parseQuestionType(typeRaw);
+        if (qType == null) {
+            failItem(item, "Loại câu hỏi không hợp lệ: " + typeRaw, errors);
+            return;
+        }
+        item.setQuestionType(qType);
 
         // 6. Validate Question Text
         if (item.getQuestionText() == null || item.getQuestionText().isBlank()) {
@@ -720,27 +738,94 @@ public class QuestionImportServiceImpl implements QuestionImportService {
             return;
         }
 
-        // 7. Validate Options
-        int validOptionsCount = 0;
-        if (!optA.isBlank()) validOptionsCount++;
-        if (!optB.isBlank()) validOptionsCount++;
-        if (!optC.isBlank()) validOptionsCount++;
-        if (!optD.isBlank()) validOptionsCount++;
+        // 7. Validate Options & Answer by QuestionType using VsatFormatRules
+        List<String> nonBlankOptions = extractNonBlankOptions(item.getOptions());
+        List<VsatFormatRules.OptionView> optionViews = new ArrayList<>();
 
-        if (validOptionsCount < 2) {
-            failItem(item, "Câu hỏi phải có ít nhất 2 phương án lựa chọn (A, B)", errors);
-            return;
+        switch (qType) {
+            case SINGLE_CHOICE -> {
+                if (nonBlankOptions.size() != 4) {
+                    failItem(item, "Câu hỏi SINGLE_CHOICE phải có đúng 4 phương án lựa chọn", errors);
+                    return;
+                }
+                if (correctRaw == null || !correctRaw.trim().toUpperCase().matches("^[A-D]$")) {
+                    failItem(item, "Đáp án đúng SINGLE_CHOICE phải là đúng 1 lựa chọn A, B, C hoặc D: " + correctRaw, errors);
+                    return;
+                }
+                String target = correctRaw.trim().toUpperCase();
+                String[] labels = {"A", "B", "C", "D"};
+                for (int i = 0; i < 4; i++) {
+                    optionViews.add(new VsatFormatRules.OptionView(
+                            labels[i], nonBlankOptions.get(i), labels[i].equals(target)));
+                }
+            }
+            case TRUE_FALSE -> {
+                if (nonBlankOptions.size() != 4) {
+                    failItem(item, "Câu hỏi TRUE_FALSE phải có đúng 4 mệnh đề (a, b, c, d)", errors);
+                    return;
+                }
+                Set<Integer> correctIndices = parseChoiceIndices(correctRaw);
+                if (correctIndices == null) {
+                    failItem(item, "Đáp án đúng TRUE_FALSE không hợp lệ (ví dụ A,C): " + correctRaw, errors);
+                    return;
+                }
+                String[] tfLabels = {"a", "b", "c", "d"};
+                for (int i = 0; i < 4; i++) {
+                    optionViews.add(new VsatFormatRules.OptionView(
+                            tfLabels[i], nonBlankOptions.get(i), correctIndices.contains(i)));
+                }
+            }
+            case SHORT_ANSWER -> {
+                String answerText = resolveShortAnswerText(nonBlankOptions, correctRaw);
+                if (answerText.isBlank()) {
+                    failItem(item, "Đáp án trả lời ngắn (SHORT_ANSWER) không được để trống", errors);
+                    return;
+                }
+                item.setCorrectAnswer(answerText);
+                optionViews.add(new VsatFormatRules.OptionView("A", answerText, true));
+            }
+            case MATCHING -> {
+                if (nonBlankOptions.size() != 4) {
+                    failItem(item, "Câu hỏi MATCHING phải có đúng 4 lựa chọn ghép (A, B, C, D)", errors);
+                    return;
+                }
+                Map<Integer, Integer> pairMap = parseMatchingPairs(correctRaw);
+                if (pairMap == null) {
+                    failItem(item, "Đáp án ghép hợp (MATCHING) phải có dạng 1-C,2-A,3-D,4-B: " + correctRaw, errors);
+                    return;
+                }
+                for (int n = 1; n <= 4; n++) {
+                    String choiceKey = String.valueOf((char) ('A' + pairMap.get(n)));
+                    optionViews.add(new VsatFormatRules.OptionView(
+                            String.valueOf(n), "Mục " + n + " ⇄ " + choiceKey, true));
+                }
+            }
+            case MULTIPLE_CHOICE -> {
+                if (nonBlankOptions.size() < 2) {
+                    failItem(item, "Câu hỏi MULTIPLE_CHOICE phải có ít nhất 2 phương án lựa chọn", errors);
+                    return;
+                }
+                Set<Integer> correctIndices = parseChoiceIndices(correctRaw);
+                if (correctIndices == null || correctIndices.stream().anyMatch(idx -> idx >= nonBlankOptions.size())) {
+                    failItem(item, "Đáp án đúng MULTIPLE_CHOICE không hợp lệ: " + correctRaw, errors);
+                    return;
+                }
+                for (int i = 0; i < nonBlankOptions.size(); i++) {
+                    optionViews.add(new VsatFormatRules.OptionView(
+                            String.valueOf((char) ('A' + i)), nonBlankOptions.get(i), correctIndices.contains(i)));
+                }
+            }
+            case FILL_IN_BLANK -> {
+                if (correctRaw == null || correctRaw.isBlank()) {
+                    failItem(item, "Đáp án đúng không được để trống", errors);
+                    return;
+                }
+            }
         }
 
-        // 8. Validate Correct Answer
-        if (correctRaw.isBlank()) {
-            failItem(item, "Đáp án đúng không được để trống", errors);
-            return;
-        }
-        String cleanAnswer = correctRaw.trim().toUpperCase();
-        boolean validAns = cleanAnswer.matches("^[A-D](,[A-D])*$") || cleanAnswer.matches("^[A-D]+$");
-        if (!validAns) {
-            failItem(item, "Đáp án đúng không hợp lệ (phải là A, B, C hoặc D): " + correctRaw, errors);
+        List<String> structErrors = VsatFormatRules.validateQuestionStructure(qType, optionViews);
+        if (!structErrors.isEmpty()) {
+            failItem(item, "Cấu trúc câu hỏi " + qType + " không đạt chuẩn V-SAT: " + String.join(", ", structErrors), errors);
         }
     }
 
@@ -792,11 +877,13 @@ public class QuestionImportServiceImpl implements QuestionImportService {
         if (raw == null || raw.isBlank()) return QuestionType.SINGLE_CHOICE;
         String val = raw.trim().toUpperCase();
         return switch (val) {
+            case "SINGLE_CHOICE", "TRAC_NGHIEM", "MCQ", "SC" -> QuestionType.SINGLE_CHOICE;
             case "MULTIPLE_CHOICE", "NHIEU_DAP_AN", "MC" -> QuestionType.MULTIPLE_CHOICE;
             case "TRUE_FALSE", "DUNG_SAI", "TF" -> QuestionType.TRUE_FALSE;
-            case "SHORT_ANSWER", "DIEN_KHUYET" -> QuestionType.SHORT_ANSWER;
+            case "SHORT_ANSWER", "DIEN_KHUYET", "SA" -> QuestionType.SHORT_ANSWER;
             case "MATCHING", "GHEP_HOP", "MATCH" -> QuestionType.MATCHING;
-            default -> QuestionType.SINGLE_CHOICE;
+            case "FILL_IN_BLANK" -> QuestionType.FILL_IN_BLANK;
+            default -> null;
         };
     }
 
@@ -814,31 +901,139 @@ public class QuestionImportServiceImpl implements QuestionImportService {
                 .questionText(item.getQuestionText())
                 .explanation(item.getExplanation())
                 .tags(item.getTags())
-                .status(QuestionStatus.APPROVED)
+                .status(QuestionStatus.PENDING_REVIEW)
                 .version(1)
                 .createdBy(currentUserId)
                 .build();
 
         Question saved = questionRepository.save(question);
+        List<String> nonBlankOptions = extractNonBlankOptions(item.getOptions());
 
-        List<String> options = item.getOptions();
-        String[] labels = {"A", "B", "C", "D"};
-        String correct = item.getCorrectAnswer().trim().toUpperCase();
-
-        for (int i = 0; i < options.size(); i++) {
-            String text = options.get(i);
-            if (text == null || text.isBlank()) continue;
-            String label = labels[i];
-            boolean isCorrect = correct.contains(label);
-
-            questionOptionRepository.save(QuestionOption.builder()
-                    .questionId(saved.getId())
-                    .optionLabel(label)
-                    .optionText(text)
-                    .isCorrect(isCorrect)
-                    .displayOrder(i + 1)
-                    .build());
+        switch (item.getQuestionType()) {
+            case SHORT_ANSWER -> {
+                String answerText = resolveShortAnswerText(nonBlankOptions, item.getCorrectAnswer());
+                questionOptionRepository.save(QuestionOption.builder()
+                        .questionId(saved.getId())
+                        .optionLabel("A")
+                        .optionText(answerText)
+                        .isCorrect(true)
+                        .displayOrder(1)
+                        .build());
+            }
+            case MATCHING -> {
+                Map<Integer, Integer> pairMap = parseMatchingPairs(item.getCorrectAnswer());
+                if (pairMap == null) {
+                    throw AppException.badRequest("Đáp án MATCHING không hợp lệ khi lưu");
+                }
+                for (int n = 1; n <= 4; n++) {
+                    String choiceKey = String.valueOf((char) ('A' + pairMap.get(n)));
+                    questionOptionRepository.save(QuestionOption.builder()
+                            .questionId(saved.getId())
+                            .optionLabel(String.valueOf(n))
+                            .optionText("Mục " + n + " ⇄ " + choiceKey)
+                            .isCorrect(true)
+                            .displayOrder(n)
+                            .build());
+                }
+                for (int i = 0; i < 4; i++) {
+                    questionMatchingChoiceRepository.save(QuestionMatchingChoice.builder()
+                            .questionId(saved.getId())
+                            .choiceKey(String.valueOf((char) ('A' + i)))
+                            .choiceText(nonBlankOptions.get(i))
+                            .displayOrder(i + 1)
+                            .build());
+                }
+            }
+            case TRUE_FALSE -> {
+                Set<Integer> correctIndices = parseChoiceIndices(item.getCorrectAnswer());
+                String[] tfLabels = {"a", "b", "c", "d"};
+                for (int i = 0; i < nonBlankOptions.size(); i++) {
+                    questionOptionRepository.save(QuestionOption.builder()
+                            .questionId(saved.getId())
+                            .optionLabel(tfLabels[i])
+                            .optionText(nonBlankOptions.get(i))
+                            .isCorrect(correctIndices != null && correctIndices.contains(i))
+                            .displayOrder(i + 1)
+                            .build());
+                }
+            }
+            default -> {
+                Set<Integer> correctIndices = parseChoiceIndices(item.getCorrectAnswer());
+                for (int i = 0; i < nonBlankOptions.size(); i++) {
+                    questionOptionRepository.save(QuestionOption.builder()
+                            .questionId(saved.getId())
+                            .optionLabel(String.valueOf((char) ('A' + i)))
+                            .optionText(nonBlankOptions.get(i))
+                            .isCorrect(correctIndices != null && correctIndices.contains(i))
+                            .displayOrder(i + 1)
+                            .build());
+                }
+            }
         }
+    }
+
+    private List<String> extractNonBlankOptions(List<String> rawOptions) {
+        if (rawOptions == null) return List.of();
+        return rawOptions.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .toList();
+    }
+
+    private String resolveShortAnswerText(List<String> nonBlankOptions, String correctRaw) {
+        String cleanCorrect = correctRaw == null ? "" : correctRaw.trim();
+        if (nonBlankOptions.isEmpty()) {
+            return cleanCorrect;
+        }
+        if ("A".equalsIgnoreCase(cleanCorrect)) {
+            return nonBlankOptions.get(0);
+        }
+        return !cleanCorrect.isBlank() ? cleanCorrect : nonBlankOptions.get(0);
+    }
+
+    private Set<Integer> parseChoiceIndices(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        String cleaned = raw.trim().toUpperCase();
+        Set<Integer> result = new LinkedHashSet<>();
+        if (cleaned.contains(",")) {
+            for (String p : cleaned.split(",")) {
+                String t = p.trim();
+                if (t.length() != 1 || t.charAt(0) < 'A' || t.charAt(0) > 'D') {
+                    return null;
+                }
+                result.add(t.charAt(0) - 'A');
+            }
+        } else {
+            for (int i = 0; i < cleaned.length(); i++) {
+                char c = cleaned.charAt(i);
+                if (c < 'A' || c > 'D') {
+                    return null;
+                }
+                result.add(c - 'A');
+            }
+        }
+        return result.isEmpty() ? null : result;
+    }
+
+    private Map<Integer, Integer> parseMatchingPairs(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        String[] pairs = raw.trim().toUpperCase().split("\\s*,\\s*");
+        if (pairs.length != 4) return null;
+        Map<Integer, Integer> pairMap = new LinkedHashMap<>();
+        for (String p : pairs) {
+            Matcher m = MATCH_PAIR_PATTERN.matcher(p.trim());
+            if (!m.matches()) {
+                return null;
+            }
+            int left = Integer.parseInt(m.group(1));
+            int rightIdx = m.group(2).charAt(0) - 'A';
+            if (pairMap.containsKey(left)) {
+                return null;
+            }
+            pairMap.put(left, rightIdx);
+        }
+        return pairMap.size() == 4 ? pairMap : null;
     }
 
     private String getCellString(Cell cell) {
@@ -847,6 +1042,27 @@ public class QuestionImportServiceImpl implements QuestionImportService {
             return dataFormatter.formatCellValue(cell).trim();
         } catch (Exception e) {
             return "";
+        }
+    }
+
+    private Integer parseMaxPlaysNode(JsonNode node) {
+        if (node.isIntegralNumber()) {
+            int val = node.asInt();
+            return val > 0 ? val : null;
+        }
+        if (node.isTextual()) {
+            return parseMaxPlaysString(node.asText());
+        }
+        return null;
+    }
+
+    private Integer parseMaxPlaysString(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        try {
+            int val = Integer.parseInt(raw.trim());
+            return val > 0 ? val : null;
+        } catch (NumberFormatException e) {
+            return null;
         }
     }
 

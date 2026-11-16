@@ -688,7 +688,6 @@ public class ExamReviewActivity extends AppCompatActivity {
 
         for (Question.Option option : question.getOptions()) {
             boolean isThis = option.getId() != null && option.getId().equals(selectedOptionId);
-            boolean isCorrect = option.isCorrect();
 
             MaterialCardView card = new MaterialCardView(this);
             card.setRadius(dpToPx(10));
@@ -699,17 +698,9 @@ public class ExamReviewActivity extends AppCompatActivity {
             cardLp.bottomMargin = dpToPx(10);
             card.setLayoutParams(cardLp);
 
-            if (isCorrect && isThis) {
-                card.setCardBackgroundColor(Color.parseColor("#E8F5E9"));
-                card.setStrokeColor(ContextCompat.getColor(this, R.color.success));
-                card.setStrokeWidth(dpToPx(2));
-            } else if (isCorrect) {
-                card.setCardBackgroundColor(Color.parseColor("#F1F8E9"));
-                card.setStrokeColor(Color.parseColor("#AED581"));
-                card.setStrokeWidth(dpToPx(2));
-            } else if (isThis) {
-                card.setCardBackgroundColor(Color.parseColor("#FFEBEE"));
-                card.setStrokeColor(Color.parseColor("#EF9A9A"));
+            if (isThis) {
+                card.setCardBackgroundColor(Color.parseColor("#E3F2FD"));
+                card.setStrokeColor(Color.parseColor("#1565C0"));
                 card.setStrokeWidth(dpToPx(2));
             } else {
                 card.setCardBackgroundColor(Color.parseColor("#F5F5F5"));
@@ -727,13 +718,9 @@ public class ExamReviewActivity extends AppCompatActivity {
             tvLabel.setText(labelText);
             tvLabel.setTextSize(14);
             tvLabel.setTypeface(null, android.graphics.Typeface.BOLD);
-            if (isCorrect) {
-                tvLabel.setTextColor(ContextCompat.getColor(this, R.color.success));
-            } else if (isThis) {
-                tvLabel.setTextColor(Color.parseColor("#E53935"));
-            } else {
-                tvLabel.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
-            }
+            tvLabel.setTextColor(isThis
+                    ? Color.parseColor("#1565C0")
+                    : ContextCompat.getColor(this, R.color.text_secondary));
             LinearLayout.LayoutParams labelLp = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -751,17 +738,8 @@ public class ExamReviewActivity extends AppCompatActivity {
             inner.addView(tvLabel);
             inner.addView(tvText);
 
-            if (isCorrect && isThis) {
-                inner.addView(buildStatusIcon("✓", "#4CAF50"));
-            } else if (isCorrect) {
-                inner.addView(buildStatusLabel(getString(R.string.review_option_correct_label), "#4CAF50"));
-            } else if (isThis) {
-                LinearLayout statusCol = new LinearLayout(this);
-                statusCol.setOrientation(LinearLayout.VERTICAL);
-                statusCol.setGravity(Gravity.CENTER_HORIZONTAL);
-                statusCol.addView(buildStatusIcon("✗", "#E53935"));
-                statusCol.addView(buildStatusLabel(getString(R.string.review_option_yours_label), "#E53935"));
-                inner.addView(statusCol);
+            if (isThis) {
+                inner.addView(buildStatusLabel(getString(R.string.review_option_yours_label), "#1565C0"));
             }
 
             card.addView(inner);

@@ -1,6 +1,6 @@
 {
   "suite": "web-report",
-  "generatedAt": "2026-11-03T06:28:35.002Z",
+  "generatedAt": "2026-11-16T04:12:25.010Z",
   "totalCases": 10,
   "passedCount": 10,
   "failedCount": 0,
@@ -10,7 +10,7 @@
       "description": "Login & Dashboard Overview (KPI Metrics, Executive Summary)",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 5367,
+      "durationMs": 11026,
       "assertions": [
         {
           "name": "assertTrue",
@@ -38,7 +38,7 @@
         "dashboard": {
           "h1": "Dashboard Tổng quan",
           "cardTitle": "Trung tâm Điều hành V-SAT Compass",
-          "bodyTextSnippet": "Theo dõi số lượng ca thi trực tuyến, tổng số học sinh đang thi và tỷ lệ phân hóa"
+          "bodyTextSnippet": "Nền tảng khảo thí số toàn diện hỗ trợ 7 môn thi trắc nghiệm khách quan chuẩn V-S"
         }
       },
       "error": null
@@ -48,7 +48,7 @@
       "description": "Exam Management List (Search Filters, Status Badges, Discard Draft)",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 836,
+      "durationMs": 847,
       "assertions": [
         {
           "name": "assertTrue",
@@ -93,7 +93,7 @@
       "description": "Create Exam Wizard (4 Steps: General -> Composition -> Preview -> Variants & Publish)",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 872,
+      "durationMs": 839,
       "assertions": [
         {
           "name": "assertTrue",
@@ -138,7 +138,7 @@
       "description": "Exam Matrix Blueprints (GDPT 2018 Specs, 4 Formats, Matrix Cells)",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 426,
+      "durationMs": 429,
       "assertions": [
         {
           "name": "assertTrue",
@@ -183,7 +183,7 @@
       "description": "Examination Schedules & Windows (Create, Status Lifecycle, Delete Window)",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 850,
+      "durationMs": 860,
       "assertions": [
         {
           "name": "assertTrue",
@@ -221,7 +221,7 @@
       "description": "Question Bank & Authoring (Subject Filters, Question Types, KaTeX Math Engine)",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 414,
+      "durationMs": 429,
       "assertions": [
         {
           "name": "assertTrue",
@@ -305,7 +305,7 @@
       "description": "Excel Question Import (Template Download, Valid XLSX Buffer In-Memory, Import Result)",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 836,
+      "durationMs": 830,
       "assertions": [
         {
           "name": "assertTrue",
@@ -358,7 +358,7 @@
       "description": "System Settings & Scoring Standards (150 Raw Points, Partial Credit Rule, Role Badges)",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 414,
+      "durationMs": 426,
       "assertions": [
         {
           "name": "assertTrue",
@@ -393,7 +393,7 @@
         "settings": {
           "header": "Cấu hình & Quy chuẩn",
           "cardTitle": "Quy chuẩn Điểm số & Chấm thi",
-          "bodyTextSnippet": "Cấu hình thang điểm 150 điểm thô, quy tắc tính điểm lũy tiến Đúng/Sai và kết nối",
+          "bodyTextSnippet": "Mỗi đề thi chuẩn V-SAT gồm đúng 25 câu hỏi với tổng điểm tối đa là 150 điểm thô.",
           "hasContentAdminBadge": true
         }
       },
@@ -404,7 +404,7 @@
       "description": "MathView KaTeX Renderer (Inline, Display, and Block Math Equations without Syntax Errors)",
       "status": "PASSED",
       "attempts": 1,
-      "durationMs": 2,
+      "durationMs": 1,
       "assertions": [
         {
           "name": "assertFalse",

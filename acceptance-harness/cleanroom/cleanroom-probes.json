@@ -1,0 +1,1921 @@
+{
+  "suite": "cleanroom-probes",
+  "generatedAt": "2026-11-16T02:51:58.560Z",
+  "totalCases": 36,
+  "passedCount": 33,
+  "failedCount": 3,
+  "results": [
+    {
+      "id": "CR-01",
+      "description": "Publish đề chuẩn 25 câu đúng tỉ lệ 9/6/5/5, đúng thứ tự, 90 phút Toán",
+      "status": "FAILED",
+      "attempts": 2,
+      "durationMs": 3736,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "CR-01 publish standard 25Q MATH exam"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "PUBLISHED",
+          "expected": "PUBLISHED",
+          "message": "data.status === PUBLISHED"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 25,
+          "expected": 25,
+          "message": "data.questionCount === 25"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "PUBLISHED",
+          "expected": "custom validation passed",
+          "message": "DB exams.status must be PUBLISHED"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": false,
+          "actual": "",
+          "expected": "custom validation passed",
+          "message": "DB exam_sections must have 4 sections 9/6/5/5 in exact order"
+        }
+      ],
+      "evidence": {
+        "request": "POST /admin/exams/2/publish (SUPER_ADMIN)",
+        "response": {
+          "status": 200,
+          "body": "{\"data\":{\"id\":2,\"examCode\":\"CR01_EXAM_491306_44898\",\"title\":\"Cleanroom CR01_EXAM_491306_44898\",\"subjectId\":1,\"subjectCode\":\"MATH\",\"questionCount\":25,\"durationMinutes\":90,\"difficulty\":\"MEDIUM\",\"pricingType\":\"FREE\",\"price\":0,\"status\":\"PUBLISHED\",\"publishDate\":\"2026-11-16T02:51:34.5150021Z\",\"version\":1,\"lockVersion\":0,\"createdBy\":3,\"reviewedBy\":4,\"createdAt\":\"2026-11-16T02:51:22.5374Z\",\"updatedAt\":\"2026-11-16T02:51:22.5374Z\"},\"message\":\"Exam published\",\"timestamp\":\"2026-11-16T09:51:34.5262342+07:00\",\"success\":true}"
+        }
+      },
+      "error": "Assertion \"assertDbRow\" FAILED: expected \"custom validation passed\", got \"\" (DB exam_sections must have 4 sections 9/6/5/5 in exact order)"
+    },
+    {
+      "id": "CR-02",
+      "description": "Publish đề thiếu câu (< 25 câu) phải bị chặn",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 1289,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "CR-02 publish incomplete exam must return 400"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": false,
+          "expected": false,
+          "message": "success === false"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "PENDING_REVIEW",
+          "expected": "custom validation passed",
+          "message": "DB status must remain PENDING_REVIEW"
+        }
+      ],
+      "evidence": {
+        "request": "POST /admin/exams/3/publish (1 question)",
+        "response": {
+          "status": 400,
+          "body": "{\"error\":{\"code\":\"VALIDATION_FAILED\",\"message\":\"V-SAT publish validation failed: VF_COUNT\"},\"timestamp\":\"2026-11-16T09:51:36.1362032+07:00\",\"success\":false}"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-03",
+      "description": "Publish đề đủ 25 câu nhưng sai cơ cấu (25 SINGLE_CHOICE) phải bị chặn",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 1975,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "CR-03 wrong 9/6/5/5 mix must return 400"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": false,
+          "expected": false,
+          "message": "success === false"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "PENDING_REVIEW",
+          "expected": "custom validation passed",
+          "message": "DB status must remain PENDING_REVIEW"
+        }
+      ],
+      "evidence": {
+        "request": "POST /admin/exams/4/publish (25 SINGLE_CHOICE)",
+        "response": {
+          "status": 400,
+          "body": "{\"error\":{\"code\":\"VALIDATION_FAILED\",\"message\":\"V-SAT publish validation failed: VF_MIX\"},\"timestamp\":\"2026-11-16T09:51:38.169362+07:00\",\"success\":false}"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-04",
+      "description": "Publish đề đủ 25 câu 9/6/5/5 nhưng sai thứ tự phần thi phải bị chặn",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 733,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "CR-04 wrong section order must return 400"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": false,
+          "expected": false,
+          "message": "success === false"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "PENDING_REVIEW",
+          "expected": "custom validation passed",
+          "message": "DB status must remain PENDING_REVIEW"
+        }
+      ],
+      "evidence": {
+        "request": "POST /admin/exams/5/publish (SC before TF)",
+        "response": {
+          "status": 400,
+          "body": "{\"error\":{\"code\":\"VALIDATION_FAILED\",\"message\":\"V-SAT publish validation failed: VF_ORDER\"},\"timestamp\":\"2026-11-16T09:51:38.9059832+07:00\",\"success\":false}"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-05",
+      "description": "Tạo hoặc publish đề Toán với thời lượng sai chuẩn (60 phút) phải bị chặn",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 273,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "CR-05 POST /admin/exams rejected 60m MATH exam"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "0",
+          "expected": "custom validation passed",
+          "message": "Rejected exam must not exist in DB"
+        }
+      ],
+      "evidence": {
+        "createResponse": {
+          "status": 400,
+          "body": "{\"error\":{\"code\":\"VALIDATION_FAILED\",\"message\":\"Invalid duration: subject MATH requires 90 minutes, got 60\"},\"timestamp\":\"2026-11-16T09:51:39.1872105+07:00\",\"success\":false}"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-06",
+      "description": "Đề Toán chứa câu hỏi thuộc môn khác (ENG) phải bị chặn",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 852,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 201,
+          "expected": 201,
+          "message": "Create DRAFT MATH exam"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "CR-06 adding ENG question to MATH exam must return 400"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "0",
+          "expected": "custom validation passed",
+          "message": "DB exam_questions must not contain ENG question"
+        }
+      ],
+      "evidence": {
+        "request": "POST /admin/exams/6/questions {questionId:49}",
+        "response": {
+          "status": 400,
+          "body": "{\"error\":{\"code\":\"VALIDATION_FAILED\",\"message\":\"Question subject (2) does not match exam subject (1)\"},\"timestamp\":\"2026-11-16T09:51:40.0290032+07:00\",\"success\":false}"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-07",
+      "description": "Publish đề có câu Đúng/Sai chỉ có 3 mệnh đề phải bị chặn",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 1110,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "CR-07 publish exam with 3-item TF question must return 400"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": false,
+          "expected": false,
+          "message": "success === false"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "PENDING_REVIEW",
+          "expected": "custom validation passed",
+          "message": "DB status must remain PENDING_REVIEW"
+        }
+      ],
+      "evidence": {
+        "request": "POST /admin/exams/7/publish (TF with 3 items)",
+        "response": {
+          "status": 400,
+          "body": "{\"error\":{\"code\":\"VALIDATION_FAILED\",\"message\":\"V-SAT publish validation failed: VF_TF4\"},\"timestamp\":\"2026-11-16T09:51:41.1563148+07:00\",\"success\":false}"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-08",
+      "description": "CONTENT_ADMIN không được phép publish đề",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 648,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "CR-08 CONTENT_ADMIN publish must return 403"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "PENDING_REVIEW|NULL",
+          "expected": "custom validation passed",
+          "message": "DB status must remain PENDING_REVIEW and publish_date IS NULL"
+        }
+      ],
+      "evidence": {
+        "request": "POST /admin/exams/8/publish (CONTENT_ADMIN)",
+        "response": {
+          "status": 403,
+          "body": "{\"error\":{\"code\":\"AUTH_FORBIDDEN\",\"message\":\"Bạn không có quyền thực hiện hành động này\"},\"timestamp\":\"2026-11-16T09:51:41.801331+07:00\",\"success\":false}"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-09",
+      "description": "COLLABORATOR không được phép publish đề",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 682,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "CR-09 COLLABORATOR publish must return 403"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "PENDING_REVIEW",
+          "expected": "custom validation passed",
+          "message": "DB status must remain PENDING_REVIEW"
+        }
+      ],
+      "evidence": {
+        "request": "POST /admin/exams/9/publish (COLLABORATOR)",
+        "response": {
+          "status": 403,
+          "body": "{\"error\":{\"code\":\"AUTH_FORBIDDEN\",\"message\":\"Bạn không có quyền thực hiện hành động này\"},\"timestamp\":\"2026-11-16T02:51:42.468096300Z\"}"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-10",
+      "description": "STUDENT và ANONYMOUS không được phép publish đề",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 920,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 403,
+          "expected": 403,
+          "message": "CR-10 STUDENT publish must return 403"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 401,
+          "expected": 401,
+          "message": "CR-10 ANONYMOUS publish must return 401"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "PENDING_REVIEW",
+          "expected": "custom validation passed",
+          "message": "DB status must remain PENDING_REVIEW"
+        }
+      ],
+      "evidence": {
+        "studentResponse": {
+          "status": 403,
+          "body": "{\"error\":{\"code\":\"AUTH_FORBIDDEN\",\"message\":\"Bạn không có quyền thực hiện hành động này\"},\"timestamp\":\"2026-11-16T02:51:43.392181300Z\"}"
+        },
+        "anonResponse": {
+          "status": 401,
+          "body": "{\"error\":{\"code\":\"AUTH_UNAUTHORIZED\",\"message\":\"Vui lòng đăng nhập\"},\"timestamp\":\"2026-11-16T02:51:43.394850900Z\"}"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-11",
+      "description": "Sinh đề mới theo blueprint MATH chọn đúng 25 câu 9/6/5/5 và đúng thứ tự phần",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 596,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "CR-11 generate-by-matrix must return 200"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 25,
+          "expected": 25,
+          "message": "selectedQuestions === 25"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 150,
+          "expected": 150,
+          "message": "rawScore === 150"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "25",
+          "expected": "custom validation passed",
+          "message": "DB exam_questions must have 25 MATH questions"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "TRUE_FALSE,TRUE_FALSE,TRUE_FALSE,TRUE_FALSE,TRUE_FALSE,TRUE_FALSE,TRUE_FALSE,TRUE_FALSE,TRUE_FALSE,SINGLE_CHOICE,SINGLE_CHOICE,SINGLE_CHOICE,SINGLE_CHOICE,SINGLE_CHOICE,SINGLE_CHOICE,MATCHING,MATCHING,MATCHING,MATCHING,MATCHING,SHORT_ANSWER,SHORT_ANSWER,SHORT_ANSWER,SHORT_ANSWER,SHORT_ANSWER",
+          "expected": "custom validation passed",
+          "message": "DB question_order must match 9 TRUE_FALSE -> 6 SINGLE_CHOICE -> 5 MATCHING -> 5 SHORT_ANSWER"
+        }
+      ],
+      "evidence": {
+        "request": "POST /admin/exams/generate-by-matrix (bpId=1)",
+        "response": {
+          "status": 200,
+          "body": "{\"data\":{\"examId\":11,\"examCode\":\"GEN_MATH_OK_491306_80326\",\"selectedQuestions\":25,\"rawScore\":150,\"variants\":[\"101\",\"102\",\"103\",\"104\"],\"generationWarnings\":[]},\"message\":\"Exam generated by matrix successfully\",\"timestamp\":\"2026-11-16T09:51:43.8831763+07:00\",\"success\":true}"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-12",
+      "description": "Sinh đề vào đề không ở trạng thái DRAFT (PUBLISHED) phải trả 409 và không ghi đè",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 912,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Setup published exam for CR-12"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 409,
+          "expected": 409,
+          "message": "CR-12 generate-by-matrix on PUBLISHED exam must return 409"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "5:1,6:2,7:3,8:4,9:5,10:6,11:7,12:8,13:9,14:10,15:11,16:12,17:13,18:14,19:15,20:16,21:17,22:18,23:19,24:20,25:21,26:22,27:23,28:24,29:25",
+          "expected": "custom validation passed",
+          "message": "DB exam_questions must remain unchanged"
+        }
+      ],
+      "evidence": {
+        "request": "POST /admin/exams/12/generate-by-matrix",
+        "response": {
+          "status": 409,
+          "body": "{\"error\":{\"code\":\"INVALID_STATE\",\"message\":\"Cannot generate questions for exam in status PUBLISHED. Only DRAFT exams allow matrix generation.\"},\"timestamp\":\"2026-11-16T09:51:44.9025423+07:00\",\"success\":false}"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-13",
+      "description": "Sinh đề theo blueprint khi ngân hàng thiếu câu phải trả cảnh báo thiếu câu hoặc từ chối",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 1192,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "CR-13 shortage returned 200 with warnings"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "generationWarnings must be non-empty array"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "selectedQuestions < 25"
+        }
+      ],
+      "evidence": {
+        "request": "POST /admin/exams/generate-by-matrix (only 6 SC available)",
+        "response": {
+          "status": 200,
+          "body": "{\"data\":{\"examId\":13,\"examCode\":\"GEN_SHORTAGE_491306_52851\",\"selectedQuestions\":6,\"rawScore\":36,\"variants\":[\"101\",\"102\",\"103\",\"104\"],\"generationWarnings\":[\"Phần TRUE_FALSE chỉ có 0/9 câu đạt chuẩn.\",\"Phần MATCHING chỉ có 0/5 câu đạt chuẩn.\",\"Phần SHORT_ANSWER chỉ có 0/5 câu đạt chuẩn.\"]},\"message\":\"Exam generated by matrix successfully\",\"timestamp\":\"2026-11-16T09:51:46.2272557+07:00\",\"success\":true}"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-14",
+      "description": "rawScore khi sinh đề thiếu câu phải bằng tổng điểm thực tế, không gán cứng 150",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 1201,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 201,
+          "expected": 201,
+          "message": "Create DRAFT exam for CR-14"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "CR-14 generate-by-matrix returned 200"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "selectedQuestions (6) < 25"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 36,
+          "expected": 36,
+          "message": "rawScore (36) must equal DB SUM(max_raw_score) (36)"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "rawScore (36) must be < 150"
+        }
+      ],
+      "evidence": {
+        "request": "POST /admin/exams/14/generate-by-matrix",
+        "response": {
+          "status": 200,
+          "body": "{\"data\":{\"examId\":14,\"examCode\":\"DRAFT_SHORT14_491306_49868\",\"selectedQuestions\":6,\"rawScore\":36,\"variants\":[\"101\",\"102\",\"103\",\"104\"],\"generationWarnings\":[\"Phần TRUE_FALSE chỉ có 0/9 câu đạt chuẩn.\",\"Phần MATCHING chỉ có 0/5 câu đạt chuẩn.\",\"Phần SHORT_ANSWER chỉ có 0/5 câu đạt chuẩn.\"]},\"message\":\"Exam questions generated by matrix successfully\",\"timestamp\":\"2026-11-16T09:51:47.2576114+07:00\",\"success\":true}"
+        },
+        "dbSumMaxRawScore": 36
+      },
+      "error": null
+    },
+    {
+      "id": "CR-15",
+      "description": "Tạo blueprint có totalQuestions khác 25 (10) phải bị từ chối",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 586,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "CR-15 blueprint with totalQuestions=10 must return 400"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "0",
+          "expected": "custom validation passed",
+          "message": "Invalid blueprint must not be persisted"
+        }
+      ],
+      "evidence": {
+        "request": "POST /admin/blueprints (BP_INV_10_491306_91278, totalQuestions=10)",
+        "response": {
+          "status": 400,
+          "body": "{\"error\":{\"code\":\"BAD_REQUEST\",\"message\":\"Tổng số câu hỏi (totalQuestions) phải bằng 25 theo chuẩn V-SAT, nhận 10\"},\"timestamp\":\"2026-11-16T09:51:47.8809934+07:00\",\"success\":false}"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-16",
+      "description": "Tạo blueprint 25 câu nhưng sai cơ cấu 9/6/5/5 (25 SINGLE_CHOICE) phải bị từ chối",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 555,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "CR-16 blueprint with wrong type mix must return 400"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "0",
+          "expected": "custom validation passed",
+          "message": "Invalid blueprint must not be persisted"
+        }
+      ],
+      "evidence": {
+        "request": "POST /admin/blueprints (BP_BAD_MIX_491306_30515, 25 SINGLE_CHOICE)",
+        "response": {
+          "status": 400,
+          "body": "{\"error\":{\"code\":\"BAD_REQUEST\",\"message\":\"Cơ cấu loại TRUE_FALSE phải là 9 câu (nhận 0)\"},\"timestamp\":\"2026-11-16T09:51:48.4366465+07:00\",\"success\":false}"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-17",
+      "description": "Tạo blueprint có cell mang questionCount âm phải bị từ chối",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 622,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "CR-17 blueprint with negative questionCount must return 400"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "0",
+          "expected": "custom validation passed",
+          "message": "Invalid blueprint must not be persisted"
+        }
+      ],
+      "evidence": {
+        "request": "POST /admin/blueprints (BP_NEG_CNT_491306_14789, questionCount=-1)",
+        "response": {
+          "status": 400,
+          "body": "{\"error\":{\"code\":\"BAD_REQUEST\",\"message\":\"Số lượng câu hỏi trong từng ô ma trận không được âm\"},\"timestamp\":\"2026-11-16T09:51:49.0463672+07:00\",\"success\":false}"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-18",
+      "description": "Tạo blueprint trỏ tới scoringProfileId không tồn tại phải bị từ chối",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 452,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "CR-18 blueprint with non-existent scoringProfileId must return 400"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "0",
+          "expected": "custom validation passed",
+          "message": "Invalid blueprint must not be persisted"
+        }
+      ],
+      "evidence": {
+        "request": "POST /admin/blueprints (BP_BAD_PROF_491306_44796, scoringProfileId=999999)",
+        "response": {
+          "status": 400,
+          "body": "{\"error\":{\"code\":\"BAD_REQUEST\",\"message\":\"Scoring profile không tồn tại: 999999\"},\"timestamp\":\"2026-11-16T09:51:49.4837356+07:00\",\"success\":false}"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-19",
+      "description": "Blueprint seed mặc định phải có profile chấm điểm hợp lệ và đủ 25 câu / 150 điểm",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 288,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "CR-19 GET /admin/blueprints"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Blueprint list must not be empty"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Standard VSAT_2026_BP_* blueprints must exist"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Blueprint VSAT_2026_BP_MATH totalQuestions=25 must be 25"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Blueprint VSAT_2026_BP_MATH maxRawScore=150 must be 150"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Blueprint VSAT_2026_BP_ENG totalQuestions=25 must be 25"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Blueprint VSAT_2026_BP_ENG maxRawScore=150 must be 150"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "0",
+          "expected": "custom validation passed",
+          "message": "No blueprint may have NULL scoring_profile_id"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "0",
+          "expected": "custom validation passed",
+          "message": "All blueprints must reference an active scoring_profile"
+        }
+      ],
+      "evidence": {
+        "request": "GET /admin/blueprints",
+        "response": {
+          "status": 200,
+          "body": "{\"data\":[{\"id\":1,\"code\":\"VSAT_2026_BP_MATH\",\"name\":\"Ma trận V-SAT Toán học chuẩn 2026 (25 câu - 150 điểm)\",\"subjectId\":1,\"subjectCode\":\"MATH\",\"subjectName\":\"Toán\",\"totalQuestions\":25,\"maxRawScore\":150,\"version\":1,\"cells\":[{\"id\":1,\"topicId\":1,\"topicName\":\"Phần I: Đúng / Sai\",\"questionType\":\"TRUE_FALSE\",\"cognitiveLevel\":\"UNDERSTANDING\",\"difficulty\":\"MEDIUM\",\"questionCount\":9},{\"id\":2,\"topicId\":2,\"topicName\":\"Phần II: MCQ 4 lựa chọn\",\"questionType\":\"SINGLE_CHOICE\",\"cognitiveLevel\":\"RECOGNITION\",\"difficulty\":\"EASY\",\"questionCount\":6},{\"id\":3,\"topicId\":3,\"topicName\":\"Phần III: Ghép hợp (Matching)\",\"questionType\":\"MATCHING\",\"cognitiveLevel\":\"APPLICATION\",\"difficulty\":\"HARD\",\"questionCount\":5},{\"id...<truncated>"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-20",
+      "description": "Import dryRun=true không được ghi bất kỳ câu hỏi nào vào DB",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 278,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "CR-20 dryRun import must return 200"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "data.dryRun === true"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 0,
+          "expected": 0,
+          "message": "data.importedQuestions === 0"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "0",
+          "expected": "custom validation passed",
+          "message": "dryRun=true must insert 0 rows in DB"
+        }
+      ],
+      "evidence": {
+        "templateHeaders": [
+          "Subject ID/Code",
+          "Topic ID/Code",
+          "Subtopic ID",
+          "Difficulty (NB/TH/VD/VDC)",
+          "Question Type",
+          "Question Text",
+          "Option A",
+          "Option B",
+          "Option C",
+          "Option D",
+          "Correct Answer (A/B/C/D)",
+          "Explanation",
+          "Tags"
+        ],
+        "request": "POST /admin/questions/import?dryRun=true (marker=CR20_DRY_491306_92852)",
+        "response": {
+          "status": 200,
+          "body": "{\"data\":{\"totalRows\":2,\"validCount\":2,\"errorCount\":0,\"importedQuestions\":0,\"createdGroups\":0,\"dryRun\":true,\"items\":[{\"sheetName\":\"Questions\",\"rowNumber\":2,\"subjectId\":1,\"subjectCode\":\"MATH\",\"topicId\":1,\"difficulty\":\"EASY\",\"questionType\":\"SINGLE_CHOICE\",\"questionText\":\"CR20_DRY_491306_92852 Câu 1\",\"options\":[\"1\",\"2\",\"3\",\"4\"],\"correctAnswer\":\"A\",\"explanation\":\"Giải 1\",\"tags\":\"\",\"valid\":true},{\"sheetName\":\"Questions\",\"rowNumber\":3,\"subjectId\":1,\"subjectCode\":\"MATH\",\"topicId\":1,\"difficulty\":\"MEDIUM\",\"questionType\":\"SINGLE_CHOICE\",\"questionText\":\"CR20_DRY_491306_92852 Câu 2\",\"options\":[\"10\",\"20\",\"30\",\"40\"],\"correctAnswer\":\"B\",\"explanation\":\"Giải 2\",\"tags\":\"\",\"valid\":true}],\"errors\":[]},\"message\":...<truncated>"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-21",
+      "description": "Import dryRun=false phải tạo câu hỏi ở trạng thái PENDING_REVIEW, không tự APPROVED",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 361,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "CR-21 live import must return 200"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": false,
+          "expected": false,
+          "message": "data.dryRun === false"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "importedQuestions >= 1"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "1",
+          "expected": "custom validation passed",
+          "message": "Imported questions must have status PENDING_REVIEW"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "0",
+          "expected": "custom validation passed",
+          "message": "Imported questions must NOT be auto-APPROVED"
+        }
+      ],
+      "evidence": {
+        "request": "POST /admin/questions/import?dryRun=false (marker=CR21_LIVE_491306_97306)",
+        "response": {
+          "status": 200,
+          "body": "{\"data\":{\"totalRows\":1,\"validCount\":1,\"errorCount\":0,\"importedQuestions\":1,\"createdGroups\":0,\"dryRun\":false,\"items\":[{\"sheetName\":\"Questions\",\"rowNumber\":2,\"subjectId\":1,\"subjectCode\":\"MATH\",\"topicId\":1,\"difficulty\":\"MEDIUM\",\"questionType\":\"SINGLE_CHOICE\",\"questionText\":\"CR21_LIVE_491306_97306 Câu import thật\",\"options\":[\"Đúng\",\"Sai 1\",\"Sai 2\",\"Sai 3\"],\"correctAnswer\":\"A\",\"explanation\":\"Lời giải\",\"tags\":\"\",\"valid\":true}],\"errors\":[]},\"message\":\"Import câu hỏi thành công (1 câu)\",\"timestamp\":\"2026-11-16T09:51:50.2596387+07:00\",\"success\":true}"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-22",
+      "description": "Import dòng có loại câu lạ (ABC) phải bị đánh dấu lỗi, không ép thành SINGLE_CHOICE",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 157,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "CR-22 unknown questionType rejected with 400"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "0",
+          "expected": "custom validation passed",
+          "message": "Unknown questionType row must not be saved in DB"
+        }
+      ],
+      "evidence": {
+        "request": "POST /admin/questions/import?dryRun=false (questionType=ABC, marker=CR22_ABC_491306_43523)",
+        "response": {
+          "status": 400,
+          "body": "{\"error\":{\"code\":\"BAD_REQUEST\",\"message\":\"Không thể nạp vào CSDL vì còn 1 dòng lỗi. Vui lòng sửa lỗi trước khi nạp.\"},\"timestamp\":\"2026-11-16T09:51:50.6009726+07:00\",\"success\":false}"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-23",
+      "description": "Import câu SINGLE_CHOICE đáp án sai định dạng \"A,B\" phải báo lỗi và không lưu DB",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 186,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "CR-23 invalid SC correctAnswer rejected with 400"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "0",
+          "expected": "custom validation passed",
+          "message": "Invalid SC row must not be saved in DB"
+        }
+      ],
+      "evidence": {
+        "request": "POST /admin/questions/import?dryRun=false (correctAnswer=A,B)",
+        "response": {
+          "status": 400,
+          "body": "{\"error\":{\"code\":\"BAD_REQUEST\",\"message\":\"Không thể nạp vào CSDL vì còn 1 dòng lỗi. Vui lòng sửa lỗi trước khi nạp.\"},\"timestamp\":\"2026-11-16T09:51:50.7551227+07:00\",\"success\":false}"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-24",
+      "description": "Import câu MATCHING hợp lệ phải lưu được 4 tiểu mục ghép hợp vào DB",
+      "status": "FAILED",
+      "attempts": 2,
+      "durationMs": 370,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "CR-24 import MATCHING must return 200"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 0,
+          "expected": 0,
+          "message": "errorCount === 0"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 1,
+          "expected": 1,
+          "message": "importedQuestions === 1"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": false,
+          "actual": "0",
+          "expected": "custom validation passed",
+          "message": "DB question_matching_items must have 4 rows matching question_matching_choices"
+        }
+      ],
+      "evidence": {
+        "request": "POST /admin/questions/import?dryRun=false (MATCHING, marker=CR24_MATCH_491306_86061)",
+        "response": {
+          "status": 200,
+          "body": "{\"data\":{\"totalRows\":1,\"validCount\":1,\"errorCount\":0,\"importedQuestions\":1,\"createdGroups\":0,\"dryRun\":false,\"items\":[{\"sheetName\":\"Questions\",\"rowNumber\":2,\"subjectId\":1,\"subjectCode\":\"MATH\",\"topicId\":1,\"difficulty\":\"MEDIUM\",\"questionType\":\"MATCHING\",\"questionText\":\"CR24_MATCH_491306_86061 Ghép nối 4 cặp\",\"options\":[\"Đáp A\",\"Đáp B\",\"Đáp C\",\"Đáp D\"],\"correctAnswer\":\"1-C,2-A,3-D,4-B\",\"explanation\":\"Giải ghép\",\"tags\":\"\",\"valid\":true}],\"errors\":[]},\"message\":\"Import câu hỏi thành công (1 câu)\",\"timestamp\":\"2026-11-16T09:51:51.1293996+07:00\",\"success\":true}"
+        }
+      },
+      "error": "Assertion \"assertDbRow\" FAILED: expected \"custom validation passed\", got \"0\" (DB question_matching_items must have 4 rows matching question_matching_choices)"
+    },
+    {
+      "id": "CR-25",
+      "description": "Import câu SHORT_ANSWER đáp án số 12.5 phải lưu khóa chấm NUMERIC vào DB",
+      "status": "FAILED",
+      "attempts": 2,
+      "durationMs": 380,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "CR-25 import SHORT_ANSWER must return 200"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 0,
+          "expected": 0,
+          "message": "errorCount === 0"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 1,
+          "expected": 1,
+          "message": "importedQuestions === 1"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": false,
+          "actual": "0",
+          "expected": "custom validation passed",
+          "message": "DB question_short_answer_keys must have NUMERIC key = 12.5"
+        }
+      ],
+      "evidence": {
+        "request": "POST /admin/questions/import?dryRun=false (SHORT_ANSWER 12.5)",
+        "response": {
+          "status": 200,
+          "body": "{\"data\":{\"totalRows\":1,\"validCount\":1,\"errorCount\":0,\"importedQuestions\":1,\"createdGroups\":0,\"dryRun\":false,\"items\":[{\"sheetName\":\"Questions\",\"rowNumber\":2,\"subjectId\":1,\"subjectCode\":\"MATH\",\"topicId\":1,\"difficulty\":\"MEDIUM\",\"questionType\":\"SHORT_ANSWER\",\"questionText\":\"CR25_SA_491306_48714 Tính giá trị\",\"options\":[\"12.5\",\"\",\"\",\"\"],\"correctAnswer\":\"12.5\",\"explanation\":\"Đáp án 12.5\",\"tags\":\"\",\"valid\":true}],\"errors\":[]},\"message\":\"Import câu hỏi thành công (1 câu)\",\"timestamp\":\"2026-11-16T09:51:51.4956395+07:00\",\"success\":true}"
+        }
+      },
+      "error": "Assertion \"assertDbRow\" FAILED: expected \"custom validation passed\", got \"0\" (DB question_short_answer_keys must have NUMERIC key = 12.5)"
+    },
+    {
+      "id": "CR-26",
+      "description": "Tạo câu TRUE_FALSE chỉ có 3 mệnh đề phải trả HTTP 400",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 433,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "CR-26 TF with 3 propositions must return 400"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "0",
+          "expected": "custom validation passed",
+          "message": "Rejected TF question must not be saved"
+        }
+      ],
+      "evidence": {
+        "request": "POST /collaborator/questions (TF 3 options)",
+        "response": {
+          "status": 400,
+          "body": "{\"error\":{\"code\":\"VALIDATION_FAILED\",\"message\":\"TRUE_FALSE requires exactly 4 options labeled a-d (VF_TF4), got 3\"},\"timestamp\":\"2026-11-16T09:51:51.9750779+07:00\",\"success\":false}"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-27",
+      "description": "Tạo câu SINGLE_CHOICE 2 phương án hoặc 2 đáp án đúng phải trả HTTP 400",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 415,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "CR-27 SC with 2 options must return 400"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "CR-27 SC with 2 correct options must return 400"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "0",
+          "expected": "custom validation passed",
+          "message": "Rejected SC questions must not be saved"
+        }
+      ],
+      "evidence": {
+        "res2Options": {
+          "status": 400,
+          "body": "{\"error\":{\"code\":\"VALIDATION_FAILED\",\"message\":\"SINGLE_CHOICE requires 4 options and exactly 1 correct option, got 2 options and 1 correct\"},\"timestamp\":\"2026-11-16T09:51:52.3537305+07:00\",\"success\":false}"
+        },
+        "res2Correct": {
+          "status": 400,
+          "body": "{\"error\":{\"code\":\"VALIDATION_FAILED\",\"message\":\"SINGLE_CHOICE requires 4 options and exactly 1 correct option, got 4 options and 2 correct\"},\"timestamp\":\"2026-11-16T09:51:52.362893+07:00\",\"success\":false}"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-28",
+      "description": "Tạo câu MATCHING chỉ có 2 cặp/tiểu mục thay vì 4 phải trả HTTP 400",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 389,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "CR-28 MATCHING with 2 pairs must return 400"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "0",
+          "expected": "custom validation passed",
+          "message": "Rejected MATCHING question must not be saved"
+        }
+      ],
+      "evidence": {
+        "request": "POST /collaborator/questions (MATCHING 2 items)",
+        "response": {
+          "status": 400,
+          "body": "{\"error\":{\"code\":\"VALIDATION_FAILED\",\"message\":\"MATCHING requires exactly 4 distinct matching pairs (VF_MATCH), got 2\"},\"timestamp\":\"2026-11-16T09:51:52.7801547+07:00\",\"success\":false}"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-29",
+      "description": "Tạo câu SHORT_ANSWER không có đáp án hợp lệ phải trả HTTP 400",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 435,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "CR-29 SA without valid answer must return 400"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "0",
+          "expected": "custom validation passed",
+          "message": "Rejected SA question must not be saved"
+        }
+      ],
+      "evidence": {
+        "request": "POST /collaborator/questions (SA isCorrect=false)",
+        "response": {
+          "status": 400,
+          "body": "{\"error\":{\"code\":\"VALIDATION_FAILED\",\"message\":\"SHORT_ANSWER requires at least 1 correct option\"},\"timestamp\":\"2026-11-16T09:51:53.2069848+07:00\",\"success\":false}"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-30",
+      "description": "Bundle tải đề của học sinh không được lộ đáp án hay lời giải dưới bất kỳ dạng nào",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 1954,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "CR-30 download-bundle must return 200"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 0,
+          "expected": 0,
+          "message": "Bundle leaked answers/explanations: "
+        }
+      ],
+      "evidence": {
+        "request": "GET /exams/15/download-bundle (STUDENT)",
+        "status": 200,
+        "leakHits": []
+      },
+      "error": null
+    },
+    {
+      "id": "CR-31",
+      "description": "Bundle tải đề phải có maxRawScore từng câu, tổng điểm 150, đúng thứ tự 9/6/5/5",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 8,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "CR-31 download-bundle must return 200"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 25,
+          "expected": 25,
+          "message": "data.questions.length === 25"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "q[0].maxRawScore must be positive number, got 6"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "q[1].maxRawScore must be positive number, got 6"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "q[2].maxRawScore must be positive number, got 6"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "q[3].maxRawScore must be positive number, got 6"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "q[4].maxRawScore must be positive number, got 6"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "q[5].maxRawScore must be positive number, got 6"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "q[6].maxRawScore must be positive number, got 6"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "q[7].maxRawScore must be positive number, got 6"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "q[8].maxRawScore must be positive number, got 6"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "q[9].maxRawScore must be positive number, got 6"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "q[10].maxRawScore must be positive number, got 6"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "q[11].maxRawScore must be positive number, got 6"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "q[12].maxRawScore must be positive number, got 6"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "q[13].maxRawScore must be positive number, got 6"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "q[14].maxRawScore must be positive number, got 6"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "q[15].maxRawScore must be positive number, got 6"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "q[16].maxRawScore must be positive number, got 6"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "q[17].maxRawScore must be positive number, got 6"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "q[18].maxRawScore must be positive number, got 6"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "q[19].maxRawScore must be positive number, got 6"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "q[20].maxRawScore must be positive number, got 6"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "q[21].maxRawScore must be positive number, got 6"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "q[22].maxRawScore must be positive number, got 6"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "q[23].maxRawScore must be positive number, got 6"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "q[24].maxRawScore must be positive number, got 6"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 150,
+          "expected": 150,
+          "message": "Sum of maxRawScore must be 150, got 150"
+        },
+        {
+          "name": "assertTrue",
+          "passed": true,
+          "actual": true,
+          "expected": true,
+          "message": "Bundle question types order mismatch: TRUE_FALSE,TRUE_FALSE,TRUE_FALSE,TRUE_FALSE,TRUE_FALSE,TRUE_FALSE,TRUE_FALSE,TRUE_FALSE,TRUE_FALSE,SINGLE_CHOICE,SINGLE_CHOICE,SINGLE_CHOICE,SINGLE_CHOICE,SINGLE_CHOICE,SINGLE_CHOICE,MATCHING,MATCHING,MATCHING,MATCHING,MATCHING,SHORT_ANSWER,SHORT_ANSWER,SHORT_ANSWER,SHORT_ANSWER,SHORT_ANSWER"
+        }
+      ],
+      "evidence": {
+        "request": "GET /exams/15/download-bundle (STUDENT)",
+        "status": 200,
+        "questionTypes": [
+          "TRUE_FALSE",
+          "TRUE_FALSE",
+          "TRUE_FALSE",
+          "TRUE_FALSE",
+          "TRUE_FALSE",
+          "TRUE_FALSE",
+          "TRUE_FALSE",
+          "TRUE_FALSE",
+          "TRUE_FALSE",
+          "SINGLE_CHOICE",
+          "SINGLE_CHOICE",
+          "SINGLE_CHOICE",
+          "SINGLE_CHOICE",
+          "SINGLE_CHOICE",
+          "SINGLE_CHOICE",
+          "MATCHING",
+          "MATCHING",
+          "MATCHING",
+          "MATCHING",
+          "MATCHING",
+          "SHORT_ANSWER",
+          "SHORT_ANSWER",
+          "SHORT_ANSWER",
+          "SHORT_ANSWER",
+          "SHORT_ANSWER"
+        ]
+      },
+      "error": null
+    },
+    {
+      "id": "CR-32",
+      "description": "Nộp bài đúng hết 25 câu qua server-side phải đạt tổng điểm thô 150",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 569,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 201,
+          "expected": 201,
+          "message": "Start MOCK_EXAM session"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Fetch bundle questions for session"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Save answer for q=62 (TRUE_FALSE)"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Save answer for q=63 (TRUE_FALSE)"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Save answer for q=64 (TRUE_FALSE)"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Save answer for q=65 (TRUE_FALSE)"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Save answer for q=66 (TRUE_FALSE)"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Save answer for q=67 (TRUE_FALSE)"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Save answer for q=68 (TRUE_FALSE)"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Save answer for q=69 (TRUE_FALSE)"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Save answer for q=70 (TRUE_FALSE)"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Save answer for q=71 (SINGLE_CHOICE)"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Save answer for q=72 (SINGLE_CHOICE)"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Save answer for q=73 (SINGLE_CHOICE)"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Save answer for q=74 (SINGLE_CHOICE)"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Save answer for q=75 (SINGLE_CHOICE)"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Save answer for q=76 (SINGLE_CHOICE)"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Save answer for q=77 (MATCHING)"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Save answer for q=78 (MATCHING)"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Save answer for q=79 (MATCHING)"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Save answer for q=80 (MATCHING)"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Save answer for q=81 (MATCHING)"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Save answer for q=82 (SHORT_ANSWER)"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Save answer for q=83 (SHORT_ANSWER)"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Save answer for q=84 (SHORT_ANSWER)"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Save answer for q=85 (SHORT_ANSWER)"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Save answer for q=86 (SHORT_ANSWER)"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "CR-32 submit must return 200"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": "SUBMITTED",
+          "expected": "SUBMITTED",
+          "message": "data.status === SUBMITTED"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 150,
+          "expected": 150,
+          "message": "data.rawScore === 150"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 150,
+          "expected": 150,
+          "message": "data.maxRawScore === 150"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 25,
+          "expected": 25,
+          "message": "data.correctCount === 25"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "150.00",
+          "expected": "custom validation passed",
+          "message": "DB exam_sessions.raw_score must equal 150.00"
+        }
+      ],
+      "evidence": {
+        "sessionId": 1,
+        "submitResponse": {
+          "status": 200,
+          "body": "{\"data\":{\"id\":1,\"examId\":15,\"mode\":\"MOCK_EXAM\",\"status\":\"SUBMITTED\",\"score\":100,\"scorePercentage\":100,\"rawScore\":150,\"maxRawScore\":150,\"correctCount\":25,\"totalQuestions\":25,\"timeSpentSeconds\":0,\"startedAt\":\"2026-11-16T02:51:55.30676Z\",\"submittedAt\":\"2026-11-16T09:51:55.747272+07:00\",\"orderedQuestionIds\":[]},\"message\":\"Nộp bài thành công\",\"timestamp\":\"2026-11-16T09:51:55.7494834+07:00\",\"success\":true}"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-33",
+      "description": "Nộp bài qua client-submit kèm điểm giả mạo: server phải bỏ qua điểm giả và tự chấm",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 152,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 201,
+          "expected": 201,
+          "message": "Start MOCK_EXAM session for client-submit"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "CR-33 client-submit returned 200 with server re-grading"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 0,
+          "expected": 0,
+          "message": "rawScore must be 0"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 0,
+          "expected": 0,
+          "message": "correctCount must be 0"
+        },
+        {
+          "name": "assertEqual",
+          "passed": true,
+          "actual": 0,
+          "expected": 0,
+          "message": "score must be 0"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "0.00|0",
+          "expected": "custom validation passed",
+          "message": "DB exam_sessions raw_score and correct_count must be 0"
+        }
+      ],
+      "evidence": {
+        "request": "POST /sessions/2/client-submit (spoofed score=100, correctCount=25)",
+        "response": {
+          "status": 200,
+          "body": "{\"data\":{\"id\":2,\"examId\":15,\"mode\":\"MOCK_EXAM\",\"status\":\"SUBMITTED\",\"score\":0,\"scorePercentage\":0,\"rawScore\":0,\"maxRawScore\":150,\"correctCount\":0,\"totalQuestions\":25,\"timeSpentSeconds\":120,\"startedAt\":\"2026-11-16T02:51:55.87314Z\",\"submittedAt\":\"2026-11-16T09:51:55.894539+07:00\",\"orderedQuestionIds\":[]},\"message\":\"Nộp bài thành công\",\"timestamp\":\"2026-11-16T09:51:55.897217+07:00\",\"success\":true}"
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-34",
+      "description": "Đề đang PUBLISHED không được sửa metadata hay thêm/xóa/đổi thứ tự câu hỏi",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 1414,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 409,
+          "expected": 409,
+          "message": "CR-34 PUT metadata on PUBLISHED exam must return 409"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 409,
+          "expected": 409,
+          "message": "CR-34 ADD question on PUBLISHED exam must return 409"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 409,
+          "expected": 409,
+          "message": "CR-34 DELETE question on PUBLISHED exam must return 409"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 409,
+          "expected": 409,
+          "message": "CR-34 REORDER questions on PUBLISHED exam must return 409"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "Cleanroom LOCK_EXAM_491306_2076",
+          "expected": "custom validation passed",
+          "message": "Title unchanged"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "5:1,6:2,7:3,8:4,9:5,10:6,11:7,12:8,13:9,14:10,15:11,16:12,17:13,18:14,19:15,20:16,21:17,22:18,23:19,24:20,25:21,26:22,27:23,28:24,29:25",
+          "expected": "custom validation passed",
+          "message": "exam_questions unchanged"
+        }
+      ],
+      "evidence": {
+        "responses": {
+          "put": {
+            "status": 409,
+            "body": "{\"error\":{\"code\":\"INVALID_STATE\",\"message\":\"Cannot edit exam metadata in status PUBLISHED. Only DRAFT or HIDDEN exams allow metadata edits in this batch.\"},\"timestamp\":\"2026-11-16T09:51:57.1816252+07:00\",\"success\":false}"
+          },
+          "add": {
+            "status": 409,
+            "body": "{\"error\":{\"code\":\"INVALID_STATE\",\"message\":\"Cannot add questions to exam in status PUBLISHED. Only DRAFT exams allow question composition.\"},\"timestamp\":\"2026-11-16T09:51:57.1881679+07:00\",\"success\":false}"
+          },
+          "del": {
+            "status": 409,
+            "body": "{\"error\":{\"code\":\"INVALID_STATE\",\"message\":\"Cannot remove questions from exam in status PUBLISHED. Only DRAFT exams allow question composition.\"},\"timestamp\":\"2026-11-16T09:51:57.1945664+07:00\",\"success\":false}"
+          },
+          "reorder": {
+            "status": 409,
+            "body": "{\"error\":{\"code\":\"INVALID_STATE\",\"message\":\"Cannot reorder questions in exam in status PUBLISHED. Only DRAFT exams allow question composition.\"},\"timestamp\":\"2026-11-16T09:51:57.202319+07:00\",\"success\":false}"
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-35",
+      "description": "Đề đang HIDDEN không được thêm, xóa hoặc sắp xếp lại câu hỏi",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 625,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Hide exam before CR-35 checks"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 409,
+          "expected": 409,
+          "message": "CR-35 ADD question on HIDDEN exam must return 409"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 409,
+          "expected": 409,
+          "message": "CR-35 DELETE question on HIDDEN exam must return 409"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 409,
+          "expected": 409,
+          "message": "CR-35 REORDER questions on HIDDEN exam must return 409"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "5:1,6:2,7:3,8:4,9:5,10:6,11:7,12:8,13:9,14:10,15:11,16:12,17:13,18:14,19:15,20:16,21:17,22:18,23:19,24:20,25:21,26:22,27:23,28:24,29:25",
+          "expected": "custom validation passed",
+          "message": "exam_questions unchanged while HIDDEN"
+        }
+      ],
+      "evidence": {
+        "responses": {
+          "add": {
+            "status": 409,
+            "body": "{\"error\":{\"code\":\"INVALID_STATE\",\"message\":\"Cannot add questions to exam in status HIDDEN. Only DRAFT exams allow question composition.\"},\"timestamp\":\"2026-11-16T09:51:57.9123657+07:00\",\"success\":false}"
+          },
+          "del": {
+            "status": 409,
+            "body": "{\"error\":{\"code\":\"INVALID_STATE\",\"message\":\"Cannot remove questions from exam in status HIDDEN. Only DRAFT exams allow question composition.\"},\"timestamp\":\"2026-11-16T09:51:57.9232334+07:00\",\"success\":false}"
+          },
+          "reorder": {
+            "status": 409,
+            "body": "{\"error\":{\"code\":\"INVALID_STATE\",\"message\":\"Cannot reorder questions in exam in status HIDDEN. Only DRAFT exams allow question composition.\"},\"timestamp\":\"2026-11-16T09:51:57.9306066+07:00\",\"success\":false}"
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "CR-36",
+      "description": "Đề HIDDEN đổi môn khi còn câu môn cũ không được xuất bản lại trực tiếp",
+      "status": "PASSED",
+      "attempts": 1,
+      "durationMs": 501,
+      "assertions": [
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 200,
+          "expected": 200,
+          "message": "Subject changed on HIDDEN exam, verifying publish is blocked"
+        },
+        {
+          "name": "assertStatus",
+          "passed": true,
+          "actual": 400,
+          "expected": 400,
+          "message": "CR-36 publish blocked with 400 due to subject mismatch / review required"
+        },
+        {
+          "name": "assertDbRow",
+          "passed": true,
+          "actual": "0",
+          "expected": "custom validation passed",
+          "message": "No PUBLISHED exam may have mismatched subject between exam and questions"
+        }
+      ],
+      "evidence": {
+        "putResponse": {
+          "status": 200,
+          "body": "{\"data\":{\"id\":16,\"examCode\":\"LOCK_EXAM_491306_2076\",\"title\":\"Cleanroom LOCK_EXAM_491306_2076\",\"subjectId\":2,\"subjectCode\":\"ENG\",\"questionCount\":25,\"durationMinutes\":60,\"difficulty\":\"MEDIUM\",\"pricingType\":\"FREE\",\"price\":0,\"status\":\"HIDDEN\",\"publishDate\":\"2026-11-16T02:51:56.612969Z\",\"version\":1,\"lockVersion\":2,\"createdBy\":3,\"reviewedBy\":4,\"createdAt\":\"2026-11-16T02:51:44.832368Z\",\"updatedAt\":\"2026-11-16T02:51:46.637324Z\"},\"message\":\"Cập nhật đề thi thành công\",\"timestamp\":\"2026-11-16T09:51:58.3633206+07:00\",\"success\":true}"
+        },
+        "publishResponse": {
+          "status": 400,
+          "body": "{\"error\":{\"code\":\"VALIDATION_FAILED\",\"message\":\"V-SAT publish validation failed: VF_SUBJECT\"},\"timestamp\":\"2026-11-16T09:51:58.4238293+07:00\",\"success\":false}"
+        }
+      },
+      "error": null
+    }
+  ]
+}

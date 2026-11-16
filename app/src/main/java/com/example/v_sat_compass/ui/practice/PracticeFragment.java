@@ -150,10 +150,7 @@ public class PracticeFragment extends Fragment {
                     String topicName = q.getTopicName() != null ? q.getTopicName() : "Khác";
                     int[] counts = aggregates.computeIfAbsent(topicName, k -> new int[]{0, 0});
                     counts[1]++;
-                    Long selected = selectedAnswers.get(q.getId());
-                    Long correct = LocalExamDataSource.getInstance()
-                            .getCorrectOptionId(requireContext(), q.getId());
-                    if (selected != null && selected.equals(correct)) {
+                    if (selectedAnswers.containsKey(q.getId())) {
                         counts[0]++;
                     }
                 }

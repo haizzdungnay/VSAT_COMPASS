@@ -1,0 +1,330 @@
+============================================================
+V-SAT COMPASS - FULL ACCEPTANCE HARNESS ORCHESTRATION
+============================================================
+
+[RUN-ALL] Step 1: Safety Preflight validation...
+[PREFLIGHT] Probing acceptance infrastructure ports...
+ - Port 55432 (Clean PostgreSQL): ACTIVE
+ - Port 18080 (Clean Backend API): INACTIVE/IDLE
+ - Port 18081 (Clean Mock LLM): INACTIVE/IDLE
+SAFETY PREFLIGHT PASSED
+[RUN-ALL] Step 2: Starting clean PostgreSQL container...
+ Container vsat-clean-pg  Running
+[RUN-ALL] Waiting for PostgreSQL readiness on 127.0.0.1:55432...
+[RUN-ALL] PostgreSQL is ready.
+
+[RUN-ALL] Step 3: Bootstrapping clean database schema & fixtures...
+[BOOTSTRAP] Starting clean-room database bootstrap...
+[BOOTSTRAP] Executing Reset Public Schema...
+[BOOTSTRAP] Executing Base Schema (vsat_database_schema.sql)...
+[BOOTSTRAP] Executing Migration 0001_create_tickets.sql...
+[BOOTSTRAP] Executing Migration 0002_add_leaderboard_opt_in.sql...
+[BOOTSTRAP] Executing Migration 0003_add_vsat_domain_types.sql...
+[BOOTSTRAP] Executing Migration 0004_extend_questions_for_vsat.sql...
+[BOOTSTRAP] Executing Migration 0005_create_vsat_question_tables.sql...
+[BOOTSTRAP] Executing Migration 0006_create_vsat_scoring_and_sections.sql...
+[BOOTSTRAP] Executing Migration 0007_create_exam_blueprints_and_variants.sql...
+[BOOTSTRAP] Executing Migration 0008_backfill_legacy_data.sql...
+[BOOTSTRAP] Executing Migration 0009_add_vsat_constraints.sql...
+[BOOTSTRAP] Executing Migration 0010_seed_vsat_blueprints.sql...
+[BOOTSTRAP] Executing Migration 0011_add_exam_window_title.sql...
+[BOOTSTRAP] Executing Migration V12__add_lock_version.sql...
+[BOOTSTRAP] Executing Migration V13__create_admission_benchmarks.sql...
+[BOOTSTRAP] Executing Migration V14__add_question_group_audio.sql...
+[BOOTSTRAP] Executing Migration V15__add_proctoring_columns.sql...
+[BOOTSTRAP] Executing Migration 0016_add_session_audio_play_counts.sql...
+[BOOTSTRAP] Executing Migration 0017_add_blueprint_cells_json.sql...
+[BOOTSTRAP] Executing Clean-Room Deterministic Fixtures...
+[BOOTSTRAP] Clean-room database bootstrap completed successfully.
+
+[RUN-ALL] Step 4: Starting LLM Mock Server on port 18081...
+[RUN-ALL] LLM Mock Server is UP.
+[RUN-ALL] Step 5: Checking Backend Spring Boot on http://127.0.0.1:18080/api/v1/actuator/health...
+[RUN-ALL] Spawning Backend Spring Boot with clean-room acceptance configuration...
+[RUN-ALL] Resolved JDK/JBR home: C:\Users\PC\.gradle\jdks\eclipse_adoptium-21-amd64-windows.2
+(node:23884) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[RUN-ALL] Backend Spring Boot is UP and healthy.
+
+[RUN-ALL] Step 6: Executing test suites...
+
+[RUN-ALL] Executing suite: suites/backend-admin.mjs...
+
+============================================================
+[SUITE START] Running backend-admin-report (42 cases registered)
+============================================================
+  [OK] API-001 - AdminBlueprintController GET /api/v1/admin/blueprints (1 attempts, 1632ms, 6 assertions)
+  [OK] API-002 - AdminBlueprintController GET /api/v1/admin/blueprints/{id} (1 attempts, 343ms, 6 assertions)
+  [OK] API-003 - AdminDashboardController GET /api/v1/admin/stats (1 attempts, 448ms, 6 assertions)
+  [OK] API-004 - AdminExamController GET /api/v1/admin/exams (1 attempts, 128ms, 6 assertions)
+  [OK] API-005 - AdminExamController GET /api/v1/admin/exams/{id} (1 attempts, 587ms, 6 assertions)
+  [OK] API-006 - AdminExamController POST /api/v1/admin/exams (1 attempts, 1178ms, 7 assertions)
+  [OK] API-007 - AdminExamController PUT /api/v1/admin/exams/{id} (1 attempts, 378ms, 6 assertions)
+  [OK] API-008 - AdminExamController DELETE /api/v1/admin/exams/{examId} (1 attempts, 629ms, 6 assertions)
+  [OK] API-009 - AdminExamController POST /api/v1/admin/exams/{examId}/questions (1 attempts, 937ms, 6 assertions)
+  [OK] API-010 - AdminExamController DELETE /api/v1/admin/exams/{examId}/questions/{questionId} (1 attempts, 1335ms, 6 assertions)
+  [OK] API-011 - AdminExamController PUT /api/v1/admin/exams/{examId}/questions/reorder (1 attempts, 1697ms, 5 assertions)
+  [OK] API-012 - AdminExamController POST /api/v1/admin/exams/{examId}/submit-review (1 attempts, 340ms, 6 assertions)
+  [OK] API-013 - AdminExamController POST /api/v1/admin/exams/{examId}/publish (1 attempts, 1303ms, 6 assertions)
+  [OK] API-014 - AdminExamController POST /api/v1/admin/exams/{examId}/hide (1 attempts, 840ms, 6 assertions)
+  [OK] API-015 - AdminExamController POST /api/v1/admin/exams/{examId}/archive (1 attempts, 857ms, 6 assertions)
+  [OK] API-016 - AdminExamController POST /api/v1/admin/exams/{examId}/reject-review (1 attempts, 1153ms, 6 assertions)
+  [OK] API-017 - AdminExamController POST /api/v1/admin/exams/{examId}/return-to-draft (1 attempts, 805ms, 6 assertions)
+  [OK] API-018 - AdminExamController GET /api/v1/admin/exams/{examId}/questions (1 attempts, 830ms, 6 assertions)
+  [OK] API-019 - AdminExamController GET /api/v1/admin/exams/{examId}/variants (1 attempts, 214ms, 6 assertions)
+  [OK] API-020 - AdminExamController POST /api/v1/admin/exams/{examId}/variants/generate (1 attempts, 218ms, 6 assertions)
+  [OK] API-021 - AdminExamController POST /api/v1/admin/exams/generate-by-matrix (1 attempts, 738ms, 6 assertions)
+  [OK] API-022 - AdminExamController POST /api/v1/admin/exams/{examId}/generate-by-matrix (1 attempts, 570ms, 6 assertions)
+  [OK] API-023 - AdminExamWindowController GET /api/v1/admin/exam-windows (1 attempts, 529ms, 5 assertions)
+  [OK] API-024 - AdminExamWindowController GET /api/v1/admin/exam-windows/{id} (1 attempts, 410ms, 6 assertions)
+  [OK] API-025 - AdminExamWindowController POST /api/v1/admin/exam-windows (1 attempts, 593ms, 7 assertions)
+  [OK] API-026 - AdminExamWindowController PUT /api/v1/admin/exam-windows/{id} (1 attempts, 545ms, 6 assertions)
+  [OK] API-027 - AdminExamWindowController PATCH /api/v1/admin/exam-windows/{id}/status (1 attempts, 449ms, 6 assertions)
+  [OK] API-028 - AdminExamWindowController DELETE /api/v1/admin/exam-windows/{id} (1 attempts, 1044ms, 6 assertions)
+  [OK] API-029 - AdminQuestionController GET /api/v1/admin/questions (1 attempts, 45ms, 6 assertions)
+  [OK] API-030 - AdminQuestionController GET /api/v1/admin/questions/picker (1 attempts, 54ms, 6 assertions)
+  [OK] API-031 - AdminQuestionController GET /api/v1/admin/questions/{id} (1 attempts, 562ms, 6 assertions)
+  [OK] API-032 - AdminQuestionController POST /api/v1/admin/questions/{id}/approve (1 attempts, 814ms, 6 assertions)
+  [OK] API-033 - AdminQuestionController POST /api/v1/admin/questions/{id}/request-revision (1 attempts, 1350ms, 6 assertions)
+  [OK] API-034 - AdminQuestionController POST /api/v1/admin/questions/{id}/reject (1 attempts, 809ms, 6 assertions)
+  [OK] API-035 - AdminQuestionController GET /api/v1/admin/questions/import/template (1 attempts, 921ms, 6 assertions)
+  [OK] API-036 - AdminQuestionController POST /api/v1/admin/questions/import (1 attempts, 268ms, 6 assertions)
+  [OK] API-037 - AdminTicketController GET /api/v1/admin/tickets (1 attempts, 459ms, 6 assertions)
+  [OK] API-038 - AdminTicketController PATCH /api/v1/admin/tickets/{id} (1 attempts, 612ms, 7 assertions)
+  [OK] API-039 - AdminUserController GET /api/v1/admin/users (1 attempts, 184ms, 7 assertions)
+  [OK] API-040 - AdminUserController PATCH /api/v1/admin/users/{id}/role (1 attempts, 468ms, 8 assertions)
+  [OK] API-041 - AdminUserController PATCH /api/v1/admin/users/{id}/lock (1 attempts, 440ms, 7 assertions)
+  [OK] API-042 - AdminUserController PATCH /api/v1/admin/users/{id}/unlock (1 attempts, 721ms, 7 assertions)
+
+[SUITE FINISHED] Report written to: E:\TuanDuong\lap trinh kiem com\Java\VSAT_COMPASS\acceptance-harness\results\backend-admin-report.json
+
+[RUN-ALL] Executing suite: suites/backend-public-student-collab.mjs...
+
+============================================================
+[SUITE START] Running backend-psc-report (36 cases registered)
+============================================================
+  [OK] API-043 - GET / - Public API system status and entry info (1 attempts, 55ms, 5 assertions)
+  [OK] API-044 - POST /auth/register - Register new student account (1 attempts, 160ms, 4 assertions)
+  [OK] API-045 - POST /auth/login - Authenticate user and issue JWT token pair (1 attempts, 168ms, 4 assertions)
+  [OK] API-046 - POST /auth/refresh - Refresh access token using valid refresh token (1 attempts, 64ms, 4 assertions)
+  [OK] API-047 - POST /auth/logout - Revoke refresh token and terminate session (1 attempts, 63ms, 2 assertions)
+  [OK] API-048 - GET /auth/me - Authenticated user profile and RBAC enforcement (1 attempts, 441ms, 6 assertions)
+  [OK] API-049 - PUT /auth/me - Update authenticated user personal profile (1 attempts, 366ms, 3 assertions)
+  [OK] API-050 - PUT /auth/me/password - Change user password and verify credentials (1 attempts, 409ms, 3 assertions)
+  [OK] API-051 - GET /auth/me/leaderboard - Get leaderboard opt-in state (1 attempts, 32ms, 3 assertions)
+  [OK] API-052 - PATCH /auth/me/leaderboard - Update leaderboard opt-in preference (1 attempts, 29ms, 3 assertions)
+  [OK] API-053 - POST /collaborator/questions - Create authoring question draft and enforce RBAC (1 attempts, 1545ms, 5 assertions)
+  [OK] API-054 - GET /collaborator/questions - List collaborator questions and RBAC (1 attempts, 18ms, 4 assertions)
+  [OK] API-055 - GET /collaborator/questions/{id} - Get collaborator question detail and RBAC (1 attempts, 20ms, 5 assertions)
+  [OK] API-056 - PUT /collaborator/questions/{id} - Update draft question and RBAC (1 attempts, 68ms, 3 assertions)
+  [OK] API-057 - POST /collaborator/questions/{id}/submit-for-review - Submit question for admin review (1 attempts, 44ms, 4 assertions)
+  [OK] API-058 - GET /exams - Browse published exams catalog (1 attempts, 41ms, 4 assertions)
+  [OK] API-059 - GET /exams/{id} - Get public overview of published exam (1 attempts, 18ms, 4 assertions)
+  [OK] API-060 - POST /ai/explain - Generate AI pedagogical explanation with LaTeX (1 attempts, 277ms, 6 assertions)
+  [OK] API-061 - GET /exams/{id}/download-bundle - Download offline exam bundle and enforce RBAC (1 attempts, 47ms, 7 assertions)
+  [OK] API-062 - GET /leaderboard - Get top ranked students and enforce RBAC (1 attempts, 17ms, 4 assertions)
+  [OK] API-063 - GET /my-stats/topics - Student performance metrics by syllabus topic (1 attempts, 24ms, 3 assertions)
+  [OK] API-064 - GET /my-stats/weak-topics - Weakest syllabus topics identification (1 attempts, 17ms, 3 assertions)
+  [OK] API-065 - GET /practice/questions - Fetch randomized practice questions and RBAC (1 attempts, 63ms, 4 assertions)
+  [OK] API-066 - POST /practice/grade - Instantly grade submitted practice answer (1 attempts, 47ms, 5 assertions)
+  [OK] API-067 - POST /sessions/start - Start official exam attempt session (1 attempts, 30ms, 4 assertions)
+  [OK] API-068 - POST /sessions/{sessionId}/client-submit - Submit offline-completed session batch (1 attempts, 80ms, 3 assertions)
+  [OK] API-069 - POST /sessions/{sessionId}/answers - Save individual answer in live session (1 attempts, 45ms, 2 assertions)
+  [OK] API-070 - POST /sessions/{sessionId}/submit - Finalize live exam session and score (1 attempts, 27ms, 4 assertions)
+  [OK] API-071 - GET /sessions/{sessionId}/questions/{questionId} - Fetch in-session question content (1 attempts, 45ms, 4 assertions)
+  [OK] API-072 - GET /sessions/{sessionId}/answer-keys - Retrieve answer keys after submission (1 attempts, 48ms, 4 assertions)
+  [OK] API-073 - POST /tickets - Submit student feedback / error report ticket and enforce RBAC (1 attempts, 22ms, 5 assertions)
+  [OK] API-074 - GET /subjects - List active examination subjects (1 attempts, 9ms, 5 assertions)
+  [OK] API-075 - GET /subjects/{subjectId}/topics - List curriculum topics under a subject (1 attempts, 13ms, 4 assertions)
+  [OK] API-076 - GET /subjects/{subjectId}/topics/{topicId}/subtopics - List subtopics under topic (1 attempts, 17ms, 4 assertions)
+  [OK] JOB-001 - RefreshTokenCleanupService - Purge expired tokens via clean-room JVM trigger (1 attempts, 1577ms, 5 assertions)
+  [OK] JOB-002 - OpenAiCompatibleLlmClient - AI explanation integration and error fallback handling (1 attempts, 54ms, 4 assertions)
+
+[SUITE FINISHED] Report written to: E:\TuanDuong\lap trinh kiem com\Java\VSAT_COMPASS\acceptance-harness\results\backend-psc-report.json
+
+[RUN-ALL] Executing suite: suites/run-web-suite.mjs...
+
+============================================================
+[SUITE START] Running web-report (10 cases registered)
+============================================================
+(node:54292) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  [OK] WEB-001 - Login & Dashboard Overview (KPI Metrics, Executive Summary) (1 attempts, 11026ms, 3 assertions)
+  [OK] WEB-002 - Exam Management List (Search Filters, Status Badges, Discard Draft) (1 attempts, 847ms, 4 assertions)
+  [OK] WEB-003 - Create Exam Wizard (4 Steps: General -> Composition -> Preview -> Variants & Publish) (1 attempts, 839ms, 4 assertions)
+  [OK] WEB-004 - Exam Matrix Blueprints (GDPT 2018 Specs, 4 Formats, Matrix Cells) (1 attempts, 429ms, 4 assertions)
+  [OK] WEB-005 - Examination Schedules & Windows (Create, Status Lifecycle, Delete Window) (1 attempts, 860ms, 3 assertions)
+  [OK] WEB-006 - Question Bank & Authoring (Subject Filters, Question Types, KaTeX Math Engine) (1 attempts, 429ms, 4 assertions)
+  [OK] WEB-007 - Question Review Queue (Triage Collaborator Submissions, Approve, Revision, Reject) (1 attempts, 419ms, 3 assertions)
+  [OK] WEB-008 - Excel Question Import (Template Download, Valid XLSX Buffer In-Memory, Import Result) (1 attempts, 830ms, 5 assertions)
+  [OK] WEB-009 - System Settings & Scoring Standards (150 Raw Points, Partial Credit Rule, Role Badges) (1 attempts, 426ms, 4 assertions)
+  [OK] WEB-010 - MathView KaTeX Renderer (Inline, Display, and Block Math Equations without Syntax Errors) (1 attempts, 1ms, 2 assertions)
+
+[SUITE FINISHED] Report written to: E:\TuanDuong\lap trinh kiem com\Java\VSAT_COMPASS\acceptance-harness\results\web-report.json
+
+[RUN-ALL] Executing suite: suites/android-student-suite.mjs...
+
+============================================================
+[SUITE START] Running android-student-report (20 cases registered)
+============================================================
+  [OK] AND-001 - SplashActivity (Application launcher entry point, token verification, role redirect) (1 attempts, 4ms, 3 assertions)
+  [OK] AND-002 - LoginActivity (User authentication with email and password, EncryptedSharedPreferences token persistence) (1 attempts, 2ms, 4 assertions)
+  [OK] AND-003 - RegisterActivity (Student registration form with validation and auto-login) (1 attempts, 2ms, 4 assertions)
+  [OK] AND-004 - MainActivity (Root student navigation container with BottomNavigationView, hosts 4 student fragments, privileged mode switcher) (1 attempts, 2ms, 4 assertions)
+  [OK] AND-005 - HomeFragment (Student dashboard with daily challenge streak, subject shortcut chips, featured practice exams) (1 attempts, 2ms, 2 assertions)
+  [OK] AND-006 - ExamFragment (Exam catalog search and subject filters, one-tap offline exam bundle download button, badge indicators) (1 attempts, 4ms, 4 assertions)
+  [OK] AND-007 - ExamDetailActivity (Detailed exam syllabus overview, download offline bundle action, start live exam session) (1 attempts, 3ms, 4 assertions)
+  [OK] AND-008 - DownloadedExamsActivity (Offline library of downloaded encrypted .vsat exams, bundle deletion, offline session launcher) (1 attempts, 1ms, 4 assertions)
+  [OK] AND-009 - ExamSessionActivity (Countdown timer, question grid modal, KaTeX formula WebView, 4 V-SAT formats, submission dialog, offline caching) (1 attempts, 6ms, 7 assertions)
+  [OK] AND-010 - ExamResultActivity (V-SAT 150-point score summary breakdown, accuracy stats, time spent, review solutions action) (1 attempts, 2ms, 4 assertions)
+  [OK] AND-011 - ExamReviewActivity (Full post-exam solution review with KaTeX, AI explanation dialog, question error ticket report) (1 attempts, 3ms, 4 assertions)
+  [OK] AND-012 - PracticeFragment (Adaptive practice topic selection and difficulty preferences, quick flashcard review launcher, weak topic drills) (1 attempts, 2ms, 2 assertions)
+  [OK] AND-013 - PracticeSessionActivity (Instant practice loop with immediate grading and explanations, KaTeX WebView rendering) (1 attempts, 3ms, 4 assertions)
+  [OK] AND-014 - ExamHistoryActivity (Historical exam attempts, scores, and review navigation) (1 attempts, 3ms, 4 assertions)
+  [OK] AND-015 - FlashcardReviewActivity (Leitner spaced repetition formula flashcard review, card flip animation, self-assessed mastery tracking) (1 attempts, 2ms, 4 assertions)
+  [OK] AND-016 - ProgressActivity (Personal analytics: accuracy per topic, weak points, study streaks) (1 attempts, 3ms, 4 assertions)
+  [OK] AND-017 - ProfileFragment (Student profile overview and streak achievements, avatar picker using ActivityResultContracts.StartActivityForResult, edit profile and change password dialogs, logout confirmation) (1 attempts, 3ms, 2 assertions)
+  [OK] AND-018 - SettingsActivity (Local daily reminder notification schedule and time picker, streak reminder alerts toggle) (1 attempts, 0ms, 3 assertions)
+  [OK] AND-019 - LeaderboardActivity (Exam competitive leaderboard rankings, student public leaderboard opt-in toggle) (1 attempts, 0ms, 3 assertions)
+  [OK] AND-020 - AdminActivity (Native Android Admin portal container, hosts AdminDashboardFragment, AdminExamListFragment, AdminQuestionBankFragment, AdminUserManagementFragment) (1 attempts, 2ms, 4 assertions)
+
+[SUITE FINISHED] Report written to: E:\TuanDuong\lap trinh kiem com\Java\VSAT_COMPASS\acceptance-harness\results\android-student-report.json
+
+[RUN-ALL] Executing suite: suites/android-roles-workers-suite.mjs...
+
+============================================================
+[SUITE START] Running android-roles-workers-report (18 cases registered)
+============================================================
+  [OK] AND-021 - Admin KPI statistics on Android (users, exams, question approval rates) (1 attempts, 156ms, 7 assertions)
+  [OK] AND-022 - Exam administration list with status filters and create exam launcher (1 attempts, 73ms, 7 assertions)
+  [OK] AND-023 - Native Android form to create new draft exam (1 attempts, 5ms, 4 assertions)
+  [OK] AND-024 - Admin exam question configuration, publish, and discard actions (1 attempts, 5ms, 6 assertions)
+  [OK] AND-025 - Select approved questions from bank to attach to draft exam (1 attempts, 5ms, 5 assertions)
+  [OK] AND-026 - Question bank browser with review status tabs on Android (1 attempts, 5ms, 4 assertions)
+  [OK] AND-027 - Admin question review interface with KaTeX math preview (1 attempts, 5ms, 4 assertions)
+  [OK] AND-028 - User role change dialog (STUDENT, COLLABORATOR, CONTENT_ADMIN, SUPER_ADMIN) (1 attempts, 6ms, 8 assertions)
+  [OK] AND-029 - Triage and resolve question error reports from students (1 attempts, 4ms, 5 assertions)
+  [OK] AND-030 - Collaborator workspace shell hosting question submissions list and authoring actions (1 attempts, 4ms, 4 assertions)
+  [OK] AND-031 - Collaborator drafted, pending, and approved questions list (1 attempts, 110ms, 6 assertions)
+  [OK] AND-032 - Collaborator question creation form with format selectors (MCQ, True/False, Matching, Short Answer) (1 attempts, 6ms, 6 assertions)
+  [OK] AND-033 - Collaborator question detail viewer, edit draft, submit for review, review feedback comments history (1 attempts, 5ms, 4 assertions)
+  [OK] AND-034 - KaTeX math equation detection and rendering via embedded WebView (1 attempts, 2ms, 11 assertions)
+  [OK] AND-035 - Download complete exam bundle via GET /api/v1/exams/{id}/download-bundle (1 attempts, 2ms, 6 assertions)
+  [OK] WRK-001 - Sends customized study streak and daily practice challenge notification to student (1 attempts, 5ms, 8 assertions)
+  [OK] WRK-002 - Automatically synchronizes pending offline exam submissions when internet connection is restored (1 attempts, 3ms, 7 assertions)
+  [OK] WRK-003 - System notification channel for daily study reminder and streak alert notifications (1 attempts, 2ms, 6 assertions)
+
+[SUITE FINISHED] Report written to: E:\TuanDuong\lap trinh kiem com\Java\VSAT_COMPASS\acceptance-harness\results\android-roles-workers-report.json
+[SUITE FINISHED] JUnit XML written to: E:\TuanDuong\lap trinh kiem com\Java\VSAT_COMPASS\acceptance-harness\results\android-roles-workers-report.xml
+
+[RUN-ALL] Executing suite: suites/vsat-format.mjs...
+
+============================================================
+[SUITE START] Running vsat-format (44 cases registered)
+============================================================
+  [OK] VF-A01 - Đề 25 câu chuẩn: publish 200 và oracle PASS (1 attempts, 7522ms, 2 assertions)
+  [OK] VF-A02 - Publish đề 1 câu bị chặn (G1) (1 attempts, 62ms, 1 assertions)
+  [OK] VF-A03 - Publish đề 25 câu toàn 4 lựa chọn bị chặn VF_MIX (G1) (1 attempts, 640ms, 1 assertions)
+  [OK] VF-A04 - Publish đề 26 câu bị chặn (G1) (1 attempts, 638ms, 1 assertions)
+  [OK] VF-A05 - Thêm câu môn ENG vào đề MATH bị chặn (G2) (1 attempts, 30ms, 1 assertions)
+  [OK] VF-A06 - Thêm câu DRAFT bị chặn (1 attempts, 28ms, 1 assertions)
+  [OK] VF-A07 - Thêm trùng câu trả 409 (1 attempts, 38ms, 1 assertions)
+  [OK] VF-A08 - Tạo đề MATH 60 phút bị chặn (G17) (1 attempts, 9ms, 1 assertions)
+  [OK] VF-A09 - Publish đề có câu Đ/S chỉ 3 ý bị chặn (G4) (1 attempts, 658ms, 1 assertions)
+  [OK] VF-A10 - CONTENT_ADMIN publish trả 403, không tự chuyển submit-review (G15) (1 attempts, 743ms, 3 assertions)
+  [OK] VF-B01 - Sinh đề từ VSAT_2026_BP_MATH ra đúng 9/6/5/5, oracle PASS (G3) (1 attempts, 712ms, 2 assertions)
+  [OK] VF-B02 - Ngân hàng ENG toàn 4 lựa chọn: sinh đề phải 400 hoặc cảnh báo thiếu dạng (G3) (1 attempts, 13419ms, 1 assertions)
+  [OK] VF-B03 - Sinh đề vào đề PUBLISHED bị chặn 409 (G3) (1 attempts, 1672ms, 2 assertions)
+  [OK] VF-B04 - blueprintId 10 câu được tôn trọng hoặc bị từ chối (G3/G12) (1 attempts, 23ms, 1 assertions)
+  [OK] VF-B05 - rawScore trả về khớp tổng điểm thực của đề (G3) (1 attempts, 2176ms, 1 assertions)
+  [OK] VF-C01 - PUT đề PUBLISHED trả 409 (1 attempts, 9ms, 1 assertions)
+  [OK] VF-C02 - Đề HIDDEN: thêm/xóa/sắp xếp câu đều 409 (1 attempts, 827ms, 3 assertions)
+  [OK] VF-C03 - DRAFT đổi môn sang ENG nhưng giữ câu MATH, publish bị chặn (G2) (1 attempts, 1051ms, 1 assertions)
+  [OK] VF-C04 - HIDDEN đổi môn rồi publish lại phải chạy lại validator (G2) (1 attempts, 806ms, 1 assertions)
+  [OK] VF-C05 - Return-to-draft, bỏ 1 câu Đ/S rồi publish lại bị chặn (G1) (1 attempts, 874ms, 1 assertions)
+  [OK] VF-C06 - Sửa câu APPROVED nằm trong đề PUBLISHED bị chặn 409 (1 attempts, 11ms, 1 assertions)
+  [OK] VF-C07 - Hai admin cùng lockVersion: người thứ hai nhận 409 (1 attempts, 71ms, 2 assertions)
+  [OK] VF-C08 - Reorder làm 4 lựa chọn đứng trước Đ/S bị chặn VF_ORDER (1 attempts, 568ms, 1 assertions)
+  [OK] VF-D01 - Import Đ/S + 4LC hợp lệ: câu vào trạng thái chờ duyệt, đúng cấu trúc (G8) (1 attempts, 386ms, 3 assertions)
+  [OK] VF-D02 - Import dạng câu lạ "ABC" phải là dòng lỗi (G8) (1 attempts, 25ms, 2 assertions)
+  [OK] VF-D03 - Import SINGLE_CHOICE đáp án "A,B" phải là dòng lỗi (G8) (1 attempts, 24ms, 2 assertions)
+  [OK] VF-D04 - Import Đ/S chỉ 3 ý phải là dòng lỗi (G4/G8) (1 attempts, 24ms, 2 assertions)
+  [OK] VF-D05 - Import trả lời ngắn đáp án số 12.5 hợp lệ (G7/G8) (1 attempts, 23ms, 2 assertions)
+  [OK] VF-D06 - Import ghép hợp 4 cặp 1-C,2-A,3-D,4-B lưu được khóa ghép (G6/G8) (1 attempts, 361ms, 2 assertions)
+  [OK] VF-D08 - dryRun không ghi DB; commit nhập đúng số dòng hợp lệ (1 attempts, 686ms, 4 assertions)
+  [OK] VF-D09 - Import 1001 dòng trả 400 (1 attempts, 5242ms, 1 assertions)
+  [OK] VF-E01 - Blueprint seed: 25 câu / 150đ / 9-6-5-5 / có profile (G10) (1 attempts, 527ms, 4 assertions)
+  [OK] VF-E02 - Tạo blueprint totalQuestions=10 bị chặn (G12) (1 attempts, 16ms, 1 assertions)
+  [OK] VF-E03 - Blueprint có ô âm / dạng câu trùng bị chặn (G12) (1 attempts, 18ms, 1 assertions)
+  [OK] VF-E04 - Blueprint scoringProfileId không tồn tại bị chặn 400 (G10) (1 attempts, 18ms, 1 assertions)
+  [OK] VF-F01 - Bundle của đề chuẩn mô tả đủ 4 phần và điểm (G14) (1 attempts, 602ms, 1 assertions)
+  [OK] VF-F02 - Bundle của học sinh không chứa đáp án (G13) (1 attempts, 257ms, 1 assertions)
+  [OK] VF-F03 - correctAnswer của câu Đ/S (nếu có) phải đủ 4 cờ Đ/S (G14) (1 attempts, 294ms, 2 assertions)
+  [OK] VF-F04 - Chấm offline scoreVsat khớp điểm server (1 bộ đáp án đúng + 10 bộ ngẫu nhiên) (1 attempts, 13197ms, 2 assertions)
+  [OK] VF-F05 - Bundle của đề chưa PUBLISHED trả 404 (1 attempts, 23ms, 1 assertions)
+  [OK] VF-Q01 - Tạo câu Đ/S 3 ý bị chặn (G4) (1 attempts, 11ms, 1 assertions)
+  [OK] VF-Q02 - Tạo câu 4 lựa chọn chỉ 2 phương án bị chặn (G5) (1 attempts, 11ms, 1 assertions)
+  [OK] VF-Q03 - Tạo câu ghép hợp 2 cặp bị chặn (G6) (1 attempts, 8ms, 1 assertions)
+  [OK] VF-Q04 - Tạo câu trả lời ngắn không có đáp án bị chặn (1 attempts, 10ms, 1 assertions)
+
+[SUITE FINISHED] Report written to: E:\TuanDuong\lap trinh kiem com\Java\VSAT_COMPASS\acceptance-harness\results\vsat-format.json
+
+[RUN-ALL] Step 6b: Executing Phase 1 & 2 Features E2E check...
+
+[RUN-ALL] Executing suite: suites/phase2-features-check.mjs...
+
+============================================================
+[PHASE2-E2E] Running Phase 1 & Phase 2 Verification Checks
+============================================================
+
+--- [1/4] Checking P2 Admission Matching API ---
+  [PASS] GET /admissions/universities - Found 6 universities
+  [PASS] GET /admissions/subject-combos - Found combos: A00, A01, B00, C00, D01
+[WARN] Classification coverage in sample data: SAFE=true, FIT=false, RISK=false
+  [PASS] POST /admissions/predict - Validated 9 predictions (SAFE: 9, FIT: 0, RISK: 0)
+
+--- [2/4] Checking TD-4 Optimistic Locking 409 Conflict ---
+  [PASS] TD-4 Optimistic Locking - HTTP 409 and error CONCURRENT_MODIFICATION received on lockVersion mismatch (current=0, sent=999999)
+
+--- [3/4] Checking P4 Proctoring Auto-Submit ---
+  [PASS] Proctoring Violation 1 - violationCount=1, autoSubmitted=false
+  [PASS] Proctoring Violation 2 - violationCount=2, autoSubmitted=false
+  [PASS] Proctoring Violation 3 - violationCount=3, autoSubmitted=true, sessionStatus=SUBMITTED
+
+--- [4/4] Checking P1 Web Student CBT UI ---
+  [PASS] P1 Web Student CBT UI - Rendered StudentExamLobby and AdmissionPredictorWidget with zero page errors
+
+============================================================
+[PHASE2-E2E] All Phase 1 & Phase 2 E2E assertions passed!
+============================================================
+
+
+[RUN-ALL] Step 7: Evaluating acceptance verdict...
+
+============================================================
+[VERDICT GATE] Evaluating Clean-Room Acceptance Results
+  Source directory: E:\TuanDuong\lap trinh kiem com\Java\VSAT_COMPASS\acceptance-harness\results
+============================================================
+[VERDICT GATE] Required acceptance IDs: 170 (across 5 feature domains)
+============================================================
+V-SAT COMPASS CLEAN-ROOM ACCEPTANCE FINAL VERDICT
+============================================================
+Verdict          : ACCEPTED
+Generated At     : 2026-11-16T04:13:25.083Z
+Total Required   : 170 IDs
+Total Collected  : 170 IDs
+Passed Count     : 170 / 170
+Failed Count     : 0
+Violations Count : 0
+------------------------------------------------------------
+Domain Breakdown :
+  - backend_endpoints             : 120/120
+  - backend_jobs_and_integrations : 2/2
+  - web_admin_pages               : 10/10
+  - android_screens_and_flows     : 35/35
+  - android_workers_and_services  : 3/3
+============================================================
+All 170/170 acceptance criteria passed with strict assertions.
+
+[FINAL RESULT] VERDICT: ACCEPTED (170/170 passed)
+EXIT=0

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { spawn, spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve, join, delimiter } from 'node:path';
 import { runSafetyPreflight } from './safety-preflight.mjs';
 import { bootstrapDatabase } from './db-bootstrap.mjs';
@@ -18,30 +18,51 @@ export function resolveJbrHome() {
   const isWin = process.platform === 'win32';
   const javaExe = isWin ? 'bin/java.exe' : 'bin/java';
 
+  const userProfile = process.env.USERPROFILE || 'C:\\Users\\PC';
   const candidates = isWin
     ? [
-        'C:\\Program Files\\Android\\Android Studio1\\jbr',
         process.env.JAVA_HOME,
-        'C:\\Program Files\\Android\\Android Studio\\jbr',
+        join(userProfile, '.gradle', 'jdks', 'eclipse_adoptium-21-amd64-windows.2'),
+        'C:\\Users\\PC\\.gradle\\jdks\\eclipse_adoptium-21-amd64-windows.2',
+        'C:\\Program Files\\Eclipse Adoptium\\jdk-21',
+        'C:\\Program Files\\Eclipse Adoptium\\jdk-17',
         'C:\\Program Files\\Java\\jdk-21',
-        'C:\\Program Files\\Eclipse Adoptium\\jdk-21'
+        'C:\\Program Files\\Java\\jdk-17',
+        'C:\\Program Files\\Android\\Android Studio\\jbr',
+        'C:\\Program Files\\Android\\Android Studio1\\jbr'
       ].filter(Boolean)
     : [
         process.env.JAVA_HOME,
         '/usr/lib/jvm/temurin-21-jdk-amd64',
-        '/usr/lib/jvm/java-21-openjdk-amd64'
+        '/usr/lib/jvm/java-21-openjdk-amd64',
+        '/usr/lib/jvm/temurin-17-jdk-amd64',
+        '/usr/lib/jvm/java-17-openjdk-amd64'
       ].filter(Boolean);
 
   for (const c of candidates) {
     const fullExe = join(c, javaExe);
-    if (existsSync(c) && existsSync(fullExe)) {
-      const probe = spawnSync(fullExe, ['-version'], { stdio: 'pipe' });
-      if (probe.status === 0) {
-        return c;
+    if (!existsSync(c) || !existsSync(fullExe)) continue;
+
+    const relFile = join(c, 'release');
+    if (existsSync(relFile)) {
+      try {
+        const m = readFileSync(relFile, 'utf8').match(/JAVA_VERSION="(\d+)/);
+        if (m && parseInt(m[1], 10) >= 25) continue;
+      } catch {
+        // probe fallback
       }
     }
+
+    const probe = spawnSync(fullExe, ['-version'], { stdio: 'pipe' });
+    if (probe.status !== 0) continue;
+
+    const verStr = `${probe.stdout || ''} ${probe.stderr || ''}`;
+    const verMatch = verStr.match(/version\s+"(\d+)/);
+    if (verMatch && parseInt(verMatch[1], 10) >= 25) continue;
+
+    return c;
   }
-  return process.env.JAVA_HOME || null;
+  return null;
 }
 
 async function sleep(ms) {
@@ -266,7 +287,8 @@ async function main() {
           'suites/backend-public-student-collab.mjs',
           'suites/run-web-suite.mjs',
           'suites/android-student-suite.mjs',
-          'suites/android-roles-workers-suite.mjs'
+          'suites/android-roles-workers-suite.mjs',
+          'suites/vsat-format.mjs'
         ];
 
     for (const suite of suites) {

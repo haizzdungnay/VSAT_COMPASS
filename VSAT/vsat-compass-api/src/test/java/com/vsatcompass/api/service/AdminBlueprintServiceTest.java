@@ -9,6 +9,7 @@ import com.vsatcompass.api.entity.enums.Difficulty;
 import com.vsatcompass.api.entity.enums.QuestionType;
 import com.vsatcompass.api.exception.AppException;
 import com.vsatcompass.api.repository.ExamBlueprintRepository;
+import com.vsatcompass.api.repository.ExamRepository;
 import com.vsatcompass.api.repository.SubjectRepository;
 import com.vsatcompass.api.service.impl.AdminBlueprintServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,6 +40,9 @@ class AdminBlueprintServiceTest {
 
     @Mock
     private ExamBlueprintRepository examBlueprintRepository;
+
+    @Mock
+    private ExamRepository examRepository;
 
     @InjectMocks
     private AdminBlueprintServiceImpl blueprintService;
@@ -317,5 +321,126 @@ class AdminBlueprintServiceTest {
                     AppException ae = (AppException) e;
                     assertThat(ae.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
                 });
+    }
+
+    @Test
+    @DisplayName("createBlueprint: totalQuestions != 25 throws 400 BAD_REQUEST")
+    void createBlueprint_totalNot25_throwsBadRequest() {
+        List<BlueprintResponse.BlueprintCellResponse> tenCells = List.of(
+                BlueprintResponse.BlueprintCellResponse.builder().questionType(QuestionType.TRUE_FALSE).questionCount(4).build(),
+                BlueprintResponse.BlueprintCellResponse.builder().questionType(QuestionType.SINGLE_CHOICE).questionCount(2).build(),
+                BlueprintResponse.BlueprintCellResponse.builder().questionType(QuestionType.MATCHING).questionCount(2).build(),
+                BlueprintResponse.BlueprintCellResponse.builder().questionType(QuestionType.SHORT_ANSWER).questionCount(2).build()
+        );
+        BlueprintUpsertRequest request = BlueprintUpsertRequest.builder()
+                .code("BP_10")
+                .name("Invalid 10")
+                .subjectId(1L)
+                .totalQuestions(10)
+                .cells(tenCells)
+                .build();
+
+        when(subjectRepository.findById(1L)).thenReturn(Optional.of(mathSubject));
+        when(examBlueprintRepository.findByCode("BP_10")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> blueprintService.createBlueprint(request))
+                .isInstanceOf(AppException.class)
+                .satisfies(e -> assertThat(((AppException) e).getStatus()).isEqualTo(HttpStatus.BAD_REQUEST));
+    }
+
+    @Test
+    @DisplayName("createBlueprint: negative cell count or wrong per-type mix throws 400 BAD_REQUEST")
+    void createBlueprint_negativeOrWrongMix_throwsBadRequest() {
+        List<BlueprintResponse.BlueprintCellResponse> badCells = List.of(
+                BlueprintResponse.BlueprintCellResponse.builder().questionType(QuestionType.TRUE_FALSE).questionCount(9).build(),
+                BlueprintResponse.BlueprintCellResponse.builder().questionType(QuestionType.TRUE_FALSE).questionCount(6).build(),
+                BlueprintResponse.BlueprintCellResponse.builder().questionType(QuestionType.MATCHING).questionCount(11).build(),
+                BlueprintResponse.BlueprintCellResponse.builder().questionType(QuestionType.SHORT_ANSWER).questionCount(-1).build()
+        );
+        BlueprintUpsertRequest request = BlueprintUpsertRequest.builder()
+                .code("BP_NEG")
+                .name("Negative Cell")
+                .subjectId(1L)
+                .totalQuestions(25)
+                .cells(badCells)
+                .build();
+
+        when(subjectRepository.findById(1L)).thenReturn(Optional.of(mathSubject));
+        when(examBlueprintRepository.findByCode("BP_NEG")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> blueprintService.createBlueprint(request))
+                .isInstanceOf(AppException.class)
+                .satisfies(e -> assertThat(((AppException) e).getStatus()).isEqualTo(HttpStatus.BAD_REQUEST));
+
+        List<BlueprintResponse.BlueprintCellResponse> wrongMix = List.of(
+                BlueprintResponse.BlueprintCellResponse.builder().questionType(QuestionType.TRUE_FALSE).questionCount(10).build(),
+                BlueprintResponse.BlueprintCellResponse.builder().questionType(QuestionType.SINGLE_CHOICE).questionCount(5).build(),
+                BlueprintResponse.BlueprintCellResponse.builder().questionType(QuestionType.MATCHING).questionCount(5).build(),
+                BlueprintResponse.BlueprintCellResponse.builder().questionType(QuestionType.SHORT_ANSWER).questionCount(5).build()
+        );
+        BlueprintUpsertRequest wrongMixReq = BlueprintUpsertRequest.builder()
+                .code("BP_WRONG_MIX")
+                .name("Wrong Mix")
+                .subjectId(1L)
+                .totalQuestions(25)
+                .cells(wrongMix)
+                .build();
+        when(examBlueprintRepository.findByCode("BP_WRONG_MIX")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> blueprintService.createBlueprint(wrongMixReq))
+                .isInstanceOf(AppException.class)
+                .satisfies(e -> assertThat(((AppException) e).getStatus()).isEqualTo(HttpStatus.BAD_REQUEST));
+    }
+
+    @Test
+    @DisplayName("createBlueprint: multiple cells of same type summed to 9/6/5/5 succeeds")
+    void createBlueprint_multipleCellsSameType_succeeds() {
+        List<BlueprintResponse.BlueprintCellResponse> splitCells = List.of(
+                BlueprintResponse.BlueprintCellResponse.builder().topicId(1L).questionType(QuestionType.TRUE_FALSE).questionCount(5).build(),
+                BlueprintResponse.BlueprintCellResponse.builder().topicId(2L).questionType(QuestionType.TRUE_FALSE).questionCount(4).build(),
+                BlueprintResponse.BlueprintCellResponse.builder().topicId(2L).questionType(QuestionType.SINGLE_CHOICE).questionCount(6).build(),
+                BlueprintResponse.BlueprintCellResponse.builder().topicId(3L).questionType(QuestionType.MATCHING).questionCount(5).build(),
+                BlueprintResponse.BlueprintCellResponse.builder().topicId(4L).questionType(QuestionType.SHORT_ANSWER).questionCount(5).build()
+        );
+        BlueprintUpsertRequest request = BlueprintUpsertRequest.builder()
+                .code("BP_SPLIT")
+                .name("Split Cells")
+                .subjectId(1L)
+                .totalQuestions(25)
+                .cells(splitCells)
+                .build();
+
+        when(subjectRepository.findById(1L)).thenReturn(Optional.of(mathSubject));
+        when(examBlueprintRepository.findByCode("BP_SPLIT")).thenReturn(Optional.empty());
+        when(examBlueprintRepository.save(any(ExamBlueprint.class))).thenAnswer(inv -> {
+            ExamBlueprint bp = inv.getArgument(0);
+            bp.setId(55L);
+            return bp;
+        });
+
+        BlueprintResponse response = blueprintService.createBlueprint(request);
+        assertThat(response.getId()).isEqualTo(55L);
+        assertThat(response.getCells()).hasSize(5);
+    }
+
+    @Test
+    @DisplayName("createBlueprint: non-existent scoringProfileId throws 400 BAD_REQUEST")
+    void createBlueprint_missingScoringProfile_throwsBadRequest() {
+        BlueprintUpsertRequest request = BlueprintUpsertRequest.builder()
+                .code("BP_BAD_SP")
+                .name("Bad Scoring Profile")
+                .subjectId(1L)
+                .scoringProfileId(999999999L)
+                .totalQuestions(25)
+                .cells(standardCells)
+                .build();
+
+        when(subjectRepository.findById(1L)).thenReturn(Optional.of(mathSubject));
+        when(examBlueprintRepository.findByCode("BP_BAD_SP")).thenReturn(Optional.empty());
+        when(examRepository.existsScoringProfileById(999999999L)).thenReturn(false);
+
+        assertThatThrownBy(() -> blueprintService.createBlueprint(request))
+                .isInstanceOf(AppException.class)
+                .satisfies(e -> assertThat(((AppException) e).getStatus()).isEqualTo(HttpStatus.BAD_REQUEST));
     }
 }
